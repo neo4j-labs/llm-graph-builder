@@ -10,6 +10,8 @@ from typing import List
 import re
 import os
 from pathlib import Path
+from urllib.parse import urlparse
+
 
 def check_url_source(source_type, yt_url:str=None, wiki_query:str=None):
     language=''

@@ -18,6 +18,7 @@ export const llms =
         'openai_gpt_4o_mini',
         'gemini_1.5_pro',
         'gemini_1.5_flash',
+        'gemini_2.0_flash',
         'diffbot',
         'azure_ai_gpt_35',
         'azure_ai_gpt_4o',

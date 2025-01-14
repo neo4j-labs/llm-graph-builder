@@ -1,9 +1,6 @@
-import { Drawer, Flex, StatusIndicator, Typography, useMediaQuery } from '@neo4j-ndl/react';
-import DropZone from '../DataSources/Local/DropZone';
 import React, { useMemo, Suspense, lazy } from 'react';
 import { Drawer, Flex, StatusIndicator, Typography, useMediaQuery } from '@neo4j-ndl/react';
 import DropZone from '../DataSources/Local/DropZone';
-import React, { useMemo, Suspense, lazy } from 'react';
 import S3Component from '../DataSources/AWS/S3Bucket';
 import GCSButton from '../DataSources/GCS/GCSButton';
 import CustomAlert from '../UI/Alert';
@@ -26,11 +23,11 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
   showGenericModal,
 }) => {
   const { closeAlert, alertState } = useAlertContext();
-  const { isReadOnlyUser, isBackendConnected } = useCredentials();
-
-  const isYoutubeOnlyCheck = useMemo(
-    () => APP_SOURCES?.includes('youtube') && !APP_SOURCES.includes('wiki') && !APP_SOURCES.includes('web'),
-    [APP_SOURCES]
+  const { isReadOnlyUser, isBackendConnected, connectionStatus } = useCredentials();
+  const isLargeDesktop = useMediaQuery('(min-width:1440px)');
+  const isYoutubeOnly = useMemo(
+    () => APP_SOURCES.includes('youtube') && !APP_SOURCES.includes('wiki') && !APP_SOURCES.includes('web'),
+    []
   );
   const isWikipediaOnly = useMemo(
     () => APP_SOURCES.includes('wiki') && !APP_SOURCES.includes('youtube') && !APP_SOURCES.includes('web'),
@@ -44,37 +41,31 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
     return null;
   }
   return (
-    <div className='flex min-h-[calc(-58px+100vh)] relative'>
+    <div className='flex relative min-h-[calc(-58px+100vh)]'>
       <Drawer
         isExpanded={isExpanded}
         position='left'
         type='push'
         isCloseable={false}
-        htmlAttributes={{ style: { height: 'intial' } }}
+        htmlAttributes={{ style: { height: 'initial' } }}
       >
-        {!isReadOnlyUser ? (
-          <Drawer.Body className={`!overflow-hidden !w-[294px]`}>
-            {alertState.showAlert && (
-              <CustomAlert
-                severity={alertState.alertType}
-                open={alertState.showAlert}
-                handleClose={closeAlert}
-                alertMessage={alertState.alertMessage}
-              />
-            )}
-            <div className='flex h-full flex-col'>
-              <div className='relative h-full'>
-                <div className='flex flex-col h-full'>
-                  <div
-                    className={`mx-6 flex flex-none items-center justify-between ${
-                      process.env.VITE_ENV != 'PROD' ? 'pb-6' : 'pb-5'
-                    }`}
-                  >
-                    {process.env.VITE_ENV != 'PROD' && (
-                      <Typography variant='body-medium' className='flex items-center content-center gap-1'>
-                        <Typography variant='body-medium'>
-                          {!isBackendConnected ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}
-                        </Typography>
+        {connectionStatus ? (
+          !isReadOnlyUser ? (
+            <Drawer.Body className='!overflow-hidden !w-[294px]'>
+              {alertState.showAlert && (
+                <CustomAlert
+                  severity={alertState.alertType}
+                  open={alertState.showAlert}
+                  handleClose={closeAlert}
+                  alertMessage={alertState.alertMessage}
+                />
+              )}
+              <div className='flex flex-col h-full'>
+                <div className='relative h-full'>
+                  {process.env.VITE_ENV !== 'PROD' && (
+                    <div className='mx-6 flex items-center justify-between pb-6'>
+                      <Typography variant='body-medium' className='flex items-center gap-1'>
+                        <StatusIndicator type={isBackendConnected ? 'success' : 'danger'} />
                         <span>Backend connection status</span>
                       </Typography>
                     </div>

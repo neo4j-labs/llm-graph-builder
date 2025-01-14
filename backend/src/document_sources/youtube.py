@@ -1,4 +1,5 @@
 from langchain.docstore.document import Document
+from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from youtube_transcript_api import YouTubeTranscriptApi 
 import logging
 from urllib.parse import urlparse,parse_qs
@@ -16,7 +17,7 @@ def get_youtube_transcript(youtube_id):
     return transcript_pieces
   except Exception as e:
     message = f"Youtube transcript is not available for youtube Id: {youtube_id}"
-    raise Exception(message)
+    raise LLMGraphBuilderException(message)
   
 def get_youtube_combined_transcript(youtube_id):
   try:

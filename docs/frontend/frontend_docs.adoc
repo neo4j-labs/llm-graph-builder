@@ -20,7 +20,9 @@ This document provides a comprehensive guide for developers on how we build a Re
     ├── Assets
     ├── Components 
     |    ├─ ChatBot
+    |    |   ├─ Chatbot
     |    |   ├─ ChatInfoModal
+    |    |   ├─ ChatModesSwitch
     |    |   ├─ ChatModeToggle
     |    |   ├─ ChatOnlyComponent
     |    |   ├─ ChatInfo
@@ -28,12 +30,6 @@ This document provides a comprehensive guide for developers on how we build a Re
     |    |   ├─ CommunitiesInfo
     |    |   ├─ EntitiesInfo
     |    |   ├─ ExpandedChatButtonContainer
-    |    |   ├─ ChatModesSwitch
-    |    |   ├─ ChatOnlyComponent
-    |    |   ├─ ChatInfo
-    |    |   ├─ CommonChatActions
-    |    |   ├─ CommunitiesInfo
-    |    |   ├─ EntitiesInfo
     |    |   ├─ MetricsCheckbox
     |    |   ├─ MetricsTab
     |    |   ├─ MultiModeMetrics
@@ -75,9 +71,11 @@ This document provides a comprehensive guide for developers on how we build a Re
     |    |   ├─ CustomButton
     |    |   ├─ CustomCheckBox
     |    |   ├─ CustomMenu
+    |    |   ├─ CustomPopOver
     |    |   ├─ CustomProgressBar
     |    |   ├─ DatabaseIcon
     |    |   ├─ DatabaseStatusIcon
+    |    |   ├─ Dropdown
     |    |   ├─ ErrorBoundary
     |    |   ├─ FallBackDialog
     |    |   ├─ HoverableLink
@@ -94,7 +92,6 @@ This document provides a comprehensive guide for developers on how we build a Re
     |    |   ├─ GenericSourceButton
     |    |   ├─ GenericSourceModal
     |    ├─ Content
-    |    ├─ Dropdown
     |    ├─ FileTable
     |    ├─ QuickStarter
     ├── HOC
@@ -143,9 +140,6 @@ Install necessary dependencies by running yarn install, such as axios for making
 
 == 2.	Connect to the Neo4j Aura instance: 
 Created a connection modal by adding details including protocol, URI, database name, username, and password. Added a submit button that triggers an API: ***/connect*** and accepts params like uri, password, username and database to establish a connection to the Neo4j Aura instance. Handled the authentication and error scenarios appropriately, by displaying relevant messages. To check whether the backend connection is up and working we hit the API: ***/health.*** The user can now access both AURA DS and AURA DB instances. 
-
-* If GDS Connection is there icon is scientific molecule >  Graph enhancement model > Post processing jobs > gives user the leverage to check and uncheck the communities checkbox.
-* If AURA DB > icon is database icon > Graph enhancement model > Post processing jobs > communities checkbox is disabled.
 
 * If GDS Connection is there icon is scientific molecule >  Graph enhancement model > Post processing jobs > gives user the leverage to check and uncheck the communities checkbox.
 * If AURA DB > icon is database icon > Graph enhancement model > Post processing jobs > communities checkbox is disabled.
@@ -387,11 +381,33 @@ User can also use the chat only feature by navigating to the url at: https://llm
 == 9. File Table Options: 
 User can explore various features available for files in the table, including sorting, filtering, viewing as a graph, examining nodes and relationships, copying file details, and accessing chunks related to the file.
 
-* ***Chat Only Mode***
+***File Status***
 
-User can also use the chat only feature by navigating to the url https://dev-frontend-dcavk67s4a-uc.a.run.app/chat-only to ask questions related to documents which have been completely processed. User is required to pass the login credentials to connect to the database.
+image::images/FileStatus.jpg[FileStatus, 600]
 
-== 8. Interface Design: 
+***File Nodes***
+
+image::images/FileNodes.jpg[FileNodes, 600]
+
+***File Relationships***
+
+image::images/FileRelationships.jpg[FileRelationships, 600]
+
+***File Actions***
+
+** ***Graph View***
+
+image::images/GraphActions.jpg[GraphActions, 600]
+
+   ** ***Copy File Data***
+
+image::images/CopyFileData.jpg[CopyFileData, 600]
+
+   ** ***Text Chunks***
+
+image::images/TextChunks.jpg[TextChunks, 600]
+
+== 10. Interface Design: 
 Designed a user-friendly interface that guides users through the process of connecting to Neo4j Aura, accessing file sources, uploading PDF files, and generating graphs.
 
 * ***Components:*** @neo4j-ndl/react

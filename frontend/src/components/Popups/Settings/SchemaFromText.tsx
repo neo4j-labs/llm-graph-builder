@@ -75,7 +75,7 @@ const SchemaFromTextDialog = ({ open, onClose }: { open: boolean; onClose: () =>
       }
       onClose();
       setUserText('');
-      setIsSchema(false);
+      setIsSchemaText(false);
     } catch (error) {
       setloading(false);
       console.log(error);

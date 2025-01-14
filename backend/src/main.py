@@ -1,5 +1,5 @@
 from langchain_neo4j import Neo4jGraph
-from src.shared.constants import (BUCKET_UPLOAD, PROJECT_ID, QUERY_TO_GET_CHUNKS, 
+from src.shared.constants import (BUCKET_UPLOAD,BUCKET_FAILED_FILE, PROJECT_ID, QUERY_TO_GET_CHUNKS, 
                                   QUERY_TO_DELETE_EXISTING_ENTITIES, 
                                   QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION,
                                   QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY,
@@ -200,14 +200,12 @@ def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     obj_source_node.communityRelCount=0
     match = re.search(r'(?:v=)([0-9A-Za-z_-]{11})\s*',obj_source_node.url)
     logging.info(f"match value: {match}")
-    video_id = parse_qs(urlparse(youtube_url).query).get('v')
     obj_source_node.file_name = match.group(1)
     transcript= get_youtube_combined_transcript(match.group(1))
     logging.info(f"Youtube transcript : {transcript}")
     if transcript==None or len(transcript)==0:
       message = f"Youtube transcript is not available for : {obj_source_node.file_name}"
-      logging.info(f"Youtube transcript is not available for : {obj_source_node.file_name}")
-      raise Exception(message)
+      raise LLMGraphBuilderException(message)
     else:  
       obj_source_node.file_size = sys.getsizeof(transcript)
     
@@ -267,7 +265,7 @@ async def extract_graph_from_file_local_file(uri, userName, password, database, 
   else:
     return await processing_source(uri, userName, password, database, model, fileName, [], allowedNodes, allowedRelationship, True, merged_file_path, retry_condition, additional_instructions=additional_instructions)
   
-async def extract_graph_from_file_s3(uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, retry_condition):
+async def extract_graph_from_file_s3(uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, retry_condition, additional_instructions):
   if not retry_condition:
     if(aws_access_key_id==None or aws_secret_access_key==None):
       raise LLMGraphBuilderException('Please provide AWS access and secret keys')
@@ -281,7 +279,7 @@ async def extract_graph_from_file_s3(uri, userName, password, database, model, s
   else:
     return await processing_source(uri, userName, password, database, model, file_name, [], allowedNodes, allowedRelationship, retry_condition=retry_condition, additional_instructions=additional_instructions)
   
-async def extract_graph_from_web_page(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition):
+async def extract_graph_from_web_page(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition, additional_instructions):
   if not retry_condition:
     file_name, pages = get_documents_from_web_page(source_url)
     if pages==None or len(pages)==0:
@@ -290,7 +288,7 @@ async def extract_graph_from_web_page(uri, userName, password, database, model, 
   else:
     return await processing_source(uri, userName, password, database, model, file_name, [], allowedNodes, allowedRelationship, retry_condition=retry_condition, additional_instructions=additional_instructions)
   
-async def extract_graph_from_file_youtube(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition):
+async def extract_graph_from_file_youtube(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, retry_condition, additional_instructions):
   if not retry_condition:
     file_name, pages = get_documents_from_youtube(source_url)
 
@@ -300,7 +298,7 @@ async def extract_graph_from_file_youtube(uri, userName, password, database, mod
   else:
      return await processing_source(uri, userName, password, database, model, file_name, [], allowedNodes, allowedRelationship, retry_condition=retry_condition, additional_instructions=additional_instructions)
     
-async def extract_graph_from_file_Wikipedia(uri, userName, password, database, model, wiki_query, language, file_name, allowedNodes, allowedRelationship, retry_condition):
+async def extract_graph_from_file_Wikipedia(uri, userName, password, database, model, wiki_query, language, file_name, allowedNodes, allowedRelationship, retry_condition, additional_instructions):
   if not retry_condition:
     file_name, pages = get_documents_from_Wikipedia(wiki_query, language)
     if pages==None or len(pages)==0:
@@ -309,7 +307,7 @@ async def extract_graph_from_file_Wikipedia(uri, userName, password, database, m
   else:
     return await processing_source(uri, userName, password, database, model, file_name,[], allowedNodes, allowedRelationship, retry_condition=retry_condition, additional_instructions=additional_instructions)
 
-async def extract_graph_from_file_gcs(uri, userName, password, database, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, file_name, allowedNodes, allowedRelationship, retry_condition):
+async def extract_graph_from_file_gcs(uri, userName, password, database, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, file_name, allowedNodes, allowedRelationship, retry_condition, additional_instructions):
   if not retry_condition:
     file_name, pages = get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token)
     if pages==None or len(pages)==0:
@@ -378,7 +376,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
       
       start_update_source_node = time.time()
       graphDb_data_Access.update_source_node(obj_source_node)
-      count_response = graphDb_data_Access.update_node_relationship_count(file_name)
+      graphDb_data_Access.update_node_relationship_count(file_name)
       end_update_source_node = time.time()
       elapsed_update_source_node = end_update_source_node - start_update_source_node
       logging.info(f'Time taken to update the document source node: {elapsed_update_source_node:.2f} seconds')
@@ -425,7 +423,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
           obj_source_node.node_count = node_count
           obj_source_node.relationship_count = rel_count
           graphDb_data_Access.update_source_node(obj_source_node)
-          count_response = graphDb_data_Access.update_node_relationship_count(file_name)
+          graphDb_data_Access.update_node_relationship_count(file_name)
       
       result = graphDb_data_Access.get_current_status_document_node(file_name)
       is_cancelled_status = result[0]['is_cancelled']
@@ -441,7 +439,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
       obj_source_node.processing_time = processed_time
 
       graphDb_data_Access.update_source_node(obj_source_node)
-      count_response = graphDb_data_Access.update_node_relationship_count(file_name)
+      graphDb_data_Access.update_node_relationship_count(file_name)
       logging.info('Updated the nodeCount and relCount properties in Document node')
       logging.info(f'file:{file_name} extraction has been completed')
 
@@ -563,7 +561,7 @@ def get_chunkId_chunkDoc_list(graph, file_name, pages, retry_condition):
       chunkId_chunkDoc_list.append({'chunk_id': chunk['id'], 'chunk_doc': chunk_doc})
     
     if chunks[0]['text'] is None or chunks[0]['text']=="" or not chunks :
-      raise Exception(f"Chunks are not created for {file_name}. Please re-upload file and try again.")    
+      raise LLMGraphBuilderException(f"Chunks are not created for {file_name}. Please re-upload file and try again.")    
     else:
       for chunk in chunks:
         chunk_doc = Document(page_content=chunk['text'], metadata={'id':chunk['id'], 'position':chunk['position']})
@@ -581,7 +579,7 @@ def get_chunkId_chunkDoc_list(graph, file_name, pages, retry_condition):
           return len(chunks), chunkId_chunkDoc_list[starting_chunk[0]["position"] - 1:]
         
         else:
-          raise Exception(f"All chunks of file are alreday processed. If you want to re-process, Please start from begnning")    
+          raise LLMGraphBuilderException(f"All chunks of file {file_name} are already processed. If you want to re-process, Please start from begnning")    
       
       else:
         raise Exception(f"All chunks of {file_name} are alreday processed. If you want to re-process, Please start from begnning")    

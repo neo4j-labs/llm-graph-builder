@@ -30,9 +30,9 @@ from Secweb.XContentTypeOptions import XContentTypeOptions
 from Secweb.XFrameOptions import XFrame
 from fastapi.middleware.gzip import GZipMiddleware
 from src.ragas_eval import *
-from starlette.types import ASGIApp, Message, Receive, Scope, Send
-import gzip
+from starlette.types import ASGIApp, Receive, Scope, Send
 from langchain_neo4j import Neo4jGraph
+from src.entities.source_node import sourceNode
 
 logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
@@ -77,8 +77,6 @@ class CustomGZipMiddleware:
         )
         await gzip_middleware(scope, receive, send)
 app = FastAPI()
-# SecWeb(app=app, Option={'referrer': False, 'xframe': False})
-# app.add_middleware(ContentSecurityPolicy, Option={'default-src': ["'self'"], 'base-uri': ["'self'"], 'block-all-mixed-content': []}, script_nonce=False, style_nonce=False, report_only=False)
 app.add_middleware(XContentTypeOptions)
 app.add_middleware(XFrame, Option={'X-Frame-Options': 'DENY'})
 app.add_middleware(CustomGZipMiddleware, minimum_size=1000, compresslevel=5,paths=["/sources_list","/url/scan","/extract","/chat_bot","/chunk_entities","/get_neighbours","/graph_query","/schema","/populate_graph_schema","/get_unconnected_nodes_list","/get_duplicate_nodes","/fetch_chunktext"])
@@ -269,8 +267,6 @@ async def extract_knowledge_graph_from_file(
             result['gcs_bucket_folder'] = gcs_bucket_folder
             result['gcs_blob_filename'] = gcs_blob_filename
             result['gcs_project_id'] = gcs_project_id
-            result['allowedNodes'] = allowedNodes
-            result['allowedRelationship'] = allowedRelationship
             result['language'] = language
             result['retry_condition'] = retry_condition
         logger.log_struct(result, "INFO")
@@ -353,7 +349,7 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
             
         if "enable_communities" in tasks:
             api_name = 'create_communities'
-            await asyncio.to_thread(create_communities, uri, userName, password, database)
+            await asyncio.to_thread(create_communities, uri, userName, password, database)  
             
             logging.info(f'created communities')
             graph = create_graph_database_connection(uri, userName, password, database)   
@@ -363,10 +359,12 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
             if count_response:
                 count_response = [{"filename": filename, **counts} for filename, counts in count_response.items()]
                 logging.info(f'Updated source node with community related counts')
+        
+        
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name': api_name, 'db_url': uri, 'userName':userName, 'database':database, 'tasks':tasks, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
-        # logger.log_struct(json_obj)
+        json_obj = {'api_name': api_name, 'db_url': uri, 'userName':userName, 'database':database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        logger.log_struct(json_obj)
         return create_api_response('Success', data=count_response, message='All tasks completed successfully')
     
     except Exception as e:
@@ -512,7 +510,7 @@ async def connect(uri=Form(), userName=Form(), password=Form(), database=Form())
         gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'connect','db_url':uri, 'userName':userName, 'database':database,'status':result, 'count':1, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        json_obj = {'api_name':'connect','db_url':uri, 'userName':userName, 'database':database, 'count':1, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
         result['elapsed_api_time'] = f'{elapsed_time:.2f}'
         result['gcs_file_cache'] = gcs_file_cache
@@ -845,13 +843,17 @@ async def retry_processing(uri=Form(), userName=Form(), password=Form(), databas
     try:
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
-        await asyncio.to_thread(set_status_retry, graph,file_name,retry_condition)
+        chunks =  graph.query(QUERY_TO_GET_CHUNKS, params={"filename":file_name})
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name':'retry_processing', 'db_url':uri, 'userName':userName, 'database':database, 'file_name':file_name,'retry_condition':retry_condition,
                             'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
-        return create_api_response('Success',message=f"Status set to Ready to Reprocess for filename : {file_name}")
+        if chunks[0]['text'] is None or chunks[0]['text']=="" or not chunks :
+            return create_api_response('Success',message=f"Chunks are not created for the file{file_name}. Please upload again the file to re-process.",data=chunks)
+        else:
+            await asyncio.to_thread(set_status_retry, graph,file_name,retry_condition)
+            return create_api_response('Success',message=f"Status set to Ready to Reprocess for filename : {file_name}")
     except Exception as e:
         job_status = "Failed"
         message="Unable to set status to Retry"
@@ -978,19 +980,33 @@ async def fetch_chunktext(
 @app.post("/backend_connection_configuation")
 async def backend_connection_configuation():
     try:
-        graph = Neo4jGraph()
-        logging.info(f'login connection status of object: {graph}')
-        if graph is not None:
-            graph_connection = True
-            isURI = os.getenv('NEO4J_URI')
-            isUsername= os.getenv('NEO4J_USERNAME')
-            isDatabase= os.getenv('NEO4J_DATABASE')
-            isPassword= os.getenv('NEO4J_PASSWORD')
-            encoded_password = encode_password(isPassword)
-            graphDb_data_Access = graphDBdataAccess(graph)
-            gds_status = graphDb_data_Access.check_gds_version()
-            write_access = graphDb_data_Access.check_account_access(database=isDatabase)
-            return create_api_response('Success',message=f"Backend connection successful",data={'graph_connection':graph_connection,'uri':isURI,'user_name':isUsername,'database':isDatabase,'password':encoded_password,'gds_status':gds_status,'write_access':write_access})
+        start = time.time()
+        uri = os.getenv('NEO4J_URI')
+        username= os.getenv('NEO4J_USERNAME')
+        database= os.getenv('NEO4J_DATABASE')
+        password= os.getenv('NEO4J_PASSWORD')
+        gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
+        if all([uri, username, database, password]):
+            print(f'uri:{uri}, usrName:{username}, database :{database}, password: {password}')
+            graph = Neo4jGraph()
+            logging.info(f'login connection status of object: {graph}')
+            if graph is not None:
+                graph_connection = True        
+                encoded_password = encode_password(password)
+                graphDb_data_Access = graphDBdataAccess(graph)
+                result = graphDb_data_Access.connection_check_and_get_vector_dimensions(database)
+                result["graph_connection"] = graph_connection
+                result["uri"] = uri
+                result["user_name"] = username
+                result["database"] = database
+                result["password"] = encoded_password
+                result['gcs_file_cache'] = gcs_file_cache
+                end = time.time()
+                elapsed_time = end - start
+                result['api_name'] = 'backend_connection_configuration'
+                result['elapsed_api_time'] = f'{elapsed_time:.2f}'
+                logger.log_struct(result, "INFO")
+                return create_api_response('Success',message=f"Backend connection successful",data=result)
         else:
             graph_connection = False
             return create_api_response('Success',message=f"Backend connection is not successful",data=graph_connection)
@@ -1002,7 +1018,7 @@ async def backend_connection_configuation():
         logging.exception(f'{error_message}')
         return create_api_response(job_status, message=message, error=error_message.rstrip('.') + ', or fill from the login dialog.', data=graph_connection)
     finally:
-        gc.collect()    
-
+        gc.collect()
+        
 if __name__ == "__main__":
     uvicorn.run(app)
