@@ -203,6 +203,12 @@ def graph_schema_consolidation(graph):
     node_labels.extend(nodes_and_relations[0]['labels'])
     relation_labels.extend(nodes_and_relations[0]['relationshipTypes'])
     
+    exclude_node_labels = ['Document','Chunk','_Bloom_Perspective_', '__Community__', '__Entity__']
+    exclude_relationship_labels = ['PART_OF', 'NEXT_CHUNK', 'HAS_ENTITY', '_Bloom_Perspective_','FIRST_CHUNK','SIMILAR','IN_COMMUNITY','PARENT_COMMUNITY']
+
+    node_labels = [i for i in node_labels if i not in exclude_node_labels ]
+    relation_labels = [i for i in relation_labels if i not in exclude_relationship_labels]
+
     parser = JsonOutputParser()
     prompt = ChatPromptTemplate(messages=[("system",GRAPH_CLEANUP_PROMPT),("human", "{input}")],
                                             partial_variables={"format_instructions": parser.get_format_instructions()})
@@ -225,8 +231,10 @@ def graph_schema_consolidation(graph):
             if new_label != old_label:
                 relation_match[old_label]=new_label 
 
-    logging.info(f"updated node labels : {node_match}")   
+    logging.info(f"updated node labels : {node_match}")
+    logging.info(f"Reduced node counts from {len(node_labels)} to {len(node_match.items())}")   
     logging.info(f"updated relationship labels : {relation_match}") 
+    logging.info(f"Reduced relationship counts from {len(relation_labels)} to {len(relation_match.items())}")
 
     # Update node labels in graph
     for old_label, new_label in node_match.items():
