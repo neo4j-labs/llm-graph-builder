@@ -937,3 +937,7 @@ export interface filedate {
   };
 }
 export type FileTableHandle = React.ElementRef<typeof FileTable>;
+
+export interface VisibilityProps {
+  isVisible: boolean;
+}

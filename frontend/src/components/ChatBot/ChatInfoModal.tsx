@@ -37,7 +37,7 @@ import { Stack } from '@mui/material';
 import { capitalizeWithUnderscore, getNodes } from '../../utils/Utils';
 import MultiModeMetrics from './MultiModeMetrics';
 import getAdditionalMetrics from '../../services/AdditionalMetrics';
-import { withVisibility } from '../../HOC/withVisibility';
+import { withVisibility } from '../../HOC/WithVisibility';
 import MetricsCheckbox from './MetricsCheckbox';
 
 const ChatInfoModal: React.FC<chatInfoMessage> = ({
