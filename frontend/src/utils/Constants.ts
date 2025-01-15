@@ -180,8 +180,7 @@ export const buttonCaptions = {
   applyGraphSchema: 'Apply',
   provideAdditionalInstructions: 'Provide Additional Instructions for Entity Extractions',
   analyzeInstructions: 'Analyze Instructions',
-  helpInstructions:
-    'Provide specific instructions for entity extraction, such as focusing on the key topics.',
+  helpInstructions: 'Provide specific instructions for entity extraction, such as focusing on the key topics.',
 };
 
 export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
@@ -212,7 +211,8 @@ export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
   },
   {
     title: 'graph_schema_consolidation',
-    description: 'This option uses the LLM for large graph schemas to consolidate many node labels and relationship types into fewer, more relevant ones and apply it to the extracted and existing graph',
+    description:
+      'This option uses the LLM for large graph schemas to consolidate many node labels and relationship types into fewer, more relevant ones and apply it to the extracted and existing graph',
   },
 ];
 export const RETRY_OPIONS = [
