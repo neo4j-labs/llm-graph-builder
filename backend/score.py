@@ -352,14 +352,15 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
             await asyncio.to_thread(create_communities, uri, userName, password, database)  
             
             logging.info(f'created communities')
-            graph = create_graph_database_connection(uri, userName, password, database)   
-            graphDb_data_Access = graphDBdataAccess(graph)
-            document_name = ""
-            count_response = graphDb_data_Access.update_node_relationship_count(document_name)
-            if count_response:
-                count_response = [{"filename": filename, **counts} for filename, counts in count_response.items()]
-                logging.info(f'Updated source node with community related counts')
-        
+
+
+        graph = create_graph_database_connection(uri, userName, password, database)   
+        graphDb_data_Access = graphDBdataAccess(graph)
+        document_name = ""
+        count_response = graphDb_data_Access.update_node_relationship_count(document_name)
+        if count_response:
+            count_response = [{"filename": filename, **counts} for filename, counts in count_response.items()]
+            logging.info(f'Updated source node with community related counts')
         
         end = time.time()
         elapsed_time = end - start
