@@ -7,6 +7,7 @@ import { buttonCaptions } from '../../../utils/Constants';
 import { createVectorIndex } from '../../../services/vectorIndexCreation';
 import { ConnectionModalProps, Message, UserCredentials } from '../../../types';
 import VectorIndexMisMatchAlert from './VectorIndexMisMatchAlert';
+import Auth from '../../Auth/Auth';
 
 export default function ConnectionModal({
   open,
@@ -474,6 +475,7 @@ export default function ConnectionModal({
               </div>
             </div>
           </form>
+          <Auth></Auth>
           <Flex flexDirection='row' justifyContent='flex-end'>
             <Button
               isLoading={isLoading}

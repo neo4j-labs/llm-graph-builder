@@ -22,6 +22,7 @@ import { RiChatSettingsLine } from 'react-icons/ri';
 import ChatModeToggle from '../ChatBot/ChatModeToggle';
 import { connectionState } from '../../types';
 import { downloadClickHandler, getIsLoading } from '../../utils/Utils';
+import Profile from '../User/Profile';
 
 interface HeaderProp {
   chatOnly?: boolean;
@@ -87,6 +88,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                 alt='Neo4j Logo'
               />
             </Typography>
+            <Profile />
           </section>
           {!chatOnly ? (
             <section className='items-center justify-end w-1/3 grow-0 flex'>
