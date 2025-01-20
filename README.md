@@ -32,9 +32,13 @@ If you are using Neo4j Desktop, you will not be able to use the docker-compose b
 #### Running through docker-compose
 By default only OpenAI and Diffbot are enabled since Gemini requires extra GCP configurations.
 According to enviornment we are configuring the models which is indicated by VITE_LLM_MODELS_PROD variable we can configure model based on our need.
+
 EX:
 ```env
 VITE_LLM_MODELS_PROD="openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash"
+```
+
+OpenAI API keys can be passed in by
 ```
 OPENAI_API_KEY="your-openai-key"
 ```
