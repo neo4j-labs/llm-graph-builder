@@ -46,7 +46,7 @@ export default function Profile() {
           />
           <div className='flex flex-col'>
             <Typography variant='body-medium' className='p-0.5'>
-              {user?.name ?? 'Jhon doe'}
+              {user?.name?.split('@')[0] ?? 'Jhon doe'}
             </Typography>
 
             <Typography variant='body-small' className='p-0.5'>

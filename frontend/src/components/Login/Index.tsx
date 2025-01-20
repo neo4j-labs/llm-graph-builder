@@ -11,7 +11,7 @@ export default function Login() {
         <Flex flexDirection='column' gap='4' alignItems='center'>
           <img src={Neo4jLogoColor} className='w-[80%]'></img>
           <Typography variant='body-medium'>
-            Turn unstructured information into to rich insightful Knoweldge Graph
+            Turn unstructured information into to rich insightful Knowledge Graph
           </Typography>
         </Flex>
         <div className='flex justify-center items-center'>

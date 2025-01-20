@@ -27,7 +27,7 @@ export default function GenericModal({
   isOnlyWeb?: boolean;
 }) {
   const themeUtils = useContext(ThemeWrapperContext);
-  const [activeTab, setactiveTab] = useState<number>(isOnlyYoutube ? 0 : isOnlyWikipedia ? 1 : isOnlyWeb ? 2 : 0);
+  const [activeTab, setActiveTab] = useState<number>(isOnlyYoutube ? 0 : isOnlyWikipedia ? 1 : isOnlyWeb ? 2 : 0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   return (
@@ -48,7 +48,7 @@ export default function GenericModal({
             </Typography>
           </div>
         </div>
-        <Tabs fill='underline' onChange={setactiveTab} size='large' value={activeTab}>
+        <Tabs fill='underline' onChange={setActiveTab} size='large' value={activeTab}>
           {APP_SOURCES != undefined && APP_SOURCES.includes('youtube') && (
             <Tabs.Tab
               tabId={0}

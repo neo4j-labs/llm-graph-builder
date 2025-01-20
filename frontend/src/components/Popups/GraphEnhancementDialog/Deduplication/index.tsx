@@ -214,7 +214,7 @@ export default function DeduplicationTab() {
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor((row) => row.documents, {
-        id: 'Connnected Documents',
+        id: 'Connected Documents',
         cell: (info) => {
           return (
             <Flex className='textellipsis'>
