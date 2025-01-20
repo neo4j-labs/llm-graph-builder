@@ -11,6 +11,7 @@ import DeduplicationTab from './Deduplication';
 import { tokens } from '@neo4j-ndl/base';
 import PostProcessingCheckList from './PostProcessingCheckList';
 import AdditionalInstructionsText from './AdditionalInstructions';
+import ChunkingConfiguration from './ChunkingConfiguration';
 
 export default function GraphEnhancementDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { breakpoints } = tokens;
@@ -106,6 +107,14 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
                   >
                     Additional Instructions
                   </Tabs.Tab>
+                  <Tabs.Tab
+                    tabId={5}
+                    htmlAttributes={{
+                      'aria-label': 'Chunking Configuration',
+                    }}
+                  >
+                    Chunking Configuration
+                  </Tabs.Tab>
                 </Tabs>
               </Flex>
             </div>
@@ -136,6 +145,9 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
         </Tabs.TabPanel>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={4}>
           <AdditionalInstructionsText closeEnhanceGraphSchemaDialog={onClose} />
+        </Tabs.TabPanel>
+        <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={5}>
+          <ChunkingConfiguration/>
         </Tabs.TabPanel>
       </Dialog.Content>
     </Dialog>
