@@ -88,7 +88,6 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                 alt='Neo4j Logo'
               />
             </Typography>
-            <Profile />
           </section>
           {!chatOnly ? (
             <section className='items-center justify-end w-1/3 grow-0 flex'>
@@ -145,6 +144,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                   >
                     <ArrowTopRightOnSquareIconOutline />
                   </IconButtonWithToolTip>
+                  <Profile />
                 </div>
               </div>
             </section>

@@ -1,23 +1,23 @@
 import { createBrowserRouter } from 'react-router-dom';
 import App from './App';
 import ChatOnlyComponent from './components/ChatBot/ChatOnlyComponent';
-import { Auth0Provider } from '@auth0/auth0-react';
+import Auth0ProviderWithHistory from './components/Auth/Auth';
+import { withAuthenticationRequired } from '@auth0/auth0-react';
+import React from 'react';
 const router = createBrowserRouter([
   {
     path: '/',
     element: (
-      <Auth0Provider
-        domain={process.env.VITE_AUTH0_DOMAIN as string}
-        clientId={process.env.VITE_AUTH0_CLIENT_ID as string}
-        authorizationParams={{
-          redirect_uri: window.location.origin,
-        }}
-      >
+      <Auth0ProviderWithHistory>
         <App />
-      </Auth0Provider>
+      </Auth0ProviderWithHistory>
     ),
     children: [],
   },
   { path: '/chat-only', element: <ChatOnlyComponent /> },
 ]);
 export default router;
+const ProtectedRoute = (component: React.ComponentType<object>) => {
+  const Component = withAuthenticationRequired(component);
+  return <Component />;
+};
