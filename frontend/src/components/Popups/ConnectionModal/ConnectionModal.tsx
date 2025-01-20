@@ -7,7 +7,6 @@ import { buttonCaptions } from '../../../utils/Constants';
 import { createVectorIndex } from '../../../services/vectorIndexCreation';
 import { ConnectionModalProps, Message, UserCredentials } from '../../../types';
 import VectorIndexMisMatchAlert from './VectorIndexMisMatchAlert';
-import { useAuth0 } from '@auth0/auth0-react';
 
 export default function ConnectionModal({
   open,
@@ -55,7 +54,6 @@ export default function ConnectionModal({
   const [searchParams, setSearchParams] = useSearchParams();
   const [userDbVectorIndex, setUserDbVectorIndex] = useState<number | undefined>(initialuserdbvectorindex ?? undefined);
   const [vectorIndexLoading, setVectorIndexLoading] = useState<boolean>(false);
-  const { loginWithRedirect } = useAuth0();
 
   const connectRef = useRef<HTMLButtonElement>(null);
   const uriRef = useRef<HTMLInputElement>(null);
@@ -286,9 +284,6 @@ export default function ConnectionModal({
           });
           return;
         }
-        loginWithRedirect({
-          appState: { credential, isgdsActive, isReadOnlyUser, isGCSActive, returnTo: window.location.pathname },
-        });
       }
     } catch (error) {
       console.log({ error });
