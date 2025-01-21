@@ -998,23 +998,34 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
     <>
       {filesData ? (
         <>
-          <div className={`${isExpanded ? 'w-[calc(100%-64px)]' : 'mx-auto w-[calc(100%-100px)]'}`}>
-            <DataGrid
-              ref={tableRef}
-              isResizable={true}
-              tableInstance={table}
-              styling={{
-                borderStyle: 'all-sides',
-                hasZebraStriping: true,
-                headerStyle: 'clean',
-              }}
-              isLoading={isLoading}
-              rootProps={{
-                className: classNameCheck,
-              }}
-              components={{
-                Body: () => (
-                  <DataGridComponents.Body
+          <DataGrid
+            ref={tableRef}
+            isResizable={true}
+            tableInstance={table}
+            styling={{
+              borderStyle: 'all-sides',
+              hasZebraStriping: true,
+              headerStyle: 'clean',
+            }}
+            isLoading={isLoading}
+            rootProps={{
+              className: `absolute left-10 filetable ${
+                !largedesktops && connectionStatus ? 'h-[50%]' : connectionStatus ? 'h-[60%]' : 'h-[67%]'
+              }  ${!largedesktops && connectionStatus ? 'top-[29%]' : connectionStatus ? 'top-[26%]' : 'top-[14%]'}`,
+            }}
+            components={{
+              Body: () => (
+                <DataGridComponents.Body
+                  innerProps={{
+                    className: colorMode == 'dark' ? 'tbody-dark' : 'tbody-light',
+                  }}
+                />
+              ),
+              PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
+                return (
+                  <DataGridComponents.PaginationNumericButton
+                    {...restProps}
+                    isSelected={isSelected}
                     innerProps={{
                       className: colorMode == 'dark' ? 'tbody-dark' : 'tbody-light',
                     }}

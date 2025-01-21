@@ -749,6 +749,10 @@ export interface ContextProps {
   setErrorMessage: Dispatch<SetStateAction<string>>;
   showDisconnectButton: boolean;
   setShowDisconnectButton: Dispatch<SetStateAction<boolean>>;
+  isGCSActive: boolean;
+  setIsGCSActive: Dispatch<SetStateAction<boolean>>;
+  chunksToBeProces: number;
+  setChunksToBeProces: Dispatch<SetStateAction<number>>;
 }
 export interface MessageContextType {
   messages: Messages[] | [];

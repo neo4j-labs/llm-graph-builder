@@ -29,14 +29,8 @@ export default function EntityExtractionSetting({
   closeEnhanceGraphSchemaDialog?: () => void;
 }) {
   const { breakpoints } = tokens;
-  const {
-    setSelectedRels,
-    setSelectedNodes,
-    selectedNodes,
-    selectedRels,
-    selectedSchemas,
-    setSelectedSchemas,
-  } = useFileContext();
+  const { setSelectedRels, setSelectedNodes, selectedNodes, selectedRels, selectedSchemas, setSelectedSchemas } =
+    useFileContext();
   const { userCredentials } = useCredentials();
   const [loading, setLoading] = useState<boolean>(false);
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);

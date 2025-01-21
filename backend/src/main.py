@@ -384,14 +384,12 @@ async def processing_source(uri, userName, password, database, model, file_name,
 
       logging.info('Update the status as Processing')
       update_graph_chunk_processed = int(os.environ.get('UPDATE_GRAPH_CHUNKS_PROCESSED'))
-      chunk_to_be_processed = int(os.environ.get('CHUNKS_TO_BE_PROCESSED', '50'))
+      
       # selected_chunks = []
       is_cancelled_status = False
       job_status = "Completed"
       for i in range(0, len(chunkId_chunkDoc_list), update_graph_chunk_processed):
         select_chunks_upto = i+update_graph_chunk_processed
-        if select_chunks_upto > chunk_to_be_processed:
-          break
         logging.info(f'Selected Chunks upto: {select_chunks_upto}')
         if len(chunkId_chunkDoc_list) <= select_chunks_upto:
           select_chunks_upto = len(chunkId_chunkDoc_list)
