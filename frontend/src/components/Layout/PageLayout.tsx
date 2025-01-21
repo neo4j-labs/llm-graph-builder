@@ -62,6 +62,7 @@ const PageLayout: React.FC = () => {
     setShowDisconnectButton,
     showDisconnectButton,
     setIsGCSActive,
+    setChunksToBeProces,
   } = useCredentials();
   const { cancel } = useSpeechSynthesis();
 
@@ -85,6 +86,7 @@ const PageLayout: React.FC = () => {
         setIsGCSActive(credentials.isGCSActive ?? false);
         setGdsActive(credentials.isgdsActive);
         setIsReadOnlyUser(credentials.isReadonlyUser);
+        setChunksToBeProces(credentials.chunksTobeProcess);
         localStorage.setItem(
           'neo4j.connection',
           JSON.stringify({
@@ -96,6 +98,7 @@ const PageLayout: React.FC = () => {
             isReadOnlyUser: credentials.isReadonlyUser,
             isgdsActive: credentials.isgdsActive,
             isGCSActive: credentials.isGCSActive,
+            chunksTobeProcess: credentials.chunksTobeProcess,
           })
         );
       };
@@ -158,7 +161,9 @@ const PageLayout: React.FC = () => {
             isReadonlyUser: !connectionData.data.write_access,
             isgdsActive: connectionData.data.gds_status,
             isGCSActive: connectionData?.data?.gcs_file_cache === 'True',
+            chunksTobeProcess: parseInt(connectionData.data.chunk_to_be_created),
           };
+          setChunksToBeProces(connectionData.chunksTobeProcess);
           setIsGCSActive(envCredentials.isGCSActive);
           if (session) {
             const updated = updateSessionIfNeeded(envCredentials, session);

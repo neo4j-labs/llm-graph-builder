@@ -13,25 +13,25 @@ export const llms =
   process.env?.VITE_LLM_MODELS?.trim() != ''
     ? (process.env.VITE_LLM_MODELS?.split(',') as string[])
     : [
-      'openai_gpt_3.5',
-      'openai_gpt_4o',
-      'openai_gpt_4o_mini',
-      'gemini_1.5_pro',
-      'gemini_1.5_flash',
-      'gemini_2.0_flash',
-      'diffbot',
-      'azure_ai_gpt_35',
-      'azure_ai_gpt_4o',
-      'ollama_llama3',
-      'groq_llama3_70b',
-      'anthropic_claude_3_5_sonnet',
-      'fireworks_llama_v3p2_90b',
-      'fireworks_qwen72b_instruct',
-      'bedrock_claude_3_5_sonnet',
-      'bedrock_nova_micro_v1',
-      'bedrock_nova_lite_v1',
-      'bedrock_nova_pro_v1'
-    ];
+        'openai_gpt_3.5',
+        'openai_gpt_4o',
+        'openai_gpt_4o_mini',
+        'gemini_1.5_pro',
+        'gemini_1.5_flash',
+        'gemini_2.0_flash',
+        'diffbot',
+        'azure_ai_gpt_35',
+        'azure_ai_gpt_4o',
+        'ollama_llama3',
+        'groq_llama3_70b',
+        'anthropic_claude_3_5_sonnet',
+        'fireworks_llama_v3p2_90b',
+        'fireworks_qwen72b_instruct',
+        'bedrock_claude_3_5_sonnet',
+        'bedrock_nova_micro_v1',
+        'bedrock_nova_lite_v1',
+        'bedrock_nova_pro_v1',
+      ];
 
 export const supportedLLmsForRagas = [
   'openai_gpt_3.5',
@@ -89,40 +89,40 @@ export const chatModeReadableLables: Record<string, string> = {
 export const chatModes =
   process.env?.VITE_CHAT_MODES?.trim() != ''
     ? process.env.VITE_CHAT_MODES?.split(',').map((mode) => ({
-      mode: mode.trim(),
-      description: getDescriptionForChatMode(mode.trim()),
-    }))
+        mode: mode.trim(),
+        description: getDescriptionForChatMode(mode.trim()),
+      }))
     : [
-      {
-        mode: chatModeLables.vector,
-        description: 'Performs semantic similarity search on text chunks using vector indexing.',
-      },
-      {
-        mode: chatModeLables.graph,
-        description: 'Translates text to Cypher queries for precise data retrieval from a graph database.',
-      },
-      {
-        mode: chatModeLables['graph+vector'],
-        description: 'Combines vector indexing and graph connections for contextually enhanced semantic search.',
-      },
-      {
-        mode: chatModeLables.fulltext,
-        description: 'Conducts fast, keyword-based search using full-text indexing on text chunks.',
-      },
-      {
-        mode: chatModeLables['graph+vector+fulltext'],
-        description: 'Integrates vector, graph, and full-text indexing for comprehensive search results.',
-      },
-      {
-        mode: chatModeLables['entity search+vector'],
-        description: 'Uses vector indexing on entity nodes for highly relevant entity-based search.',
-      },
-      {
-        mode: chatModeLables['global search+vector+fulltext'],
-        description:
-          'Use vector and full-text indexing on community nodes to provide accurate, context-aware answers globally.',
-      },
-    ];
+        {
+          mode: chatModeLables.vector,
+          description: 'Performs semantic similarity search on text chunks using vector indexing.',
+        },
+        {
+          mode: chatModeLables.graph,
+          description: 'Translates text to Cypher queries for precise data retrieval from a graph database.',
+        },
+        {
+          mode: chatModeLables['graph+vector'],
+          description: 'Combines vector indexing and graph connections for contextually enhanced semantic search.',
+        },
+        {
+          mode: chatModeLables.fulltext,
+          description: 'Conducts fast, keyword-based search using full-text indexing on text chunks.',
+        },
+        {
+          mode: chatModeLables['graph+vector+fulltext'],
+          description: 'Integrates vector, graph, and full-text indexing for comprehensive search results.',
+        },
+        {
+          mode: chatModeLables['entity search+vector'],
+          description: 'Uses vector indexing on entity nodes for highly relevant entity-based search.',
+        },
+        {
+          mode: chatModeLables['global search+vector+fulltext'],
+          description:
+            'Use vector and full-text indexing on community nodes to provide accurate, context-aware answers globally.',
+        },
+      ];
 
 export const chunkSize = process.env.VITE_CHUNK_SIZE ? parseInt(process.env.VITE_CHUNK_SIZE) : 1 * 1024 * 1024;
 export const timeperpage = process.env.VITE_TIME_PER_PAGE ? parseInt(process.env.VITE_TIME_PER_PAGE) : 50;
@@ -183,8 +183,7 @@ export const buttonCaptions = {
   applyGraphSchema: 'Apply',
   provideAdditionalInstructions: 'Provide Additional Instructions for Entity Extractions',
   analyzeInstructions: 'Analyze Instructions',
-  helpInstructions:
-    'Provide specific instructions for entity extraction, such as focusing on the key topics.',
+  helpInstructions: 'Provide specific instructions for entity extraction, such as focusing on the key topics.',
 };
 
 export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
@@ -215,7 +214,8 @@ export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
   },
   {
     title: 'graph_schema_consolidation',
-    description: 'This option uses the LLM for large graph schemas to consolidate many node labels and relationship types into fewer, more relevant ones and apply it to the extracted and existing graph',
+    description:
+      'This option uses the LLM for large graph schemas to consolidate many node labels and relationship types into fewer, more relevant ones and apply it to the extracted and existing graph',
   },
 ];
 export const RETRY_OPIONS = [
