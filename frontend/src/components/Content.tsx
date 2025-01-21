@@ -917,11 +917,11 @@ const Content: React.FC<ContentProps> = ({
               )
             )}
           </div>
-          <Callout
+          {connectionStatus&&(<Callout
             className='!w-[93%] m-auto '
             type='note'
             description={`Large files may be partially processed up to ${chunksToBeProces} chunks due to resource limits. If you need more comprehensive processing, consider splitting larger documents.`}
-          ></Callout>
+          ></Callout>)}
         </Flex>
 
         <FileTable
