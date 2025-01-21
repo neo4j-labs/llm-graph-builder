@@ -729,9 +729,8 @@ const Content: React.FC<ContentProps> = ({
         setshowExpirationModal(true);
       } else if (largeFileExists && isGCSActive) {
         setshowConfirmationModal(true);
-      } else if (largeFileExists && isGCSActive) {
         setshowExpirationModal(true);
-      } else {
+      }  else {
         handleGenerateGraph(selectedRows.filter((f) => isFileReadyToProcess(f, false)));
       }
     } else if (filesData.length) {
@@ -917,11 +916,13 @@ const Content: React.FC<ContentProps> = ({
               )
             )}
           </div>
-          {connectionStatus&&(<Callout
-            className='!w-[93%] m-auto '
-            type='note'
-            description={`Large files may be partially processed up to ${chunksToBeProces} chunks due to resource limits. If you need more comprehensive processing, consider splitting larger documents.`}
-          ></Callout>)}
+          {connectionStatus && (
+            <Callout
+              className='!w-[93%] m-auto '
+              type='note'
+              description={`Large files may be partially processed up to ${chunksToBeProces} chunks due to resource limits. If you need more comprehensive processing, consider splitting larger documents.`}
+            ></Callout>
+          )}
         </Flex>
 
         <FileTable

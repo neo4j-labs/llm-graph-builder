@@ -163,7 +163,7 @@ const PageLayout: React.FC = () => {
             isGCSActive: connectionData?.data?.gcs_file_cache === 'True',
             chunksTobeProcess: parseInt(connectionData.data.chunk_to_be_created),
           };
-          setChunksToBeProces(connectionData.chunksTobeProcess);
+          setChunksToBeProces(envCredentials.chunksTobeProcess);
           setIsGCSActive(envCredentials.isGCSActive);
           if (session) {
             const updated = updateSessionIfNeeded(envCredentials, session);

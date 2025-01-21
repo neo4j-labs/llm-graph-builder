@@ -225,7 +225,7 @@ export default function ConnectionModal({
         const isgdsActive = response.data.data.gds_status;
         const isReadOnlyUser = !response.data.data.write_access;
         const isGCSActive = response.data.data.gcs_file_cache === 'True';
-        const chunksTobeProcess = parseInt(response.data.chunk_to_be_created);
+        const chunksTobeProcess = parseInt(response.data.data.chunk_to_be_created);
         setIsGCSActive(isGCSActive);
         setGdsActive(isgdsActive);
         setIsReadOnlyUser(isReadOnlyUser);
