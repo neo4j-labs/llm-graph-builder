@@ -1,4 +1,4 @@
-import { VisibilityProps } from "../types";
+import { VisibilityProps } from '../types';
 
 export function withVisibility<P>(WrappedComponent: React.ComponentType<P>) {
   const VisibityControlled = (props: P & VisibilityProps) => {

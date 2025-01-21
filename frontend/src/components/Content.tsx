@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useRef, Suspense, useReducer, useCallback } from 'react';
 import FileTable from './FileTable';
-import { Button, Typography, Flex, StatusIndicator, useMediaQuery } from '@neo4j-ndl/react';
+import { Button, Typography, Flex, StatusIndicator, useMediaQuery, Callout } from '@neo4j-ndl/react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { extractAPI } from '../utils/FileAPI';
@@ -63,8 +63,15 @@ const Content: React.FC<ContentProps> = ({
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
   const [documentName, setDocumentName] = useState<string>('');
-  const { setUserCredentials, userCredentials, setConnectionStatus, isGdsActive, isReadOnlyUser, isGCSActive } =
-    useCredentials();
+  const {
+    setUserCredentials,
+    userCredentials,
+    setConnectionStatus,
+    isGdsActive,
+    isReadOnlyUser,
+    isGCSActive,
+    chunksToBeProces,
+  } = useCredentials();
   const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
   const [showExpirationModal, setshowExpirationModal] = useState<boolean>(false);
   const [extractLoading, setextractLoading] = useState<boolean>(false);
@@ -106,7 +113,7 @@ const Content: React.FC<ContentProps> = ({
   );
   const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
-    const hasSelections = useHasSelections(selectedNodes, selectedRels);
+  const hasSelections = useHasSelections(selectedNodes, selectedRels);
 
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
@@ -150,8 +157,10 @@ const Content: React.FC<ContentProps> = ({
               ? postProcessingTasks.filter((task) => task !== 'graph_schema_consolidation')
               : postProcessingTasks
             : hasSelections
-              ? postProcessingTasks.filter((task) => task !== 'graph_schema_consolidation' && task !== 'enable_communities')
-              : postProcessingTasks.filter((task) => task !== 'enable_communities');
+            ? postProcessingTasks.filter(
+                (task) => task !== 'graph_schema_consolidation' && task !== 'enable_communities'
+              )
+            : postProcessingTasks.filter((task) => task !== 'enable_communities');
           const response = await postProcessing(userCredentials as UserCredentials, payload);
           if (response.data.status === 'Success') {
             const communityfiles = response.data?.data;
@@ -381,7 +390,11 @@ const Content: React.FC<ContentProps> = ({
   const addFilesToQueue = async (remainingFiles: CustomFile[]) => {
     if (!remainingFiles.length) {
       showNormalToast(
-        <PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} isSchema={hasSelections} />
+        <PostProcessingToast
+          isGdsActive={isGdsActive}
+          postProcessingTasks={postProcessingTasks}
+          isSchema={hasSelections}
+        />
       );
       try {
         const response = await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
@@ -532,8 +545,9 @@ const Content: React.FC<ContentProps> = ({
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.VITE_BLOOM_URL;
     const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
-      }`;
+    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
+      userCredentials?.port ?? '7687'
+    }`;
     const encodedURL = encodeURIComponent(connectURL);
     const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     window.open(replacedUrl, '_blank');
@@ -586,19 +600,19 @@ const Content: React.FC<ContentProps> = ({
         (response.data?.message as string).includes('Chunks are not created')
       ) {
         showNormalToast(response.data.message as string);
-        retryOnclose()
+        retryOnclose();
       } else {
         const isStartFromBegining = retryoption === RETRY_OPIONS[0] || retryoption === RETRY_OPIONS[1];
         setFilesData((prev) => {
           return prev.map((f) => {
             return f.name === filename
               ? {
-                ...f,
-                status: 'Ready to Reprocess',
-                processingProgress: isStartFromBegining ? 0 : f.processingProgress,
-                nodesCount: isStartFromBegining ? 0 : f.nodesCount,
-                relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
-              }
+                  ...f,
+                  status: 'Ready to Reprocess',
+                  processingProgress: isStartFromBegining ? 0 : f.processingProgress,
+                  nodesCount: isStartFromBegining ? 0 : f.nodesCount,
+                  relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
+                }
               : f;
           });
         });
@@ -706,7 +720,7 @@ const Content: React.FC<ContentProps> = ({
     const selectedRows = childRef.current?.getSelectedRows();
     if (selectedRows?.length) {
       const expiredFilesExists = selectedRows.some(
-        (c) => c.status !==  'Ready to Reprocess' && isExpired(c?.createdAt as Date ?? new Date())
+        (c) => c.status !== 'Ready to Reprocess' && isExpired((c?.createdAt as Date) ?? new Date())
       );
       const largeFileExists = selectedRows.some(
         (c) => isFileReadyToProcess(c, true) && typeof c.size === 'number' && c.size > largeFileSize
@@ -715,15 +729,12 @@ const Content: React.FC<ContentProps> = ({
         setshowExpirationModal(true);
       } else if (largeFileExists && isGCSActive) {
         setshowConfirmationModal(true);
-      } else if (largeFileExists && isGCSActive) {
         setshowExpirationModal(true);
-      } else {
+      }  else {
         handleGenerateGraph(selectedRows.filter((f) => isFileReadyToProcess(f, false)));
       }
     } else if (filesData.length) {
-      const expiredFileExists = filesData.some(
-        (c) => isExpired(c?.createdAt as Date)
-      );
+      const expiredFileExists = filesData.some((c) => isExpired(c?.createdAt as Date));
       const largeFileExists = filesData.some(
         (c) => isFileReadyToProcess(c, true) && typeof c.size === 'number' && c.size > largeFileSize
       );
@@ -863,20 +874,12 @@ const Content: React.FC<ContentProps> = ({
                 uri={userCredentials && userCredentials?.uri}
               />
               <div className='pt-1 flex gap-1 items-center'>
+                <div>{!hasSelections ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}</div>
                 <div>
-                  {!hasSelections ? (
-                    <StatusIndicator type='danger' />
-                  ) :
-                    (<StatusIndicator type='success' />
-                    )}
-                </div>
-                <div>
-                  {hasSelections? (
+                  {hasSelections ? (
                     <span className='n-body-small'>
-                      {(hasSelections)} Graph Schema configured
-                      {hasSelections
-                        ? `(${selectedNodes.length} Labels + ${selectedRels.length} Rel Types)`
-                        : ''}
+                      {hasSelections} Graph Schema configured
+                      {hasSelections ? `(${selectedNodes.length} Labels + ${selectedRels.length} Rel Types)` : ''}
                     </span>
                   ) : (
                     <span className='n-body-small'>No Graph Schema configured</span>
@@ -913,7 +916,15 @@ const Content: React.FC<ContentProps> = ({
               )
             )}
           </div>
+          {connectionStatus && (
+            <Callout
+              className='!w-[93%] m-auto '
+              type='note'
+              description={`Large files may be partially processed up to ${chunksToBeProces} chunks due to resource limits. If you need more comprehensive processing, consider splitting larger documents.`}
+            ></Callout>
+          )}
         </Flex>
+
         <FileTable
           connectionStatus={connectionStatus}
           setConnectionStatus={setConnectionStatus}
@@ -940,6 +951,7 @@ const Content: React.FC<ContentProps> = ({
           ref={childRef}
           handleGenerateGraph={processWaitingFilesOnRefresh}
         ></FileTable>
+
         <Flex
           className={`p-2.5  mt-1.5 absolute bottom-0 w-full`}
           justifyContent='space-between'

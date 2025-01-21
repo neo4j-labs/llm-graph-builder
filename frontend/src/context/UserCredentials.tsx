@@ -22,6 +22,8 @@ export const UserConnection = createContext<ContextProps>({
   setShowDisconnectButton: () => null,
   isGCSActive: false,
   setIsGCSActive: () => null,
+  chunksToBeProces: 50,
+  setChunksToBeProces: () => null,
 });
 export const useCredentials = () => {
   const userCredentials = useContext(UserConnection);
@@ -36,6 +38,7 @@ const UserCredentialsWrapper: FunctionComponent<Props> = (props) => {
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showDisconnectButton, setShowDisconnectButton] = useState<boolean>(false);
   const [isGCSActive, setIsGCSActive] = useState<boolean>(false);
+  const [chunksToBeProces, setChunksToBeProces] = useState<number>(50);
 
   const value = {
     userCredentials,
@@ -54,6 +57,8 @@ const UserCredentialsWrapper: FunctionComponent<Props> = (props) => {
     setShowDisconnectButton,
     isGCSActive,
     setIsGCSActive,
+    chunksToBeProces,
+    setChunksToBeProces,
   };
 
   return <UserConnection.Provider value={value}>{props.children}</UserConnection.Provider>;

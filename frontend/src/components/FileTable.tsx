@@ -1009,7 +1009,9 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
             }}
             isLoading={isLoading}
             rootProps={{
-              className: `absolute h-[67%] left-10 filetable ${!largedesktops ? 'top-[17%]' : 'top-[14%]'}`,
+              className: `absolute left-10 filetable ${
+                !largedesktops && connectionStatus ? 'h-[50%]' : connectionStatus ? 'h-[60%]' : 'h-[67%]'
+              }  ${!largedesktops && connectionStatus ? 'top-[29%]' : connectionStatus ? 'top-[26%]' : 'top-[14%]'}`,
             }}
             components={{
               Body: () => (
