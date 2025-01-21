@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useRef, Suspense, useReducer, useCallback } from 'react';
 import FileTable from './FileTable';
-import { Button, Typography, Flex, StatusIndicator, useMediaQuery, Callout } from '@neo4j-ndl/react';
+import { Button, Typography, Flex, StatusIndicator, useMediaQuery } from '@neo4j-ndl/react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { extractAPI } from '../utils/FileAPI';
@@ -58,15 +58,8 @@ const Content: React.FC<ContentProps> = ({
   const [showConfirmationModal, setShowConfirmationModal] = useState<boolean>(false);
   const [showExpirationModal, setShowExpirationModal] = useState<boolean>(false);
   const [extractLoading, setIsExtractLoading] = useState<boolean>(false);
-  const {
-    setUserCredentials,
-    userCredentials,
-    setConnectionStatus,
-    isGdsActive,
-    isReadOnlyUser,
-    isGCSActive,
-    chunksToBeProces,
-  } = useCredentials();
+  const { setUserCredentials, userCredentials, setConnectionStatus, isGdsActive, isReadOnlyUser, isGCSActive } =
+    useCredentials();
 
   const [retryFile, setRetryFile] = useState<string>('');
   const [retryLoading, setRetryLoading] = useState<boolean>(false);
@@ -896,13 +889,6 @@ const Content: React.FC<ContentProps> = ({
               )
             )}
           </div>
-          {connectionStatus && (
-            <Callout
-              className='!w-[93%] m-auto '
-              type='note'
-              description={`Large files may be partially processed up to ${chunksToBeProces} chunks due to resource limits. If you need more comprehensive processing, consider splitting larger documents.`}
-            ></Callout>
-          )}
         </Flex>
 
         <FileTable
