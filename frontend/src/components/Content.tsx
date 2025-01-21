@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useRef, Suspense, useReducer, useCallback } from 'react';
 import FileTable from './FileTable';
-import { Button, Typography, Flex, StatusIndicator, useMediaQuery } from '@neo4j-ndl/react';
+import { Button, Typography, Flex, StatusIndicator, useMediaQuery, Callout } from '@neo4j-ndl/react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { extractAPI } from '../utils/FileAPI';
@@ -63,11 +63,19 @@ const Content: React.FC<ContentProps> = ({
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
   const [documentName, setDocumentName] = useState<string>('');
-  const { setUserCredentials, userCredentials, setConnectionStatus, isGdsActive, isReadOnlyUser, isGCSActive } =
-    useCredentials();
   const [showConfirmationModal, setShowConfirmationModal] = useState<boolean>(false);
   const [showExpirationModal, setShowExpirationModal] = useState<boolean>(false);
   const [extractLoading, setIsExtractLoading] = useState<boolean>(false);
+  const {
+    setUserCredentials,
+    userCredentials,
+    setConnectionStatus,
+    isGdsActive,
+    isReadOnlyUser,
+    isGCSActive,
+    chunksToBeProces,
+  } = useCredentials();
+
   const [retryFile, setRetryFile] = useState<string>('');
   const [retryLoading, setRetryLoading] = useState<boolean>(false);
   const [showRetryPopup, toggleRetryPopup] = useReducer((state) => !state, false);
@@ -104,8 +112,10 @@ const Content: React.FC<ContentProps> = ({
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView'>(
     'tableView'
   );
+
   const [showDeletePopUp, setShowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setIsDeleteLoading] = useState<boolean>(false);
+
   const hasSelections = useHasSelections(selectedNodes, selectedRels);
 
   const { updateStatusForLargeFiles } = useServerSideEvent(
@@ -722,7 +732,6 @@ const Content: React.FC<ContentProps> = ({
         setShowExpirationModal(true);
       } else if (largeFileExists && isGCSActive) {
         setShowConfirmationModal(true);
-        setShowExpirationModal(true);
       } else {
         handleGenerateGraph(selectedRows.filter((f) => isFileReadyToProcess(f, false)));
       }
@@ -909,7 +918,15 @@ const Content: React.FC<ContentProps> = ({
               )
             )}
           </div>
+          {connectionStatus && (
+            <Callout
+              className='!w-[93%] m-auto '
+              type='note'
+              description={`Large files may be partially processed up to ${chunksToBeProces} chunks due to resource limits. If you need more comprehensive processing, consider splitting larger documents.`}
+            ></Callout>
+          )}
         </Flex>
+
         <FileTable
           connectionStatus={connectionStatus}
           setConnectionStatus={setConnectionStatus}
@@ -936,6 +953,7 @@ const Content: React.FC<ContentProps> = ({
           ref={childRef}
           handleGenerateGraph={processWaitingFilesOnRefresh}
         ></FileTable>
+
         <Flex
           className={`p-2.5  mt-1.5 absolute bottom-0 w-full`}
           justifyContent='space-between'
