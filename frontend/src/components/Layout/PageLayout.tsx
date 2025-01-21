@@ -25,10 +25,10 @@ const PageLayout: React.FC = () => {
     vectorIndexMisMatch: false,
     chunksExistsWithDifferentDimension: false,
   });
-  const largedesktops = useMediaQuery(`(min-width:1440px )`);
+  const isLargeDesktop = useMediaQuery(`(min-width:1440px )`);
   const { userCredentials, connectionStatus, setIsReadOnlyUser } = useCredentials();
-  const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(Boolean(largedesktops));
-  const [isRightExpanded, setIsRightExpanded] = useState<boolean>(Boolean(largedesktops));
+  const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(Boolean(isLargeDesktop));
+  const [isRightExpanded, setIsRightExpanded] = useState<boolean>(Boolean(isLargeDesktop));
   const [showChatBot, setShowChatBot] = useState<boolean>(false);
   const [showDrawerChatbot, setShowDrawerChatbot] = useState<boolean>(true);
   const [showEnhancementDialog, toggleEnhancementDialog] = useReducer((s) => !s, false);
@@ -37,14 +37,14 @@ const PageLayout: React.FC = () => {
   const [showGenericModal, toggleGenericModal] = useReducer((s) => !s, false);
   const navigate = useNavigate();
   const toggleLeftDrawer = () => {
-    if (largedesktops) {
+    if (isLargeDesktop) {
       setIsLeftExpanded(!isLeftExpanded);
     } else {
       setIsLeftExpanded(false);
     }
   };
   const toggleRightDrawer = () => {
-    if (largedesktops) {
+    if (isLargeDesktop) {
       setIsRightExpanded(!isRightExpanded);
     } else {
       setIsRightExpanded(false);
@@ -278,7 +278,7 @@ const PageLayout: React.FC = () => {
           }
         }}
       ></SchemaFromTextDialog>
-      {largedesktops ? (
+      {isLargeDesktop ? (
         <div
           className={`layout-wrapper ${!isLeftExpanded ? 'drawerdropzoneclosed' : ''} ${
             !isRightExpanded ? 'drawerchatbotclosed' : ''

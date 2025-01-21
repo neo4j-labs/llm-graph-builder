@@ -15,7 +15,7 @@ export default function AdditionalInstructionsText({
   const tablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
   const { additionalInstructions, setAdditionalInstructions } = useFileContext();
 
-  const clickAnalyzeIntructHandler = useCallback(async () => {
+  const clickAnalyzeInstructHandler = useCallback(async () => {
     localStorage.setItem('instructions', additionalInstructions);
     closeEnhanceGraphSchemaDialog();
     showNormalToast(`Successfully Applied the Instructions`);
@@ -50,7 +50,7 @@ export default function AdditionalInstructionsText({
                   label='Analyze button'
                   text={'Analyze instructions for schema'}
                   disabled={additionalInstructions.trim() === ''}
-                  onClick={clickAnalyzeIntructHandler}
+                  onClick={clickAnalyzeInstructHandler}
                 >
                   {buttonCaptions.analyzeInstructions}
                 </ButtonWithToolTip>

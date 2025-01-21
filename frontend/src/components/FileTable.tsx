@@ -76,7 +76,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [statusFilter, setstatusFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('');
   const [filetypeFilter, setFiletypeFilter] = useState<string>('');
   const [fileSourceFilter, setFileSourceFilter] = useState<string>('');
   const [llmtypeFilter, setLLmtypeFilter] = useState<string>('');
@@ -84,7 +84,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
   const [_, copy] = useCopyToClipboard();
   const { colorMode } = useContext(ThemeWrapperContext);
   const [copyRow, setCopyRow] = useState<boolean>(false);
-  const largedesktops = useMediaQuery(`(min-width:1440px )`);
+  const islargeDesktop = useMediaQuery(`(min-width:1440px )`);
 
   const tableRef = useRef(null);
 
@@ -286,7 +286,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                   </span>
                 ),
                 onClick: () => {
-                  setstatusFilter('All');
+                  setStatusFilter('All');
                   table.getColumn('status')?.setFilterValue(true);
                   skipPageResetRef.current = true;
                 },
@@ -298,7 +298,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                   </span>
                 ),
                 onClick: () => {
-                  setstatusFilter('Completed');
+                  setStatusFilter('Completed');
                   table.getColumn('status')?.setFilterValue(true);
                   skipPageResetRef.current = true;
                 },
@@ -310,7 +310,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                   </span>
                 ),
                 onClick: () => {
-                  setstatusFilter('New');
+                  setStatusFilter('New');
                   table.getColumn('status')?.setFilterValue(true);
                   skipPageResetRef.current = true;
                 },
@@ -322,7 +322,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                   </span>
                 ),
                 onClick: () => {
-                  setstatusFilter('Failed');
+                  setStatusFilter('Failed');
                   table.getColumn('status')?.setFilterValue(true);
                   skipPageResetRef.current = true;
                 },

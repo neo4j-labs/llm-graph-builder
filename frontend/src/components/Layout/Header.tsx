@@ -22,6 +22,7 @@ import { RiChatSettingsLine } from 'react-icons/ri';
 import ChatModeToggle from '../ChatBot/ChatModeToggle';
 import { connectionState } from '../../types';
 import { downloadClickHandler, getIsLoading } from '../../utils/Utils';
+import Profile from '../User/Profile';
 
 interface HeaderProp {
   chatOnly?: boolean;
@@ -40,7 +41,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
   const downloadLinkRef = useRef<HTMLAnchorElement>(null);
   const { connectionStatus } = useCredentials();
   const chatAnchor = useRef<HTMLDivElement>(null);
-  const [showChatModeOption, setshowChatModeOption] = useState<boolean>(false);
+  const [showChatModeOption, setShowChatModeOption] = useState<boolean>(false);
 
   const openChatPopout = useCallback(() => {
     let session = localStorage.getItem('neo4j.connection');
@@ -143,6 +144,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                   >
                     <ArrowTopRightOnSquareIconOutline />
                   </IconButtonWithToolTip>
+                  <Profile />
                 </div>
               </div>
             </section>
@@ -198,7 +200,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                 <div ref={chatAnchor}>
                   <IconButtonWithToolTip
                     onClick={() => {
-                      setshowChatModeOption(true);
+                      setShowChatModeOption(true);
                     }}
                     clean
                     text='Chat mode'
@@ -252,7 +254,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
       <ChatModeToggle
         closeHandler={(_, reason) => {
           if (reason.type === 'backdropClick') {
-            setshowChatModeOption(false);
+            setShowChatModeOption(false);
           }
         }}
         open={showChatModeOption}

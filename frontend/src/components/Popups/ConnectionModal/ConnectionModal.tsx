@@ -55,6 +55,7 @@ export default function ConnectionModal({
   const [searchParams, setSearchParams] = useSearchParams();
   const [userDbVectorIndex, setUserDbVectorIndex] = useState<number | undefined>(initialuserdbvectorindex ?? undefined);
   const [vectorIndexLoading, setVectorIndexLoading] = useState<boolean>(false);
+
   const connectRef = useRef<HTMLButtonElement>(null);
   const uriRef = useRef<HTMLInputElement>(null);
   const databaseRef = useRef<HTMLInputElement>(null);

@@ -101,7 +101,7 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
                   <Tabs.Tab
                     tabId={4}
                     htmlAttributes={{
-                      'aria-label': 'Additinal Instructions',
+                      'aria-label': 'Additional Instructions',
                     }}
                   >
                     Additional Instructions

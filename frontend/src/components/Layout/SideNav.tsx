@@ -44,8 +44,8 @@ const SideNav: React.FC<SideNavProps> = ({
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const { setMessages, isDeleteChatLoading } = useMessageContext();
-  const [showChatMode, setshowChatMode] = useState<boolean>(false);
-  const largedesktops = useMediaQuery(`(min-width:1440px )`);
+  const [showChatMode, setShowChatMode] = useState<boolean>(false);
+  const isLargeDesktop = useMediaQuery(`(min-width:1440px )`);
   const { connectionStatus, isReadOnlyUser } = useCredentials();
   const downloadLinkRef = useRef<HTMLAnchorElement>(null);
   const anchorMenuRef = useRef<HTMLAnchorElement>(null);
@@ -61,16 +61,16 @@ const SideNav: React.FC<SideNavProps> = ({
   const handleShrinkClick = () => {
     setIsChatModalOpen(false);
     setIsFullScreen(false);
-    if (setShowDrawerChatbot && setIsRightExpanded && largedesktops) {
+    if (setShowDrawerChatbot && setIsRightExpanded && isLargeDesktop) {
       setShowDrawerChatbot(true);
       setIsRightExpanded(true);
     }
   };
   const handleClick = () => {
-    if (!largedesktops && position === 'right') {
+    if (!isLargeDesktop && position === 'right') {
       setIsChatModalOpen(true);
       setIsFullScreen(true);
-    } else if (!largedesktops && position === 'left') {
+    } else if (!isLargeDesktop && position === 'left') {
       setIsleftExpanded && setIsleftExpanded(false);
     } else {
       toggleDrawer();
@@ -81,7 +81,7 @@ const SideNav: React.FC<SideNavProps> = ({
     <div style={{ height: 'calc(100vh - 58px)', minHeight: '200px', display: 'flex' }}>
       <SideNavigation hasIconMenu={true} isExpanded={false} position={position}>
         <SideNavigation.List>
-          {isExpanded && largedesktops && (
+          {isExpanded && isLargeDesktop && (
             <SideNavigation.Item
               htmlAttributes={{ onClick: handleClick }}
               icon={
@@ -93,7 +93,7 @@ const SideNav: React.FC<SideNavProps> = ({
               }
             />
           )}
-          {!isExpanded && position === 'left' && largedesktops && (
+          {!isExpanded && position === 'left' && isLargeDesktop && (
             <SideNavigation.Item
               htmlAttributes={{ onClick: handleClick }}
               icon={
@@ -115,7 +115,7 @@ const SideNav: React.FC<SideNavProps> = ({
             />
           )}
 
-          {!largedesktops && position === 'left' && !isReadOnlyUser && (
+          {!isLargeDesktop && position === 'left' && !isReadOnlyUser && (
             <SideNavigation.Item
               icon={
                 <TooltipWrapper tooltip='Local Files' placement='right'>
@@ -124,29 +124,29 @@ const SideNav: React.FC<SideNavProps> = ({
               }
             />
           )}
-          {!largedesktops && APP_SOURCES.includes('gcs') && position === 'left' && !isReadOnlyUser && (
+          {!isLargeDesktop && APP_SOURCES.includes('gcs') && position === 'left' && !isReadOnlyUser && (
             <SideNavigation.Item
               icon={
                 <TooltipWrapper tooltip='GCS Files' placement='right'>
-                  <GCSButton isLargeDesktop={largedesktops} openModal={toggleGCSModal}></GCSButton>
+                  <GCSButton isLargeDesktop={isLargeDesktop} openModal={toggleGCSModal}></GCSButton>
                 </TooltipWrapper>
               }
             />
           )}
-          {!largedesktops && APP_SOURCES.includes('s3') && position === 'left' && !isReadOnlyUser && (
+          {!isLargeDesktop && APP_SOURCES.includes('s3') && position === 'left' && !isReadOnlyUser && (
             <SideNavigation.Item
               icon={
                 <TooltipWrapper tooltip='S3 Files' placement='right'>
-                  <S3Component isLargeDesktop={largedesktops} openModal={toggles3Modal}></S3Component>
+                  <S3Component isLargeDesktop={isLargeDesktop} openModal={toggles3Modal}></S3Component>
                 </TooltipWrapper>
               }
             />
           )}
-          {!largedesktops && APP_SOURCES.includes('web') && position === 'left' && !isReadOnlyUser && (
+          {!isLargeDesktop && APP_SOURCES.includes('web') && position === 'left' && !isReadOnlyUser && (
             <SideNavigation.Item
               icon={
                 <TooltipWrapper tooltip='Web Sources' placement='right'>
-                  <WebButton isLargeDesktop={largedesktops} openModal={toggleGenericModal}></WebButton>
+                  <WebButton isLargeDesktop={isLargeDesktop} openModal={toggleGenericModal}></WebButton>
                 </TooltipWrapper>
               }
             ></SideNavigation.Item>
@@ -212,7 +212,7 @@ const SideNav: React.FC<SideNavProps> = ({
                     <>
                       <IconButtonWithToolTip
                         onClick={() => {
-                          setshowChatMode(true);
+                          setShowChatMode(true);
                         }}
                         size='small'
                         placement='left'
@@ -226,7 +226,7 @@ const SideNav: React.FC<SideNavProps> = ({
                         open={showChatMode}
                         closeHandler={(_, reason) => {
                           if (reason.type === 'backdropClick') {
-                            setshowChatMode(false);
+                            setShowChatMode(false);
                           }
                         }}
                         menuAnchor={anchorMenuRef}

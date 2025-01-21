@@ -15,7 +15,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [secretKey, setSecretKey] = useState<string>('');
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
   const [statusMessage, setStatusMessage] = useState<string>('');
-  const [isFocused, setisFocused] = useState<boolean>(false);
+  const [isFocused, setIsFocused] = useState<boolean>(false);
   const [isValid, setValid] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
   const { setFilesData, model, filesData } = useFileContext();
@@ -25,7 +25,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     setAccessKey('');
     setSecretKey('');
     setValid(false);
-    setisFocused(false);
+    setIsFocused(false);
   };
 
   const submitHandler = async (url: string) => {
@@ -177,7 +177,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
             isRequired={true}
             errorText={!isValid && isFocused && 'Please Fill The Valid URL'}
             onChange={(e) => {
-              setisFocused(true);
+              setIsFocused(true);
               setBucketUrl(e.target.value);
             }}
           />

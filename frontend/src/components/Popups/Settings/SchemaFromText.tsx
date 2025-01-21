@@ -9,7 +9,7 @@ import { showNormalToast, showSuccessToast } from '../../../utils/toasts';
 
 const SchemaFromTextDialog = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
   const [userText, setUserText] = useState<string>('');
-  const [loading, setloading] = useState<boolean>(false);
+  const [loading, setIsLoading] = useState<boolean>(false);
   const { setSelectedNodes, setSelectedRels } = useFileContext();
   const { userCredentials } = useCredentials();
   const [isSchemaText, setIsSchemaText] = useState<boolean>(false);
@@ -17,9 +17,9 @@ const SchemaFromTextDialog = ({ open, onClose }: { open: boolean; onClose: () =>
 
   const clickHandler = useCallback(async () => {
     try {
-      setloading(true);
+      setIsLoading(true);
       const response = await getNodeLabelsAndRelTypesFromText(model, userText, isSchemaText);
-      setloading(false);
+      setIsLoading(false);
       if (response.data.status === 'Success') {
         if (response.data?.data?.labels.length) {
           const nodelabels = response.data?.data?.labels?.map((l) => ({ value: l, label: l }));
@@ -68,7 +68,7 @@ const SchemaFromTextDialog = ({ open, onClose }: { open: boolean; onClose: () =>
         } else if (!response.data?.data?.relationshipTypes.length && response.data?.data?.labels.length) {
           showSuccessToast(`Successfully Created ${response.data?.data?.labels.length} Node labels`);
         } else {
-          showNormalToast(`Please give meaningfull text`);
+          showNormalToast(`Please give meaningful text`);
         }
       } else {
         throw new Error('Unable to create labels from ');
@@ -77,7 +77,7 @@ const SchemaFromTextDialog = ({ open, onClose }: { open: boolean; onClose: () =>
       setUserText('');
       setIsSchemaText(false);
     } catch (error) {
-      setloading(false);
+      setIsLoading(false);
       console.log(error);
     }
   }, [userCredentials, userText, isSchemaText]);
@@ -87,7 +87,7 @@ const SchemaFromTextDialog = ({ open, onClose }: { open: boolean; onClose: () =>
       size='medium'
       isOpen={open}
       onClose={() => {
-        setloading(false);
+        setIsLoading(false);
         setIsSchemaText(false);
         setUserText('');
         onClose();

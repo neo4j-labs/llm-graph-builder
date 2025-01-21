@@ -10,7 +10,7 @@ function DeletePopUp({
 }: {
   open: boolean;
   no_of_files: number;
-  deleteHandler: (delentities: boolean) => void;
+  deleteHandler: (deleteEntities: boolean) => void;
   deleteCloseHandler: () => void;
   loading: boolean;
   view?: 'contentView' | 'settingsView';
