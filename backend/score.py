@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, Form, Request
+from fastapi import FastAPI, File, UploadFile, Form, Request, HTTPException
 from fastapi_health import health
 from fastapi.middleware.cors import CORSMiddleware
 from src.main import *
@@ -19,7 +19,6 @@ from src.communities import create_communities
 from src.neighbours import get_neighbour_nodes
 import json
 from typing import List
-from starlette.middleware.sessions import SessionMiddleware
 from google.oauth2.credentials import Credentials
 import os
 from src.logger import CustomLogger
@@ -33,6 +32,10 @@ from src.ragas_eval import *
 from starlette.types import ASGIApp, Receive, Scope, Send
 from langchain_neo4j import Neo4jGraph
 from src.entities.source_node import sourceNode
+from starlette.middleware.sessions import SessionMiddleware
+from starlette.responses import HTMLResponse, RedirectResponse,JSONResponse
+from starlette.requests import Request
+import secrets
 
 logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
@@ -77,6 +80,7 @@ class CustomGZipMiddleware:
         )
         await gzip_middleware(scope, receive, send)
 app = FastAPI()
+
 app.add_middleware(XContentTypeOptions)
 app.add_middleware(XFrame, Option={'X-Frame-Options': 'DENY'})
 app.add_middleware(CustomGZipMiddleware, minimum_size=1000, compresslevel=5,paths=["/sources_list","/url/scan","/extract","/chat_bot","/chunk_entities","/get_neighbours","/graph_query","/schema","/populate_graph_schema","/get_unconnected_nodes_list","/get_duplicate_nodes","/fetch_chunktext"])
@@ -86,6 +90,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(SessionMiddleware, secret_key=os.urandom(24))
 
 is_gemini_enabled = os.environ.get("GEMINI_ENABLED", "False").lower() in ("true", "1", "yes")
 if is_gemini_enabled:
@@ -93,7 +98,6 @@ if is_gemini_enabled:
 
 app.add_api_route("/health", health([healthy_condition, healthy]))
 
-app.add_middleware(SessionMiddleware, secret_key=os.urandom(24))
 
 
 @app.post("/url/scan")
