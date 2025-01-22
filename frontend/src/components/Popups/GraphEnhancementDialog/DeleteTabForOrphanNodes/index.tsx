@@ -38,7 +38,7 @@ export default function DeletePopUpForOrphanNodes({
   const { userCredentials } = useCredentials();
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const tableRef = useRef(null);
-  const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
+  const [showDeletePopUp, setShowDeletePopUp] = useState<boolean>(false);
   const [neoNodes, setNeoNodes] = useState<any[]>([]);
   const [neoRels, setNeoRels] = useState<any[]>([]);
   const [openGraphView, setOpenGraphView] = useState(false);
@@ -151,7 +151,7 @@ export default function DeletePopUpForOrphanNodes({
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor((row) => row.documents, {
-        id: 'Connnected Documents',
+        id: 'Connected Documents',
         cell: (info) => {
           return (
             <Flex className='textellipsis'>
@@ -214,7 +214,7 @@ export default function DeletePopUpForOrphanNodes({
       const eid: string = selectedRows[index];
       setOrphanNodes((prev) => prev.filter((node) => node.e.elementId != eid));
     }
-    setshowDeletePopUp(false);
+    setShowDeletePopUp(false);
     if (totalOrphanNodes) {
       await fetchOrphanNodes();
     }
@@ -228,7 +228,7 @@ export default function DeletePopUpForOrphanNodes({
             open={showDeletePopUp}
             no_of_files={table.getSelectedRowModel().rows.length ?? 0}
             deleteHandler={onDeleteHandler}
-            deleteCloseHandler={() => setshowDeletePopUp(false)}
+            deleteCloseHandler={() => setShowDeletePopUp(false)}
             loading={loading}
             view='settingsView'
           />
@@ -298,7 +298,7 @@ export default function DeletePopUpForOrphanNodes({
         />
         <Flex className='mt-3' flexDirection='row' justifyContent='flex-end'>
           <ButtonWithToolTip
-            onClick={() => setshowDeletePopUp(true)}
+            onClick={() => setShowDeletePopUp(true)}
             size='large'
             loading={loading}
             text={

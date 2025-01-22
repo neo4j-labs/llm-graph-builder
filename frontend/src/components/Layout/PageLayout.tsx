@@ -25,10 +25,10 @@ const PageLayout: React.FC = () => {
     vectorIndexMisMatch: false,
     chunksExistsWithDifferentDimension: false,
   });
-  const largedesktops = useMediaQuery(`(min-width:1440px )`);
+  const isLargeDesktop = useMediaQuery(`(min-width:1440px )`);
   const { userCredentials, connectionStatus, setIsReadOnlyUser } = useCredentials();
-  const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(Boolean(largedesktops));
-  const [isRightExpanded, setIsRightExpanded] = useState<boolean>(Boolean(largedesktops));
+  const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(Boolean(isLargeDesktop));
+  const [isRightExpanded, setIsRightExpanded] = useState<boolean>(Boolean(isLargeDesktop));
   const [showChatBot, setShowChatBot] = useState<boolean>(false);
   const [showDrawerChatbot, setShowDrawerChatbot] = useState<boolean>(true);
   const [showEnhancementDialog, toggleEnhancementDialog] = useReducer((s) => !s, false);
@@ -37,14 +37,14 @@ const PageLayout: React.FC = () => {
   const [showGenericModal, toggleGenericModal] = useReducer((s) => !s, false);
   const navigate = useNavigate();
   const toggleLeftDrawer = () => {
-    if (largedesktops) {
+    if (isLargeDesktop) {
       setIsLeftExpanded(!isLeftExpanded);
     } else {
       setIsLeftExpanded(false);
     }
   };
   const toggleRightDrawer = () => {
-    if (largedesktops) {
+    if (isLargeDesktop) {
       setIsRightExpanded(!isRightExpanded);
     } else {
       setIsRightExpanded(false);
@@ -62,6 +62,7 @@ const PageLayout: React.FC = () => {
     setShowDisconnectButton,
     showDisconnectButton,
     setIsGCSActive,
+    setChunksToBeProces,
   } = useCredentials();
   const { cancel } = useSpeechSynthesis();
 
@@ -85,6 +86,7 @@ const PageLayout: React.FC = () => {
         setIsGCSActive(credentials.isGCSActive ?? false);
         setGdsActive(credentials.isgdsActive);
         setIsReadOnlyUser(credentials.isReadonlyUser);
+        setChunksToBeProces(credentials.chunksTobeProcess);
         localStorage.setItem(
           'neo4j.connection',
           JSON.stringify({
@@ -96,6 +98,7 @@ const PageLayout: React.FC = () => {
             isReadOnlyUser: credentials.isReadonlyUser,
             isgdsActive: credentials.isgdsActive,
             isGCSActive: credentials.isGCSActive,
+            chunksTobeProcess: credentials.chunksTobeProcess,
           })
         );
       };
@@ -158,7 +161,9 @@ const PageLayout: React.FC = () => {
             isReadonlyUser: !connectionData.data.write_access,
             isgdsActive: connectionData.data.gds_status,
             isGCSActive: connectionData?.data?.gcs_file_cache === 'True',
+            chunksTobeProcess: parseInt(connectionData.data.chunk_to_be_created),
           };
+          setChunksToBeProces(envCredentials.chunksTobeProcess);
           setIsGCSActive(envCredentials.isGCSActive);
           if (session) {
             const updated = updateSessionIfNeeded(envCredentials, session);
@@ -257,7 +262,7 @@ const PageLayout: React.FC = () => {
           }
         }}
       ></SchemaFromTextDialog>
-      {largedesktops ? (
+      {isLargeDesktop ? (
         <div
           className={`layout-wrapper ${!isLeftExpanded ? 'drawerdropzoneclosed' : ''} ${
             !isRightExpanded ? 'drawerchatbotclosed' : ''

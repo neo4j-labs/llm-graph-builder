@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, Form, Request
+from fastapi import FastAPI, File, UploadFile, Form, Request, HTTPException
 from fastapi_health import health
 from fastapi.middleware.cors import CORSMiddleware
 from src.main import *
@@ -19,7 +19,6 @@ from src.communities import create_communities
 from src.neighbours import get_neighbour_nodes
 import json
 from typing import List, Optional
-from starlette.middleware.sessions import SessionMiddleware
 from google.oauth2.credentials import Credentials
 import os
 from src.logger import CustomLogger
@@ -33,6 +32,10 @@ from src.ragas_eval import *
 from starlette.types import ASGIApp, Receive, Scope, Send
 from langchain_neo4j import Neo4jGraph
 from src.entities.source_node import sourceNode
+from starlette.middleware.sessions import SessionMiddleware
+from starlette.responses import HTMLResponse, RedirectResponse,JSONResponse
+from starlette.requests import Request
+import secrets
 
 logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
@@ -77,6 +80,7 @@ class CustomGZipMiddleware:
         )
         await gzip_middleware(scope, receive, send)
 app = FastAPI()
+
 app.add_middleware(XContentTypeOptions)
 app.add_middleware(XFrame, Option={'X-Frame-Options': 'DENY'})
 app.add_middleware(CustomGZipMiddleware, minimum_size=1000, compresslevel=5,paths=["/sources_list","/url/scan","/extract","/chat_bot","/chunk_entities","/get_neighbours","/graph_query","/schema","/populate_graph_schema","/get_unconnected_nodes_list","/get_duplicate_nodes","/fetch_chunktext"])
@@ -86,6 +90,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(SessionMiddleware, secret_key=os.urandom(24))
 
 is_gemini_enabled = os.environ.get("GEMINI_ENABLED", "False").lower() in ("true", "1", "yes")
 if is_gemini_enabled:
@@ -93,7 +98,6 @@ if is_gemini_enabled:
 
 app.add_api_route("/health", health([healthy_condition, healthy]))
 
-app.add_middleware(SessionMiddleware, secret_key=os.urandom(24))
 
 
 @app.post("/url/scan")
@@ -211,9 +215,8 @@ async def extract_knowledge_graph_from_file(
         start_time = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)   
         graphDb_data_Access = graphDBdataAccess(graph)
+        merged_file_path = os.path.join(MERGED_DIR,file_name)
         if source_type == 'local file':
-            merged_file_path = os.path.join(MERGED_DIR,file_name)
-            logging.info(f'File path:{merged_file_path}')
             uri_latency, result = await extract_graph_from_file_local_file(uri, userName, password, database, model, merged_file_path, file_name, allowedNodes, allowedRelationship, chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions)
 
         elif source_type == 's3 bucket' and source_url:
@@ -322,6 +325,7 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
         tasks = set(map(str.strip, json.loads(tasks)))
+        api_name = 'post_processing'
         count_response = []
         start = time.time()
         if "materialize_text_chunk_similarities" in tasks:
@@ -506,12 +510,14 @@ async def connect(uri=Form(), userName=Form(), password=Form(), database=Form())
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, database)
         gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
+        chunk_to_be_created = int(os.environ.get('CHUNKS_TO_BE_CREATED', '50'))
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name':'connect','db_url':uri, 'userName':userName, 'database':database, 'count':1, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
         result['elapsed_api_time'] = f'{elapsed_time:.2f}'
         result['gcs_file_cache'] = gcs_file_cache
+        result['chunk_to_be_created']= chunk_to_be_created
         return create_api_response('Success',data=result)
     except Exception as e:
         job_status = "Failed"
@@ -984,8 +990,8 @@ async def backend_connection_configuration():
         database= os.getenv('NEO4J_DATABASE')
         password= os.getenv('NEO4J_PASSWORD')
         gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
+        chunk_to_be_created = int(os.environ.get('CHUNKS_TO_BE_CREATED', '50'))
         if all([uri, username, database, password]):
-            print(f'uri:{uri}, usrName:{username}, database :{database}, password: {password}')
             graph = Neo4jGraph()
             logging.info(f'login connection status of object: {graph}')
             if graph is not None:
@@ -999,6 +1005,7 @@ async def backend_connection_configuration():
                 result["database"] = database
                 result["password"] = encoded_password
                 result['gcs_file_cache'] = gcs_file_cache
+                result['chunk_to_be_created']= chunk_to_be_created
                 end = time.time()
                 elapsed_time = end - start
                 result['api_name'] = 'backend_connection_configuration'
