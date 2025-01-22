@@ -149,34 +149,36 @@ const Content: React.FC<ContentProps> = ({
                 (task) => task !== 'graph_schema_consolidation' && task !== 'enable_communities'
               )
             : postProcessingTasks.filter((task) => task !== 'enable_communities');
-          const response = await postProcessing(payload);
-          if (response.data.status === 'Success') {
-            const communityfiles = response.data?.data;
-            if (Array.isArray(communityfiles) && communityfiles.length) {
-              communityfiles?.forEach((c: any) => {
-                setFilesData((prev) => {
-                  return prev.map((f) => {
-                    if (f.name === c.filename) {
-                      return {
-                        ...f,
-                        chunkNodeCount: c.chunkNodeCount ?? 0,
-                        entityNodeCount: c.entityNodeCount ?? 0,
-                        communityNodeCount: c.communityNodeCount ?? 0,
-                        chunkRelCount: c.chunkRelCount ?? 0,
-                        entityEntityRelCount: c.entityEntityRelCount ?? 0,
-                        communityRelCount: c.communityRelCount ?? 0,
-                        nodesCount: c.nodeCount,
-                        relationshipsCount: c.relationshipCount,
-                      };
-                    }
-                    return f;
+          if (payload.length) {
+            const response = await postProcessing(payload);
+            if (response.data.status === 'Success') {
+              const communityfiles = response.data?.data;
+              if (Array.isArray(communityfiles) && communityfiles.length) {
+                communityfiles?.forEach((c: any) => {
+                  setFilesData((prev) => {
+                    return prev.map((f) => {
+                      if (f.name === c.filename) {
+                        return {
+                          ...f,
+                          chunkNodeCount: c.chunkNodeCount ?? 0,
+                          entityNodeCount: c.entityNodeCount ?? 0,
+                          communityNodeCount: c.communityNodeCount ?? 0,
+                          chunkRelCount: c.chunkRelCount ?? 0,
+                          entityEntityRelCount: c.entityEntityRelCount ?? 0,
+                          communityRelCount: c.communityRelCount ?? 0,
+                          nodesCount: c.nodeCount,
+                          relationshipsCount: c.relationshipCount,
+                        };
+                      }
+                      return f;
+                    });
                   });
                 });
-              });
+              }
+              showSuccessToast('All Q&A functionality is available now.');
+            } else {
+              throw new Error(response.data.error);
             }
-            showSuccessToast('All Q&A functionality is available now.');
-          } else {
-            throw new Error(response.data.error);
           }
         } catch (error) {
           if (error instanceof Error) {
@@ -375,7 +377,7 @@ const Content: React.FC<ContentProps> = ({
   };
 
   const addFilesToQueue = async (remainingFiles: CustomFile[]) => {
-    if (!remainingFiles.length) {
+    if (!remainingFiles.length && postProcessingTasks.length) {
       showNormalToast(
         <PostProcessingToast
           isGdsActive={isGdsActive}

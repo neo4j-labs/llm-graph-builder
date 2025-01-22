@@ -6,7 +6,7 @@ const retry = async (file: string, retryOption: string) => {
     const formData = new FormData();
     formData.append('file_name', file);
     formData.append('retry_condition', retryOption);
-    const response = await api.post<commonserverresponse>(`/retry_processing`,formData)
+    const response = await api.post<commonserverresponse>(`/retry_processing`, formData);
     return response;
   } catch (error) {
     console.log('Error Posting the Question:', error);

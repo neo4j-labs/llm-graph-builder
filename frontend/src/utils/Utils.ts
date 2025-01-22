@@ -524,20 +524,6 @@ export function getNodes<Type extends Entity | ExtendedNode>(nodesData: Array<Ty
   });
 }
 export function getParsedDate(neo4jdate: filedate) {
-  //   {
-  //     "_Date__ordinal": 739273,
-  //     "_Date__year": 2025,
-  //     "_Date__month": 1,
-  //     "_Date__day": 22
-  // }
-  // {
-  //   "_Time__ticks": 43060848458000,
-  //   "_Time__hour": 11,
-  //   "_Time__minute": 57,
-  //   "_Time__second": 40,
-  //   "_Time__nanosecond": 848458000,
-  //   "_Time__tzinfo": null
-  // }
   const { _Date__year, _Date__month, _Date__day } = neo4jdate._DateTime__date;
   const { _Time__hour, _Time__minute, _Time__second } = neo4jdate._DateTime__time;
   const currentdate = new Date(`${_Date__month}/${_Date__day}/${_Date__year}`);
