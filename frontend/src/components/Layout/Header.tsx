@@ -13,7 +13,7 @@ import {
 import { Button, TextLink, Typography } from '@neo4j-ndl/react';
 import { Dispatch, memo, SetStateAction, useCallback, useContext, useRef, useState } from 'react';
 import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
-import { buttonCaptions, tooltips } from '../../utils/Constants';
+import { buttonCaptions, SKIP_AUTH, tooltips } from '../../utils/Constants';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 import { useCredentials } from '../../context/UserCredentials';
 import { useNavigate } from 'react-router';
@@ -144,7 +144,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                   >
                     <ArrowTopRightOnSquareIconOutline />
                   </IconButtonWithToolTip>
-                  <Profile />
+                  {!SKIP_AUTH && <Profile />}
                 </div>
               </div>
             </section>

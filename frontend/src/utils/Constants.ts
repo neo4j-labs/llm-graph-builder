@@ -382,3 +382,4 @@ export const metricsinfo: Record<string, string> = {
   context_entity_recall: 'Determines the recall of entities present in both generated answer and retrieved contexts',
 };
 export const EXPIRATION_DAYS = 3;
+export const SKIP_AUTH = (process.env.VITE_SKIP_AUTH ?? 'true') == 'true';
