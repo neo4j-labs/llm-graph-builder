@@ -15,6 +15,7 @@ ARG VITE_BATCH_SIZE=2
 ARG VITE_LLM_MODELS_PROD="openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash"
 ARG VITE_AUTH0_CLIENT_ID=""
 ARG VITE_AUTH0_DOMAIN=""
+ARG VITE_SKIP_AUTH="false"
 
 WORKDIR /app
 COPY package.json yarn.lock ./
@@ -34,6 +35,7 @@ RUN VITE_BACKEND_API_URL=$VITE_BACKEND_API_URL \
     VITE_LLM_MODELS_PROD=$VITE_LLM_MODELS_PROD \
     VITE_AUTH0_CLIENT_ID=$VITE_AUTH0_CLIENT_ID \
     VITE_AUTH0_DOMAIN=$VITE_AUTH0_DOMAIN \
+    VITE_SKIP_AUTH=$VITE_SKIP_AUTH \
     yarn run build
 
 # Step 2: Serve the application using Nginx

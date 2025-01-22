@@ -149,6 +149,9 @@ Allow unauthenticated request : Yes
 | VITE_GOOGLE_CLIENT_ID        | Optional           |               | Client ID for Google authentication                                                              |
 | VITE_LLM_MODELS_PROD         | Optional      | openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash | To Distinguish models based on the Enviornment PROD or DEV 
 | VITE_LLM_MODELS              | Optional | 'diffbot,openai_gpt_3.5,openai_gpt_4o,openai_gpt_4o_mini,gemini_1.5_pro,gemini_1.5_flash,azure_ai_gpt_35,azure_ai_gpt_4o,ollama_llama3,groq_llama3_70b,anthropic_claude_3_5_sonnet' | Supported Models For the application
+| VITE_AUTH0_CLIENT_ID | Mandatory if you are enabling Authentication otherwise it is optional |       |Okta Oauth Client ID for authentication
+| VITE_AUTH0_DOMAIN | Mandatory if you are enabling Authentication otherwise it is optional |           | Okta Oauth Cliend Domain
+| VITE_SKIP_AUTH | Optional | true | Flag to skip the authentication 
 
 ## LLMs Supported 
 1. OpenAI
