@@ -831,27 +831,62 @@ START_FROM_BEGINNING  = "start_from_beginning"
 DELETE_ENTITIES_AND_START_FROM_BEGINNING = "delete_entities_and_start_from_beginning"
 START_FROM_LAST_PROCESSED_POSITION = "start_from_last_processed_position"                                                    
 
-GRAPH_CLEANUP_PROMPT = """Please consolidate the following list of types into a smaller set of more general, semantically 
-related types. The consolidated types must be drawn from the original list; do not introduce new types.  
-Return a JSON object representing the mapping of original types to consolidated types. Every key is the consolidated type
-and value is list of the original types that were merged into the consolidated type. Prioritize using the most generic and 
-repeated term when merging. If a type doesn't merge with any other type, it should still be included in the output, 
-mapped to itself.
-
-**Input:** A list of strings representing the types to be consolidated. These types may represent either node 
-labels or relationship labels Your algorithm should do appropriate groupings based on semantic similarity.
-
-Example 1:
-Input: 
-[ "Person", "Human", "People", "Company", "Organization", "Product"]
-Output :
-[Person": ["Person", "Human", "People"], Organization": ["Company", "Organization"], Product": ["Product"]]
-
-Example 2:
-Input :
-["CREATED_FOR", "CREATED_TO", "CREATED", "PLACE", "LOCATION", "VENUE"]
+GRAPH_CLEANUP_PROMPT = """
+You are tasked with organizing a list of types into semantic categories based on their meanings, including synonyms or morphological similarities. The input will include two separate lists: one for **Node Labels** and one for **Relationship Types**. Follow these rules strictly:
+### 1. Input Format
+The input will include two keys:
+- `nodes`: A list of node labels.
+- `relationships`: A list of relationship types.
+### 2. Grouping Rules
+- Group similar items into **semantic categories** based on their meaning or morphological similarities.
+- The name of each category must be chosen from the types in the input list (node labels or relationship types). **Do not create or infer new names for categories**.
+- Items that cannot be grouped must remain in their own category.
+### 3. Naming Rules
+- The category name must reflect the grouped items and must be an existing type in the input list.
+- Use a widely applicable type as the category name.
+- **Do not introduce new names or types** under any circumstances.
+### 4. Output Rules
+- Return the output as a JSON object with two keys:
+ - `nodes`: A dictionary where each key represents a category name for nodes, and its value is a list of original node labels in that category.
+ - `relationships`: A dictionary where each key represents a category name for relationships, and its value is a list of original relationship types in that category.
+- Every key and value must come from the provided input lists.
+### 5. Examples
+#### Example 1:
+Input:
+{{
+ "nodes": ["Person", "Human", "People", "Company", "Organization", "Product"],
+ "relationships": ["CREATED_FOR", "CREATED_TO", "CREATED", "PUBLISHED","PUBLISHED_BY", "PUBLISHED_IN", "PUBLISHED_ON"]
+}}
+Output in JSON:
+{{
+ "nodes": {{
+   "Person": ["Person", "Human", "People"],
+   "Organization": ["Company", "Organization"],
+   "Product": ["Product"]
+ }},
+ "relationships": {{
+   "CREATED": ["CREATED_FOR", "CREATED_TO", "CREATED"],
+   "PUBLISHED": ["PUBLISHED_BY", "PUBLISHED_IN", "PUBLISHED_ON"]
+ }}
+}}
+#### Example 2: Avoid redundant or incorrect grouping
+Input:
+{{
+ "nodes": ["Process", "Process_Step", "Step", "Procedure", "Method", "Natural Process", "Step"],
+ "relationships": ["USED_FOR", "USED_BY", "USED_WITH", "USED_IN"]
+}}
 Output:
-["CREATED": ["CREATED_FOR", "CREATED_TO", "CREATED"],"PLACE": ["PLACE", "LOCATION", "VENUE"]]
+{{
+ "nodes": {{
+   "Process": ["Process", "Process_Step", "Step", "Procedure", "Method", "Natural Process"]
+ }},
+ "relationships": {{
+   "USED": ["USED_FOR", "USED_BY", "USED_WITH", "USED_IN"]
+ }}
+}}
+### 6. Key Rule
+If any item cannot be grouped, it must remain in its own category using its original name. Do not repeat values or create incorrect mappings.
+Use these rules to group and name categories accurately without introducing errors or new types.
 """
 
 ADDITIONAL_INSTRUCTIONS = """Your goal is to identify and categorize entities while ensuring that specific data 

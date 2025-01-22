@@ -540,7 +540,7 @@ export function isExpired(itemdate: Date) {
 
 export function isFileReadyToProcess(file: CustomFile, withLocalCheck: boolean) {
   if (withLocalCheck) {
-    return file.fileSource === 'local file' && (file.status === 'New');
+    return file.fileSource === 'local file' && file.status === 'New';
   }
   return file.status === 'New' || file.status == 'Ready to Reprocess';
 }

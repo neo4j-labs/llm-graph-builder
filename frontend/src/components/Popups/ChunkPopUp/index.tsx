@@ -43,7 +43,7 @@ const ChunkPopUp = ({
             <Typography variant='h2'>Text Chunks</Typography>
             <Typography variant='body-medium' className='mb-2'>
               These text chunks are extracted to build a knowledge graph and enable accurate information retrieval using
-              a different retrival strategies
+              a different retrieval strategies
             </Typography>
           </div>
         </div>
