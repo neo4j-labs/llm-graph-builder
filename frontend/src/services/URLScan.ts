@@ -12,10 +12,6 @@ const urlScanAPI = async (props: ScanProps) => {
         s3url = props?.urlParam;
       }
     }
-    formData.append('uri', props?.userCredentials?.uri ?? '');
-    formData.append('database', props?.userCredentials?.database ?? '');
-    formData.append('userName', props?.userCredentials?.userName ?? '');
-    formData.append('password', props?.userCredentials?.password ?? '');
     if (props.source_type === 's3 bucket') {
       formData.append('source_url', s3url ?? '');
     } else {

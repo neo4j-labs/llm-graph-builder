@@ -1,6 +1,6 @@
 import { Checkbox, DataGrid, DataGridComponents, Flex, TextLink, Typography, useMediaQuery } from '@neo4j-ndl/react';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { UserCredentials, orphanNodeProps } from '../../../../types';
+import { orphanNodeProps } from '../../../../types';
 import { getOrphanNodes } from '../../../../services/GetOrphanNodes';
 import { useCredentials } from '../../../../context/UserCredentials';
 import Legend from '../../../UI/Legend';
@@ -48,7 +48,7 @@ export default function DeletePopUpForOrphanNodes({
   const fetchOrphanNodes = useCallback(async () => {
     try {
       setLoading(true);
-      const apiresponse = await getOrphanNodes(userCredentials as UserCredentials);
+      const apiresponse = await getOrphanNodes();
       setLoading(false);
       if (apiresponse.data.data.length) {
         setOrphanNodes(apiresponse.data.data);
@@ -62,7 +62,7 @@ export default function DeletePopUpForOrphanNodes({
       setLoading(false);
       console.log(error);
     }
-  }, [userCredentials]);
+  }, []);
 
   useEffect(() => {
     if (userCredentials != null) {
@@ -78,15 +78,7 @@ export default function DeletePopUpForOrphanNodes({
   const columnHelper = createColumnHelper<orphanNodeProps>();
 
   const handleOrphanNodeClick = (elementId: string, viewMode: string) => {
-    handleGraphNodeClick(
-      userCredentials as UserCredentials,
-      elementId,
-      viewMode,
-      setNeoNodes,
-      setNeoRels,
-      setOpenGraphView,
-      setViewPoint
-    );
+    handleGraphNodeClick(elementId, viewMode, setNeoNodes, setNeoRels, setOpenGraphView, setViewPoint);
   };
 
   const columns = useMemo(

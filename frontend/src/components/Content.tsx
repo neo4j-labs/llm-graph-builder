@@ -4,15 +4,7 @@ import { Button, Typography, Flex, StatusIndicator, useMediaQuery } from '@neo4j
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { extractAPI } from '../utils/FileAPI';
-import {
-  BannerAlertProps,
-  ContentProps,
-  CustomFile,
-  OptionType,
-  UserCredentials,
-  chunkdata,
-  FileTableHandle,
-} from '../types';
+import { BannerAlertProps, ContentProps, CustomFile, OptionType, chunkdata, FileTableHandle } from '../types';
 import deleteAPI from '../services/DeleteFiles';
 import { postProcessing } from '../services/PostProcessing';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
@@ -157,7 +149,7 @@ const Content: React.FC<ContentProps> = ({
                 (task) => task !== 'graph_schema_consolidation' && task !== 'enable_communities'
               )
             : postProcessingTasks.filter((task) => task !== 'enable_communities');
-          const response = await postProcessing(userCredentials as UserCredentials, payload);
+          const response = await postProcessing(payload);
           if (response.data.status === 'Success') {
             const communityfiles = response.data?.data;
             if (Array.isArray(communityfiles) && communityfiles.length) {
@@ -220,7 +212,7 @@ const Content: React.FC<ContentProps> = ({
   };
   const getChunks = async (name: string, pageNo: number) => {
     toggleChunksLoading();
-    const response = await getChunkText(userCredentials as UserCredentials, name, pageNo);
+    const response = await getChunkText(name, pageNo);
     setTextChunks(response.data.data.pageitems);
     if (!totalPageCount) {
       setTotalPageCount(response.data.data.total_pages);
@@ -281,7 +273,6 @@ const Content: React.FC<ContentProps> = ({
 
       const apiResponse = await extractAPI(
         fileItem.model,
-        userCredentials as UserCredentials,
         fileItem.fileSource,
         fileItem.retryOption ?? '',
         fileItem.sourceUrl,
@@ -393,7 +384,7 @@ const Content: React.FC<ContentProps> = ({
         />
       );
       try {
-        const response = await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
+        const response = await postProcessing(postProcessingTasks);
         if (response.data.status === 'Success') {
           const communityfiles = response.data?.data;
           if (Array.isArray(communityfiles) && communityfiles.length) {
@@ -561,7 +552,7 @@ const Content: React.FC<ContentProps> = ({
     setConnectionStatus(false);
     localStorage.removeItem('password');
     localStorage.removeItem('selectedModel');
-    setUserCredentials({ uri: '', password: '', userName: '', database: '' });
+    setUserCredentials({ uri: '', password: '', userName: '', database: '', email: '' });
     setSelectedNodes([]);
     setSelectedRels([]);
     localStorage.removeItem('instructions');
@@ -586,7 +577,7 @@ const Content: React.FC<ContentProps> = ({
   const retryHandler = async (filename: string, retryoption: string) => {
     try {
       setRetryLoading(true);
-      const response = await retry(userCredentials as UserCredentials, filename, retryoption);
+      const response = await retry(filename, retryoption);
       setRetryLoading(false);
       if (response.data.status === 'Failure') {
         throw new Error(response.data.error);
@@ -677,11 +668,7 @@ const Content: React.FC<ContentProps> = ({
   const handleDeleteFiles = async (deleteEntities: boolean) => {
     try {
       setIsDeleteLoading(true);
-      const response = await deleteAPI(
-        userCredentials as UserCredentials,
-        childRef.current?.getSelectedRows() as CustomFile[],
-        deleteEntities
-      );
+      const response = await deleteAPI(childRef.current?.getSelectedRows() as CustomFile[], deleteEntities);
       queue.clear();
       setProcessedCount(0);
       setRowSelection({});
@@ -716,7 +703,7 @@ const Content: React.FC<ContentProps> = ({
     const selectedRows = childRef.current?.getSelectedRows();
     if (selectedRows?.length) {
       const expiredFilesExists = selectedRows.some(
-        (c) => c.status !== 'Ready to Reprocess' && isExpired((c?.createdAt as Date) ?? new Date())
+        (c) => isFileReadyToProcess(c, true) && isExpired((c?.createdAt as Date) ?? new Date())
       );
       const largeFileExists = selectedRows.some(
         (c) => isFileReadyToProcess(c, true) && typeof c.size === 'number' && c.size > largeFileSize
@@ -729,7 +716,7 @@ const Content: React.FC<ContentProps> = ({
         handleGenerateGraph(selectedRows.filter((f) => isFileReadyToProcess(f, false)));
       }
     } else if (filesData.length) {
-      const expiredFileExists = filesData.some((c) => isExpired(c?.createdAt as Date));
+      const expiredFileExists = filesData.some((c) => isFileReadyToProcess(c, true) && isExpired(c?.createdAt as Date));
       const largeFileExists = filesData.some(
         (c) => isFileReadyToProcess(c, true) && typeof c.size === 'number' && c.size > largeFileSize
       );
