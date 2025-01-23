@@ -9,7 +9,6 @@ import {
   GraphType,
   GraphViewModalProps,
   Scheme,
-  UserCredentials,
 } from '../../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
 import NVL from '@neo4j-nvl/base';
@@ -114,11 +113,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       const nodeRelationshipData =
         viewPoint === graphLabels.showGraphView
           ? await graphQueryAPI(
-              userCredentials as UserCredentials,
               graphQuery,
               selectedRows?.map((f) => f.name)
             )
-          : await graphQueryAPI(userCredentials as UserCredentials, graphQuery, [inspectedName ?? '']);
+          : await graphQueryAPI(graphQuery, [inspectedName ?? '']);
       return nodeRelationshipData;
     } catch (error: any) {
       console.log(error);

@@ -1,12 +1,8 @@
 import api from '../API/Index';
 
-const connectAPI = async (connectionURI: string, username: string, password: string, database: string) => {
+const connectAPI = async () => {
   try {
     const formData = new FormData();
-    formData.append('uri', connectionURI ?? '');
-    formData.append('database', database ?? '');
-    formData.append('userName', username ?? '');
-    formData.append('password', password ?? '');
     const response = await api.post(`/connect`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',

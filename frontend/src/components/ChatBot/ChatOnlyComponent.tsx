@@ -32,6 +32,7 @@ const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
     const encodedPassword = urlParams.get('password');
     const database = urlParams.get('database');
     const port = urlParams.get('port');
+    const email = urlParams.get('email');
     const openModal = urlParams.get('open') === 'true';
     if (openModal || !(uri && user && encodedPassword && database && port)) {
       setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
@@ -42,6 +43,7 @@ const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
         password: atob(atob(encodedPassword)),
         database,
         port,
+        email: email ?? '',
       };
       setShowBackButton();
       setUserCredentials(credentialsForAPI);

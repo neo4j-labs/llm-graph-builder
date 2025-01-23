@@ -1,8 +1,7 @@
 import { TextInput } from '@neo4j-ndl/react';
 import React, { useState } from 'react';
-import { CustomFile, CustomFileBase, S3File, S3ModalProps, UserCredentials } from '../../../types';
+import { CustomFile, CustomFileBase, S3File, S3ModalProps } from '../../../types';
 import { urlScanAPI } from '../../../services/URLScan';
-import { useCredentials } from '../../../context/UserCredentials';
 import { validation } from '../../../utils/Utils';
 import { useFileContext } from '../../../context/UsersFiles';
 import { v4 as uuidv4 } from 'uuid';
@@ -17,7 +16,6 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [isFocused, setIsFocused] = useState<boolean>(false);
   const [isValid, setValid] = useState<boolean>(false);
-  const { userCredentials } = useCredentials();
   const { setFilesData, model, filesData } = useFileContext();
 
   const reset = () => {
@@ -64,8 +62,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         setStatus('info');
         setStatusMessage('Scanning...');
         const apiResponse = await urlScanAPI({
-          urlParam: url,
-          userCredentials: userCredentials as UserCredentials,
+          urlParam: url.trim(),
           model: model,
           accessKey: accessKey,
           secretKey: secretKey,
