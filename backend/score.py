@@ -80,7 +80,6 @@ class CustomGZipMiddleware:
         )
         await gzip_middleware(scope, receive, send)
 app = FastAPI()
-
 app.add_middleware(XContentTypeOptions)
 app.add_middleware(XFrame, Option={'X-Frame-Options': 'DENY'})
 app.add_middleware(CustomGZipMiddleware, minimum_size=1000, compresslevel=5,paths=["/sources_list","/url/scan","/extract","/chat_bot","/chunk_entities","/get_neighbours","/graph_query","/schema","/populate_graph_schema","/get_unconnected_nodes_list","/get_duplicate_nodes","/fetch_chunktext"])
@@ -353,8 +352,6 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
             await asyncio.to_thread(create_communities, uri, userName, password, database)  
             
             logging.info(f'created communities')
-
-
         graph = create_graph_database_connection(uri, userName, password, database)   
         graphDb_data_Access = graphDBdataAccess(graph)
         document_name = ""

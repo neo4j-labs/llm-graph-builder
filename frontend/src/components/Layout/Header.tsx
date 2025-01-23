@@ -42,7 +42,6 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
   const { connectionStatus } = useCredentials();
   const chatAnchor = useRef<HTMLDivElement>(null);
   const [showChatModeOption, setShowChatModeOption] = useState<boolean>(false);
-
   const openChatPopout = useCallback(() => {
     let session = localStorage.getItem('neo4j.connection');
     const isLoading = getIsLoading(messages);

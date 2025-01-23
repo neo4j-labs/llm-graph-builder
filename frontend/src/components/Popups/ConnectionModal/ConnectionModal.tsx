@@ -44,7 +44,6 @@ export default function ConnectionModal({
   const [password, setPassword] = useState<string>('');
   const [connectionMessage, setMessage] = useState<Message | null>({ type: 'unknown', content: '' });
   const { user } = useAuth0();
-
   const {
     setUserCredentials,
     userCredentials,
