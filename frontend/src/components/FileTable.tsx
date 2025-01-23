@@ -65,6 +65,7 @@ import { batchSize, largeFileSize, llms } from '../utils/Constants';
 import { showErrorToast, showNormalToast } from '../utils/toasts';
 import { ThemeWrapperContext } from '../context/ThemeWrapper';
 import BreakDownPopOver from './BreakDownPopOver';
+import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
 
 let onlyfortheFirstRender = true;
 
@@ -72,11 +73,11 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
   const { connectionStatus, setConnectionStatus, onInspect, onRetry, onChunkView } = props;
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } =
     useFileContext();
-  const { userCredentials, isReadOnlyUser } = useCredentials();
+  const { userCredentials, isReadOnlyUser, chunksToBeProces } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [statusFilter, setstatusFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('');
   const [filetypeFilter, setFiletypeFilter] = useState<string>('');
   const [fileSourceFilter, setFileSourceFilter] = useState<string>('');
   const [llmtypeFilter, setLLmtypeFilter] = useState<string>('');
@@ -84,7 +85,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
   const [_, copy] = useCopyToClipboard();
   const { colorMode } = useContext(ThemeWrapperContext);
   const [copyRow, setCopyRow] = useState<boolean>(false);
-  const largedesktops = useMediaQuery(`(min-width:1440px )`);
+  const islargeDesktop = useMediaQuery(`(min-width:1440px )`);
 
   const tableRef = useRef(null);
 
@@ -286,7 +287,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                   </span>
                 ),
                 onClick: () => {
-                  setstatusFilter('All');
+                  setStatusFilter('All');
                   table.getColumn('status')?.setFilterValue(true);
                   skipPageResetRef.current = true;
                 },
@@ -298,7 +299,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                   </span>
                 ),
                 onClick: () => {
-                  setstatusFilter('Completed');
+                  setStatusFilter('Completed');
                   table.getColumn('status')?.setFilterValue(true);
                   skipPageResetRef.current = true;
                 },
@@ -310,7 +311,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                   </span>
                 ),
                 onClick: () => {
-                  setstatusFilter('New');
+                  setStatusFilter('New');
                   table.getColumn('status')?.setFilterValue(true);
                   skipPageResetRef.current = true;
                 },
@@ -322,7 +323,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                   </span>
                 ),
                 onClick: () => {
-                  setstatusFilter('Failed');
+                  setStatusFilter('Failed');
                   table.getColumn('status')?.setFilterValue(true);
                   skipPageResetRef.current = true;
                 },
@@ -1009,7 +1010,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
             }}
             isLoading={isLoading}
             rootProps={{
-              className: `absolute h-[67%] left-10 filetable ${!largedesktops ? 'top-[17%]' : 'top-[14%]'}`,
+              className: `absolute h-[67%] left-10 filetable ${!islargeDesktop ? 'top-[17%]' : 'top-[14%]'}`,
             }}
             components={{
               Body: () => (
@@ -1019,6 +1020,22 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                   }}
                 />
               ),
+              TableResults: () => {
+                if (connectionStatus) {
+                  return (
+                    <DataGridComponents.TableResults>
+                      <Flex flexDirection='row' gap='0' alignItems='center'>
+                        <span>
+                          <InformationCircleIconOutline className='n-size-token-6' />
+                        </span>
+                        {`Large files may be partially processed up to ${chunksToBeProces} chunks due to resource limits.`}
+                        <span></span>
+                      </Flex>
+                    </DataGridComponents.TableResults>
+                  );
+                }
+                return <DataGridComponents.TableResults></DataGridComponents.TableResults>;
+              },
               PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
                 return (
                   <DataGridComponents.PaginationNumericButton

@@ -361,7 +361,6 @@ async def processing_source(uri, userName, password, database, model, file_name,
 
       logging.info('Update the status as Processing')
       update_graph_chunk_processed = int(os.environ.get('UPDATE_GRAPH_CHUNKS_PROCESSED'))
-      chunk_to_be_processed = int(os.environ.get('CHUNKS_TO_BE_PROCESSED', '50'))
       # selected_chunks = []
       is_cancelled_status = False
       job_status = "Completed"
@@ -676,7 +675,7 @@ def get_labels_and_relationtypes(graph):
   query = """
           RETURN collect { 
           CALL db.labels() yield label 
-          WHERE NOT label  IN ['Chunk','_Bloom_Perspective_', '__Community__', '__Entity__'] 
+          WHERE NOT label  IN ['Document','Chunk','_Bloom_Perspective_', '__Community__', '__Entity__'] 
           return label order by label limit 100 } as labels, 
           collect { 
           CALL db.relationshipTypes() yield relationshipType  as type 

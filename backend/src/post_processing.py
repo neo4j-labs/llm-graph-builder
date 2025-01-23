@@ -8,7 +8,8 @@ from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from src.shared.constants import GRAPH_CLEANUP_PROMPT
 from src.llm import get_llm
-from src.main import get_labels_and_relationtypes
+from src.graphDB_dataAccess import graphDBdataAccess
+import time 
 
 DROP_INDEX_QUERY = "DROP INDEX entities IF EXISTS;"
 LABELS_QUERY = "CALL db.labels()"
@@ -195,50 +196,35 @@ def update_embeddings(rows, graph):
     return graph.query(query,params={'rows':rows})          
 
 def graph_schema_consolidation(graph):
-    nodes_and_relations = get_labels_and_relationtypes(graph)
-    logging.info(f"nodes_and_relations in existing graph : {nodes_and_relations}")
-    node_labels = []
-    relation_labels = []
-    
-    node_labels.extend(nodes_and_relations[0]['labels'])
-    relation_labels.extend(nodes_and_relations[0]['relationshipTypes'])
-    
+    graphDb_data_Access = graphDBdataAccess(graph)
+    node_labels,relation_labels = graphDb_data_Access.get_nodelabels_relationships()
     parser = JsonOutputParser()
-    prompt = ChatPromptTemplate(messages=[("system",GRAPH_CLEANUP_PROMPT),("human", "{input}")],
-                                            partial_variables={"format_instructions": parser.get_format_instructions()})
-    
-    graph_cleanup_model = os.getenv("GRAPH_CLEANUP_MODEL",'openai_gpt_4o')
+    prompt = ChatPromptTemplate(
+        messages=[("system", GRAPH_CLEANUP_PROMPT), ("human", "{input}")],
+        partial_variables={"format_instructions": parser.get_format_instructions()}
+    )
+    graph_cleanup_model = os.getenv("GRAPH_CLEANUP_MODEL", 'openai_gpt_4o')
     llm, _ = get_llm(graph_cleanup_model)
     chain = prompt | llm | parser
-    nodes_dict = chain.invoke({'input':node_labels})
-    relation_dict = chain.invoke({'input':relation_labels})  
-    
-    node_match = {}
-    relation_match = {}
-    for new_label , values in nodes_dict.items() :
-        for old_label in values:
-            if new_label != old_label:
-                node_match[old_label]=new_label
-            
-    for new_label , values in relation_dict.items() :
-        for old_label in values:
-            if new_label != old_label:
-                relation_match[old_label]=new_label 
 
-    logging.info(f"updated node labels : {node_match}")   
-    logging.info(f"updated relationship labels : {relation_match}") 
+    nodes_relations_input = {'nodes': node_labels, 'relationships': relation_labels}
+    mappings = chain.invoke({'input': nodes_relations_input})
+    node_mapping = {old: new for new, old_list in mappings['nodes'].items() for old in old_list if new != old}
+    relation_mapping = {old: new for new, old_list in mappings['relationships'].items() for old in old_list if new != old}
 
-    # Update node labels in graph
-    for old_label, new_label in node_match.items():
-        query = f"""
-                MATCH (n:`{old_label}`)
-                SET n:`{new_label}`
-                REMOVE n:`{old_label}`
-                """
-        graph.query(query)
+    logging.info(f"Node Labels: Total = {len(node_labels)}, Reduced to = {len(set(node_mapping.values()))} (from {len(node_mapping)})")
+    logging.info(f"Relationship Types: Total = {len(relation_labels)}, Reduced to = {len(set(relation_mapping.values()))} (from {len(relation_mapping)})")
+
+    if node_mapping:
+        for old_label, new_label in node_mapping.items():
+            query = f"""
+                    MATCH (n:`{old_label}`)
+                    SET n:`{new_label}`
+                    REMOVE n:`{old_label}`
+                    """
+            graph.query(query)
     
-    # Update relation types in graph
-    for old_label, new_label in relation_match.items():
+    for old_label, new_label in relation_mapping.items():
         query = f"""
                 MATCH (n)-[r:`{old_label}`]->(m)
                 CREATE (n)-[r2:`{new_label}`]->(m)

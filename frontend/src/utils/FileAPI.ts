@@ -1,12 +1,11 @@
 import { Method } from 'axios';
 import { url } from './Utils';
-import { UserCredentials, ExtractParams, UploadParams } from '../types';
+import { ExtractParams, UploadParams } from '../types';
 import { apiCall } from '../services/CommonAPI';
 
 // Upload Call
 export const uploadAPI = async (
   file: Blob,
-  userCredentials: UserCredentials,
   model: string,
   chunkNumber: number,
   totalChunks: number,
@@ -14,16 +13,14 @@ export const uploadAPI = async (
 ): Promise<any> => {
   const urlUpload = `${url()}/upload`;
   const method: Method = 'post';
-  const commonParams: UserCredentials = userCredentials;
   const additionalParams: UploadParams = { file, model, chunkNumber, totalChunks, originalname };
-  const response = await apiCall(urlUpload, method, commonParams, additionalParams);
+  const response = await apiCall(urlUpload, method, additionalParams);
   return response;
 };
 
 // Extract call
 export const extractAPI = async (
   model: string,
-  userCredentials: UserCredentials,
   source_type: string,
   retry_condition: string,
   source_url?: string,
@@ -41,7 +38,6 @@ export const extractAPI = async (
 ): Promise<any> => {
   const urlExtract = `${url()}/extract`;
   const method: Method = 'post';
-  const commonParams: UserCredentials = userCredentials;
   let additionalParams: ExtractParams;
   if (source_type === 's3 bucket') {
     additionalParams = {
@@ -116,6 +112,6 @@ export const extractAPI = async (
       additional_instructions,
     };
   }
-  const response = await apiCall(urlExtract, method, commonParams, additionalParams);
+  const response = await apiCall(urlExtract, method, additionalParams);
   return response;
 };

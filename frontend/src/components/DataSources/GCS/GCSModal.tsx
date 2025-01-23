@@ -1,6 +1,5 @@
 import { TextInput } from '@neo4j-ndl/react';
 import { useCallback, useState } from 'react';
-import { useCredentials } from '../../../context/UserCredentials';
 import { useFileContext } from '../../../context/UsersFiles';
 import { urlScanAPI } from '../../../services/URLScan';
 import { CustomFileBase, GCSModalProps, fileName, nonoautherror } from '../../../types';
@@ -12,12 +11,11 @@ import { buttonCaptions } from '../../../utils/Constants';
 import { showErrorToast, showNormalToast } from '../../../utils/toasts';
 
 const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) => {
-  const [bucketName, setbucketName] = useState<string>('');
+  const [bucketName, setBucketName] = useState<string>('');
   const [folderName, setFolderName] = useState<string>('');
-  const [projectId, setprojectId] = useState<string>('');
+  const [projectId, setProjectId] = useState<string>('');
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
   const [statusMessage, setStatusMessage] = useState<string>('');
-  const { userCredentials } = useCredentials();
   const { showAlert } = useAlertContext();
 
   const { setFilesData, model, filesData } = useFileContext();
@@ -42,9 +40,9 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
   };
 
   const reset = () => {
-    setbucketName('');
+    setBucketName('');
     setFolderName('');
-    setprojectId('');
+    setProjectId('');
   };
 
   const googleLogin = useGoogleLogin({
@@ -54,7 +52,6 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
         setStatusMessage('Loading...');
         openGCSModal();
         const apiResponse = await urlScanAPI({
-          userCredentials,
           model,
           accessKey: '',
           secretKey: '',
@@ -203,7 +200,7 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
             isFluid={true}
             isRequired={true}
             onChange={(e) => {
-              setprojectId(e.target.value);
+              setProjectId(e.target.value);
             }}
           ></TextInput>
           <TextInput
@@ -220,7 +217,7 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
             isFluid={true}
             isRequired={true}
             onChange={(e) => {
-              setbucketName(e.target.value);
+              setBucketName(e.target.value);
             }}
           />
           <TextInput

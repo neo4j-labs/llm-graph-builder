@@ -536,3 +536,29 @@ class graphDBdataAccess:
                     "relationshipCount" : relationshipCount
                     }
         return response
+    
+    def get_nodelabels_relationships(self):
+        node_query = """
+                    CALL db.labels() YIELD label
+                    WITH label
+                    WHERE NOT label IN ['Document', 'Chunk', '_Bloom_Perspective_', '__Community__', '__Entity__']
+                    CALL apoc.cypher.run("MATCH (n:`" + label + "`) RETURN count(n) AS count",{}) YIELD value
+                    WHERE value.count > 0
+                    RETURN label order by label
+                    """
+
+        relation_query = """
+                CALL db.relationshipTypes() yield relationshipType
+                WHERE NOT relationshipType  IN ['PART_OF', 'NEXT_CHUNK', 'HAS_ENTITY', '_Bloom_Perspective_','FIRST_CHUNK','SIMILAR','IN_COMMUNITY','PARENT_COMMUNITY'] 
+                return relationshipType order by relationshipType
+                """
+            
+        try:
+            node_result = self.execute_query(node_query)
+            node_labels = [record["label"] for record in node_result]
+            relationship_result = self.execute_query(relation_query)
+            relationship_types = [record["relationshipType"] for record in relationship_result]
+            return node_labels,relationship_types
+        except Exception as e:
+            print(f"Error in getting node labels/relationship types from db: {e}")
+            return []

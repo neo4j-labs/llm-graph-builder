@@ -1,9 +1,8 @@
 import { getNeighbors } from '../../services/GraphQuery';
-import { NeoNode, NeoRelationship, UserCredentials } from '../../types';
+import { NeoNode, NeoRelationship } from '../../types';
 import { showNormalToast } from '../../utils/toasts';
 
 export const handleGraphNodeClick = async (
-  userCredentials: UserCredentials,
   elementId: string,
   viewMode: string,
   setNeoNodes: React.Dispatch<React.SetStateAction<NeoNode[]>>,
@@ -16,7 +15,7 @@ export const handleGraphNodeClick = async (
     setLoadingGraphView(true);
   }
   try {
-    const result = await getNeighbors(userCredentials, elementId);
+    const result = await getNeighbors(elementId);
     if (result && result.data.data.nodes.length > 0) {
       let { nodes } = result.data.data;
       if (viewMode === 'Chunk') {
