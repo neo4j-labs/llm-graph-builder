@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from 'react';
-import { CustomFile, CustomFileBase, ScanProps, UserCredentials } from '../types';
+import { CustomFile, CustomFileBase, ScanProps } from '../types';
 import { useFileContext } from '../context/UsersFiles';
-import { useCredentials } from '../context/UserCredentials';
 import { urlScanAPI } from '../services/URLScan';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -19,7 +18,6 @@ export default function useSourceInput(
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
   const [statusMessage, setStatusMessage] = useState<string>('');
   const { setFilesData, model, filesData } = useFileContext();
-  const { userCredentials } = useCredentials();
 
   const onChangeHandler: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     setIsFocused(true);
@@ -73,7 +71,6 @@ export default function useSourceInput(
           setIsLoading(true);
           setStatusMessage('Scanning...');
           const params: ScanProps = {
-            userCredentials: userCredentials as UserCredentials,
             model: model,
             source_type: fileSource,
           };
