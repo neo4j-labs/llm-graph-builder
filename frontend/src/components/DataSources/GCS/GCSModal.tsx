@@ -1,6 +1,5 @@
 import { TextInput } from '@neo4j-ndl/react';
 import { useCallback, useState } from 'react';
-import { useCredentials } from '../../../context/UserCredentials';
 import { useFileContext } from '../../../context/UsersFiles';
 import { urlScanAPI } from '../../../services/URLScan';
 import { CustomFileBase, GCSModalProps, fileName, nonoautherror } from '../../../types';
@@ -17,7 +16,6 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
   const [projectId, setProjectId] = useState<string>('');
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
   const [statusMessage, setStatusMessage] = useState<string>('');
-  const { userCredentials } = useCredentials();
   const { showAlert } = useAlertContext();
 
   const { setFilesData, model, filesData } = useFileContext();
@@ -54,7 +52,6 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
         setStatusMessage('Loading...');
         openGCSModal();
         const apiResponse = await urlScanAPI({
-          userCredentials,
           model,
           accessKey: '',
           secretKey: '',
