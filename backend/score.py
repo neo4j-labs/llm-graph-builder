@@ -359,8 +359,6 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
             await asyncio.to_thread(create_communities, uri, userName, password, database)  
             
             logging.info(f'created communities')
-
-
         graph = create_graph_database_connection(uri, userName, password, database)   
         graphDb_data_Access = graphDBdataAccess(graph)
         document_name = ""

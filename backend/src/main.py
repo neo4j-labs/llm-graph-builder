@@ -384,7 +384,6 @@ async def processing_source(uri, userName, password, database, model, file_name,
 
       logging.info('Update the status as Processing')
       update_graph_chunk_processed = int(os.environ.get('UPDATE_GRAPH_CHUNKS_PROCESSED'))
-      
       # selected_chunks = []
       is_cancelled_status = False
       job_status = "Completed"
