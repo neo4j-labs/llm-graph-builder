@@ -6,13 +6,13 @@ import App from './App.tsx';
 import { SKIP_AUTH } from './utils/Constants.ts';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-    <BrowserRouter>
-      {SKIP_AUTH ? (
+  <BrowserRouter>
+    {SKIP_AUTH ? (
+      <App />
+    ) : (
+      <Auth0ProviderWithHistory>
         <App />
-      ) : (
-        <Auth0ProviderWithHistory>
-          <App />
-        </Auth0ProviderWithHistory>
-      )}
-    </BrowserRouter>
+      </Auth0ProviderWithHistory>
+    )}
+  </BrowserRouter>
 );
