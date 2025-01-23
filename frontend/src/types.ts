@@ -51,6 +51,7 @@ export type UserCredentials = {
   userName: string;
   password: string;
   database: string;
+  email: string;
 } & { [key: string]: any };
 
 export interface SourceNode extends Omit<CustomFileBase, 'relationshipsCount' | 'createdAt'> {
@@ -335,7 +336,6 @@ export interface ServerResponse extends Partial<AxiosResponse> {
 }
 export interface ScanProps {
   urlParam?: string;
-  userCredentials: UserCredentials | null;
   model?: string;
   accessKey?: string;
   secretKey?: string;
@@ -759,6 +759,8 @@ export interface ContextProps {
   setShowDisconnectButton: Dispatch<SetStateAction<boolean>>;
   isGCSActive: boolean;
   setIsGCSActive: Dispatch<SetStateAction<boolean>>;
+  chunksToBeProces: number;
+  setChunksToBeProces: Dispatch<SetStateAction<number>>;
 }
 export interface MessageContextType {
   messages: Messages[] | [];

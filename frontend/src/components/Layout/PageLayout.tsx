@@ -15,6 +15,8 @@ import FallBackDialog from '../UI/FallBackDialog';
 import { envConnectionAPI } from '../../services/ConnectAPI';
 import { healthStatus } from '../../services/HealthStatus';
 import { useNavigate } from 'react-router';
+import { useAuth0 } from '@auth0/auth0-react';
+import { createDefaultFormData } from '../../API/Index';
 
 const ConnectionModal = lazy(() => import('../Popups/ConnectionModal/ConnectionModal'));
 
@@ -25,26 +27,28 @@ const PageLayout: React.FC = () => {
     vectorIndexMisMatch: false,
     chunksExistsWithDifferentDimension: false,
   });
-  const largedesktops = useMediaQuery(`(min-width:1440px )`);
+  const isLargeDesktop = useMediaQuery(`(min-width:1440px )`);
   const { userCredentials, connectionStatus, setIsReadOnlyUser } = useCredentials();
-  const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(Boolean(largedesktops));
-  const [isRightExpanded, setIsRightExpanded] = useState<boolean>(Boolean(largedesktops));
+  const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(Boolean(isLargeDesktop));
+  const [isRightExpanded, setIsRightExpanded] = useState<boolean>(Boolean(isLargeDesktop));
   const [showChatBot, setShowChatBot] = useState<boolean>(false);
   const [showDrawerChatbot, setShowDrawerChatbot] = useState<boolean>(true);
   const [showEnhancementDialog, toggleEnhancementDialog] = useReducer((s) => !s, false);
   const [shows3Modal, toggleS3Modal] = useReducer((s) => !s, false);
   const [showGCSModal, toggleGCSModal] = useReducer((s) => !s, false);
   const [showGenericModal, toggleGenericModal] = useReducer((s) => !s, false);
+  const { user, isAuthenticated } = useAuth0();
+
   const navigate = useNavigate();
   const toggleLeftDrawer = () => {
-    if (largedesktops) {
+    if (isLargeDesktop) {
       setIsLeftExpanded(!isLeftExpanded);
     } else {
       setIsLeftExpanded(false);
     }
   };
   const toggleRightDrawer = () => {
-    if (largedesktops) {
+    if (isLargeDesktop) {
       setIsRightExpanded(!isRightExpanded);
     } else {
       setIsRightExpanded(false);
@@ -62,6 +66,7 @@ const PageLayout: React.FC = () => {
     setShowDisconnectButton,
     showDisconnectButton,
     setIsGCSActive,
+    setChunksToBeProces,
   } = useCredentials();
   const { cancel } = useSpeechSynthesis();
 
@@ -82,9 +87,11 @@ const PageLayout: React.FC = () => {
       };
       const setUserCredentialsLocally = (credentials: any) => {
         setUserCredentials(credentials);
+        createDefaultFormData(credentials);
         setIsGCSActive(credentials.isGCSActive ?? false);
         setGdsActive(credentials.isgdsActive);
         setIsReadOnlyUser(credentials.isReadonlyUser);
+        setChunksToBeProces(credentials.chunksTobeProcess);
         localStorage.setItem(
           'neo4j.connection',
           JSON.stringify({
@@ -96,6 +103,8 @@ const PageLayout: React.FC = () => {
             isReadOnlyUser: credentials.isReadonlyUser,
             isgdsActive: credentials.isgdsActive,
             isGCSActive: credentials.isGCSActive,
+            chunksTobeProcess: credentials.chunksTobeProcess,
+            email: credentials.email,
           })
         );
       };
@@ -108,12 +117,15 @@ const PageLayout: React.FC = () => {
         try {
           const parsedConnection = JSON.parse(neo4jConnection);
           if (parsedConnection.uri && parsedConnection.user && parsedConnection.password && parsedConnection.database) {
-            setUserCredentials({
+            const credentials = {
               uri: parsedConnection.uri,
               userName: parsedConnection.user,
               password: atob(parsedConnection.password),
               database: parsedConnection.database,
-            });
+              email: parsedConnection.email,
+            };
+            setUserCredentials(credentials);
+            createDefaultFormData(credentials);
             setGdsActive(parsedConnection.isgdsActive);
             setIsReadOnlyUser(parsedConnection.isReadOnlyUser);
             setIsGCSActive(parsedConnection.isGCSActive);
@@ -158,7 +170,10 @@ const PageLayout: React.FC = () => {
             isReadonlyUser: !connectionData.data.write_access,
             isgdsActive: connectionData.data.gds_status,
             isGCSActive: connectionData?.data?.gcs_file_cache === 'True',
+            chunksTobeProcess: parseInt(connectionData.data.chunk_to_be_created),
+            email: user?.email ?? '',
           };
+          setChunksToBeProces(envCredentials.chunksTobeProcess);
           setIsGCSActive(envCredentials.isGCSActive);
           if (session) {
             const updated = updateSessionIfNeeded(envCredentials, session);
@@ -195,7 +210,7 @@ const PageLayout: React.FC = () => {
       }
     }
     initializeConnection();
-  }, []);
+  }, [isAuthenticated]);
 
   const deleteOnClick = async () => {
     try {
@@ -257,7 +272,7 @@ const PageLayout: React.FC = () => {
           }
         }}
       ></SchemaFromTextDialog>
-      {largedesktops ? (
+      {isLargeDesktop ? (
         <div
           className={`layout-wrapper ${!isLeftExpanded ? 'drawerdropzoneclosed' : ''} ${
             !isRightExpanded ? 'drawerchatbotclosed' : ''

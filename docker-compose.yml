@@ -63,6 +63,9 @@ services:
         - VITE_BATCH_SIZE=${VITE_BATCH_SIZE-2}
         - VITE_LLM_MODELS=${VITE_LLM_MODELS-}
         - VITE_LLM_MODELS_PROD=${VITE_LLM_MODELS_PROD-openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash}
+        - VITE_AUTH0_DOMAIN=${VITE_AUTH0_DOMAIN-}
+        - VITE_AUTH0_CLIENT_ID=${VITE_AUTH0_CLIENT_ID-}
+        - VITE_SKIP_AUTH=$VITE_SKIP_AUTH-true}
         - DEPLOYMENT_ENV=local
     volumes:
       - ./frontend:/app

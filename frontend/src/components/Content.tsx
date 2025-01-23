@@ -4,15 +4,7 @@ import { Button, Typography, Flex, StatusIndicator, useMediaQuery } from '@neo4j
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { extractAPI } from '../utils/FileAPI';
-import {
-  BannerAlertProps,
-  ContentProps,
-  CustomFile,
-  OptionType,
-  UserCredentials,
-  chunkdata,
-  FileTableHandle,
-} from '../types';
+import { BannerAlertProps, ContentProps, CustomFile, OptionType, chunkdata, FileTableHandle } from '../types';
 import deleteAPI from '../services/DeleteFiles';
 import { postProcessing } from '../services/PostProcessing';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
@@ -63,11 +55,12 @@ const Content: React.FC<ContentProps> = ({
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
   const [documentName, setDocumentName] = useState<string>('');
+  const [showConfirmationModal, setShowConfirmationModal] = useState<boolean>(false);
+  const [showExpirationModal, setShowExpirationModal] = useState<boolean>(false);
+  const [extractLoading, setIsExtractLoading] = useState<boolean>(false);
   const { setUserCredentials, userCredentials, setConnectionStatus, isGdsActive, isReadOnlyUser, isGCSActive } =
     useCredentials();
-  const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
-  const [showExpirationModal, setshowExpirationModal] = useState<boolean>(false);
-  const [extractLoading, setextractLoading] = useState<boolean>(false);
+
   const [retryFile, setRetryFile] = useState<string>('');
   const [retryLoading, setRetryLoading] = useState<boolean>(false);
   const [showRetryPopup, toggleRetryPopup] = useReducer((state) => !state, false);
@@ -104,9 +97,10 @@ const Content: React.FC<ContentProps> = ({
   const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView'>(
     'tableView'
   );
-  const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
-  const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
-    const hasSelections = useHasSelections(selectedNodes, selectedRels);
+  const [showDeletePopUp, setShowDeletePopUp] = useState<boolean>(false);
+  const [deleteLoading, setIsDeleteLoading] = useState<boolean>(false);
+
+  const hasSelections = useHasSelections(selectedNodes, selectedRels);
 
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
@@ -150,36 +144,40 @@ const Content: React.FC<ContentProps> = ({
               ? postProcessingTasks.filter((task) => task !== 'graph_schema_consolidation')
               : postProcessingTasks
             : hasSelections
-              ? postProcessingTasks.filter((task) => task !== 'graph_schema_consolidation' && task !== 'enable_communities')
-              : postProcessingTasks.filter((task) => task !== 'enable_communities');
-          const response = await postProcessing(userCredentials as UserCredentials, payload);
-          if (response.data.status === 'Success') {
-            const communityfiles = response.data?.data;
-            if (Array.isArray(communityfiles) && communityfiles.length) {
-              communityfiles?.forEach((c: any) => {
-                setFilesData((prev) => {
-                  return prev.map((f) => {
-                    if (f.name === c.filename) {
-                      return {
-                        ...f,
-                        chunkNodeCount: c.chunkNodeCount ?? 0,
-                        entityNodeCount: c.entityNodeCount ?? 0,
-                        communityNodeCount: c.communityNodeCount ?? 0,
-                        chunkRelCount: c.chunkRelCount ?? 0,
-                        entityEntityRelCount: c.entityEntityRelCount ?? 0,
-                        communityRelCount: c.communityRelCount ?? 0,
-                        nodesCount: c.nodeCount,
-                        relationshipsCount: c.relationshipCount,
-                      };
-                    }
-                    return f;
+            ? postProcessingTasks.filter(
+                (task) => task !== 'graph_schema_consolidation' && task !== 'enable_communities'
+              )
+            : postProcessingTasks.filter((task) => task !== 'enable_communities');
+          if (payload.length) {
+            const response = await postProcessing(payload);
+            if (response.data.status === 'Success') {
+              const communityfiles = response.data?.data;
+              if (Array.isArray(communityfiles) && communityfiles.length) {
+                communityfiles?.forEach((c: any) => {
+                  setFilesData((prev) => {
+                    return prev.map((f) => {
+                      if (f.name === c.filename) {
+                        return {
+                          ...f,
+                          chunkNodeCount: c.chunkNodeCount ?? 0,
+                          entityNodeCount: c.entityNodeCount ?? 0,
+                          communityNodeCount: c.communityNodeCount ?? 0,
+                          chunkRelCount: c.chunkRelCount ?? 0,
+                          entityEntityRelCount: c.entityEntityRelCount ?? 0,
+                          communityRelCount: c.communityRelCount ?? 0,
+                          nodesCount: c.nodeCount,
+                          relationshipsCount: c.relationshipCount,
+                        };
+                      }
+                      return f;
+                    });
                   });
                 });
-              });
+              }
+              showSuccessToast('All Q&A functionality is available now.');
+            } else {
+              throw new Error(response.data.error);
             }
-            showSuccessToast('All Q&A functionality is available now.');
-          } else {
-            throw new Error(response.data.error);
           }
         } catch (error) {
           if (error instanceof Error) {
@@ -215,7 +213,7 @@ const Content: React.FC<ContentProps> = ({
   };
   const getChunks = async (name: string, pageNo: number) => {
     toggleChunksLoading();
-    const response = await getChunkText(userCredentials as UserCredentials, name, pageNo);
+    const response = await getChunkText(name, pageNo);
     setTextChunks(response.data.data.pageitems);
     if (!totalPageCount) {
       setTotalPageCount(response.data.data.total_pages);
@@ -227,13 +225,13 @@ const Content: React.FC<ContentProps> = ({
     if (!isselectedRows) {
       const fileItem = filesData.find((f) => f.id == uid);
       if (fileItem) {
-        setextractLoading(true);
+        setIsExtractLoading(true);
         await extractHandler(fileItem, uid);
       }
     } else {
       const fileItem = filesTobeProcess.find((f) => f.id == uid);
       if (fileItem) {
-        setextractLoading(true);
+        setIsExtractLoading(true);
         await extractHandler(fileItem, uid);
       }
     }
@@ -276,7 +274,6 @@ const Content: React.FC<ContentProps> = ({
 
       const apiResponse = await extractAPI(
         fileItem.model,
-        userCredentials as UserCredentials,
         fileItem.fileSource,
         fileItem.retryOption ?? '',
         fileItem.sourceUrl,
@@ -379,12 +376,16 @@ const Content: React.FC<ContentProps> = ({
   };
 
   const addFilesToQueue = async (remainingFiles: CustomFile[]) => {
-    if (!remainingFiles.length) {
+    if (!remainingFiles.length && postProcessingTasks.length) {
       showNormalToast(
-        <PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} isSchema={hasSelections} />
+        <PostProcessingToast
+          isGdsActive={isGdsActive}
+          postProcessingTasks={postProcessingTasks}
+          isSchema={hasSelections}
+        />
       );
       try {
-        const response = await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
+        const response = await postProcessing(postProcessingTasks);
         if (response.data.status === 'Success') {
           const communityfiles = response.data?.data;
           if (Array.isArray(communityfiles) && communityfiles.length) {
@@ -495,12 +496,12 @@ const Content: React.FC<ContentProps> = ({
         data = triggerBatchProcessing(filesTobeSchedule, filesTobeProcessed, true, true);
       }
       Promise.allSettled(data).then((_) => {
-        setextractLoading(false);
+        setIsExtractLoading(false);
       });
     } else if (queueFiles && !queue.isEmpty() && processingFilesCount < batchSize) {
       data = scheduleBatchWiseProcess(queue.items, true);
       Promise.allSettled(data).then((_) => {
-        setextractLoading(false);
+        setIsExtractLoading(false);
       });
     } else {
       addFilesToQueue(filesTobeProcessed as CustomFile[]);
@@ -519,7 +520,7 @@ const Content: React.FC<ContentProps> = ({
         data = triggerBatchProcessing(queue.items, queue.items as CustomFile[], true, false);
       }
       Promise.allSettled(data).then((_) => {
-        setextractLoading(false);
+        setIsExtractLoading(false);
       });
     } else {
       const selectedNewFiles = childRef.current
@@ -551,7 +552,7 @@ const Content: React.FC<ContentProps> = ({
     setConnectionStatus(false);
     localStorage.removeItem('password');
     localStorage.removeItem('selectedModel');
-    setUserCredentials({ uri: '', password: '', userName: '', database: '' });
+    setUserCredentials({ uri: '', password: '', userName: '', database: '', email: '' });
     setSelectedNodes([]);
     setSelectedRels([]);
     localStorage.removeItem('instructions');
@@ -576,7 +577,7 @@ const Content: React.FC<ContentProps> = ({
   const retryHandler = async (filename: string, retryoption: string) => {
     try {
       setRetryLoading(true);
-      const response = await retry(userCredentials as UserCredentials, filename, retryoption);
+      const response = await retry(filename, retryoption);
       setRetryLoading(false);
       if (response.data.status === 'Failure') {
         throw new Error(response.data.error);
@@ -586,19 +587,19 @@ const Content: React.FC<ContentProps> = ({
         (response.data?.message as string).includes('Chunks are not created')
       ) {
         showNormalToast(response.data.message as string);
-        retryOnclose()
+        retryOnclose();
       } else {
         const isStartFromBegining = retryoption === RETRY_OPIONS[0] || retryoption === RETRY_OPIONS[1];
         setFilesData((prev) => {
           return prev.map((f) => {
             return f.name === filename
               ? {
-                ...f,
-                status: 'Ready to Reprocess',
-                processingProgress: isStartFromBegining ? 0 : f.processingProgress,
-                nodesCount: isStartFromBegining ? 0 : f.nodesCount,
-                relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
-              }
+                  ...f,
+                  status: 'Ready to Reprocess',
+                  processingProgress: isStartFromBegining ? 0 : f.processingProgress,
+                  nodesCount: isStartFromBegining ? 0 : f.nodesCount,
+                  relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
+                }
               : f;
           });
         });
@@ -666,16 +667,12 @@ const Content: React.FC<ContentProps> = ({
 
   const handleDeleteFiles = async (deleteEntities: boolean) => {
     try {
-      setdeleteLoading(true);
-      const response = await deleteAPI(
-        userCredentials as UserCredentials,
-        childRef.current?.getSelectedRows() as CustomFile[],
-        deleteEntities
-      );
+      setIsDeleteLoading(true);
+      const response = await deleteAPI(childRef.current?.getSelectedRows() as CustomFile[], deleteEntities);
       queue.clear();
       setProcessedCount(0);
       setRowSelection({});
-      setdeleteLoading(false);
+      setIsDeleteLoading(false);
       if (response.data.status == 'Success') {
         showSuccessToast(response.data.message);
         const filenames = childRef.current?.getSelectedRows().map((str) => str.name);
@@ -689,9 +686,9 @@ const Content: React.FC<ContentProps> = ({
         let errorobj = { error: response.data.error, message: response.data.message };
         throw new Error(JSON.stringify(errorobj));
       }
-      setshowDeletePopUp(false);
+      setShowDeletePopUp(false);
     } catch (err) {
-      setdeleteLoading(false);
+      setIsDeleteLoading(false);
       if (err instanceof Error) {
         const error = JSON.parse(err.message);
         const { message } = error;
@@ -699,31 +696,27 @@ const Content: React.FC<ContentProps> = ({
         console.log(err);
       }
     }
-    setshowDeletePopUp(false);
+    setShowDeletePopUp(false);
   };
 
   const onClickHandler = () => {
     const selectedRows = childRef.current?.getSelectedRows();
     if (selectedRows?.length) {
       const expiredFilesExists = selectedRows.some(
-        (c) => c.status !==  'Ready to Reprocess' && isExpired(c?.createdAt as Date ?? new Date())
+        (c) => isFileReadyToProcess(c, true) && isExpired((c?.createdAt as Date) ?? new Date())
       );
       const largeFileExists = selectedRows.some(
         (c) => isFileReadyToProcess(c, true) && typeof c.size === 'number' && c.size > largeFileSize
       );
       if (expiredFilesExists) {
-        setshowExpirationModal(true);
+        setShowExpirationModal(true);
       } else if (largeFileExists && isGCSActive) {
-        setshowConfirmationModal(true);
-      } else if (largeFileExists && isGCSActive) {
-        setshowExpirationModal(true);
+        setShowConfirmationModal(true);
       } else {
         handleGenerateGraph(selectedRows.filter((f) => isFileReadyToProcess(f, false)));
       }
     } else if (filesData.length) {
-      const expiredFileExists = filesData.some(
-        (c) => isExpired(c?.createdAt as Date)
-      );
+      const expiredFileExists = filesData.some((c) => isFileReadyToProcess(c, true) && isExpired(c?.createdAt as Date));
       const largeFileExists = filesData.some(
         (c) => isFileReadyToProcess(c, true) && typeof c.size === 'number' && c.size > largeFileSize
       );
@@ -736,9 +729,9 @@ const Content: React.FC<ContentProps> = ({
       }, {});
       setRowSelection(stringified);
       if (largeFileExists) {
-        setshowConfirmationModal(true);
+        setShowConfirmationModal(true);
       } else if (expiredFileExists && isGCSActive) {
-        setshowExpirationModal(true);
+        setShowExpirationModal(true);
       } else {
         handleGenerateGraph(filesData.filter((f) => isFileReadyToProcess(f, false)));
       }
@@ -781,7 +774,7 @@ const Content: React.FC<ContentProps> = ({
             open={showConfirmationModal}
             largeFiles={filesForProcessing}
             extractHandler={handleGenerateGraph}
-            onClose={() => setshowConfirmationModal(false)}
+            onClose={() => setShowConfirmationModal(false)}
             loading={extractLoading}
             selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
             isLargeDocumentAlert={true}
@@ -794,7 +787,7 @@ const Content: React.FC<ContentProps> = ({
             open={showExpirationModal}
             largeFiles={filesForProcessing}
             extractHandler={handleGenerateGraph}
-            onClose={() => setshowExpirationModal(false)}
+            onClose={() => setShowExpirationModal(false)}
             loading={extractLoading}
             selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
             isLargeDocumentAlert={false}
@@ -807,7 +800,7 @@ const Content: React.FC<ContentProps> = ({
             open={showExpirationModal}
             largeFiles={filesForProcessing}
             extractHandler={handleGenerateGraph}
-            onClose={() => setshowExpirationModal(false)}
+            onClose={() => setShowExpirationModal(false)}
             loading={extractLoading}
             selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
             isLargeDocumentAlert={false}
@@ -819,7 +812,7 @@ const Content: React.FC<ContentProps> = ({
           open={showDeletePopUp}
           no_of_files={selectedfileslength ?? 0}
           deleteHandler={(delentities: boolean) => handleDeleteFiles(delentities)}
-          deleteCloseHandler={() => setshowDeletePopUp(false)}
+          deleteCloseHandler={() => setShowDeletePopUp(false)}
           loading={deleteLoading}
           view='contentView'
         ></DeletePopUp>
@@ -863,20 +856,12 @@ const Content: React.FC<ContentProps> = ({
                 uri={userCredentials && userCredentials?.uri}
               />
               <div className='pt-1 flex gap-1 items-center'>
+                <div>{!hasSelections ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}</div>
                 <div>
-                  {!hasSelections ? (
-                    <StatusIndicator type='danger' />
-                  ) :
-                    (<StatusIndicator type='success' />
-                    )}
-                </div>
-                <div>
-                  {hasSelections? (
+                  {hasSelections ? (
                     <span className='n-body-small'>
-                      {(hasSelections)} Graph Schema configured
-                      {hasSelections
-                        ? `(${selectedNodes.length} Labels + ${selectedRels.length} Rel Types)`
-                        : ''}
+                      {hasSelections} Graph Schema configured
+                      {hasSelections ? `(${selectedNodes.length} Labels + ${selectedRels.length} Rel Types)` : ''}
                     </span>
                   ) : (
                     <span className='n-body-small'>No Graph Schema configured</span>
@@ -914,6 +899,7 @@ const Content: React.FC<ContentProps> = ({
             )}
           </div>
         </Flex>
+
         <FileTable
           connectionStatus={connectionStatus}
           setConnectionStatus={setConnectionStatus}
@@ -940,6 +926,7 @@ const Content: React.FC<ContentProps> = ({
           ref={childRef}
           handleGenerateGraph={processWaitingFilesOnRefresh}
         ></FileTable>
+
         <Flex
           className={`p-2.5  mt-1.5 absolute bottom-0 w-full`}
           justifyContent='space-between'
@@ -995,7 +982,7 @@ const Content: React.FC<ContentProps> = ({
                 !selectedfileslength ? tooltips.deleteFile : `${selectedfileslength} ${tooltips.deleteSelectedFiles}`
               }
               placement='top'
-              onClick={() => setshowDeletePopUp(true)}
+              onClick={() => setShowDeletePopUp(true)}
               disabled={!selectedfileslength || isReadOnlyUser}
               className='ml-0.5'
               label='Delete Files'

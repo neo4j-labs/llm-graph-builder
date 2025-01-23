@@ -5,7 +5,7 @@ import { Select, Flex, Typography, useMediaQuery } from '@neo4j-ndl/react';
 import { useCredentials } from '../../../../context/UserCredentials';
 import { useFileContext } from '../../../../context/UsersFiles';
 import { OnChangeValue, ActionMeta } from 'react-select';
-import { OptionType, schema, UserCredentials } from '../../../../types';
+import { OptionType, schema } from '../../../../types';
 import { getNodeLabelsAndRelTypes } from '../../../../services/GetNodeLabelsRelTypes';
 import { tokens } from '@neo4j-ndl/base';
 import { showNormalToast } from '../../../../utils/toasts';
@@ -29,14 +29,8 @@ export default function EntityExtractionSetting({
   closeEnhanceGraphSchemaDialog?: () => void;
 }) {
   const { breakpoints } = tokens;
-  const {
-    setSelectedRels,
-    setSelectedNodes,
-    selectedNodes,
-    selectedRels,
-    selectedSchemas,
-    setSelectedSchemas,
-  } = useFileContext();
+  const { setSelectedRels, setSelectedNodes, selectedNodes, selectedRels, selectedSchemas, setSelectedSchemas } =
+    useFileContext();
   const { userCredentials } = useCredentials();
   const [loading, setLoading] = useState<boolean>(false);
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
@@ -149,7 +143,7 @@ export default function EntityExtractionSetting({
         const getOptions = async () => {
           setLoading(true);
           try {
-            const response = await getNodeLabelsAndRelTypes(userCredentials as UserCredentials);
+            const response = await getNodeLabelsAndRelTypes();
             setLoading(false);
             if (response.data.data.length) {
               const nodelabels = response.data?.data[0]?.labels.map((l) => ({ value: l, label: l }));
@@ -169,7 +163,7 @@ export default function EntityExtractionSetting({
         const getOptions = async () => {
           setLoading(true);
           try {
-            const response = await getNodeLabelsAndRelTypes(userCredentials as UserCredentials);
+            const response = await getNodeLabelsAndRelTypes();
             setLoading(false);
             if (response.data.data.length) {
               const nodelabels = response.data?.data[0]?.labels.map((l) => ({ value: l, label: l }));

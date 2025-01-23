@@ -23,12 +23,10 @@ import {
   ExtendedRelationship,
   Messages,
   ResponseMode,
-  UserCredentials,
   metricstate,
   multimodelmetric,
   nodeDetailsProps,
 } from '../../types';
-import { useCredentials } from '../../context/UserCredentials';
 import { chatBotAPI } from '../../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../../context/UsersFiles';
@@ -63,7 +61,6 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   } = props;
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState<boolean>(isLoading);
-  const { userCredentials } = useCredentials();
   const { model, chatModes, selectedRows, filesData } = useFileContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
@@ -215,7 +212,6 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     try {
       const apiCalls = chatModes.map((mode) =>
         chatBotAPI(
-          userCredentials as UserCredentials,
           inputMessage,
           sessionId,
           model,
