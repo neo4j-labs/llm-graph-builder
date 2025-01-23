@@ -163,7 +163,7 @@ def create_gcs_bucket_folder_name_hashed(uri, file_name):
 
 def formatted_time(current_time):
   formatted_time = current_time.strftime('%Y-%m-%d %H:%M:%S %Z')
-  return formatted_time
+  return str(formatted_time)
 
 def last_url_segment(url):
   parsed_url = urlparse(url)
