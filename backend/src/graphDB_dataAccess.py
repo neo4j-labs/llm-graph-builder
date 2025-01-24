@@ -159,7 +159,24 @@ class graphDBdataAccess:
         else:
             logging.info("Vector index does not exist, So KNN graph not update")
 
+    def check_edition(self):
+        query = """
+        CALL dbms.components() YIELD name, edition RETURN edition
+        """
+        result = self.graph.query(query)
+        edition = result[0]['edition'].lower()
+        if edition not in ['community', 'enterprise']:
+            raise ValueError("Unknown Neo4j edition")
+        return edition
+
+    def is_community_edition(self):
+        return self.check_edition() == 'community'
+
     def check_account_access(self, database):
+        if self.is_community_edition():
+            logging.info(f"The server is a community edition server. Assume have write access")
+            return True
+
         query = """
         SHOW USER PRIVILEGES 
         YIELD * 
