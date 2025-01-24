@@ -377,64 +377,132 @@ VECTOR_GRAPH_SEARCH_ENTITY_QUERY = """
     END AS paths, e
 """
 
+# VECTOR_GRAPH_SEARCH_QUERY_SUFFIX = """
+#     WITH apoc.coll.toSet(apoc.coll.flatten(collect(DISTINCT paths))) AS paths, 
+#          collect(DISTINCT e) AS entities
+
+#     // De-duplicate nodes and relationships across chunks
+#     RETURN 
+#         collect {
+#             UNWIND paths AS p 
+#             UNWIND relationships(p) AS r 
+#             RETURN DISTINCT r
+#         } AS rels,
+#         collect {
+#             UNWIND paths AS p 
+#             UNWIND nodes(p) AS n 
+#             RETURN DISTINCT n
+#         } AS nodes, 
+#         entities
+# }
+
+# // Generate metadata and text components for chunks, nodes, and relationships
+# WITH d, avg_score,
+#      [c IN chunks | c.chunk.text] AS texts, 
+#      [c IN chunks | {id: c.chunk.id, score: c.score}] AS chunkdetails,
+#      [n IN nodes | elementId(n)] AS entityIds,
+#      [r IN rels | elementId(r)] AS relIds,
+#      apoc.coll.sort([
+#          n IN nodes | 
+#          coalesce(apoc.coll.removeAll(labels(n), ['__Entity__'])[0], "") + ":" + 
+#          n.id + 
+#          (CASE WHEN n.description IS NOT NULL THEN " (" + n.description + ")" ELSE "" END)
+#      ]) AS nodeTexts,
+#      apoc.coll.sort([
+#          r IN rels | 
+#          coalesce(apoc.coll.removeAll(labels(startNode(r)), ['__Entity__'])[0], "") + ":" + 
+#          startNode(r).id + " " + type(r) + " " + 
+#          coalesce(apoc.coll.removeAll(labels(endNode(r)), ['__Entity__'])[0], "") + ":" + endNode(r).id
+#      ]) AS relTexts,
+#      entities
+
+# // Combine texts into response text
+# WITH d, avg_score, chunkdetails, entityIds, relIds,
+#      "Text Content:\n" + apoc.text.join(texts, "\n----\n") +
+#      "\n----\nEntities:\n" + apoc.text.join(nodeTexts, "\n") +
+#      "\n----\nRelationships:\n" + apoc.text.join(relTexts, "\n") AS text, 
+#      entities
+
+# RETURN 
+#     text, 
+#     avg_score AS score, 
+#     {
+#         length: size(text), 
+#         source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), 
+#         chunkdetails: chunkdetails, 
+#         entities : {
+#             entityids: entityIds, 
+#             relationshipids: relIds
+#         }
+#     } AS metadata
+# """
 VECTOR_GRAPH_SEARCH_QUERY_SUFFIX = """
-    WITH apoc.coll.toSet(apoc.coll.flatten(collect(DISTINCT paths))) AS paths, 
-         collect(DISTINCT e) AS entities
-
-    // De-duplicate nodes and relationships across chunks
-    RETURN 
-        collect {
-            UNWIND paths AS p 
-            UNWIND relationships(p) AS r 
-            RETURN DISTINCT r
-        } AS rels,
-        collect {
-            UNWIND paths AS p 
-            UNWIND nodes(p) AS n 
-            RETURN DISTINCT n
-        } AS nodes, 
-        entities
+   WITH apoc.coll.toSet(apoc.coll.flatten(collect(DISTINCT paths))) AS paths,
+        collect(DISTINCT e) AS entities
+   // De-duplicate nodes and relationships across chunks
+   RETURN
+       collect {
+           UNWIND paths AS p
+           UNWIND relationships(p) AS r
+           RETURN DISTINCT r
+       } AS rels,
+       collect {
+           UNWIND paths AS p
+           UNWIND nodes(p) AS n
+           RETURN DISTINCT n
+       } AS nodes,
+       entities
 }
-
 // Generate metadata and text components for chunks, nodes, and relationships
 WITH d, avg_score,
-     [c IN chunks | c.chunk.text] AS texts, 
-     [c IN chunks | {id: c.chunk.id, score: c.score}] AS chunkdetails,
-     [n IN nodes | elementId(n)] AS entityIds,
-     [r IN rels | elementId(r)] AS relIds,
-     apoc.coll.sort([
-         n IN nodes | 
-         coalesce(apoc.coll.removeAll(labels(n), ['__Entity__'])[0], "") + ":" + 
-         n.id + 
-         (CASE WHEN n.description IS NOT NULL THEN " (" + n.description + ")" ELSE "" END)
-     ]) AS nodeTexts,
-     apoc.coll.sort([
-         r IN rels | 
-         coalesce(apoc.coll.removeAll(labels(startNode(r)), ['__Entity__'])[0], "") + ":" + 
-         startNode(r).id + " " + type(r) + " " + 
-         coalesce(apoc.coll.removeAll(labels(endNode(r)), ['__Entity__'])[0], "") + ":" + endNode(r).id
-     ]) AS relTexts,
-     entities
-
+    [c IN chunks | c.chunk.text] AS texts,
+    [c IN chunks | {id: c.chunk.id, score: c.score}] AS chunkdetails,
+    [n IN nodes | elementId(n)] AS entityIds,
+    [r IN rels | elementId(r)] AS relIds,
+    apoc.coll.sort([
+        n IN nodes |
+        coalesce(apoc.coll.removeAll(labels(n), ['__Entity__'])[0], "") + ":" +
+        coalesce(
+            n.id,
+            n[head([k IN keys(n) WHERE k =~ "(?i)(name|title|id|description)$"])],
+            ""
+        ) +
+        (CASE WHEN n.description IS NOT NULL THEN " (" + n.description + ")" ELSE "" END)
+    ]) AS nodeTexts,
+    apoc.coll.sort([
+        r IN rels |
+        coalesce(apoc.coll.removeAll(labels(startNode(r)), ['__Entity__'])[0], "") + ":" +
+        coalesce(
+            startNode(r).id,
+            startNode(r)[head([k IN keys(startNode(r)) WHERE k =~ "(?i)(name|title|id|description)$"])],
+            ""
+        ) + " " + type(r) + " " +
+        coalesce(apoc.coll.removeAll(labels(endNode(r)), ['__Entity__'])[0], "") + ":" +
+        coalesce(
+            endNode(r).id,
+            endNode(r)[head([k IN keys(endNode(r)) WHERE k =~ "(?i)(name|title|id|description)$"])],
+            ""
+        )
+    ]) AS relTexts,
+    entities
 // Combine texts into response text
 WITH d, avg_score, chunkdetails, entityIds, relIds,
-     "Text Content:\n" + apoc.text.join(texts, "\n----\n") +
-     "\n----\nEntities:\n" + apoc.text.join(nodeTexts, "\n") +
-     "\n----\nRelationships:\n" + apoc.text.join(relTexts, "\n") AS text, 
-     entities
-
-RETURN 
-    text, 
-    avg_score AS score, 
-    {
-        length: size(text), 
-        source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), 
-        chunkdetails: chunkdetails, 
-        entities : {
-            entityids: entityIds, 
-            relationshipids: relIds
-        }
-    } AS metadata
+    "Text Content:\n" + apoc.text.join(texts, "\n----\n") +
+    "\n----\nEntities:\n" + apoc.text.join(nodeTexts, "\n") +
+    "\n----\nRelationships:\n" + apoc.text.join(relTexts, "\n") AS text,
+    entities
+RETURN
+   text,
+   avg_score AS score,
+   {
+       length: size(text),
+       source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName),
+       chunkdetails: chunkdetails,
+       entities : {
+           entityids: entityIds,
+           relationshipids: relIds
+       }
+   } AS metadata
 """
 
 VECTOR_GRAPH_SEARCH_QUERY = VECTOR_GRAPH_SEARCH_QUERY_PREFIX+ VECTOR_GRAPH_SEARCH_ENTITY_QUERY.format(
@@ -763,45 +831,65 @@ START_FROM_BEGINNING  = "start_from_beginning"
 DELETE_ENTITIES_AND_START_FROM_BEGINNING = "delete_entities_and_start_from_beginning"
 START_FROM_LAST_PROCESSED_POSITION = "start_from_last_processed_position"                                                    
 
-PROMPT_TO_ALL_LLMs = """
-"# Knowledge Graph Instructions for LLMs\n"
-    "## 1. Overview\n"
-    "You are a top-tier algorithm designed for extracting information in structured "
-    "formats to build a knowledge graph.\n"
-    "Try to capture as much information from the text as possible without "
-    "sacrificing accuracy. Do not add any information that is not explicitly "
-    "mentioned in the text.\n"
-    "- **Nodes** represent entities and concepts.\n"
-    "- The aim is to achieve simplicity and clarity in the knowledge graph, making it\n"
-    "accessible for a vast audience.\n"
-    "## 2. Labeling Nodes\n"
-    "- **Consistency**: Ensure you use available types for node labels.\n"
-    "Ensure you use basic or elementary types for node labels.\n"
-    "- For example, when you identify an entity representing a person, "
-    "always label it as **'person'**. Avoid using more specific terms "
-    "like 'mathematician' or 'scientist'."
-    "- **Node IDs**: Never utilize integers as node IDs. Node IDs should be "
-    "names or human-readable identifiers found in the text.\n"
-    "- **Relationships** represent connections between entities or concepts.\n"
-    "Ensure consistency and generality in relationship types when constructing "
-    "knowledge graphs. Instead of using specific and momentary types "
-    "such as 'BECAME_PROFESSOR', use more general and timeless relationship types "
-    "like 'PROFESSOR'. Make sure to use general and timeless relationship types!\n"
-    "## 3. Coreference Resolution\n"
-    "- **Maintain Entity Consistency**: When extracting entities, it's vital to "
-    "ensure consistency.\n"
-    'If an entity, such as "John Doe", is mentioned multiple times in the text '
-    'but is referred to by different names or pronouns (e.g., "Joe", "he"),'
-    "always use the most complete identifier for that entity throughout the "
-    'knowledge graph. In this example, use "John Doe" as the entity ID.\n'
-    "Remember, the knowledge graph should be coherent and easily understandable, "
-    "so maintaining consistency in entity references is crucial.\n"
-    "## 4. Node Properties\n"
-    "- Dates, URLs, Time, and Numerical Values: Instead of creating separate nodes for 
-    these elements, represent them as properties of existing nodes."
-    "- Example: Instead of creating a node labeled "2023-03-15" and connecting it to another node 
-    with the relationship "BORN_ON", add a property called "born_on" to the person node with the 
-    value "2023-03-15"."
-    "## 5. Strict Compliance\n"
-    "Adhere to the rules strictly. Non-compliance will result in termination."
-    """
+GRAPH_CLEANUP_PROMPT = """
+You are tasked with organizing a list of types into semantic categories based on their meanings, including synonyms or morphological similarities. The input will include two separate lists: one for **Node Labels** and one for **Relationship Types**. Follow these rules strictly:
+### 1. Input Format
+The input will include two keys:
+- `nodes`: A list of node labels.
+- `relationships`: A list of relationship types.
+### 2. Grouping Rules
+- Group similar items into **semantic categories** based on their meaning or morphological similarities.
+- The name of each category must be chosen from the types in the input list (node labels or relationship types). **Do not create or infer new names for categories**.
+- Items that cannot be grouped must remain in their own category.
+### 3. Naming Rules
+- The category name must reflect the grouped items and must be an existing type in the input list.
+- Use a widely applicable type as the category name.
+- **Do not introduce new names or types** under any circumstances.
+### 4. Output Rules
+- Return the output as a JSON object with two keys:
+ - `nodes`: A dictionary where each key represents a category name for nodes, and its value is a list of original node labels in that category.
+ - `relationships`: A dictionary where each key represents a category name for relationships, and its value is a list of original relationship types in that category.
+- Every key and value must come from the provided input lists.
+### 5. Examples
+#### Example 1:
+Input:
+{{
+ "nodes": ["Person", "Human", "People", "Company", "Organization", "Product"],
+ "relationships": ["CREATED_FOR", "CREATED_TO", "CREATED", "PUBLISHED","PUBLISHED_BY", "PUBLISHED_IN", "PUBLISHED_ON"]
+}}
+Output in JSON:
+{{
+ "nodes": {{
+   "Person": ["Person", "Human", "People"],
+   "Organization": ["Company", "Organization"],
+   "Product": ["Product"]
+ }},
+ "relationships": {{
+   "CREATED": ["CREATED_FOR", "CREATED_TO", "CREATED"],
+   "PUBLISHED": ["PUBLISHED_BY", "PUBLISHED_IN", "PUBLISHED_ON"]
+ }}
+}}
+#### Example 2: Avoid redundant or incorrect grouping
+Input:
+{{
+ "nodes": ["Process", "Process_Step", "Step", "Procedure", "Method", "Natural Process", "Step"],
+ "relationships": ["USED_FOR", "USED_BY", "USED_WITH", "USED_IN"]
+}}
+Output:
+{{
+ "nodes": {{
+   "Process": ["Process", "Process_Step", "Step", "Procedure", "Method", "Natural Process"]
+ }},
+ "relationships": {{
+   "USED": ["USED_FOR", "USED_BY", "USED_WITH", "USED_IN"]
+ }}
+}}
+### 6. Key Rule
+If any item cannot be grouped, it must remain in its own category using its original name. Do not repeat values or create incorrect mappings.
+Use these rules to group and name categories accurately without introducing errors or new types.
+"""
+
+ADDITIONAL_INSTRUCTIONS = """Your goal is to identify and categorize entities while ensuring that specific data 
+types such as dates, numbers, revenues, and other non-entity information are not extracted as separate nodes.
+Instead, treat these as properties associated with the relevant entities."""
+

@@ -4,9 +4,6 @@ from neo4j import GraphDatabase
 import os
 import json
 from src.shared.constants import GRAPH_CHUNK_LIMIT,GRAPH_QUERY,CHUNK_TEXT_QUERY,COUNT_CHUNKS_QUERY
-# from neo4j.debug import watch
-
-# watch("neo4j")
 
 def get_graphDB_driver(uri, username, password,database="neo4j"):
     """
@@ -28,7 +25,6 @@ def get_graphDB_driver(uri, username, password,database="neo4j"):
     except Exception as e:
         error_message = f"graph_query module: Failed to connect to the database at {uri}."
         logging.error(error_message, exc_info=True)
-        # raise Exception(error_message) from e 
 
 
 def execute_query(driver, query,document_names,doc_limit=None):
@@ -201,7 +197,7 @@ def get_graph_results(uri, username, password,database,document_names):
     try:
         logging.info(f"Starting graph query process")
         driver = get_graphDB_driver(uri, username, password,database)  
-        document_names= list(map(str.strip, json.loads(document_names)))
+        document_names= list(map(str, json.loads(document_names)))
         query = GRAPH_QUERY.format(graph_chunk_limit=GRAPH_CHUNK_LIMIT)
         records, summary , keys = execute_query(driver, query.strip(), document_names)
         document_nodes = extract_node_elements(records)

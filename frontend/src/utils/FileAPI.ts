@@ -1,12 +1,11 @@
 import { Method } from 'axios';
 import { url } from './Utils';
-import { UserCredentials, ExtractParams, UploadParams } from '../types';
+import { ExtractParams, UploadParams } from '../types';
 import { apiCall } from '../services/CommonAPI';
 
 // Upload Call
 export const uploadAPI = async (
   file: Blob,
-  userCredentials: UserCredentials,
   model: string,
   chunkNumber: number,
   totalChunks: number,
@@ -14,16 +13,14 @@ export const uploadAPI = async (
 ): Promise<any> => {
   const urlUpload = `${url()}/upload`;
   const method: Method = 'post';
-  const commonParams: UserCredentials = userCredentials;
   const additionalParams: UploadParams = { file, model, chunkNumber, totalChunks, originalname };
-  const response = await apiCall(urlUpload, method, commonParams, additionalParams);
+  const response = await apiCall(urlUpload, method, additionalParams);
   return response;
 };
 
 // Extract call
 export const extractAPI = async (
   model: string,
-  userCredentials: UserCredentials,
   source_type: string,
   retry_condition: string,
   source_url?: string,
@@ -36,11 +33,11 @@ export const extractAPI = async (
   allowedRelationship?: string[],
   gcs_project_id?: string,
   language?: string,
-  access_token?: string
+  access_token?: string,
+  additional_instructions?: string
 ): Promise<any> => {
   const urlExtract = `${url()}/extract`;
   const method: Method = 'post';
-  const commonParams: UserCredentials = userCredentials;
   let additionalParams: ExtractParams;
   if (source_type === 's3 bucket') {
     additionalParams = {
@@ -53,6 +50,7 @@ export const extractAPI = async (
       allowedNodes,
       allowedRelationship,
       retry_condition,
+      additional_instructions,
     };
   } else if (source_type === 'Wikipedia') {
     additionalParams = {
@@ -64,6 +62,7 @@ export const extractAPI = async (
       allowedRelationship,
       language,
       retry_condition,
+      additional_instructions,
     };
   } else if (source_type === 'gcs bucket') {
     additionalParams = {
@@ -78,6 +77,7 @@ export const extractAPI = async (
       gcs_project_id,
       access_token,
       retry_condition,
+      additional_instructions,
     };
   } else if (source_type === 'youtube') {
     additionalParams = {
@@ -88,6 +88,7 @@ export const extractAPI = async (
       allowedNodes,
       allowedRelationship,
       retry_condition,
+      additional_instructions,
     };
   } else if (source_type === 'web-url') {
     additionalParams = {
@@ -98,6 +99,7 @@ export const extractAPI = async (
       allowedNodes,
       allowedRelationship,
       retry_condition,
+      additional_instructions,
     };
   } else {
     additionalParams = {
@@ -107,8 +109,9 @@ export const extractAPI = async (
       allowedNodes,
       allowedRelationship,
       retry_condition,
+      additional_instructions,
     };
   }
-  const response = await apiCall(urlExtract, method, commonParams, additionalParams);
+  const response = await apiCall(urlExtract, method, additionalParams);
   return response;
 };

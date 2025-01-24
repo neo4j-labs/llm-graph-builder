@@ -1,6 +1,6 @@
 import { Checkbox, DataGrid, DataGridComponents, Flex, TextLink, Typography, useMediaQuery } from '@neo4j-ndl/react';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { UserCredentials, orphanNodeProps } from '../../../../types';
+import { orphanNodeProps } from '../../../../types';
 import { getOrphanNodes } from '../../../../services/GetOrphanNodes';
 import { useCredentials } from '../../../../context/UserCredentials';
 import Legend from '../../../UI/Legend';
@@ -38,7 +38,7 @@ export default function DeletePopUpForOrphanNodes({
   const { userCredentials } = useCredentials();
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const tableRef = useRef(null);
-  const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
+  const [showDeletePopUp, setShowDeletePopUp] = useState<boolean>(false);
   const [neoNodes, setNeoNodes] = useState<any[]>([]);
   const [neoRels, setNeoRels] = useState<any[]>([]);
   const [openGraphView, setOpenGraphView] = useState(false);
@@ -48,7 +48,7 @@ export default function DeletePopUpForOrphanNodes({
   const fetchOrphanNodes = useCallback(async () => {
     try {
       setLoading(true);
-      const apiresponse = await getOrphanNodes(userCredentials as UserCredentials);
+      const apiresponse = await getOrphanNodes();
       setLoading(false);
       if (apiresponse.data.data.length) {
         setOrphanNodes(apiresponse.data.data);
@@ -62,7 +62,7 @@ export default function DeletePopUpForOrphanNodes({
       setLoading(false);
       console.log(error);
     }
-  }, [userCredentials]);
+  }, []);
 
   useEffect(() => {
     if (userCredentials != null) {
@@ -78,15 +78,7 @@ export default function DeletePopUpForOrphanNodes({
   const columnHelper = createColumnHelper<orphanNodeProps>();
 
   const handleOrphanNodeClick = (elementId: string, viewMode: string) => {
-    handleGraphNodeClick(
-      userCredentials as UserCredentials,
-      elementId,
-      viewMode,
-      setNeoNodes,
-      setNeoRels,
-      setOpenGraphView,
-      setViewPoint
-    );
+    handleGraphNodeClick(elementId, viewMode, setNeoNodes, setNeoRels, setOpenGraphView, setViewPoint);
   };
 
   const columns = useMemo(
@@ -151,7 +143,7 @@ export default function DeletePopUpForOrphanNodes({
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor((row) => row.documents, {
-        id: 'Connnected Documents',
+        id: 'Connected Documents',
         cell: (info) => {
           return (
             <Flex className='textellipsis'>
@@ -214,7 +206,7 @@ export default function DeletePopUpForOrphanNodes({
       const eid: string = selectedRows[index];
       setOrphanNodes((prev) => prev.filter((node) => node.e.elementId != eid));
     }
-    setshowDeletePopUp(false);
+    setShowDeletePopUp(false);
     if (totalOrphanNodes) {
       await fetchOrphanNodes();
     }
@@ -228,7 +220,7 @@ export default function DeletePopUpForOrphanNodes({
             open={showDeletePopUp}
             no_of_files={table.getSelectedRowModel().rows.length ?? 0}
             deleteHandler={onDeleteHandler}
-            deleteCloseHandler={() => setshowDeletePopUp(false)}
+            deleteCloseHandler={() => setShowDeletePopUp(false)}
             loading={loading}
             view='settingsView'
           />
@@ -298,7 +290,7 @@ export default function DeletePopUpForOrphanNodes({
         />
         <Flex className='mt-3' flexDirection='row' justifyContent='flex-end'>
           <ButtonWithToolTip
-            onClick={() => setshowDeletePopUp(true)}
+            onClick={() => setShowDeletePopUp(true)}
             size='large'
             loading={loading}
             text={

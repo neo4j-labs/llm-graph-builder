@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { getDuplicateNodes } from '../../../../services/GetDuplicateNodes';
 import { useCredentials } from '../../../../context/UserCredentials';
-import { dupNodes, selectedDuplicateNodes, UserCredentials } from '../../../../types';
+import { dupNodes, selectedDuplicateNodes } from '../../../../types';
 import {
   useReactTable,
   getCoreRowModel,
@@ -52,7 +52,7 @@ export default function DeduplicationTab() {
   const fetchDuplicateNodes = useCallback(async () => {
     try {
       setLoading(true);
-      const duplicateNodesData = await getDuplicateNodes(userCredentials as UserCredentials);
+      const duplicateNodesData = await getDuplicateNodes();
       setLoading(false);
       if (duplicateNodesData.data.status === 'Failed') {
         throw new Error(duplicateNodesData.data.error);
@@ -87,7 +87,7 @@ export default function DeduplicationTab() {
         })
       );
       setmergeAPIloading(true);
-      const response = await mergeDuplicateNodes(userCredentials as UserCredentials, selectedNodeMap);
+      const response = await mergeDuplicateNodes(selectedNodeMap);
       table.resetRowSelection();
       table.resetPagination();
       setmergeAPIloading(false);
@@ -115,15 +115,7 @@ export default function DeduplicationTab() {
   };
 
   const handleDuplicateNodeClick = (elementId: string, viewMode: string) => {
-    handleGraphNodeClick(
-      userCredentials as UserCredentials,
-      elementId,
-      viewMode,
-      setNeoNodes,
-      setNeoRels,
-      setOpenGraphView,
-      setViewPoint
-    );
+    handleGraphNodeClick(elementId, viewMode, setNeoNodes, setNeoRels, setOpenGraphView, setViewPoint);
   };
 
   const columns = useMemo(
@@ -214,7 +206,7 @@ export default function DeduplicationTab() {
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor((row) => row.documents, {
-        id: 'Connnected Documents',
+        id: 'Connected Documents',
         cell: (info) => {
           return (
             <Flex className='textellipsis'>

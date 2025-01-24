@@ -9,17 +9,17 @@ import { showNormalToast, showSuccessToast } from '../../../utils/toasts';
 
 const SchemaFromTextDialog = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
   const [userText, setUserText] = useState<string>('');
-  const [loading, setloading] = useState<boolean>(false);
+  const [loading, setIsLoading] = useState<boolean>(false);
   const { setSelectedNodes, setSelectedRels } = useFileContext();
   const { userCredentials } = useCredentials();
-  const [isSchema, setIsSchema] = useState<boolean>(false);
+  const [isSchemaText, setIsSchemaText] = useState<boolean>(false);
   const { model } = useFileContext();
 
   const clickHandler = useCallback(async () => {
     try {
-      setloading(true);
-      const response = await getNodeLabelsAndRelTypesFromText(model, userText, isSchema);
-      setloading(false);
+      setIsLoading(true);
+      const response = await getNodeLabelsAndRelTypesFromText(model, userText, isSchemaText);
+      setIsLoading(false);
       if (response.data.status === 'Success') {
         if (response.data?.data?.labels.length) {
           const nodelabels = response.data?.data?.labels?.map((l) => ({ value: l, label: l }));
@@ -68,27 +68,27 @@ const SchemaFromTextDialog = ({ open, onClose }: { open: boolean; onClose: () =>
         } else if (!response.data?.data?.relationshipTypes.length && response.data?.data?.labels.length) {
           showSuccessToast(`Successfully Created ${response.data?.data?.labels.length} Node labels`);
         } else {
-          showNormalToast(`Please give meaningfull text`);
+          showNormalToast(`Please give meaningful text`);
         }
       } else {
         throw new Error('Unable to create labels from ');
       }
       onClose();
       setUserText('');
-      setIsSchema(false);
+      setIsSchemaText(false);
     } catch (error) {
-      setloading(false);
+      setIsLoading(false);
       console.log(error);
     }
-  }, [userCredentials, userText, isSchema]);
+  }, [userCredentials, userText, isSchemaText]);
 
   return (
     <Dialog
       size='medium'
       isOpen={open}
       onClose={() => {
-        setloading(false);
-        setIsSchema(false);
+        setIsLoading(false);
+        setIsSchemaText(false);
         setUserText('');
         onClose();
       }}
@@ -115,9 +115,9 @@ const SchemaFromTextDialog = ({ open, onClose }: { open: boolean; onClose: () =>
           <Checkbox
             label='Text is schema description'
             onChange={(e) => {
-              setIsSchema(e.target.checked);
+              setIsSchemaText(e.target.checked);
             }}
-            isChecked={isSchema}
+            isChecked={isSchemaText}
           />
           <ButtonWithToolTip
             placement='top'

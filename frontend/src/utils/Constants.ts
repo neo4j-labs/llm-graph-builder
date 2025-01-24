@@ -18,6 +18,7 @@ export const llms =
         'openai_gpt_4o_mini',
         'gemini_1.5_pro',
         'gemini_1.5_flash',
+        'gemini_2.0_flash',
         'diffbot',
         'azure_ai_gpt_35',
         'azure_ai_gpt_4o',
@@ -25,7 +26,11 @@ export const llms =
         'groq_llama3_70b',
         'anthropic_claude_3_5_sonnet',
         'fireworks_llama_v3p2_90b',
+        'fireworks_qwen72b_instruct',
         'bedrock_claude_3_5_sonnet',
+        'bedrock_nova_micro_v1',
+        'bedrock_nova_lite_v1',
+        'bedrock_nova_pro_v1',
       ];
 
 export const supportedLLmsForRagas = [
@@ -176,6 +181,9 @@ export const buttonCaptions = {
   clearSettings: 'Clear Schema',
   ask: 'Ask',
   applyGraphSchema: 'Apply',
+  provideAdditionalInstructions: 'Provide Additional Instructions for Entity Extractions',
+  analyzeInstructions: 'Analyze Instructions',
+  helpInstructions: 'Provide specific instructions for entity extraction, such as focusing on the key topics.',
 };
 
 export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
@@ -203,6 +211,11 @@ export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
   {
     title: 'enable_communities',
     description: 'Enable community creation across entities to use GraphRAG capabilities both local and global search.',
+  },
+  {
+    title: 'graph_schema_consolidation',
+    description:
+      'This option uses the LLM for large graph schemas to consolidate many node labels and relationship types into fewer, more relevant ones and apply it to the extracted and existing graph',
   },
 ];
 export const RETRY_OPIONS = [
@@ -369,3 +382,4 @@ export const metricsinfo: Record<string, string> = {
   context_entity_recall: 'Determines the recall of entities present in both generated answer and retrieved contexts',
 };
 export const EXPIRATION_DAYS = 3;
+export const SKIP_AUTH = (process.env.VITE_SKIP_AUTH ?? 'true') == 'true';

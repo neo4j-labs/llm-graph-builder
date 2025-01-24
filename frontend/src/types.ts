@@ -51,6 +51,7 @@ export type UserCredentials = {
   userName: string;
   password: string;
   database: string;
+  email: string;
 } & { [key: string]: any };
 
 export interface SourceNode extends Omit<CustomFileBase, 'relationshipsCount' | 'createdAt'> {
@@ -74,7 +75,6 @@ export type ExtractParams = Pick<CustomFile, 'wikiQuery' | 'model' | 'sourceUrl'
   file?: File;
   aws_access_key_id?: string | null;
   aws_secret_access_key?: string | null;
-  max_sources?: number;
   gcs_bucket_name?: string;
   gcs_bucket_folder?: string;
   gcs_blob_filename?: string;
@@ -84,6 +84,7 @@ export type ExtractParams = Pick<CustomFile, 'wikiQuery' | 'model' | 'sourceUrl'
   allowedRelationship?: string[];
   gcs_project_id?: string;
   retry_condition: string;
+  additional_instructions?: string;
 } & { [key: string]: any };
 
 export type UploadParams = {
@@ -149,8 +150,6 @@ export interface ContentProps {
   showChatBot: boolean;
   openChatBot: () => void;
   openTextSchema: () => void;
-  isSchema?: boolean;
-  setIsSchema: Dispatch<SetStateAction<boolean>>;
   showEnhancementDialog: boolean;
   toggleEnhancementDialog: () => void;
   setOpenConnection: Dispatch<SetStateAction<connectionState>>;
@@ -337,7 +336,6 @@ export interface ServerResponse extends Partial<AxiosResponse> {
 }
 export interface ScanProps {
   urlParam?: string;
-  userCredentials: UserCredentials | null;
   model?: string;
   accessKey?: string;
   secretKey?: string;
@@ -632,6 +630,7 @@ export interface SettingsModalProps {
   onClear?: () => void;
 }
 export interface Menuitems {
+  id: string;
   title: string | JSX.Element;
   onClick: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   disabledCondition: boolean;
@@ -760,6 +759,8 @@ export interface ContextProps {
   setShowDisconnectButton: Dispatch<SetStateAction<boolean>>;
   isGCSActive: boolean;
   setIsGCSActive: Dispatch<SetStateAction<boolean>>;
+  chunksToBeProces: number;
+  setChunksToBeProces: Dispatch<SetStateAction<number>>;
 }
 export interface MessageContextType {
   messages: Messages[] | [];
@@ -856,8 +857,6 @@ export interface FileContextType {
   setSelectedSchemas: Dispatch<SetStateAction<readonly OptionType[]>>;
   chatModes: string[];
   setchatModes: Dispatch<SetStateAction<string[]>>;
-  isSchema: boolean;
-  setIsSchema: React.Dispatch<React.SetStateAction<boolean>>;
   showTextFromSchemaDialog: showTextFromSchemaDialogType;
   setShowTextFromSchemaDialog: React.Dispatch<React.SetStateAction<showTextFromSchemaDialogType>>;
   postProcessingTasks: string[];
@@ -868,6 +867,8 @@ export interface FileContextType {
   setProcessedCount: Dispatch<SetStateAction<number>>;
   postProcessingVal: boolean;
   setPostProcessingVal: Dispatch<SetStateAction<boolean>>;
+  additionalInstructions: string;
+  setAdditionalInstructions: Dispatch<SetStateAction<string>>;
 }
 export declare type Side = 'top' | 'right' | 'bottom' | 'left';
 
@@ -938,3 +939,7 @@ export interface filedate {
   };
 }
 export type FileTableHandle = React.ElementRef<typeof FileTable>;
+
+export interface VisibilityProps {
+  isVisible: boolean;
+}
