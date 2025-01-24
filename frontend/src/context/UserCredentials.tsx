@@ -37,7 +37,6 @@ const UserCredentialsWrapper: FunctionComponent<Props> = (props) => {
   const [showDisconnectButton, setShowDisconnectButton] = useState<boolean>(false);
   const [isGCSActive, setIsGCSActive] = useState<boolean>(false);
   const [chunksToBeProces, setChunksToBeProces] = useState<number>(50);
-
   const value = {
     userCredentials,
     setUserCredentials,
