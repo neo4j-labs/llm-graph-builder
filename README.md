@@ -32,9 +32,11 @@ If you are using Neo4j Desktop, you will not be able to use the docker-compose b
 #### Running through docker-compose
 By default only OpenAI and Diffbot are enabled since Gemini requires extra GCP configurations.
 According to enviornment we are configuring the models which is indicated by VITE_LLM_MODELS_PROD variable we can configure model based on our need.
+
 EX:
 ```env
 VITE_LLM_MODELS_PROD="openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash"
+
 You can then run Docker Compose to build and start all components:
 ```bash
 docker-compose up --build
@@ -66,6 +68,7 @@ VITE_CHAT_MODES=""
 
 If however you want to specify the only vector mode or only graph mode you can do that by specifying the mode in the env:
 ```env
+VITE_CHAT_MODES="vector,graph"
 VITE_CHAT_MODES="vector,graph"
 ```
 

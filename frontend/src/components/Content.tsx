@@ -60,7 +60,6 @@ const Content: React.FC<ContentProps> = ({
   const [extractLoading, setIsExtractLoading] = useState<boolean>(false);
   const { setUserCredentials, userCredentials, setConnectionStatus, isGdsActive, isReadOnlyUser, isGCSActive } =
     useCredentials();
-
   const [retryFile, setRetryFile] = useState<string>('');
   const [retryLoading, setRetryLoading] = useState<boolean>(false);
   const [showRetryPopup, toggleRetryPopup] = useReducer((state) => !state, false);
@@ -704,7 +703,6 @@ const Content: React.FC<ContentProps> = ({
     if (selectedRows?.length) {
       const expiredFilesExists = selectedRows.some(
         (c) => isFileReadyToProcess(c, true) && isExpired((c?.createdAt as Date) ?? new Date())
-      );
       const largeFileExists = selectedRows.some(
         (c) => isFileReadyToProcess(c, true) && typeof c.size === 'number' && c.size > largeFileSize
       );
@@ -801,6 +799,19 @@ const Content: React.FC<ContentProps> = ({
             largeFiles={filesForProcessing}
             extractHandler={handleGenerateGraph}
             onClose={() => setShowExpirationModal(false)}
+            loading={extractLoading}
+            selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
+            isLargeDocumentAlert={false}
+          ></ConfirmationDialog>
+        </Suspense>
+      )}
+      {showExpirationModal && filesForProcessing.length && (
+        <Suspense fallback={<FallBackDialog />}>
+          <ConfirmationDialog
+            open={showExpirationModal}
+            largeFiles={filesForProcessing}
+            extractHandler={handleGenerateGraph}
+            onClose={() => setshowExpirationModal(false)}
             loading={extractLoading}
             selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
             isLargeDocumentAlert={false}

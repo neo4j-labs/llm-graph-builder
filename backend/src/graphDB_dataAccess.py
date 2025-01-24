@@ -535,6 +535,7 @@ class graphDBdataAccess:
                     "nodeCount" : nodeCount,
                     "relationshipCount" : relationshipCount
                     }
+
         return response
     
     def get_nodelabels_relationships(self):

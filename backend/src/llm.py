@@ -191,7 +191,6 @@ async def get_graph_document_list(
     return graph_document_list
 
 
-
 async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship, additional_instructions=None):
     try:
         llm, model_name = get_llm(model)
