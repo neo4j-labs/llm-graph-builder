@@ -12,50 +12,51 @@ const isNode = (item: BasicNode | BasicRelationship): item is BasicNode => {
 
 const GraphPropertiesPanel = ({ inspectedItem, newScheme }: GraphPropertiesPanelProps) => {
   const inspectedItemType = isNode(inspectedItem) ? 'node' : 'relationship';
-  const filteredProperties =
-    inspectedItemType === 'node'
-      ? Object.entries((inspectedItem as BasicNode).properties)
-          .filter(([, value]) => value !== null && value !== undefined && value !== ' ')
-          .reduce((acc, [key, value]) => {
-            acc[key] = value;
-            return acc;
-          }, {} as Record<string, any>)
-      : {};
+  const filteredProperties = Object.entries((inspectedItem as BasicNode || inspectedItem as BasicRelationship).properties)
+    .filter(([, value]) => value !== null && value !== undefined && value !== ' ')
+    .reduce((acc, [key, value]) => {
+      acc[key] = value;
+      return acc;
+    }, {} as Record<string, any>);
   const properties =
     inspectedItemType === 'node'
       ? [
-          {
-            key: '<id>',
-            value: `${(inspectedItem as BasicNode).id}`,
-            type: 'String',
-          },
-          ...Object.keys(filteredProperties).map((key) => {
-            const value = filteredProperties[key];
-            return { key, value };
-          }),
-        ]
+        {
+          key: '<id>',
+          value: `${(inspectedItem as BasicNode).id}`,
+          type: 'String',
+        },
+        ...Object.keys(filteredProperties).map((key) => {
+          const value = filteredProperties[key];
+          return { key, value };
+        }),
+      ]
       : [
-          {
-            key: '<element_id>',
-            value: `${(inspectedItem as BasicRelationship).id}`,
-            type: 'String',
-          },
-          {
-            key: '<from>',
-            value: `${(inspectedItem as BasicRelationship).from}`,
-            type: 'String',
-          },
-          {
-            key: '<to>',
-            value: `${(inspectedItem as BasicRelationship).to}`,
-            type: 'String',
-          },
-          {
-            key: '<caption>',
-            value: `${(inspectedItem as BasicRelationship).caption ?? ''}`,
-            type: 'String',
-          },
-        ];
+        {
+          key: '<element_id>',
+          value: `${(inspectedItem as BasicRelationship).id}`,
+          type: 'String',
+        },
+        {
+          key: '<from>',
+          value: `${(inspectedItem as BasicRelationship).from}`,
+          type: 'String',
+        },
+        {
+          key: '<to>',
+          value: `${(inspectedItem as BasicRelationship).to}`,
+          type: 'String',
+        },
+        {
+          key: '<caption>',
+          value: `${(inspectedItem as BasicRelationship).caption ?? ''}`,
+          type: 'String',
+        },
+        ...Object.keys(filteredProperties).map((key) => {
+          const value = filteredProperties[key];
+          return { key, value };
+        }),
+      ];
   const labelsSorted = useMemo(() => {
     if (isNode(inspectedItem)) {
       return [...inspectedItem.labels].sort(sortAlphabetically);

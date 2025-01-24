@@ -274,7 +274,9 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const headerTitle =
     viewPoint === graphLabels.showGraphView || viewPoint === graphLabels.chatInfoView
       ? graphLabels.generateGraph
-      : `${graphLabels.inspectGeneratedGraphFrom} ${inspectedName}`;
+      : viewPoint === graphLabels.showSchemaView
+        ? graphLabels.renderSchemaGraph
+        : `${graphLabels.inspectGeneratedGraphFrom} ${inspectedName}`;
 
   const checkBoxView = viewPoint !== graphLabels.chatInfoView;
 
@@ -369,7 +371,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       >
         <Dialog.Header htmlAttributes={{ id: 'graph-title' }}>
           {headerTitle}
-          {viewPoint !== graphLabels.chatInfoView && (
+          {viewPoint !== graphLabels.chatInfoView || viewPoint === graphLabels.showSchemaView && (
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <span>
                 <InformationCircleIconOutline className='n-size-token-6' />

@@ -890,10 +890,12 @@ export type BasicNode = {
   propertyTypes: Record<string, string>;
 };
 
+export type PropertyValue = string| number| boolean | {low:number; high:number} | null;
+
 export type GraphPropertiesTableProps = {
   propertiesWithTypes: {
     key: string;
-    value: string;
+    value: PropertyValue
   }[];
 };
 

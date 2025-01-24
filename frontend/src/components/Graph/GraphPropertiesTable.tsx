@@ -11,6 +11,7 @@ const GraphPropertiesTable = ({ propertiesWithTypes }: GraphPropertiesTableProps
         <Typography variant='body-medium'>Value</Typography>
       </div>
       {propertiesWithTypes.map(({ key, value }, _) => {
+        const isObject = value && typeof value === 'object' && 'low' in value && 'high' in value;
         return (
           <div key={key} className='border-palette-neutral-border-weak flex border-t py-1 pl-2 first:border-none'>
             <div className='shrink basis-1/3 overflow-hidden whitespace-nowrap'>
@@ -24,7 +25,16 @@ const GraphPropertiesTable = ({ propertiesWithTypes }: GraphPropertiesTableProps
                 {key}
               </GraphLabel>
             </div>
-            <div className={`ml-2 flex-1 whitespace-pre-wrap`}>{value}</div>
+            <div className={`ml-2 flex-1 whitespace-pre-wrap`}>
+              {isObject ? (
+                <div>
+                  <span className="block">Low: {value.low}</span>
+                  <span className="block">High: {value.high}</span>
+                </div>
+              ) : (
+                <span>{value}</span>
+              )}
+            </div>
           </div>
         );
       })}
