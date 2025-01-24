@@ -316,6 +316,7 @@ export const graphLabels = {
   noNodesRels: 'No Nodes and No relationships',
   neighborView: 'neighborView',
   chunksInfo: 'We are visualizing 50 chunks at a time',
+  showSchemaView:'showSchemaView'
 };
 
 export const RESULT_STEP_SIZE = 25;

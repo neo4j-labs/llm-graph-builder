@@ -21,7 +21,7 @@ import {
   MagnifyingGlassPlusIconOutline,
 } from '@neo4j-ndl/react/icons';
 import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
-import { filterData, getCheckboxConditions, graphTypeFromNodes, processGraphData } from '../../utils/Utils';
+import { filterData, getCheckboxConditions, graphTypeFromNodes, processGraphData, runRecoQuery, setDriver } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
 
 import { graphQueryAPI } from '../../services/GraphQuery';
@@ -63,10 +63,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
       ? queryMap.DocChunkEntities
       : graphType.includes('DocumentChunk')
-      ? queryMap.DocChunks
-      : graphType.includes('Entities')
-      ? queryMap.Entities
-      : '';
+        ? queryMap.DocChunks
+        : graphType.includes('Entities')
+          ? queryMap.Entities
+          : '';
 
   // fit graph to original position
   const handleZoomToFit = () => {
@@ -110,13 +110,33 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
 
   const fetchData = useCallback(async () => {
     try {
-      const nodeRelationshipData =
-        viewPoint === graphLabels.showGraphView
-          ? await graphQueryAPI(
-              graphQuery,
-              selectedRows?.map((f) => f.name)
-            )
-          : await graphQueryAPI(graphQuery, [inspectedName ?? '']);
+      let nodeRelationshipData;
+      if (viewPoint === graphLabels.showGraphView) {
+        const showGraphRes = await graphQueryAPI(
+          graphQuery,
+          selectedRows?.map((f) => f.name)
+        );
+        nodeRelationshipData = showGraphRes.data.data;
+      } else if (viewPoint === graphLabels.showSchemaView) {
+        // nodeRelationshipData = await getGraphSchema();
+
+        const connectionURI = userCredentials?.uri || ''
+        const username = userCredentials?.userName || '';
+        const password = userCredentials?.password || ''
+        const connectionStatus = await setDriver(connectionURI, username, password);
+        if (connectionStatus) {
+          const showSchemaRes = await runRecoQuery('CALL apoc.meta.graph () YIELD nodes, relationships RETURN nodes, relationships');
+          if (showSchemaRes) {
+            nodeRelationshipData = showSchemaRes[0];
+            console.log('schema', nodeRelationshipData)
+          }
+        } else {
+          console.error('Failed to connect to Neo4j');
+        }
+      } else {
+        const showTableViewRes  = await graphQueryAPI(graphQuery, [inspectedName ?? '']);
+        nodeRelationshipData = showTableViewRes.data.data;
+      }
       return nodeRelationshipData;
     } catch (error: any) {
       console.log(error);
@@ -127,13 +147,13 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const graphApi = async (mode?: string) => {
     try {
       const result = await fetchData();
-      if (result && result.data.data.nodes.length > 0) {
-        const neoNodes = result.data.data.nodes;
+      if (result && result.nodes.length > 0) {
+        const neoNodes = result.nodes;
         const nodeIds = new Set(neoNodes.map((node: any) => node.element_id));
-        const neoRels = result.data.data.relationships
+        const neoRels = result.relationships
           .map((f: Relationship) => f)
           .filter((rel: any) => nodeIds.has(rel.end_node_element_id) && nodeIds.has(rel.start_node_element_id));
-        const { finalNodes, finalRels, schemeVal } = processGraphData(neoNodes, neoRels);
+        const { finalNodes, finalRels, schemeVal } = processGraphData(neoNodes, neoRels, viewPoint);
 
         if (mode === 'refreshMode') {
           initGraph(graphType, finalNodes, finalRels, schemeVal);
@@ -166,7 +186,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       if (viewPoint !== graphLabels.chatInfoView) {
         graphApi();
       } else {
-        const { finalNodes, finalRels, schemeVal } = processGraphData(nodeValues ?? [], relationshipValues ?? []);
+        const { finalNodes, finalRels, schemeVal } = processGraphData(nodeValues ?? [], relationshipValues ?? [], viewPoint);
         setAllNodes(finalNodes);
         setAllRelationships(finalRels);
         setScheme(schemeVal);
