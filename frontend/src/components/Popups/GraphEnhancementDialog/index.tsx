@@ -74,13 +74,21 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
                   <Tabs.Tab
                     tabId={1}
                     htmlAttributes={{
+                      'aria-label': 'Additional Instructions',
+                    }}
+                  >
+                    Additional Instructions
+                  </Tabs.Tab>
+                  <Tabs.Tab
+                    tabId={2}
+                    htmlAttributes={{
                       'aria-label': 'Disconnected Nodes',
                     }}
                   >
                     Disconnected Nodes
                   </Tabs.Tab>
                   <Tabs.Tab
-                    tabId={2}
+                    tabId={3}
                     htmlAttributes={{
                       'aria-label': 'Duplication Nodes',
                     }}
@@ -88,20 +96,12 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
                     De-Duplication Of Nodes
                   </Tabs.Tab>
                   <Tabs.Tab
-                    tabId={3}
+                    tabId={4}
                     htmlAttributes={{
                       'aria-label': 'Post Processing Jobs',
                     }}
                   >
                     Post Processing Jobs
-                  </Tabs.Tab>
-                  <Tabs.Tab
-                    tabId={4}
-                    htmlAttributes={{
-                      'aria-label': 'Additional Instructions',
-                    }}
-                  >
-                    Additional Instructions
                   </Tabs.Tab>
                 </Tabs>
               </Flex>
@@ -123,17 +123,18 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
           </div>
         </Tabs.TabPanel>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={1}>
-          <DeletePopUpForOrphanNodes deleteHandler={orphanNodesDeleteHandler} loading={orphanDeleteAPIloading} />
-        </Tabs.TabPanel>
-        <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={2}>
-          <DeduplicationTab />
-        </Tabs.TabPanel>
-        <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={3}>
-          <PostProcessingCheckList />
-        </Tabs.TabPanel>
-        <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={4}>
           <AdditionalInstructionsText closeEnhanceGraphSchemaDialog={onClose} />
         </Tabs.TabPanel>
+        <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={2}>
+          <DeletePopUpForOrphanNodes deleteHandler={orphanNodesDeleteHandler} loading={orphanDeleteAPIloading} />
+        </Tabs.TabPanel>
+        <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={3}>
+          <DeduplicationTab />
+        </Tabs.TabPanel>
+        <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={4}>
+          <PostProcessingCheckList />
+        </Tabs.TabPanel>
+
       </Dialog.Content>
     </Dialog>
   );

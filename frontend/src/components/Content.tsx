@@ -702,7 +702,7 @@ const Content: React.FC<ContentProps> = ({
     const selectedRows = childRef.current?.getSelectedRows();
     if (selectedRows?.length) {
       const expiredFilesExists = selectedRows.some(
-        (c) => isFileReadyToProcess(c, true) && isExpired((c?.createdAt as Date) ?? new Date())
+        (c) => isFileReadyToProcess(c, true) && isExpired((c?.createdAt as Date) ?? new Date()));
       const largeFileExists = selectedRows.some(
         (c) => isFileReadyToProcess(c, true) && typeof c.size === 'number' && c.size > largeFileSize
       );
@@ -811,7 +811,7 @@ const Content: React.FC<ContentProps> = ({
             open={showExpirationModal}
             largeFiles={filesForProcessing}
             extractHandler={handleGenerateGraph}
-            onClose={() => setshowExpirationModal(false)}
+            onClose={() => setShowExpirationModal(false)}
             loading={extractLoading}
             selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
             isLargeDocumentAlert={false}
