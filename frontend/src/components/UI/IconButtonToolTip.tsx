@@ -11,6 +11,7 @@ export const IconButtonWithToolTip = ({
   placement = 'bottom',
   disabled = false,
   label,
+  loading = false,
 }: {
   label: string;
   text: string | React.ReactNode;
@@ -21,6 +22,7 @@ export const IconButtonWithToolTip = ({
   grouped?: boolean;
   placement?: 'bottom' | 'top' | 'right' | 'left';
   disabled?: boolean;
+  loading?: boolean;
 }) => {
   const [isHovered, setIsHovered] = useState<boolean>(false);
   return (
@@ -34,6 +36,7 @@ export const IconButtonWithToolTip = ({
           onClick={onClick}
           isDisabled={disabled}
           htmlAttributes={{ onMouseEnter: () => setIsHovered(true), onMouseLeave: () => setIsHovered(false) }}
+          isLoading={loading}
         >
           {children}
         </IconButton>

@@ -35,7 +35,6 @@ export const getNeighbors = async (elementId: string) => {
   }
 };
 
-
 export const getGraphSchema = async () => {
   try {
     const formData = new FormData();
