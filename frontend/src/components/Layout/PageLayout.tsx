@@ -28,7 +28,20 @@ const PageLayout: React.FC = () => {
     chunksExistsWithDifferentDimension: false,
   });
   const isLargeDesktop = useMediaQuery(`(min-width:1440px )`);
-  const { userCredentials, connectionStatus, setIsReadOnlyUser } = useCredentials();
+  const {
+    userCredentials,
+    connectionStatus,
+    setIsReadOnlyUser,
+    setConnectionStatus,
+    setGdsActive,
+    setIsBackendConnected,
+    setUserCredentials,
+    setErrorMessage,
+    setShowDisconnectButton,
+    showDisconnectButton,
+    setIsGCSActive,
+    setChunksToBeProces,
+  } = useCredentials();
   const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(Boolean(isLargeDesktop));
   const [isRightExpanded, setIsRightExpanded] = useState<boolean>(Boolean(isLargeDesktop));
   const [showChatBot, setShowChatBot] = useState<boolean>(false);
@@ -57,17 +70,6 @@ const PageLayout: React.FC = () => {
 
   const { messages, setClearHistoryData, clearHistoryData, setMessages, setIsDeleteChatLoading } = useMessageContext();
   const { setShowTextFromSchemaDialog, showTextFromSchemaDialog } = useFileContext();
-  const {
-    setConnectionStatus,
-    setGdsActive,
-    setIsBackendConnected,
-    setUserCredentials,
-    setErrorMessage,
-    setShowDisconnectButton,
-    showDisconnectButton,
-    setIsGCSActive,
-    setChunksToBeProces,
-  } = useCredentials();
   const { cancel } = useSpeechSynthesis();
 
   useEffect(() => {
