@@ -28,8 +28,7 @@ const GraphPropertiesTable = ({ propertiesWithTypes }: GraphPropertiesTableProps
             <div className={`ml-2 flex-1 whitespace-pre-wrap`}>
               {isObject ? (
                 <div>
-                  <span className="block">Low: {value.low}</span>
-                  <span className="block">High: {value.high}</span>
+                  <span className="block">{value.low}</span>
                 </div>
               ) : (
                 <span>{value}</span>
