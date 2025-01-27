@@ -991,6 +991,7 @@ const Content: React.FC<ContentProps> = ({
               placement='top'
               fill='outlined'
               onClick={handleSchemaView}
+              disabled={!connectionStatus}
             >
               <Hierarchy1Icon />
             </ButtonWithToolTip>
