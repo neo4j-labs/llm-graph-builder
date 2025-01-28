@@ -64,6 +64,7 @@ const UserCredentialsWrapper: FunctionComponent<Props> = (props) => {
   useEffect(() => {
     if (pathname === '/readonly') {
       setIsReadOnlyUser(true);
+      localStorage.setItem('isReadOnlyMode', 'true');
     }
   }, [pathname]);
   return <UserConnection.Provider value={value}>{props.children}</UserConnection.Provider>;

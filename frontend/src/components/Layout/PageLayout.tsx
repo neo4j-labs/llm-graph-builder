@@ -118,6 +118,7 @@ const PageLayout: React.FC = () => {
         }
         try {
           const parsedConnection = JSON.parse(neo4jConnection);
+          const readonlymode = JSON.parse(localStorage.getItem('isReadOnlyMode') ?? 'null');
           if (parsedConnection.uri && parsedConnection.user && parsedConnection.password && parsedConnection.database) {
             const credentials = {
               uri: parsedConnection.uri,
@@ -126,10 +127,14 @@ const PageLayout: React.FC = () => {
               database: parsedConnection.database,
               email: parsedConnection.email,
             };
+            if (readonlymode !== null) {
+              setIsReadOnlyUser(readonlymode);
+            } else {
+              setIsReadOnlyUser(parsedConnection.isReadOnlyUser);
+            }
             setUserCredentials(credentials);
             createDefaultFormData(credentials);
             setGdsActive(parsedConnection.isgdsActive);
-            setIsReadOnlyUser(parsedConnection.isReadOnlyUser);
             setIsGCSActive(parsedConnection.isGCSActive);
           } else {
             console.error('Invalid parsed session data:', parsedConnection);

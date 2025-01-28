@@ -14,7 +14,12 @@ const DrawerChatbot: React.FC<DrawerChatbotProps> = ({ isExpanded, clearHistoryD
   useEffect(() => {
     if (location && location.state && Array.isArray(location.state)) {
       setMessages(location.state);
-    } else if (location && location.state && Object.prototype.toString.call(location.state) === '[object Object]') {
+    } else if (
+      location &&
+      location.state &&
+      typeof location.state === 'object' &&
+      Object.keys(location.state).length > 1
+    ) {
       setUserCredentials(location.state.credential);
       setIsGCSActive(location.state.isGCSActive);
       setGdsActive(location.state.isgdsActive);
