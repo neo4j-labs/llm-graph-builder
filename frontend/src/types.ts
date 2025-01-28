@@ -25,8 +25,8 @@ export interface CustomFileBase extends Partial<globalThis.File> {
   googleProjectId?: string;
   language?: string;
   processingProgress?: number;
-  access_token?: string;
-  checked?: boolean;
+  accessToken?: string;
+  isChecked?: boolean;
   retryOptionStatus: boolean;
   retryOption: string;
   chunkNodeCount: number;
@@ -35,6 +35,7 @@ export interface CustomFileBase extends Partial<globalThis.File> {
   entityEntityRelCount: number;
   communityNodeCount: number;
   communityRelCount: number;
+  createdAt?: Date;
 }
 export interface CustomFile extends CustomFileBase {
   id: string;
@@ -58,7 +59,7 @@ export interface SourceNode extends Omit<CustomFileBase, 'relationshipsCount' | 
   fileSize: number;
   fileType: string;
   nodeCount?: number;
-  processingTime?: string;
+  processingTime: string;
   relationshipCount?: number;
   url?: string;
   awsAccessKeyId?: string;
@@ -70,7 +71,7 @@ export interface SourceNode extends Omit<CustomFileBase, 'relationshipsCount' | 
   createdAt: filedate;
 }
 
-export type ExtractParams = Pick<CustomFile, 'wiki_query' | 'model' | 'source_url' | 'language' | 'access_token'> & {
+export type ExtractParams = Pick<CustomFile, 'wikiQuery' | 'model' | 'sourceUrl' | 'language' | 'accessToken'> & {
   file?: File;
   aws_access_key_id?: string | null;
   aws_secret_access_key?: string | null;
@@ -207,7 +208,7 @@ export interface CommonButtonProps {
 export interface Source {
   page_numbers?: number[];
   source_name: string;
-  time_stamps?: string;
+  start_time?: string;
 }
 export interface ChunkDetail {
   id: string;
@@ -242,6 +243,7 @@ export interface Messages {
   };
   currentMode: string;
 }
+
 export type ChatbotProps = {
   messages: Messages[];
   setMessages: Dispatch<SetStateAction<Messages[]>>;
@@ -632,7 +634,9 @@ export interface Menuitems {
   title: string | JSX.Element;
   onClick: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   disabledCondition: boolean;
-  description?: string;
+  description?: string | React.ReactNode;
+  isSelected?: boolean;
+  selectedClassName?: string;
 }
 export type Vertical = 'top' | 'bottom';
 export type Horizontal = 'left' | 'right' | 'center';
@@ -741,6 +745,10 @@ export interface ChatOnlyProps {
 export interface ContextProps {
   userCredentials: UserCredentials | null;
   setUserCredentials: (UserCredentials: UserCredentials) => void;
+  isGdsActive: boolean;
+  setGdsActive: Dispatch<SetStateAction<boolean>>;
+  isReadOnlyUser: boolean;
+  setIsReadOnlyUser: Dispatch<SetStateAction<boolean>>;
   connectionStatus: boolean;
   setConnectionStatus: Dispatch<SetStateAction<boolean>>;
   isBackendConnected: boolean;
@@ -761,11 +769,6 @@ export interface MessageContextType {
   setClearHistoryData: Dispatch<SetStateAction<boolean>>;
   isDeleteChatLoading: boolean;
   setIsDeleteChatLoading: Dispatch<SetStateAction<boolean>>;
-}
-
-export interface GraphContextType {
-  loadingGraph: boolean;
-  setLoadingGraph: Dispatch<SetStateAction<boolean>>;
 }
 
 export interface GraphContextType {

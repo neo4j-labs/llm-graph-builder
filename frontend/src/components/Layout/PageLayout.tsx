@@ -144,7 +144,7 @@ const PageLayout: React.FC = () => {
         }
       };
       // To update credentials if environment values differ
-      const updateSessionIfNeeded = (envCredentials: UserCredentials, storedSession: string) => {
+      const updateSessionIfNeeded = (envCredentials: any, storedSession: string) => {
         try {
           const storedCredentials = JSON.parse(storedSession);
           const isDiffCreds =
@@ -255,7 +255,7 @@ const PageLayout: React.FC = () => {
   };
 
   return (
-    <div style={{ maxHeight: 'calc(100vh - 58px)' }} className='flex overflow-hidden'>
+    <>
       <Suspense fallback={<FallBackDialog />}>
         <ConnectionModal
           open={openConnection.openPopUp}
@@ -266,23 +266,6 @@ const PageLayout: React.FC = () => {
           chunksExistsWithDifferentEmbedding={openConnection.chunksExistsWithDifferentDimension}
         />
       </Suspense>
-      <SideNav
-        toggles3Modal={toggleS3Modal}
-        toggleGCSModal={toggleGCSModal}
-        toggleGenericModal={toggleGenericModal}
-        isExpanded={isLeftExpanded}
-        position='left'
-        toggleDrawer={toggleLeftDrawer}
-      />
-      <DrawerDropzone
-        shows3Modal={shows3Modal}
-        showGCSModal={showGCSModal}
-        showGenericModal={showGenericModal}
-        toggleGCSModal={toggleGCSModal}
-        toggleGenericModal={toggleGenericModal}
-        toggleS3Modal={toggleS3Modal}
-        isExpanded={isLeftExpanded}
-      />
       <SchemaFromTextDialog
         open={showTextFromSchemaDialog.show}
         onClose={() => {

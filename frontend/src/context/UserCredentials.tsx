@@ -23,6 +23,8 @@ export const UserConnection = createContext<ContextProps>({
   setIsGCSActive: () => null,
   chunksToBeProces: 50,
   setChunksToBeProces: () => null,
+  isGdsActive: false,
+  setGdsActive: () => null,
 });
 export const useCredentials = () => {
   const userCredentials = useContext(UserConnection);
@@ -55,6 +57,8 @@ const UserCredentialsWrapper: FunctionComponent<Props> = (props) => {
     setIsGCSActive,
     chunksToBeProces,
     setChunksToBeProces,
+    isGdsActive,
+    setGdsActive,
   };
   const { pathname } = useLocation();
   useEffect(() => {

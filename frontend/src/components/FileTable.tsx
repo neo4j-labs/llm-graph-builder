@@ -39,7 +39,6 @@ import { getSourceNodes } from '../services/GetFiles';
 import { v4 as uuidv4 } from 'uuid';
 import {
   statusCheck,
-  capitalize,
   isFileCompleted,
   calculateProcessedCount,
   getFileSourceStatus,
@@ -749,9 +748,9 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                   type: item?.fileType?.includes('.')
                     ? item?.fileType?.substring(1)?.toUpperCase() ?? 'None'
                     : item?.fileType?.toUpperCase() ?? 'None',
-                  NodesCount: item?.nodeCount ?? 0,
-                  processing: item?.processingTime ?? 'None',
-                  relationshipCount: item?.relationshipCount ?? 0,
+                  nodesCount: item?.nodeCount ?? 0,
+                  processingTotalTime: item?.processingTime ?? 'None',
+                  relationshipsCount: item?.relationshipCount ?? 0,
                   status: waitingFile ? 'Waiting' : getFileSourceStatus(item),
                   model: item?.model ?? model,
                   id: !waitingFile ? uuidv4() : waitingFile.id,
@@ -769,7 +768,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                     !isNaN(Math.floor((item?.processed_chunk / item?.total_chunks) * 100))
                       ? Math.floor((item?.processed_chunk / item?.total_chunks) * 100)
                       : undefined,
-                  access_token: item?.access_token ?? '',
+                  accessToken: item?.accessToken ?? '',
                   retryOption: item.retry_condition ?? '',
                   retryOptionStatus: false,
                   chunkNodeCount: item.chunkNodeCount ?? 0,
@@ -778,6 +777,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                   entityEntityRelCount: item.entityEntityRelCount ?? 0,
                   communityNodeCount: item.communityNodeCount ?? 0,
                   communityRelCount: item.communityRelCount ?? 0,
+                  createdAt: item.createdAt != undefined ? getParsedDate(item?.createdAt) : undefined,
                 });
               }
             });
@@ -963,7 +963,6 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
       communityRelCount,
     } = file_name;
     if (fileName && total_chunks) {
-      console.log({ processed_chunk, total_chunks, percentage: Math.floor((processed_chunk / total_chunks) * 100) });
       setFilesData((prevfiles) =>
         prevfiles.map((curfile) => {
           if (curfile.name == fileName) {
@@ -1053,31 +1052,20 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                     {...restProps}
                     isSelected={isSelected}
                     innerProps={{
-                      className: colorMode == 'dark' ? 'tbody-dark' : 'tbody-light',
+                      ...innerProps,
+                      style: {
+                        ...(isSelected && {
+                          backgroundSize: '200% auto',
+                          borderRadius: '10px',
+                        }),
+                      },
                     }}
                   />
-                ),
-                PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
-                  return (
-                    <DataGridComponents.PaginationNumericButton
-                      {...restProps}
-                      isSelected={isSelected}
-                      innerProps={{
-                        ...innerProps,
-                        style: {
-                          ...(isSelected && {
-                            backgroundSize: '200% auto',
-                            borderRadius: '10px',
-                          }),
-                        },
-                      }}
-                    />
-                  );
-                },
-              }}
-              isKeyboardNavigable={false}
-            />
-          </div>
+                );
+              },
+            }}
+            isKeyboardNavigable={false}
+          />
         </>
       ) : null}
     </>

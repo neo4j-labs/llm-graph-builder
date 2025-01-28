@@ -93,9 +93,9 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
                 size: item.fileSize ?? 0,
                 gcsBucket: item.gcsBucketName,
                 gcsBucketFolder: item.gcsBucketFolder,
-                google_project_id: item.gcsProjectId,
+                googleProjectId: item.gcsProjectId,
                 id: uuidv4(),
-                access_token: codeResponse.access_token,
+                accessToken: codeResponse.access_token,
                 ...defaultValues,
               });
             } else {
@@ -104,13 +104,13 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
               copiedFilesData.unshift({
                 ...tempFileData,
                 status: defaultValues.status,
-                NodesCount: defaultValues.NodesCount,
-                relationshipCount: defaultValues.relationshipCount,
-                processing: defaultValues.processing,
+                nodesCount: defaultValues.nodesCount,
+                relationshipsCount: defaultValues.relationshipsCount,
+                processingStatus: defaultValues.processingStatus,
                 model: defaultValues.model,
                 fileSource: defaultValues.fileSource,
                 processingProgress: defaultValues.processingProgress,
-                access_token: codeResponse.access_token,
+                accessToken: codeResponse.access_token,
               });
             }
           }

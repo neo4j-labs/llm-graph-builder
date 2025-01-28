@@ -125,7 +125,7 @@ export default function useSourceInput(
                   ...defaultValues,
                 };
                 if (isWikiQuery) {
-                  baseValues.wiki_query = item.fileName;
+                  baseValues.wikiQuery = item.fileName;
                 }
                 copiedFilesData.unshift(baseValues);
               } else {
@@ -134,9 +134,9 @@ export default function useSourceInput(
                 copiedFilesData.unshift({
                   ...tempFileData,
                   status: defaultValues.status,
-                  NodesCount: defaultValues.NodesCount,
-                  relationshipCount: defaultValues.relationshipCount,
-                  processing: defaultValues.processing,
+                  nodesCount: defaultValues.nodesCount,
+                  relationshipsCount: defaultValues.relationshipsCount,
+                  processingStatus: defaultValues.processingStatus,
                   model: defaultValues.model,
                   fileSource: defaultValues.fileSource,
                   processingProgress: defaultValues.processingProgress,

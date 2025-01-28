@@ -82,6 +82,7 @@ const Content: React.FC<ContentProps> = ({
     selectedNodes,
     selectedRels,
     setSelectedNodes,
+    setRowSelection,
     setSelectedRels,
     postProcessingTasks,
     queue,
@@ -109,7 +110,7 @@ const Content: React.FC<ContentProps> = ({
       showErrorToast(`${fileName} Failed to process`);
     }
   );
-  const childRef = useRef<ChildRef>(null);
+  const childRef = useRef<FileTableHandle>(null);
 
   const incrementPage = async () => {
     setCurrentPage((prev) => prev + 1);
@@ -274,7 +275,7 @@ const Content: React.FC<ContentProps> = ({
         fileItem.model,
         fileItem.fileSource,
         fileItem.retryOption ?? '',
-        fileItem.source_url,
+        fileItem.sourceUrl,
         localStorage.getItem('accesskey'),
         atob(localStorage.getItem('secretkey') ?? ''),
         fileItem.name ?? '',
@@ -844,8 +845,21 @@ const Content: React.FC<ContentProps> = ({
       {showEnhancementDialog && (
         <GraphEnhancementDialog open={showEnhancementDialog} onClose={toggleEnhancementDialog}></GraphEnhancementDialog>
       )}
-      <div className={`n-bg-palette-neutral-bg-default ${classNameCheck}`}>
-        <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row' flexWrap='wrap'>
+      <GraphViewModal
+        inspectedName={inspectedName}
+        open={openGraphView}
+        setGraphViewOpen={setOpenGraphView}
+        viewPoint={viewPoint}
+        selectedRows={childRef.current?.getSelectedRows()}
+      />
+      <div className={`n-bg-palette-neutral-bg-default main-content-wrapper`}>
+        <Flex
+          className='w-full absolute top-0'
+          alignItems='center'
+          justifyContent='space-between'
+          flexDirection='row'
+          flexWrap='wrap'
+        >
           <div className='connectionstatus__container'>
             <span className='h6 px-1'>Neo4j connection {isReadOnlyUser ? '(Read only Mode)' : ''}</span>
             <Typography variant='body-medium'>
@@ -931,15 +945,17 @@ const Content: React.FC<ContentProps> = ({
           justifyContent='space-between'
           flexDirection={isTablet ? 'column' : 'row'}
         >
-          <DropdownComponent
-            onSelect={handleDropdownChange}
-            options={llms ?? ['']}
-            placeholder='Select LLM Model'
-            defaultValue={model}
-            view='ContentView'
-            isDisabled={false}
-          />
-          <Flex flexDirection='row' gap='4' className='self-end' flexWrap='wrap'>
+          <div>
+            <DropdownComponent
+              onSelect={handleDropdownChange}
+              options={llms ?? ['']}
+              placeholder='Select LLM Model'
+              defaultValue={model}
+              view='ContentView'
+              isDisabled={false}
+            />
+          </div>
+          <Flex flexDirection='row' gap='4' className='self-end mb-2.5' flexWrap='wrap'>
             <ButtonWithToolTip
               text={tooltips.generateGraph}
               placement='top'
@@ -957,14 +973,15 @@ const Content: React.FC<ContentProps> = ({
               placement='top'
               onClick={handleGraphView}
               disabled={showGraphCheck}
-              onClick={handleGraphView}
               className='mr-0.5'
               label='show graph'
               size={isTablet ? 'small' : 'medium'}
             >
-              Show Graph {selectedfileslength && completedfileNo ? `(${completedfileNo})` : ''}
-            </Button>
-            <Button
+              {buttonCaptions.showPreviewGraph} {selectedfileslength && completedfileNo ? `(${completedfileNo})` : ''}
+            </ButtonWithToolTip>
+            <ButtonWithToolTip
+              text={tooltips.bloomGraph}
+              placement='top'
               onClick={handleOpenGraphClick}
               disabled={!filesData.some((f) => f?.status === 'Completed')}
               className='ml-0.5'
@@ -984,9 +1001,9 @@ const Content: React.FC<ContentProps> = ({
               label='Delete Files'
               size={isTablet ? 'small' : 'medium'}
             >
-              <TrashIconOutline className='n-size-token-7' />
-              Delete <TrashIconOutline></TrashIconOutline>
-            </Button>
+              {buttonCaptions.deleteFiles}
+              {selectedfileslength != undefined && selectedfileslength > 0 && `(${selectedfileslength})`}
+            </ButtonWithToolTip>
           </Flex>
         </Flex>
       </div>

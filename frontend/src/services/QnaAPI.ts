@@ -1,12 +1,7 @@
 import { UserCredentials } from '../types';
 import api from '../API/Index';
 
-export const chatBotAPI = async (
-  question: string,
-  session_id: string,
-  model: string,
-  mode = 'vector'
-) => {
+export const chatBotAPI = async (question: string, session_id: string, model: string, mode = 'vector') => {
   try {
     const formData = new FormData();
     formData.append('question', question);

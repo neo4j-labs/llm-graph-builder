@@ -10,7 +10,8 @@ import WikipediaInput from './WikiPedia/WikipediaInput';
 import WebInput from './Web/WebInput';
 import YoutubeInput from './Youtube/YoutubeInput';
 import { APP_SOURCES } from '../../utils/Constants';
-import Neo4jRetrievalLogo from '../../assets/images/Neo4jRetrievalLogo.png';
+import Neo4jDataImportFromCloud from '../../assets/images/data-from-cloud.svg';
+import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 
 export default function GenericModal({
   open,
