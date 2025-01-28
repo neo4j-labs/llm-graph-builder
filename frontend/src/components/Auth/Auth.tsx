@@ -7,6 +7,7 @@ const Auth0ProviderWithHistory: React.FC<{ children: React.ReactNode }> = ({ chi
   const navigate = useNavigate();
 
   function onRedirectCallback(appState?: AppState) {
+    localStorage.removeItem('isReadOnlyMode');
     navigate(appState?.returnTo || window.location.pathname, { state: appState });
   }
 

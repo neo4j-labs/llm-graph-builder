@@ -28,7 +28,20 @@ const PageLayout: React.FC = () => {
     chunksExistsWithDifferentDimension: false,
   });
   const isLargeDesktop = useMediaQuery(`(min-width:1440px )`);
-  const { userCredentials, connectionStatus, setIsReadOnlyUser } = useCredentials();
+  const {
+    userCredentials,
+    connectionStatus,
+    setIsReadOnlyUser,
+    setConnectionStatus,
+    setGdsActive,
+    setIsBackendConnected,
+    setUserCredentials,
+    setErrorMessage,
+    setShowDisconnectButton,
+    showDisconnectButton,
+    setIsGCSActive,
+    setChunksToBeProces,
+  } = useCredentials();
   const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(Boolean(isLargeDesktop));
   const [isRightExpanded, setIsRightExpanded] = useState<boolean>(Boolean(isLargeDesktop));
   const [showChatBot, setShowChatBot] = useState<boolean>(false);
@@ -57,17 +70,6 @@ const PageLayout: React.FC = () => {
 
   const { messages, setClearHistoryData, clearHistoryData, setMessages, setIsDeleteChatLoading } = useMessageContext();
   const { setShowTextFromSchemaDialog, showTextFromSchemaDialog } = useFileContext();
-  const {
-    setConnectionStatus,
-    setGdsActive,
-    setIsBackendConnected,
-    setUserCredentials,
-    setErrorMessage,
-    setShowDisconnectButton,
-    showDisconnectButton,
-    setIsGCSActive,
-    setChunksToBeProces,
-  } = useCredentials();
   const { cancel } = useSpeechSynthesis();
 
   useEffect(() => {
@@ -116,6 +118,7 @@ const PageLayout: React.FC = () => {
         }
         try {
           const parsedConnection = JSON.parse(neo4jConnection);
+          const readonlymode = JSON.parse(localStorage.getItem('isReadOnlyMode') ?? 'null');
           if (parsedConnection.uri && parsedConnection.user && parsedConnection.password && parsedConnection.database) {
             const credentials = {
               uri: parsedConnection.uri,
@@ -124,10 +127,14 @@ const PageLayout: React.FC = () => {
               database: parsedConnection.database,
               email: parsedConnection.email,
             };
+            if (readonlymode !== null) {
+              setIsReadOnlyUser(readonlymode);
+            } else {
+              setIsReadOnlyUser(parsedConnection.isReadOnlyUser);
+            }
             setUserCredentials(credentials);
             createDefaultFormData(credentials);
             setGdsActive(parsedConnection.isgdsActive);
-            setIsReadOnlyUser(parsedConnection.isReadOnlyUser);
             setIsGCSActive(parsedConnection.isGCSActive);
           } else {
             console.error('Invalid parsed session data:', parsedConnection);
