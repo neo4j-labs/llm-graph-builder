@@ -4,7 +4,7 @@ import Loader from '../../../utils/Loader';
 import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../../../context/UserCredentials';
 import { useFileContext } from '../../../context/UsersFiles';
-import { CustomFile, CustomFileBase, UserCredentials } from '../../../types';
+import { CustomFile, CustomFileBase } from '../../../types';
 import { buttonCaptions, chunkSize } from '../../../utils/Constants';
 import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
 import { IconButtonWithToolTip } from '../../UI/IconButtonToolTip';
@@ -117,14 +117,7 @@ const DropZone: FunctionComponent = () => {
           })
         );
         try {
-          const apiResponse = await uploadAPI(
-            chunk,
-            userCredentials as UserCredentials,
-            model,
-            chunkNumber,
-            totalChunks,
-            file.name
-          );
+          const apiResponse = await uploadAPI(chunk, model, chunkNumber, totalChunks, file.name);
           if (apiResponse?.status === 'Failed') {
             throw new Error(`message:${apiResponse.data.message},fileName:${apiResponse.data.file_name}`);
           } else {

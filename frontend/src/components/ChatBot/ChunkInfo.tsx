@@ -1,5 +1,5 @@
 import { FC, useContext, useState } from 'react';
-import { ChunkProps, UserCredentials } from '../../types';
+import { ChunkProps } from '../../types';
 import { LoadingSpinner, TextLink, Typography } from '@neo4j-ndl/react';
 import { DocumentTextIconOutline, GlobeAltIconOutline } from '@neo4j-ndl/react/icons';
 import wikipedialogo from '../../assets/images/wikipedia.svg';
@@ -10,13 +10,11 @@ import ReactMarkdown from 'react-markdown';
 import { generateYouTubeLink, getLogo, isAllowedHost } from '../../utils/Utils';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 import { chatModeLables } from '../../utils/Constants';
-import { useCredentials } from '../../context/UserCredentials';
 import GraphViewModal from '../Graph/GraphViewModal';
 import { handleGraphNodeClick } from './chatInfo';
 
 const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
   const themeUtils = useContext(ThemeWrapperContext);
-  const { userCredentials } = useCredentials();
   const [neoNodes, setNeoNodes] = useState<any[]>([]);
   const [neoRels, setNeoRels] = useState<any[]>([]);
   const [openGraphView, setOpenGraphView] = useState(false);
@@ -25,7 +23,6 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
 
   const handleChunkClick = (elementId: string, viewMode: string) => {
     handleGraphNodeClick(
-      userCredentials as UserCredentials,
       elementId,
       viewMode,
       setNeoNodes,

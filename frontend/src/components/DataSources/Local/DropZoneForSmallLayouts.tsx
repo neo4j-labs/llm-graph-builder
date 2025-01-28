@@ -3,7 +3,7 @@ import { useDropzone } from 'react-dropzone';
 import { useFileContext } from '../../../context/UsersFiles';
 import { useEffect, useState } from 'react';
 import { useCredentials } from '../../../context/UserCredentials';
-import { CustomFile, CustomFileBase, UserCredentials } from '../../../types';
+import { CustomFile, CustomFileBase } from '../../../types';
 import { chunkSize } from '../../../utils/Constants';
 import { uploadAPI } from '../../../utils/FileAPI';
 import { v4 as uuidv4 } from 'uuid';
@@ -48,14 +48,7 @@ export default function DropZoneForSmallLayouts() {
           })
         );
         try {
-          const apiResponse = await uploadAPI(
-            chunk,
-            userCredentials as UserCredentials,
-            model,
-            chunkNumber,
-            totalChunks,
-            file.name
-          );
+          const apiResponse = await uploadAPI(chunk, model, chunkNumber, totalChunks, file.name);
           if (apiResponse?.status === 'Failed') {
             throw new Error(`message:${apiResponse.data.message},fileName:${apiResponse.data.file_name}`);
           } else {

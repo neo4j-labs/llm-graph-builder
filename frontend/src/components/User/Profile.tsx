@@ -9,11 +9,10 @@ export default function Profile() {
   const { user, isAuthenticated, isLoading, logout } = useAuth0();
   const settings = useMemo(
     () => [
-      { title: 'Profile', onClick: () => {} },
       {
         title: 'Logout',
         onClick: () => {
-          logout({ logoutParams: { returnTo: window.location.origin } });
+          logout({ logoutParams: { returnTo: `${window.location.origin}/readonly` } });
         },
       },
     ],

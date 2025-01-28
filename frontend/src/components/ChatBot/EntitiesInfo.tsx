@@ -1,15 +1,13 @@
 import { GraphLabel, LoadingSpinner, TextLink, Typography } from '@neo4j-ndl/react';
 import { FC, useMemo, useState } from 'react';
-import { EntitiesProps, GroupedEntity, UserCredentials } from '../../types';
+import { EntitiesProps, GroupedEntity } from '../../types';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import { graphLabels } from '../../utils/Constants';
 import { parseEntity } from '../../utils/Utils';
-import { useCredentials } from '../../context/UserCredentials';
 import GraphViewModal from '../Graph/GraphViewModal';
 import { handleGraphNodeClick } from './chatInfo';
 
 const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, infoEntities }) => {
-  const { userCredentials } = useCredentials();
   const [neoNodes, setNeoNodes] = useState<any[]>([]);
   const [neoRels, setNeoRels] = useState<any[]>([]);
   const [openGraphView, setOpenGraphView] = useState(false);
@@ -45,7 +43,6 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
 
   const handleEntityClick = (elementId: string, viewMode: string) => {
     handleGraphNodeClick(
-      userCredentials as UserCredentials,
       elementId,
       viewMode,
       setNeoNodes,

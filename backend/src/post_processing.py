@@ -11,7 +11,6 @@ from src.llm import get_llm
 from src.graphDB_dataAccess import graphDBdataAccess
 import time 
 
-
 DROP_INDEX_QUERY = "DROP INDEX entities IF EXISTS;"
 LABELS_QUERY = "CALL db.labels()"
 FULL_TEXT_QUERY = "CREATE FULLTEXT INDEX entities FOR (n{labels_str}) ON EACH [n.id, n.description];"

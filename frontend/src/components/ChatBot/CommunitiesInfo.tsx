@@ -1,14 +1,12 @@
 import { LoadingSpinner, Flex, Typography, TextLink } from '@neo4j-ndl/react';
 import { FC, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { CommunitiesProps, UserCredentials } from '../../types';
+import { CommunitiesProps } from '../../types';
 import { chatModeLables } from '../../utils/Constants';
-import { useCredentials } from '../../context/UserCredentials';
 import GraphViewModal from '../Graph/GraphViewModal';
 import { handleGraphNodeClick } from './chatInfo';
 
 const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) => {
-  const { userCredentials } = useCredentials();
   const [neoNodes, setNeoNodes] = useState<any[]>([]);
   const [neoRels, setNeoRels] = useState<any[]>([]);
   const [openGraphView, setOpenGraphView] = useState(false);
@@ -17,7 +15,6 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) =
 
   const handleCommunityClick = (elementId: string, viewMode: string) => {
     handleGraphNodeClick(
-      userCredentials as UserCredentials,
       elementId,
       viewMode,
       setNeoNodes,
