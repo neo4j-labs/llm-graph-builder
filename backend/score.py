@@ -32,10 +32,24 @@ from fastapi.middleware.gzip import GZipMiddleware
 from src.ragas_eval import *
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 from langchain_neo4j import Neo4jGraph
+from pydantic import BaseModel
+
+class Message(BaseModel):
+    role: str
+    content: str
+
+class MessageData(BaseModel):
+    messages: List[Message]  # Wrap the messages array in an object    
+    question: str
+    # tools: List[str]
 
 logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
 MERGED_DIR = os.path.join(os.path.dirname(__file__), "merged_files")
+
+def printEnvKey(key):
+    value = os.environ.get(key)
+    logging.info(f"{key} = {value}")
 
 def healthy_condition():
     output = {"healthy": True}
@@ -357,6 +371,87 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
     
     finally:
         gc.collect()
+
+@app.post("/magic-trek-chatbot")
+async def magic_trek_chat_bot(
+    messageData: MessageData,
+    #uri=Form(),
+    # model=Form(None),
+    # userName=Form(), 
+    # password=Form(), 
+    # database=Form(),
+    # question=Form(None), 
+    # document_names=Form(None)
+    # session_id=str,
+    # mode=Form(None)
+    ):
+    logging.info(messageData)
+    messages = messageData.messages
+    question = messageData.question
+    print(f'question = {question}')
+    print(messages)
+    print(len(messages))
+    logging.info(f"IAN-TEST called at {datetime.now()}")
+    qa_rag_start_time = time.time()
+
+    # tyler notes:
+    #   add 'enterprise" as education level
+    #   test switching the model
+
+    ## added by ian
+    mode = "graph_vector_fulltext" ## added by ian
+    uri = "bolt://54.167.141.10:7687"
+    userName = "neo4j"
+    password = "interference-float-fountains"
+    database = "neo4j"
+    model = "openai_gpt_3.5"
+    # model = "openai_gpt_4o_mini"
+    document_names=Form(None)
+    session_id = "7f7fb2ac-d849-4569-9647-17d5f3a1615e"
+    ## end of added by ian
+    try:
+        if mode == "graph":
+            graph = Neo4jGraph( url=uri,username=userName,password=password,database=database,sanitize = True, refresh_schema=True)
+            print("created neo4j graph object")
+        else:
+            graph = create_graph_database_connection(uri, userName, password, database)
+        
+        graph_DB_dataAccess = graphDBdataAccess(graph)
+        write_access = graph_DB_dataAccess.check_account_access(database=database)
+        result = await asyncio.to_thread(
+            MAGIC_TREK_QA_RAG ,
+            graph=graph,
+            model=model,
+            messages=messages, 
+            question=question,
+            document_names=document_names,
+            session_id=session_id,
+            mode=mode,
+            write_access=write_access
+        )
+
+        total_call_time = time.time() - qa_rag_start_time
+        logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
+        result["info"]["response_time"] = round(total_call_time, 2)
+        
+        json_obj = {'api_name':'chat_bot','db_url':uri, 'userName':userName, 'database':database, 'question':question,'document_names':document_names,
+                             'session_id':session_id, 'mode':mode, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{total_call_time:.2f}'}
+        logger.log_struct(json_obj, "INFO")
+        
+        logging.info("printing tool calls in magic_trek_chat_bot")
+        logging.info(result["tool_calls"])
+        response = create_api_response('Success',data=result)
+        logging.info("response")
+        logging.info(response)
+        return response
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to get chat response"
+        error_message = str(e)
+        logging.exception(f'Exception in chat bot:{error_message}')
+        return create_api_response(job_status, message=message, error=error_message,data=mode)
+    finally:
+        gc.collect()        
                 
 @app.post("/chat_bot")
 async def chat_bot(uri=Form(),model=Form(None),userName=Form(), password=Form(), database=Form(),question=Form(None), document_names=Form(None),session_id=Form(None),mode=Form(None)):

@@ -14,8 +14,55 @@ from langchain_community.chat_models import ChatOllama
 import boto3
 import google.auth
 
-def get_llm(model: str):
+# Added by ian
+from pydantic import BaseModel, Field
+from enum import Enum
+
+
+# Step 1: Define the Pydantic model for the function parameters
+class EducationLevelInput(BaseModel):
+    course: str = Field(..., description="Call this tool when the user selects an education level. Provide the education level from the enum, for example grade9.",
+                        enum=["grade9", "grade10", "grade11", "grade12"])
+
+
+class LessonTopicInput(BaseModel):
+    lessonTopic: str = Field(..., description="Call this tool when the user selects an lesson topic. Provide a topic name for a lesson, e.g. History of Astronomy.")
+
+# Define the enum of subjects
+class SubjectEnum(str, Enum):
+    Anatomy = "Anatomy"
+    Astronomy = "Astronomy"
+    Chemistry = "Chemistry"
+    US_History = "U.S. History"
+    Zoology = "Zoology"
+    History_of_Science = "History of Science"
+    Theater = "Theater"
+    Artificial_Intelligence = "Artificial Intelligence"
+    Mythology = "Mythology"
+    SEL = "Social and Emotional Learning"
+
+# Define the input model using Pydantic
+class SelectSubjectInput(BaseModel):
+    subject: SubjectEnum = Field(..., description="Call this when the user selects a subject in their message. Get a subject from the enum, for example Chemistry.")
+# end of added by ian
+
+class OnGenerateKeywordsInput(BaseModel):
+    # The keywords are a required field, formatted as a comma-separated string.
+    keywords: str = Field(..., 
+                          description="Provide 3 comma-separated keywords to be used for searching media assets. "
+                                      "The keywords should represent relevant terms for the chosen topic.")
+    
+    class Config:
+        schema_extra = {
+            "example": {
+                "keywords": "education, technology, AI"
+            }
+        }
+
+def get_llm(model: str, add_tools=False):
     """Retrieve the specified language model based on the model name."""
+
+    logging.info(f"get_llm called with add_tools {add_tools}")
     model = model.lower().strip()
     env_key = f"LLM_MODEL_CONFIG_{model}"
     env_value = os.environ.get(env_key)
@@ -51,6 +98,11 @@ def get_llm(model: str):
                 model=model_name,
                 temperature=0,
             )
+            if(add_tools==True): 
+                logging.info("binding tool");
+                llm = llm.bind_tools([EducationLevelInput, LessonTopicInput, SelectSubjectInput, OnGenerateKeywordsInput])
+                logging.info("bound the tool")
+
 
         elif "azure" in model:
             model_name, api_endpoint, api_key, api_version = env_value.split(",")

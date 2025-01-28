@@ -18,7 +18,7 @@ from langchain.retrievers import ContextualCompressionRetriever
 from langchain_community.document_transformers import EmbeddingsRedundantFilter
 from langchain.retrievers.document_compressors import EmbeddingsFilter, DocumentCompressorPipeline
 from langchain_text_splitters import TokenTextSplitter
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_community.chat_message_histories import ChatMessageHistory 
 from langchain_core.callbacks import StdOutCallbackHandler, BaseCallbackHandler
 
@@ -40,6 +40,18 @@ load_dotenv()
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
 EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL) 
 
+# old tool extraction prompt
+# "Only invoke tools based off when the user makes a selection in their messages. 
+# Only reference older messages to understand what the user's selection is."
+
+TOOL_EXTRACTION_PROMPT = """
+You are an intelligent assistant responsible for analyzing user inputs and invoking functions when the user makes a selection. 
+The conversation you are analyzing is between an ai assistant helping a user to make choices about a lesson they are creating.
+- Call a function only when the user makes an active selection that matches one of the tools. 
+- Avoid invoking functions for inputs that have already been addressed. 
+- If multiple functions need to be called based on the user's input, invoke all relevant functions simultaneously. 
+- Only the user's most recent input should trigger a function, but reference past context when needed to understand their intent.
+"""
 class SessionChatHistory:
     history_dict = {}
 
@@ -385,7 +397,6 @@ def create_retriever(neo_db, document_names, chat_mode_settings,search_k, score_
 
 def get_neo4j_retriever(graph, document_names,chat_mode_settings, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD):
     try:
-
         neo_db = initialize_neo4j_vector(graph, chat_mode_settings)
         # document_names= list(map(str.strip, json.loads(document_names)))
         search_k = chat_mode_settings["top_k"]
@@ -418,10 +429,45 @@ def setup_chat(model, graph, document_names, chat_mode_settings):
     
     return llm, doc_retriever, model_name
 
+def remap_tool_names(tool):
+    tool_name_map = {
+        "EducationLevelInput": "onSelectEducationLevel",
+        "LessonTopicInput": "onSelectLessonTopic",
+        "SelectSubjectInput": "onSelectSubject",
+        "OnGenerateKeywordsInput": "onGenerateKeywords"
+    }
+    current_name = tool["function"]["name"]
+    if current_name in tool_name_map:
+        tool["function"]["name"] = tool_name_map[current_name]
+    return tool
+
+def extract_tool_calls(model, messages):
+    # extract tool calling
+    messages_copy = list(messages)
+
+    # remove the system 
+    messages.pop(0)
+    messages.insert(0, SystemMessage(TOOL_EXTRACTION_PROMPT))
+    
+    llm_with_tools,model_name = get_llm(model, add_tools=True)
+    logging.info("calling tool extracting llm")
+
+    response = llm_with_tools.invoke(messages)
+    logging.info(response)
+    # Extract tool calls from additional_kwargs, handle missing key gracefully
+    tools = response.additional_kwargs.get("tool_calls", [])
+    tools = list(map(remap_tool_names, tools))
+    return tools
+
+
 def process_chat_response(messages, history, question, model, graph, document_names, chat_mode_settings):
     try:
         llm, doc_retriever, model_version = setup_chat(model, graph, document_names, chat_mode_settings)
-        
+
+        tool_calls = extract_tool_calls(model, messages)
+        logging.info("returned tool calls")
+        logging.info(tool_calls)
+
         docs,transformed_question = retrieve_documents(doc_retriever, messages)  
 
         if docs:
@@ -435,9 +481,10 @@ def process_chat_response(messages, history, question, model, graph, document_na
         ai_response = AIMessage(content=content)
         messages.append(ai_response)
 
-        summarization_thread = threading.Thread(target=summarize_and_log, args=(history, messages, llm))
-        summarization_thread.start()
-        logging.info("Summarization thread started.")
+        if(history):
+            summarization_thread = threading.Thread(target=summarize_and_log, args=(history, messages, llm))
+            summarization_thread.start()
+            logging.info("Summarization thread started.")
         # summarize_and_log(history, messages, llm)
         metric_details = {"question":question,"contexts":formatted_docs,"answer":content}
         return {
@@ -454,7 +501,7 @@ def process_chat_response(messages, history, question, model, graph, document_na
                 "entities": result["entities"],
                 "metric_details": metric_details,
             },
-            
+            "tool_calls": tool_calls,
             "user": "chatbot"
         }
     
@@ -518,7 +565,7 @@ def create_graph_chain(model, graph):
         logging.info(f"Graph QA Chain using LLM model: {model}")
 
         cypher_llm,model_name = get_llm(model)
-        qa_llm,model_name = get_llm(model)
+        qa_llm,model_name = get_llm(model, True)
         graph_chain = GraphCypherQAChain.from_llm(
             cypher_llm=cypher_llm,
             qa_llm=qa_llm,
@@ -559,20 +606,23 @@ def get_graph_response(graph_chain, question):
     except Exception as e:
         logging.error(f"An error occurred while getting the graph response : {e}")
 
-def process_graph_response(model, graph, question, messages, history):
+def process_graph_response(model, graph, question, messages, history=None):
     try:
         graph_chain, qa_llm, model_version = create_graph_chain(model, graph)
-        
+        extract_tool_calls(model, question)
         graph_response = get_graph_response(graph_chain, question)
-        
+        logging.info("graph_response")
+        logging.info(graph_response)
         ai_response_content = graph_response.get("response", "Something went wrong")
+        logging.info(ai_response_content)
         ai_response = AIMessage(content=ai_response_content)
         
         messages.append(ai_response)
         # summarize_and_log(history, messages, qa_llm)
-        summarization_thread = threading.Thread(target=summarize_and_log, args=(history, messages, qa_llm))
-        summarization_thread.start()
-        logging.info("Summarization thread started.")
+        if(history):
+            summarization_thread = threading.Thread(target=summarize_and_log, args=(history, messages, qa_llm))
+            summarization_thread.start()
+            logging.info("Summarization thread started.")
         metric_details = {"question":question,"contexts":graph_response.get("context", ""),"answer":ai_response_content}
         result = {
             "session_id": "", 
@@ -639,15 +689,101 @@ def get_chat_mode_settings(mode,settings_map=CHAT_MODE_CONFIG_MAP):
         raise
 
     return chat_mode_settings
+
+# Function to convert JSON message list to Langchain message objects
+def convert_messages_to_langchain(messages):
+    langchain_messages = []
     
+    for msg in messages:
+        role = msg.role
+        content = msg.content
+        
+        if role == 'system':
+            langchain_messages.append(SystemMessage(content=content))
+        elif role == 'assistant':
+            langchain_messages.append(AIMessage(content=content))
+        elif role == 'user':  # assuming the user role maps to HumanMessage
+            langchain_messages.append(HumanMessage(content=content))
+        else:
+            raise ValueError(f"Unknown role: {role}")
+    
+    return langchain_messages
+
+def MAGIC_TREK_QA_RAG(graph,model, messages, question, document_names, session_id, mode, write_access=True):
+    logging.info(f"Chat Mode: {mode}")
+    document_names = "[]"
+
+    logging.info(f"question = {question}")
+    # receive the message history from our frontend
+    messages = convert_messages_to_langchain(messages)
+    logging.info("translated message history:")
+    logging.info(messages)
+
+    # NOTE: for now we are going to take our message history from the one maintained on magic trek
+    #   frontend
+    # history = create_neo4j_chat_message_history(graph, session_id, write_access)
+    # messages = history.messages
+
+    # print("message history")
+    # print(messages)
+
+    user_question = HumanMessage(content=question)
+    messages.append(user_question)
+
+    logging.info("messages")
+    logging.info(messages)
+
+    if mode == CHAT_GRAPH_MODE:
+        result = process_graph_response(model, graph, question, messages, history=None)
+    else:
+        chat_mode_settings = get_chat_mode_settings(mode=mode)
+        document_names= list(map(str.strip, json.loads(document_names)))
+        if document_names and not chat_mode_settings["document_filter"]:
+            result =  {
+                "session_id": "",  
+                "message": "Please deselect all documents in the table before using this chat mode",
+                "info": {
+                    "sources": [],
+                    "model": "",
+                    "nodedetails": [],
+                    "total_tokens": 0,
+                    "response_time": 0,
+                    "mode": chat_mode_settings["mode"],
+                    "entities": [],
+                    "metric_details": [],
+                },
+                "user": "chatbot"
+            }
+        else:
+            result = process_chat_response(
+                messages=messages,
+                history=None, # TODO: once we set up history pass it again instead of None
+                question=question, 
+                model=model, 
+                graph=graph, 
+                document_names=document_names,
+                chat_mode_settings=chat_mode_settings
+            )
+
+    # result["session_id"] = session_id
+    # return False
+    return result
+
 def QA_RAG(graph,model, question, document_names, session_id, mode, write_access=True):
     logging.info(f"Chat Mode: {mode}")
 
     history = create_neo4j_chat_message_history(graph, session_id, write_access)
+    print(history)
     messages = history.messages
+
+    print("message history")
+    print(messages)
 
     user_question = HumanMessage(content=question)
     messages.append(user_question)
+
+    tool_calls = extract_tool_calls(model, user_question)
+    logging.info(tool_calls)
 
     if mode == CHAT_GRAPH_MODE:
         result = process_graph_response(model, graph, question, messages, history)
