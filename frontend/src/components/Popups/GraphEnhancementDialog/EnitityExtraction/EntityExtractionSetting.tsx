@@ -318,7 +318,7 @@ export default function EntityExtractionSetting({
               label='Use Existing Schema'
               placement='top'
             >
-              Use Existing Schema
+              Load Existing Schema
             </ButtonWithToolTip>
             <ButtonWithToolTip
               label={'Graph Schema'}
