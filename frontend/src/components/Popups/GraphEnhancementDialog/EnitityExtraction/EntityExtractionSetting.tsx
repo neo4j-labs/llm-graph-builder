@@ -283,7 +283,7 @@ export default function EntityExtractionSetting({
             value: selectedNodes,
             classNamePrefix: `${
               isTablet ? 'tablet_entity_extraction_Tab_node_label' : 'entity_extraction_Tab_node_label'
-            }`,
+              }`,
           }}
           type='creatable'
         />
@@ -299,7 +299,7 @@ export default function EntityExtractionSetting({
             value: selectedRels,
             classNamePrefix: `${
               isTablet ? 'tablet_entity_extraction_Tab_relationship_label' : 'entity_extraction_Tab_relationship_label'
-            }`,
+              }`,
           }}
           type='creatable'
         />
@@ -326,8 +326,7 @@ export default function EntityExtractionSetting({
               placement='top'
               fill='outlined'
               onClick={handleSchemaView}
-              loading={loading}
-              disabled={!hasSelections}
+              disabled={!hasSelections || selectedSchemas.length > 0}
             >
               <Hierarchy1Icon />
             </ButtonWithToolTip>
