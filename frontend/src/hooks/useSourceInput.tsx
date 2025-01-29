@@ -118,9 +118,10 @@ export default function useSourceInput(
                 const baseValues = {
                   name: item.fileName,
                   size: item.fileSize,
-                  source_url: item.url,
+                  sourceUrl: item.url,
                   id: uuidv4(),
                   language: item.language,
+                  uploadProgress: 100,
                   // total_pages: 1,
                   ...defaultValues,
                 };
@@ -136,10 +137,11 @@ export default function useSourceInput(
                   status: defaultValues.status,
                   nodesCount: defaultValues.nodesCount,
                   relationshipsCount: defaultValues.relationshipsCount,
-                  processingStatus: defaultValues.processingStatus,
+                  processingTotalTime: defaultValues.processingTotalTime,
                   model: defaultValues.model,
                   fileSource: defaultValues.fileSource,
                   processingProgress: defaultValues.processingProgress,
+                  uploadProgress: 100,
                 });
               }
             }
@@ -163,7 +165,7 @@ export default function useSourceInput(
       }
       setTimeout(() => {
         setStatus('unknown');
-      }, 1000);
+      }, 3000);
     },
 
     [filesData, isWikiQuery, isYoutubeLink, isWebLink, isValid, fileSource, model]

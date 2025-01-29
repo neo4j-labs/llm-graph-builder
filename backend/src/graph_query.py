@@ -195,7 +195,6 @@ def get_graph_results(uri, username, password,database,document_names):
     dict: Contains the session ID, user-defined messages with nodes and relationships, and the user module identifier.
     """
     try:
-        # logging.info(f"URI: {uri}, Username: {username}, Password: {password}, Query Type: {query_type}, Document Names: {document_names}")
         logging.info(f"Starting graph query process")
         driver = get_graphDB_driver(uri, username, password,database)  
         document_names= list(map(str, json.loads(document_names)))
@@ -207,8 +206,8 @@ def get_graph_results(uri, username, password,database,document_names):
         logging.info(f"no of nodes : {len(document_nodes)}")
         logging.info(f"no of relations : {len(document_relationships)}")
         result = {
-            "nodes": nodes,
-            "relationships": relationships
+            "nodes": document_nodes,
+            "relationships": document_relationships
         }
 
         logging.info(f"Query process completed successfully")

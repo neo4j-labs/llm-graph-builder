@@ -27,31 +27,31 @@ def get_llm(model: str):
         raise Exception(err)
     
     logging.info("Model: {}".format(env_key))
-    
-    if "gemini" in model:
-        model_name = env_value
-        credentials, project_id = google.auth.default()
-        llm = ChatVertexAI(
-            model_name=model_name,
-            #convert_system_message_to_human=True,
-            credentials=credentials,
-            project=project_id,
-            temperature=0,
-            safety_settings={
-                HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
-            },
-        )
-    elif "openai" in model:
-        model_name, api_key = env_value.split(",")
-        llm = ChatOpenAI(
-            api_key=api_key,
-            model=model_name,
-            temperature=0,
-        )
+    try:
+        if "gemini" in model:
+            model_name = env_value
+            credentials, project_id = google.auth.default()
+            llm = ChatVertexAI(
+                model_name=model_name,
+                #convert_system_message_to_human=True,
+                credentials=credentials,
+                project=project_id,
+                temperature=0,
+                safety_settings={
+                    HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+                },
+            )
+        elif "openai" in model:
+            model_name, api_key = env_value.split(",")
+            llm = ChatOpenAI(
+                api_key=api_key,
+                model=model_name,
+                temperature=0,
+            )
 
         elif "azure" in model:
             model_name, api_endpoint, api_key, api_version = env_value.split(",")

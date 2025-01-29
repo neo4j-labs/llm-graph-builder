@@ -5,14 +5,14 @@ from src.shared.constants import (BUCKET_UPLOAD,BUCKET_FAILED_FILE, PROJECT_ID, 
                                   QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY,
                                   START_FROM_BEGINNING,
                                   START_FROM_LAST_PROCESSED_POSITION,
-                                  DELETE_ENTITIES_AND_START_FROM_BEGINNING)
+                                  DELETE_ENTITIES_AND_START_FROM_BEGINNING,
+                                  QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT)
 from src.shared.schema_extraction import schema_extraction_from_text
 from dotenv import load_dotenv
 from datetime import datetime
 import logging
 from src.create_chunks import CreateChunksofDocument
 from src.graphDB_dataAccess import graphDBdataAccess
-from src.api_response import create_api_response
 from src.document_sources.local_file import get_documents_from_file_by_path
 from src.entities.source_node import sourceNode
 from src.llm import get_graph_from_llm
@@ -33,36 +33,8 @@ import json
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 
 warnings.filterwarnings("ignore")
-from pathlib import Path
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
-
-# def create_source_node_graph_local_file(uri, userName, password, file, model, db_name=None):
-#   """
-#    Creates a source node in Neo4jGraph and sets properties.
-   
-#    Args:
-#    	 uri: URI of Graph Service to connect to
-#      db_name: database name to connect
-#    	 userName: Username to connect to Graph Service with ( default : None )
-#    	 password: Password to connect to Graph Service with ( default : None )
-#    	 file: File object with information about file to be added
-   
-#    Returns: 
-#    	 Success or Failed message of node creation
-#   """
-#   obj_source_node = sourceNode()
-#   obj_source_node.file_name = file.filename
-#   obj_source_node.file_type = file.filename.split('.')[1]
-#   obj_source_node.file_size = file.size
-#   obj_source_node.file_source = 'local file'
-#   obj_source_node.model = model
-#   obj_source_node.created_at = datetime.now()
-#   graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
-#   graphDb_data_Access = graphDBdataAccess(graph)
-    
-#   graphDb_data_Access.create_source_node(obj_source_node)
-#   return obj_source_node
 
 def create_source_node_graph_url_s3(graph, model, source_url, aws_access_key_id, aws_secret_access_key, source_type):
     
@@ -343,6 +315,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
   logging.info(f'Time taken database connection: {elapsed_create_connection:.2f} seconds')
   uri_latency["create_connection"] = f'{elapsed_create_connection:.2f}'
   graphDb_data_Access = graphDBdataAccess(graph)
+  create_chunk_vector_index(graph)
   start_get_chunkId_chunkDoc_list = time.time()
   total_chunks, chunkId_chunkDoc_list = get_chunkId_chunkDoc_list(graph, file_name, pages, retry_condition)
   end_get_chunkId_chunkDoc_list = time.time()
@@ -351,9 +324,13 @@ async def processing_source(uri, userName, password, database, model, file_name,
   uri_latency["create_list_chunk_and_document"] = f'{elapsed_get_chunkId_chunkDoc_list:.2f}'
   uri_latency["total_chunks"] = total_chunks
 
-  total_chunks, chunkId_chunkDoc_list = get_chunkId_chunkDoc_list(graph, file_name, pages, retry_condition)
+  start_status_document_node = time.time()
   result = graphDb_data_Access.get_current_status_document_node(file_name)
- 
+  end_status_document_node = time.time()
+  elapsed_status_document_node = end_status_document_node - start_status_document_node
+  logging.info(f'Time taken to get the current status of document node: {elapsed_status_document_node:.2f} seconds')
+  uri_latency["get_status_document_node"] = f'{elapsed_status_document_node:.2f}'
+
   select_chunks_with_retry=0
   node_count = 0
   rel_count = 0
@@ -384,11 +361,14 @@ async def processing_source(uri, userName, password, database, model, file_name,
 
       logging.info('Update the status as Processing')
       update_graph_chunk_processed = int(os.environ.get('UPDATE_GRAPH_CHUNKS_PROCESSED'))
+      chunk_to_be_processed = int(os.environ.get('CHUNKS_TO_BE_PROCESSED', '50'))
       # selected_chunks = []
       is_cancelled_status = False
       job_status = "Completed"
       for i in range(0, len(chunkId_chunkDoc_list), update_graph_chunk_processed):
         select_chunks_upto = i+update_graph_chunk_processed
+        if select_chunks_upto > chunk_to_be_processed:
+          break
         logging.info(f'Selected Chunks upto: {select_chunks_upto}')
         if len(chunkId_chunkDoc_list) <= select_chunks_upto:
           select_chunks_upto = len(chunkId_chunkDoc_list)
@@ -417,8 +397,13 @@ async def processing_source(uri, userName, password, database, model, file_name,
           obj_source_node.updated_at = end_time
           obj_source_node.processing_time = processed_time
           obj_source_node.processed_chunk = select_chunks_upto+select_chunks_with_retry
-          obj_source_node.node_count = node_count
-          obj_source_node.relationship_count = rel_count
+          if retry_condition == START_FROM_BEGINNING:
+            result = graph.query(QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT, params={"filename":file_name})
+            obj_source_node.node_count = result[0]['nodes']
+            obj_source_node.relationship_count = result[0]['rels']
+          else:  
+            obj_source_node.node_count = node_count
+            obj_source_node.relationship_count = rel_count
           graphDb_data_Access.update_source_node(obj_source_node)
           graphDb_data_Access.update_node_relationship_count(file_name)
       
@@ -553,9 +538,6 @@ def get_chunkId_chunkDoc_list(graph, file_name, pages, retry_condition):
   else:  
     chunkId_chunkDoc_list=[]
     chunks =  graph.query(QUERY_TO_GET_CHUNKS, params={"filename":file_name})
-    for chunk in chunks:
-      chunk_doc = Document(page_content=chunk['text'], metadata={'id':chunk['id'], 'position':chunk['position']})
-      chunkId_chunkDoc_list.append({'chunk_id': chunk['id'], 'chunk_doc': chunk_doc})
     
     if chunks[0]['text'] is None or chunks[0]['text']=="" or not chunks :
       raise LLMGraphBuilderException(f"Chunks are not created for {file_name}. Please re-upload file and try again.")    
@@ -579,11 +561,8 @@ def get_chunkId_chunkDoc_list(graph, file_name, pages, retry_condition):
           raise LLMGraphBuilderException(f"All chunks of file {file_name} are already processed. If you want to re-process, Please start from begnning")    
       
       else:
-        raise Exception(f"All chunks of {file_name} are alreday processed. If you want to re-process, Please start from begnning")    
-    
-    else:
-      logging.info(f"Retry : start_from_beginning with chunks {len(chunkId_chunkDoc_list)}")    
-      return len(chunks), chunkId_chunkDoc_list
+        logging.info(f"Retry : start_from_beginning with chunks {len(chunkId_chunkDoc_list)}")    
+        return len(chunks), chunkId_chunkDoc_list
   
 def get_source_list_from_graph(uri,userName,password,db_name=None):
   """
@@ -610,7 +589,6 @@ def update_graph(graph):
   """
   Update the graph node with SIMILAR relationship where embedding scrore match
   """
-  graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
   graph_DB_dataAccess = graphDBdataAccess(graph)
   graph_DB_dataAccess.update_KNN_graph()
 
@@ -633,7 +611,8 @@ def merge_chunks_local(file_name, total_chunks, chunk_dir, merged_dir):
   if not os.path.exists(merged_dir):
       os.mkdir(merged_dir)
   logging.info(f'Merged File Path: {merged_dir}')
-  with open(os.path.join(merged_dir, file_name), "wb") as write_stream:
+  merged_file_path = os.path.join(merged_dir, file_name)
+  with open(merged_file_path, "wb") as write_stream:
       for i in range(1,total_chunks+1):
           chunk_file_path = os.path.join(chunk_dir, f"{file_name}_part_{i}")
           logging.info(f'Chunk File Path While Merging Parts:{chunk_file_path}')

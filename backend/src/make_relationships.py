@@ -1,13 +1,9 @@
 from langchain_neo4j import Neo4jGraph
 from langchain.docstore.document import Document
-from langchain_community.vectorstores.neo4j_vector import Neo4jVector
-from langchain_openai import OpenAIEmbeddings
-from langchain_google_vertexai import VertexAIEmbeddings
-from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
+from src.shared.common_fn import load_embedding_model
 import logging
 from typing import List
 import os
-import uuid
 import hashlib
 import time
 from langchain_neo4j import Neo4jVector
@@ -45,6 +41,8 @@ def create_chunk_embeddings(graph, chunkId_chunkDoc_list, file_name):
     
     embeddings, dimension = EMBEDDING_FUNCTION , EMBEDDING_DIMENSION
     logging.info(f'embedding model:{embeddings} and dimesion:{dimension}')
+    data_for_query = []
+    logging.info(f"update embedding and vector index for chunks")
     for row in chunkId_chunkDoc_list:
         if isEmbedding.upper() == "TRUE":
             embeddings_arr = embeddings.embed_query(row['chunk_doc'].page_content)
@@ -53,35 +51,6 @@ def create_chunk_embeddings(graph, chunkId_chunkDoc_list, file_name):
                 "chunkId": row['chunk_id'],
                 "embeddings": embeddings_arr
             })
-            # graph.query("""MATCH (d:Document {fileName : $fileName})
-            #                MERGE (c:Chunk {id:$chunkId}) SET c.embedding = $embeddings 
-            #                MERGE (c)-[:PART_OF]->(d)
-            #             """,
-            #             {
-            #                 "fileName" : file_name,
-            #                 "chunkId": row['chunk_id'],
-            #                 "embeddings" : embeddings_arr
-            #             }
-            #             )
-            logging.info('create vector index on chunk embedding')
-            # result = graph.query("SHOW INDEXES YIELD * WHERE labelsOrTypes = ['Chunk'] and name = 'vector'")
-            vector_index = graph.query("SHOW INDEXES YIELD * WHERE labelsOrTypes = ['Chunk'] and type = 'VECTOR' AND name = 'vector' return options")
-            # if result:
-            #     logging.info(f"vector index dropped for 'Chunk'")
-            #     graph.query("DROP INDEX vector IF EXISTS;")
-
-            if len(vector_index) == 0:
-                logging.info(f'vector index is not exist, will create in next query')
-                graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
-                                OPTIONS {indexConfig: {
-                                `vector.dimensions`: $dimensions,
-                                `vector.similarity_function`: 'cosine'
-                                }}
-                            """,
-                            {
-                                "dimensions" : dimension
-                            }
-                            )
     
     query_to_create_embedding = """
         UNWIND $data AS row
@@ -122,6 +91,7 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
             "length": chunk_document.metadata["length"],
             "f_name": file_name,
             "previous_id" : previous_chunk_id,
+            "content_offset" : offset
         }
         
         if 'page_number' in chunk.metadata:
@@ -135,13 +105,6 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
         
         lst_chunks_including_hash.append({'chunk_id': current_chunk_id, 'chunk_doc': chunk})
         
-        #create PART_OF realtion between chunk and Document node
-        graph.query(
-            """MATCH(d:Document {fileName : $f_name}) ,(c:Chunk {id : $chunk_id}) 
-            MERGE (c)-[:PART_OF]->(d)
-            """,
-            {"f_name": file_name, "chunk_id": current_chunk_id},
-        )
         # create relationships between chunks
         if firstChunk:
             relationships.append({"type": "FIRST_CHUNK", "chunk_id": current_chunk_id})
@@ -157,11 +120,9 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
         MERGE (c:Chunk {id: data.id})
         SET c.text = data.pg_content, c.position = data.position, c.length = data.length, c.fileName=data.f_name, c.content_offset=data.content_offset
         WITH data, c
-        WHERE data.page_number IS NOT NULL
-        SET c.page_number = data.page_number
-        WITH data, c
-        WHERE data.page_number IS NOT NULL
-        SET c.page_number = data.page_number
+        SET c.page_number = CASE WHEN data.page_number IS NOT NULL THEN data.page_number END,
+            c.start_time = CASE WHEN data.start_time IS NOT NULL THEN data.start_time END,
+            c.end_time = CASE WHEN data.end_time IS NOT NULL THEN data.end_time END
         WITH data, c
         MATCH (d:Document {fileName: data.f_name})
         MERGE (c)-[:PART_OF]->(d)
