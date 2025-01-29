@@ -208,9 +208,8 @@ async def extract_knowledge_graph_from_file(
         start_time = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)   
         graphDb_data_Access = graphDBdataAccess(graph)
+        merged_file_path = os.path.join(MERGED_DIR,file_name)
         if source_type == 'local file':
-            merged_file_path = os.path.join(MERGED_DIR,file_name)
-            logging.info(f'File path:{merged_file_path}')
             uri_latency, result = await extract_graph_from_file_local_file(uri, userName, password, database, model, merged_file_path, file_name, allowedNodes, allowedRelationship, retry_condition, additional_instructions)
 
         elif source_type == 's3 bucket' and source_url:

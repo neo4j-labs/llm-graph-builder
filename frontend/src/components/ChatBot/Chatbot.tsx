@@ -210,7 +210,15 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     };
     setListMessages((prev) => [...prev, chatbotMessage]);
     try {
-      const apiCalls = chatModes.map((mode) => chatBotAPI(inputMessage, sessionId, model, mode));
+      const apiCalls = chatModes.map((mode) =>
+        chatBotAPI(
+          inputMessage,
+          sessionId,
+          model,
+          mode,
+          selectedFileNames?.map((f) => f.name)
+        )
+      );
       setInputMessage('');
       const results = await Promise.allSettled(apiCalls);
       results.forEach((result, index) => {

@@ -1,13 +1,20 @@
 import { UserCredentials } from '../types';
 import api from '../API/Index';
 
-export const chatBotAPI = async (question: string, session_id: string, model: string, mode = 'vector') => {
+export const chatBotAPI = async (
+  question: string,
+  session_id: string,
+  model: string,
+  mode: string,
+  document_names?: (string | undefined)[]
+) => {
   try {
     const formData = new FormData();
     formData.append('question', question);
     formData.append('session_id', session_id);
     formData.append('model', model);
     formData.append('mode', mode);
+    formData.append('document_names', JSON.stringify(document_names));
     const startTime = Date.now();
     const response = await api.post(`/chat_bot`, formData, {
       headers: {
