@@ -3,9 +3,9 @@ import { url } from '../utils/Utils';
 export function triggerStatusUpdateAPI(
   name: string,
   uri: string,
-  username: string,
-  password: string,
-  database: string,
+  username: string | null,
+  password: string | null,
+  database: string | null,
   datahandler: (i: eventResponsetypes) => void
 ) {
   let encodedstr: string = password ? btoa(password) : '';

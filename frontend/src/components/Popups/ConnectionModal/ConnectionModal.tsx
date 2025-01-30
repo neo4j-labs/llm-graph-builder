@@ -97,7 +97,7 @@ export default function ConnectionModal({
               JSON.stringify({
                 uri: usercredential?.uri,
                 user: usercredential?.userName,
-                password: btoa(usercredential?.password),
+                password: btoa(usercredential.password ?? ''),
                 database: usercredential?.database,
                 userDbVectorIndex: 384,
               })

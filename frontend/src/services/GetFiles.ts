@@ -3,7 +3,7 @@ import api from '../API/Index';
 
 export const getSourceNodes = async (userCredentials: UserCredentials) => {
   try {
-    const encodedstr = btoa(userCredentials?.password);
+    const encodedstr = userCredentials.password ? btoa(userCredentials?.password) : null;
     const response = await api.get<SourceListServerData>(
       `/sources_list?uri=${userCredentials?.uri}&database=${userCredentials?.database}&userName=${userCredentials?.userName}&password=${encodedstr}&email=${userCredentials.email}`
     );

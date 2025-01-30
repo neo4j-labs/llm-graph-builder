@@ -695,7 +695,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
     triggerStatusUpdateAPI(
       item.fileName,
       userCredentials.uri,
-      userCredentials.userName,
+      userCredentials.userName ?? null,
       userCredentials.password,
       userCredentials.database,
       updateStatusForLargeFiles

@@ -96,9 +96,9 @@ const PageLayout: React.FC = () => {
           'neo4j.connection',
           JSON.stringify({
             uri: credentials.uri,
-            user: credentials.userName,
-            password: btoa(credentials.password),
-            database: credentials.database,
+            user: credentials.userName || null,
+            password: credentials.password ? btoa(credentials.password) : null,
+            database: credentials.database || null,
             userDbVectorIndex: 384,
             isReadOnlyUser: credentials.isReadonlyUser,
             isgdsActive: credentials.isgdsActive,
@@ -116,12 +116,12 @@ const PageLayout: React.FC = () => {
         }
         try {
           const parsedConnection = JSON.parse(neo4jConnection);
-          if (parsedConnection.uri && parsedConnection.user && parsedConnection.password && parsedConnection.database) {
+          if (parsedConnection.uri) {
             const credentials = {
               uri: parsedConnection.uri,
-              userName: parsedConnection.user,
-              password: atob(parsedConnection.password),
-              database: parsedConnection.database,
+              userName: parsedConnection.user || null,
+              password: parsedConnection.password ? atob(parsedConnection.password) : null,
+              database: parsedConnection.database || null,
               email: parsedConnection.email,
             };
             setUserCredentials(credentials);
@@ -143,7 +143,7 @@ const PageLayout: React.FC = () => {
           const isDiffCreds =
             envCredentials.uri !== storedCredentials.uri ||
             envCredentials.userName !== storedCredentials.user ||
-            btoa(envCredentials.password) !== storedCredentials.password ||
+            (envCredentials.password && btoa(envCredentials.password) !== storedCredentials.password) ||
             envCredentials.database !== storedCredentials.database;
           if (isDiffCreds) {
             setUserCredentialsLocally(envCredentials);
@@ -164,14 +164,15 @@ const PageLayout: React.FC = () => {
         if (connectionData.data && connectionData.status === 'Success') {
           const envCredentials = {
             uri: connectionData.data.uri,
-            password: atob(connectionData.data.password),
-            userName: connectionData.data.user_name,
-            database: connectionData.data.database,
+            password: null,
+            userName: null,
+            database: null,
             isReadonlyUser: !connectionData.data.write_access,
             isgdsActive: connectionData.data.gds_status,
             isGCSActive: connectionData?.data?.gcs_file_cache === 'True',
             chunksTobeProcess: parseInt(connectionData.data.chunk_to_be_created),
             email: user?.email ?? '',
+            connection: connectionData.data.connection === 'backendApi'
           };
           setChunksToBeProces(envCredentials.chunksTobeProcess);
           setIsGCSActive(envCredentials.isGCSActive);

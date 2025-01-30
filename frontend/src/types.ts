@@ -48,9 +48,9 @@ export interface OptionType {
 
 export type UserCredentials = {
   uri: string;
-  userName: string;
-  password: string;
-  database: string;
+  userName: string | null;
+  password: string | null;
+  database: string | null;
   email: string;
 } & { [key: string]: any };
 
