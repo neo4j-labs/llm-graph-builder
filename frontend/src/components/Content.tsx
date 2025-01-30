@@ -17,6 +17,9 @@ import {
   llms,
   RETRY_OPIONS,
   tooltips,
+  chunkSize,
+  chunkOverlap,
+  chunksToCombine
 } from '../utils/Constants';
 import ButtonWithToolTip from './UI/ButtonWithToolTip';
 import DropdownComponent from './Dropdown';
@@ -60,7 +63,6 @@ const Content: React.FC<ContentProps> = ({
   const [extractLoading, setIsExtractLoading] = useState<boolean>(false);
   const { setUserCredentials, userCredentials, setConnectionStatus, isGdsActive, isReadOnlyUser, isGCSActive } =
     useCredentials();
-
   const [retryFile, setRetryFile] = useState<string>('');
   const [retryLoading, setRetryLoading] = useState<boolean>(false);
   const [showRetryPopup, toggleRetryPopup] = useReducer((state) => !state, false);
@@ -82,9 +84,15 @@ const Content: React.FC<ContentProps> = ({
     setModel,
     selectedNodes,
     selectedRels,
+    selectedChunk_size,
+    selectedChunk_overlap,
+    selectedChunks_to_combine,
     setSelectedNodes,
     setRowSelection,
     setSelectedRels,
+    setSelectedChunk_size,
+    setSelectedChunk_overlap,
+    setSelectedChunks_to_combine,
     postProcessingTasks,
     queue,
     processedCount,
@@ -284,6 +292,9 @@ const Content: React.FC<ContentProps> = ({
         fileItem.gcsBucketFolder ?? '',
         selectedNodes.map((l) => l.value),
         selectedRels.map((t) => t.value),
+        selectedChunk_size,
+        selectedChunk_overlap,
+        selectedChunks_to_combine,
         fileItem.googleProjectId,
         fileItem.language,
         fileItem.accessToken,
@@ -556,6 +567,12 @@ const Content: React.FC<ContentProps> = ({
     setUserCredentials({ uri: '', password: '', userName: '', database: '', email: '' });
     setSelectedNodes([]);
     setSelectedRels([]);
+    localStorage.removeItem('selectedChunk_size');
+    setSelectedChunk_size(chunkSize)
+    localStorage.removeItem('selectedChunk_overlap');
+    setSelectedChunk_overlap(chunkOverlap)
+    localStorage.removeItem('selectedChunks_to_combine');
+    setSelectedChunks_to_combine(chunksToCombine)
     localStorage.removeItem('instructions');
     setAdditionalInstructions('');
     setMessages([
@@ -779,6 +796,19 @@ const Content: React.FC<ContentProps> = ({
             loading={extractLoading}
             selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
             isLargeDocumentAlert={true}
+          ></ConfirmationDialog>
+        </Suspense>
+      )}
+      {showExpirationModal && filesForProcessing.length && (
+        <Suspense fallback={<FallBackDialog />}>
+          <ConfirmationDialog
+            open={showExpirationModal}
+            largeFiles={filesForProcessing}
+            extractHandler={handleGenerateGraph}
+            onClose={() => setShowExpirationModal(false)}
+            loading={extractLoading}
+            selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
+            isLargeDocumentAlert={false}
           ></ConfirmationDialog>
         </Suspense>
       )}

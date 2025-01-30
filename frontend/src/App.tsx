@@ -8,6 +8,7 @@ const App = () => {
   return (
     <Routes>
       <Route path='/' element={SKIP_AUTH ? <Home /> : <AuthenticationGuard component={Home} />}></Route>
+      <Route path='/readonly' element={<Home />}></Route>
       <Route path='/chat-only' element={<ChatOnlyComponent />}></Route>
     </Routes>
   );

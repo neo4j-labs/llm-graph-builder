@@ -121,7 +121,7 @@ def get_llm(model: str):
     return llm, model_name
 
 
-def get_combined_chunks(chunkId_chunkDoc_list):
+def get_combined_chunks(chunkId_chunkDoc_list,chunks_to_combine):
     chunks_to_combine = int(os.environ.get("NUMBER_OF_CHUNKS_TO_COMBINE"))
     logging.info(f"Combining {chunks_to_combine} chunks before sending request to LLM")
     combined_chunk_document_list = []
@@ -189,8 +189,6 @@ async def get_graph_document_list(
     else:
         graph_document_list = await llm_transformer.aconvert_to_graph_documents(combined_chunk_document_list)
     return graph_document_list
-
-
 
 async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship, additional_instructions=None):
     try:
