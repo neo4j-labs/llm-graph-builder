@@ -72,7 +72,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
                   )}
                   <Flex gap='6' className='h-full source-container'>
                     {APP_SOURCES.includes('local') && (
-                      <div className='px-6 outline-dashed outline-2 outline-offset-2 outline-gray-100 imageBg'>
+                      <div className='px-6 outline-dashed outline-2 outline-offset-2 outline-gray-100 mt-3 imageBg'>
                         <DropZone />
                       </div>
                     )}
