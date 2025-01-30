@@ -134,6 +134,7 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4 n-p-token-6' value={activeTab} tabId={4}>
           <PostProcessingCheckList />
         </Tabs.TabPanel>
+
       </Dialog.Content>
     </Dialog>
   );
