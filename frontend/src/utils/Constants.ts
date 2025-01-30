@@ -157,7 +157,7 @@ export const tooltips = {
   applySettings: 'Apply Graph Schema',
   openChatPopout: 'Chat',
   downloadChat: 'Download Conversation',
-  visualizeGraph:'Visualize Graph Schema'
+  visualizeGraph: 'Visualize Graph Schema',
 };
 export const PRODMODLES = ['openai_gpt_4o', 'openai_gpt_4o_mini', 'diffbot', 'gemini_1.5_flash'];
 export const buttonCaptions = {

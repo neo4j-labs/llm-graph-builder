@@ -21,12 +21,7 @@ import {
   MagnifyingGlassPlusIconOutline,
 } from '@neo4j-ndl/react/icons';
 import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
-import {
-  filterData,
-  getCheckboxConditions,
-  graphTypeFromNodes,
-  processGraphData
-} from '../../utils/Utils';
+import { filterData, getCheckboxConditions, graphTypeFromNodes, processGraphData } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
 
 import { getGraphSchema, graphQueryAPI } from '../../services/GraphQuery';
