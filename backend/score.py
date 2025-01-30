@@ -303,7 +303,12 @@ async def get_source_list(uri:str, userName:str, password:str, email:str, databa
     """
     try:
         start = time.time()
-        decoded_password = decode_password(password)
+        if password is not None and password != "null":
+            decoded_password = decode_password(password)
+        else:
+            decoded_password = None
+        userName = None
+        database = None
         if " " in uri:
             uri = uri.replace(" ","+")
         result = await asyncio.to_thread(get_source_list_from_graph,uri,userName,decoded_password,database)
