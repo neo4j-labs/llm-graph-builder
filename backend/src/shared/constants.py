@@ -1,4 +1,3 @@
-
 OPENAI_MODELS = ["openai-gpt-3.5", "openai-gpt-4o", "openai-gpt-4o-mini"]
 GEMINI_MODELS = ["gemini-1.0-pro", "gemini-1.5-pro", "gemini-1.5-flash"]
 GROQ_MODELS = ["groq-llama3"]
@@ -893,3 +892,19 @@ ADDITIONAL_INSTRUCTIONS = """Your goal is to identify and categorize entities wh
 types such as dates, numbers, revenues, and other non-entity information are not extracted as separate nodes.
 Instead, treat these as properties associated with the relevant entities."""
 
+SCHEMA_VISUALIZATION_QUERY = """
+CALL db.schema.visualization() YIELD nodes, relationships
+RETURN
+  [n IN nodes | {
+      element_id: elementId(n),
+      labels: labels(n),
+      properties: apoc.any.properties(n)
+  }] AS nodes,
+  [r IN relationships | {
+      type: type(r),
+      properties: apoc.any.properties(r),
+      element_id: elementId(r),
+      start_node_element_id: elementId(startNode(r)),
+      end_node_element_id: elementId(endNode(r))
+  }] AS relationships;
+"""

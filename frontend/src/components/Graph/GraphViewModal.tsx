@@ -24,7 +24,7 @@ import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
 import { filterData, getCheckboxConditions, graphTypeFromNodes, processGraphData } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
 
-import { graphQueryAPI } from '../../services/GraphQuery';
+import { getGraphSchema, graphQueryAPI } from '../../services/GraphQuery';
 import { graphLabels, nvlOptions, queryMap } from '../../utils/Constants';
 import CheckboxSelection from './CheckboxSelection';
 
@@ -110,13 +110,17 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
 
   const fetchData = useCallback(async () => {
     try {
-      const nodeRelationshipData =
-        viewPoint === graphLabels.showGraphView
-          ? await graphQueryAPI(
-              graphQuery,
-              selectedRows?.map((f) => f.name)
-            )
-          : await graphQueryAPI(graphQuery, [inspectedName ?? '']);
+      let nodeRelationshipData;
+      if (viewPoint === graphLabels.showGraphView) {
+        nodeRelationshipData = await graphQueryAPI(
+          graphQuery,
+          selectedRows?.map((f) => f.name)
+        );
+      } else if (viewPoint === graphLabels.showSchemaView) {
+        nodeRelationshipData = await getGraphSchema();
+      } else {
+        nodeRelationshipData = await graphQueryAPI(graphQuery, [inspectedName ?? '']);
+      }
       return nodeRelationshipData;
     } catch (error: any) {
       console.log(error);
@@ -254,6 +258,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const headerTitle =
     viewPoint === graphLabels.showGraphView || viewPoint === graphLabels.chatInfoView
       ? graphLabels.generateGraph
+      : viewPoint === graphLabels.showSchemaView
+      ? graphLabels.renderSchemaGraph
       : `${graphLabels.inspectGeneratedGraphFrom} ${inspectedName}`;
 
   const checkBoxView = viewPoint !== graphLabels.chatInfoView;
@@ -349,14 +355,15 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       >
         <Dialog.Header htmlAttributes={{ id: 'graph-title' }}>
           {headerTitle}
-          {viewPoint !== graphLabels.chatInfoView && (
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <span>
-                <InformationCircleIconOutline className='n-size-token-6' />
-              </span>
-              <span className='n-body-small ml-1'>{graphLabels.chunksInfo}</span>
-            </div>
-          )}
+          {viewPoint !== graphLabels.chatInfoView ||
+            (viewPoint === graphLabels.showSchemaView && (
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <span>
+                  <InformationCircleIconOutline className='n-size-token-6' />
+                </span>
+                <span className='n-body-small ml-1'>{graphLabels.chunksInfo}</span>
+              </div>
+            ))}
           <Flex className='w-full' alignItems='center' flexDirection='row'>
             {checkBoxView && (
               <CheckboxSelection

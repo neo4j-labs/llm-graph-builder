@@ -34,8 +34,6 @@
     "react-markdown": "^9.0.1",
     "react-router": "^6.23.1",
     "react-router-dom": "^6.23.1",
-    "remark-gfm": "^4.0.0",
-    "tailwind-merge": "^2.3.0",
     "uuid": "^9.0.1"
   },
   "devDependencies": {

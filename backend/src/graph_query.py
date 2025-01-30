@@ -3,7 +3,8 @@ from neo4j import time
 from neo4j import GraphDatabase
 import os
 import json
-from src.shared.constants import GRAPH_CHUNK_LIMIT,GRAPH_QUERY,CHUNK_TEXT_QUERY,COUNT_CHUNKS_QUERY
+
+from src.shared.constants import GRAPH_CHUNK_LIMIT,GRAPH_QUERY,CHUNK_TEXT_QUERY,COUNT_CHUNKS_QUERY,SCHEMA_VISUALIZATION_QUERY
 
 def get_graphDB_driver(uri, username, password,database="neo4j"):
     """
@@ -250,6 +251,25 @@ def get_chunktext_results(uri, username, password, database, document_name, page
    except Exception as e:
        logging.error(f"An error occurred in get_chunktext_results. Error: {str(e)}")
        raise Exception("An error occurred in get_chunktext_results. Please check the logs for more details.") from e
+   finally:
+       if driver:
+           driver.close()
+
+
+def visualize_schema(uri, userName, password, database):
+   """Retrieves graph schema"""
+   driver = None
+   try:
+       logging.info("Starting visualizing graph schema")
+       driver = GraphDatabase.driver(uri, auth=(userName, password),database=database)
+       records, summary, keys = driver.execute_query(SCHEMA_VISUALIZATION_QUERY)
+       nodes = records[0].get("nodes", [])
+       relationships = records[0].get("relationships", [])
+       result = {"nodes": nodes, "relationships": relationships}
+       return result
+   except Exception as e:
+       logging.error(f"An error occurred schema retrieval. Error: {str(e)}")
+       raise Exception(f"An error occurred schema retrieval. Error: {str(e)}")
    finally:
        if driver:
            driver.close()
