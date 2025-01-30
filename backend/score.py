@@ -1000,6 +1000,7 @@ async def backend_connection_configuration():
                 graphDb_data_Access = graphDBdataAccess(graph)
                 result = graphDb_data_Access.connection_check_and_get_vector_dimensions(database)
                 result['gcs_file_cache'] = gcs_file_cache
+                result['uri'] = uri
                 result['chunk_to_be_created']= chunk_to_be_created
                 end = time.time()
                 elapsed_time = end - start
