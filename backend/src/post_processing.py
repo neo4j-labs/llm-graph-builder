@@ -233,6 +233,3 @@ def graph_schema_consolidation(graph):
         graph.query(query)
 
     return None
-                      
-    
-    

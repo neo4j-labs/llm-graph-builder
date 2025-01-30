@@ -892,7 +892,6 @@ ADDITIONAL_INSTRUCTIONS = """Your goal is to identify and categorize entities wh
 types such as dates, numbers, revenues, and other non-entity information are not extracted as separate nodes.
 Instead, treat these as properties associated with the relevant entities."""
 
-
 SCHEMA_VISUALIZATION_QUERY = """
 CALL db.schema.visualization() YIELD nodes, relationships
 RETURN
