@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useReducer, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useReducer, useState } from 'react';
 import SideNav from './SideNav';
 import DrawerDropzone from './DrawerDropzone';
 import DrawerChatbot from './DrawerChatbot';
@@ -17,7 +17,10 @@ import { healthStatus } from '../../services/HealthStatus';
 import { useNavigate } from 'react-router';
 import { useAuth0 } from '@auth0/auth0-react';
 import { createDefaultFormData } from '../../API/Index';
-
+import { APP_SOURCES } from '../../utils/Constants';
+const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
+const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
+const GenericModal = lazy(() => import('../WebSources/GenericSourceModal'));
 const ConnectionModal = lazy(() => import('../Popups/ConnectionModal/ConnectionModal'));
 
 const PageLayout: React.FC = () => {
@@ -48,7 +51,9 @@ const PageLayout: React.FC = () => {
   const [showDrawerChatbot, setShowDrawerChatbot] = useState<boolean>(true);
   const [showEnhancementDialog, toggleEnhancementDialog] = useReducer((s) => !s, false);
   const [shows3Modal, toggleS3Modal] = useReducer((s) => !s, false);
-  const [showGCSModal, toggleGCSModal] = useReducer((s) => !s, false);
+  const [showGCSModal, toggleGCSModal] = useReducer((s) => {
+    return !s;
+  }, false);
   const [showGenericModal, toggleGenericModal] = useReducer((s) => !s, false);
   const { user, isAuthenticated } = useAuth0();
 
@@ -67,7 +72,18 @@ const PageLayout: React.FC = () => {
       setIsRightExpanded(false);
     }
   };
-
+  const isYoutubeOnly = useMemo(
+    () => APP_SOURCES.includes('youtube') && !APP_SOURCES.includes('wiki') && !APP_SOURCES.includes('web'),
+    []
+  );
+  const isWikipediaOnly = useMemo(
+    () => APP_SOURCES.includes('wiki') && !APP_SOURCES.includes('youtube') && !APP_SOURCES.includes('web'),
+    []
+  );
+  const isWebOnly = useMemo(
+    () => APP_SOURCES.includes('web') && !APP_SOURCES.includes('youtube') && !APP_SOURCES.includes('wiki'),
+    []
+  );
   const { messages, setClearHistoryData, clearHistoryData, setMessages, setIsDeleteChatLoading } = useMessageContext();
   const { setShowTextFromSchemaDialog, showTextFromSchemaDialog } = useFileContext();
   const { cancel } = useSpeechSynthesis();
@@ -342,16 +358,21 @@ const PageLayout: React.FC = () => {
         </div>
       ) : (
         <>
-          <DrawerDropzone
-            shows3Modal={shows3Modal}
-            showGCSModal={showGCSModal}
-            showGenericModal={showGenericModal}
-            toggleGCSModal={toggleGCSModal}
-            toggleGenericModal={toggleGenericModal}
-            toggleS3Modal={toggleS3Modal}
-            isExpanded={isLeftExpanded}
-          />
-
+          <Suspense fallback={<FallBackDialog />}>
+            <GCSModal openGCSModal={toggleGCSModal} open={showGCSModal} hideModal={toggleGCSModal} />
+          </Suspense>
+          <Suspense fallback={<FallBackDialog />}>
+            <S3Modal hideModal={toggleS3Modal} open={shows3Modal} />
+          </Suspense>
+          <Suspense fallback={<FallBackDialog />}>
+            <GenericModal
+              isOnlyYoutube={isYoutubeOnly}
+              isOnlyWikipedia={isWikipediaOnly}
+              isOnlyWeb={isWebOnly}
+              open={showGenericModal}
+              closeHandler={toggleGenericModal}
+            />
+          </Suspense>
           <div className='layout-wrapper drawerclosed'>
             <SideNav
               toggles3Modal={toggleS3Modal}

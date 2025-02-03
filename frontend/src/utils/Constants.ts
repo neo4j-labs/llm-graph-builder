@@ -32,7 +32,7 @@ export const llms =
         'bedrock_nova_lite_v1',
         'bedrock_nova_pro_v1',
         'fireworks_deepseek_r1',
-        'fireworks_deepseek_v3'
+        'fireworks_deepseek_v3',
       ];
 
 export const supportedLLmsForRagas = [
