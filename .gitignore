@@ -173,3 +173,27 @@ google-cloud-cli-linux-x86_64.tar.gz
 newenv
 files
 
+
+#terraform GITIGNORE
+
+# Local .terraform directories
+**/.terraform/*
+
+
+*.tfvars
+*.tfvars.json
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Ignore transient lock info files created by terraform apply
+.terraform.tfstate.lock.info
+
+# Ignore CLI configuration files
+.terraformrc
+terraform.rc
