@@ -849,6 +849,12 @@ export interface FileContextType {
   setSelectedNodes: Dispatch<SetStateAction<readonly OptionType[]>>;
   selectedRels: readonly OptionType[];
   setSelectedRels: Dispatch<SetStateAction<readonly OptionType[]>>;
+  selectedChunk_size: number;
+  setSelectedChunk_size: Dispatch<SetStateAction<number>>;
+  selectedChunk_overlap: number;
+  setSelectedChunk_overlap: Dispatch<SetStateAction<number>>;
+  selectedChunks_to_combine: number;
+  setSelectedChunks_to_combine: Dispatch<SetStateAction<number>>;
   rowSelection: Record<string, boolean>;
   setRowSelection: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   selectedRows: string[];

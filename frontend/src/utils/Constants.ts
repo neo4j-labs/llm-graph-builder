@@ -126,7 +126,12 @@ export const chatModes =
         },
       ];
 
-export const chunkSize = process.env.VITE_CHUNK_SIZE ? parseInt(process.env.VITE_CHUNK_SIZE) : 1 * 1024 * 1024;
+export const chunkSize = process.env.VITE_CHUNK_SIZE ? parseInt(process.env.VITE_CHUNK_SIZE) : 200;
+export const chunkOverlap = process.env.VITE_Chunk_Overlap ? parseInt(process.env.VITE_Chunk_Overlap) : 20;
+export const chunksToCombine = process.env.VITE_Chunks_to_combine ? parseInt(process.env.VITE_Chunks_to_combine) : 1;
+export const defaultChunkSizeOptions = [200, 1024, 2048];
+export const defaultChunkOverlapOptions = [20, 100, 200];
+export const defaultChunksToCombineOptions = [1, 2, 3, 4, 5, 6];
 export const timeperpage = process.env.VITE_TIME_PER_PAGE ? parseInt(process.env.VITE_TIME_PER_PAGE) : 50;
 export const timePerByte = 0.2;
 export const largeFileSize = process.env.VITE_LARGE_FILE_SIZE
@@ -340,6 +345,7 @@ export const getDefaultMessage = () => {
 export const appLabels = {
   ownSchema: 'Or Define your own Schema',
   predefinedSchema: 'Select a Pre-defined Schema',
+  chunkingConfiguration: 'Select a Chunking Configuration'
 };
 
 export const LLMDropdownLabel = {
