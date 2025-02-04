@@ -4,9 +4,9 @@ import api from '../API/Index';
 export default async function subscribe(
   fileName: string,
   uri: string,
-  username: string | null,
-  password: string | null,
-  database: string | null,
+  username: string ,
+  password: string ,
+  database: string ,
   datahandler: (i: statusupdate) => void,
   progressHandler: (i: statusupdate) => void
 ) {

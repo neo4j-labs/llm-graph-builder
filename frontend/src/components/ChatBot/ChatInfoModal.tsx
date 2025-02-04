@@ -142,10 +142,10 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         toggleInfoLoading();
         try {
           const response = await chunkEntitiesAPI(
-            userCredentials?.database,
             nodeDetails,
             entities_ids,
-            mode
+            mode,
+            userCredentials?.database ?? '',
           );
           if (response.data.status === 'Failure') {
             throw new Error(response.data.error);
