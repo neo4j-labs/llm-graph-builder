@@ -442,6 +442,10 @@ def remap_tool_names(tool):
     return tool
 
 def extract_tool_calls(model, messages):
+    if not isinstance(messages, list):
+        return []
+    logging.info("extract_tool_calls called with messages below")
+    logging.info(messages)
     # extract tool calling
     messages_copy = list(messages)
 
@@ -460,13 +464,15 @@ def extract_tool_calls(model, messages):
     return tools
 
 
-def process_chat_response(messages, history, question, model, graph, document_names, chat_mode_settings):
+def process_chat_response(messages, history, question, model, graph, document_names, chat_mode_settings, extract_tools = False):
     try:
         llm, doc_retriever, model_version = setup_chat(model, graph, document_names, chat_mode_settings)
 
-        tool_calls = extract_tool_calls(model, messages)
-        logging.info("returned tool calls")
-        logging.info(tool_calls)
+        tool_calls = None
+        if(extract_tools):
+            extract_tool_calls(model, messages)
+            logging.info("returned tool calls")
+            logging.info(tool_calls)
 
         docs,transformed_question = retrieve_documents(doc_retriever, messages)  
 
@@ -762,7 +768,8 @@ def MAGIC_TREK_QA_RAG(graph,model, messages, question, document_names, session_i
                 model=model, 
                 graph=graph, 
                 document_names=document_names,
-                chat_mode_settings=chat_mode_settings
+                chat_mode_settings=chat_mode_settings,
+                extract_tools=True
             )
 
     # result["session_id"] = session_id
@@ -807,7 +814,7 @@ def QA_RAG(graph,model, question, document_names, session_id, mode, write_access
                 "user": "chatbot"
             }
         else:
-            result = process_chat_response(messages,history, question, model, graph, document_names,chat_mode_settings)
+            result = process_chat_response(messages,history, question, model, graph, document_names,chat_mode_settings, extract_tools=False)
 
     result["session_id"] = session_id
     
