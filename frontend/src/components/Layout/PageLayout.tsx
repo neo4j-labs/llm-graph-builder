@@ -16,6 +16,7 @@ import { envConnectionAPI } from '../../services/ConnectAPI';
 import { healthStatus } from '../../services/HealthStatus';
 import { useNavigate } from 'react-router';
 import { useAuth0 } from '@auth0/auth0-react';
+import { showErrorToast } from '../../utils/toasts';
 
 
 const ConnectionModal = lazy(() => import('../Popups/ConnectionModal/ConnectionModal'));
@@ -95,25 +96,41 @@ const PageLayout: React.FC = () => {
             isGCSActive: connectionData.data.gcs_file_cache === 'True',
             chunksTobeProcess: parseInt(connectionData.data.chunk_to_be_created),
             email: user?.email ?? '',
-            connection: connectionData.data.connection === 'backendApi',
+            connection:'backendApi',
           };
           setChunksToBeProces(credentials.chunksTobeProcess);
           setIsGCSActive(credentials.isGCSActive);
           setUserCredentials(credentials);
           setGdsActive(credentials.isgdsActive);
           setConnectionStatus(Boolean(connectionData.data.graph_connection));
-          setIsReadOnlyUser(connectionData.data.isReadonlyUser)
+          setIsReadOnlyUser(connectionData.data.isReadonlyUser);
           handleDisconnectButtonState(false);
+        }
+        else if (!connectionData.data && connectionData.status === 'Success') {
+          const storedCredentials = localStorage.getItem('neo4j.connection');
+          if (storedCredentials) {
+            const credentials = JSON.parse(storedCredentials);
+            setUserCredentials(credentials);
+            setChunksToBeProces(credentials.chunksTobeProcess);
+            setIsGCSActive(credentials.isGCSActive);
+            setGdsActive(credentials.isgdsActive);
+            setConnectionStatus(Boolean(credentials.connection === 'connectAPI'));
+            setIsReadOnlyUser(credentials.isReadonlyUser);
+            handleDisconnectButtonState(true);
+          } else {
+            setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
+            handleDisconnectButtonState(true);
+          }
         } else {
           setErrorMessage(backendApiResponse?.data?.error);
           setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
           handleDisconnectButtonState(true);
+          console.log('from else cndition error is there')
         }
       } catch (error) {
-        console.error('Error during backend API call:', error);
-        setErrorMessage('Failed to connect to backend API');
-        setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
-        handleDisconnectButtonState(true);
+        if (error instanceof Error) {
+          showErrorToast(error.message);
+        }
       }
     }
     initializeConnection();
@@ -181,9 +198,8 @@ const PageLayout: React.FC = () => {
       ></SchemaFromTextDialog>
       {isLargeDesktop ? (
         <div
-          className={`layout-wrapper ${!isLeftExpanded ? 'drawerdropzoneclosed' : ''} ${
-            !isRightExpanded ? 'drawerchatbotclosed' : ''
-          } ${!isRightExpanded && !isLeftExpanded ? 'drawerclosed' : ''}`}
+          className={`layout-wrapper ${!isLeftExpanded ? 'drawerdropzoneclosed' : ''} ${!isRightExpanded ? 'drawerchatbotclosed' : ''
+            } ${!isRightExpanded && !isLeftExpanded ? 'drawerclosed' : ''}`}
         >
           <SideNav
             toggles3Modal={toggleS3Modal}

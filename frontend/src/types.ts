@@ -52,6 +52,7 @@ export type UserCredentials = {
   password?: string
   database?: string
   email: string;
+  connection?: string
 } & { [key: string]: any };
 
 export interface SourceNode extends Omit<CustomFileBase, 'relationshipsCount' | 'createdAt'> {
@@ -779,7 +780,7 @@ export interface GraphContextType {
 export interface DatabaseStatusProps {
   isConnected: boolean;
   isGdsActive: boolean;
-  uri: string | null;
+  uri?: string;
 }
 
 export type SourcesProps = {
