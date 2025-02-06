@@ -701,7 +701,8 @@ const Content: React.FC<ContentProps> = ({
     const selectedRows = childRef.current?.getSelectedRows();
     if (selectedRows?.length) {
       const expiredFilesExists = selectedRows.some(
-        (c) => isFileReadyToProcess(c, true) && isExpired((c?.createdAt as Date) ?? new Date()));
+        (c) => isFileReadyToProcess(c, true) && isExpired((c?.createdAt as Date) ?? new Date())
+      );
       const largeFileExists = selectedRows.some(
         (c) => isFileReadyToProcess(c, true) && typeof c.size === 'number' && c.size > largeFileSize
       );

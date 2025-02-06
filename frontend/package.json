@@ -16,8 +16,8 @@
     "@mui/material": "^5.15.10",
     "@mui/styled-engine": "^5.15.9",
     "@neo4j-devtools/word-color": "^0.0.8",
-    "@neo4j-ndl/base": "^3.0.16",
-    "@neo4j-ndl/react": "^3.0.30",
+    "@neo4j-ndl/base": "^3.2.5",
+    "@neo4j-ndl/react": "^3.2.12",
     "@neo4j-nvl/base": "^0.3.6",
     "@neo4j-nvl/react": "^0.3.6",
     "@react-oauth/google": "^0.12.1",
@@ -34,8 +34,6 @@
     "react-markdown": "^9.0.1",
     "react-router": "^6.23.1",
     "react-router-dom": "^6.23.1",
-    "remark-gfm": "^4.0.0",
-    "tailwind-merge": "^2.3.0",
     "uuid": "^9.0.1"
   },
   "devDependencies": {

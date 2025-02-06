@@ -31,6 +31,8 @@ export const llms =
         'bedrock_nova_micro_v1',
         'bedrock_nova_lite_v1',
         'bedrock_nova_pro_v1',
+        'fireworks_deepseek_r1',
+        'fireworks_deepseek_v3',
       ];
 
 export const supportedLLmsForRagas = [
@@ -157,6 +159,7 @@ export const tooltips = {
   applySettings: 'Apply Graph Schema',
   openChatPopout: 'Chat',
   downloadChat: 'Download Conversation',
+  visualizeGraph: 'Visualize Graph Schema',
 };
 export const PRODMODLES = ['openai_gpt_4o', 'openai_gpt_4o_mini', 'diffbot', 'gemini_1.5_flash'];
 export const buttonCaptions = {
@@ -316,6 +319,8 @@ export const graphLabels = {
   noNodesRels: 'No Nodes and No relationships',
   neighborView: 'neighborView',
   chunksInfo: 'We are visualizing 50 chunks at a time',
+  showSchemaView: 'showSchemaView',
+  renderSchemaGraph: 'Graph from Database Schema',
 };
 
 export const RESULT_STEP_SIZE = 25;

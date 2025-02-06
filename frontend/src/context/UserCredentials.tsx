@@ -1,5 +1,6 @@
-import { createContext, useState, useContext, FunctionComponent, ReactNode } from 'react';
+import { createContext, useState, useContext, FunctionComponent, ReactNode, useEffect } from 'react';
 import { ContextProps, UserCredentials } from '../types';
+import { useLocation } from 'react-router';
 
 type Props = {
   children: ReactNode;
@@ -59,7 +60,13 @@ const UserCredentialsWrapper: FunctionComponent<Props> = (props) => {
     chunksToBeProces,
     setChunksToBeProces,
   };
-
+  const { pathname } = useLocation();
+  useEffect(() => {
+    if (pathname === '/readonly') {
+      setIsReadOnlyUser(true);
+      localStorage.setItem('isReadOnlyMode', 'true');
+    }
+  }, [pathname]);
   return <UserConnection.Provider value={value}>{props.children}</UserConnection.Provider>;
 };
 export default UserCredentialsWrapper;

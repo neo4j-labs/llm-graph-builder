@@ -1075,3 +1075,56 @@ The API responsible for create the connection obj from Neo4j DB based on environ
   "error": "Could not connect to Neo4j database. Please ensure that the username and password are correct",
   "message": "Unable to connect backend DB"
 }
+....
+
+=== Visualize graph DB schema
+----
+POST /schema_visualization
+----
+
+User can visualize schema of the db through this API. 
+
+**API Parameters :**
+
+* `uri`=Neo4j uri, 
+* `userName`= Neo4j db username, 
+* `password`= Neo4j db password, 
+* `database`= Neo4j database name
+
+
+**Response :**
+[source,json,indent=0]
+....
+{
+  "status": "Success",
+  "data": {
+    "nodes": [
+      {
+        "element_id": "-5374",
+        "labels": [
+          "Entity"
+        ],
+        "properties": {
+          "name": "Entity",
+          "indexes": [
+            "id,description"
+          ],
+          "constraints": []
+        }
+      },
+    ],
+    "relationships": [
+      {
+        "element_id": "-44223",
+        "end_node_element_id": "-5411",
+        "start_node_element_id": "-5342",
+        "properties": {
+          "name": "OWNED"
+        },
+        "type": "OWNED"
+      },
+     ]
+  },
+  "message": "Total elapsed API time 3.51"
+}
+....

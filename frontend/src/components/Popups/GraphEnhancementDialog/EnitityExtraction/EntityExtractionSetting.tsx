@@ -10,6 +10,8 @@ import { getNodeLabelsAndRelTypes } from '../../../../services/GetNodeLabelsRelT
 import { tokens } from '@neo4j-ndl/base';
 import { showNormalToast } from '../../../../utils/toasts';
 import { useHasSelections } from '../../../../hooks/useHasSelections';
+import { Hierarchy1Icon } from '@neo4j-ndl/react/icons';
+import GraphViewModal from '../../../Graph/GraphViewModal';
 
 export default function EntityExtractionSetting({
   view,
@@ -35,6 +37,8 @@ export default function EntityExtractionSetting({
   const [loading, setLoading] = useState<boolean>(false);
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
   const hasSelections = useHasSelections(selectedNodes, selectedRels);
+  const [openGraphView, setOpenGraphView] = useState<boolean>(false);
+  const [viewPoint, setViewPoint] = useState<string>('tableView');
   const removeNodesAndRels = (nodelabels: string[], relationshipTypes: string[]) => {
     const labelsToRemoveSet = new Set(nodelabels);
     const relationshipLabelsToremoveSet = new Set(relationshipTypes);
@@ -229,6 +233,11 @@ export default function EntityExtractionSetting({
     );
   };
 
+  const handleSchemaView = () => {
+    setOpenGraphView(true);
+    setViewPoint('showSchemaView');
+  };
+
   return (
     <div>
       <Typography variant='body-medium'>
@@ -309,7 +318,17 @@ export default function EntityExtractionSetting({
               label='Use Existing Schema'
               placement='top'
             >
-              Use Existing Schema
+              Load Existing Schema
+            </ButtonWithToolTip>
+            <ButtonWithToolTip
+              label={'Graph Schema'}
+              text={tooltips.visualizeGraph}
+              placement='top'
+              fill='outlined'
+              onClick={handleSchemaView}
+              disabled={!hasSelections || selectedSchemas.length > 0}
+            >
+              <Hierarchy1Icon />
             </ButtonWithToolTip>
             <ButtonWithToolTip
               text={tooltips.createSchema}
@@ -359,6 +378,7 @@ export default function EntityExtractionSetting({
           </Flex>
         </Flex>
       </div>
+      <GraphViewModal open={openGraphView} setGraphViewOpen={setOpenGraphView} viewPoint={viewPoint} />
     </div>
   );
 }

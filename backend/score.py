@@ -11,7 +11,7 @@ from langserve import add_routes
 from langchain_google_vertexai import ChatVertexAI
 from src.api_response import create_api_response
 from src.graphDB_dataAccess import graphDBdataAccess
-from src.graph_query import get_graph_results,get_chunktext_results
+from src.graph_query import get_graph_results,get_chunktext_results,visualize_schema
 from src.chunkid_entities import get_entities_from_chunkids
 from src.post_processing import create_vector_fulltext_indexes, create_entity_embedding, graph_schema_consolidation
 from sse_starlette.sse import EventSourceResponse
@@ -82,7 +82,7 @@ class CustomGZipMiddleware:
 app = FastAPI()
 app.add_middleware(XContentTypeOptions)
 app.add_middleware(XFrame, Option={'X-Frame-Options': 'DENY'})
-app.add_middleware(CustomGZipMiddleware, minimum_size=1000, compresslevel=5,paths=["/sources_list","/url/scan","/extract","/chat_bot","/chunk_entities","/get_neighbours","/graph_query","/schema","/populate_graph_schema","/get_unconnected_nodes_list","/get_duplicate_nodes","/fetch_chunktext"])
+app.add_middleware(CustomGZipMiddleware, minimum_size=1000, compresslevel=5,paths=["/sources_list","/url/scan","/extract","/chat_bot","/chunk_entities","/get_neighbours","/graph_query","/schema","/populate_graph_schema","/get_unconnected_nodes_list","/get_duplicate_nodes","/fetch_chunktext","/schema_visualization"])
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -1033,6 +1033,32 @@ async def backend_connection_configuration():
         return create_api_response(job_status, message=message, error=error_message.rstrip('.') + ', or fill from the login dialog.', data=graph_connection)
     finally:
         gc.collect()
-        
+    
+@app.post("/schema_visualization")
+async def get_schema_visualization(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None)):
+    try:
+        start = time.time()
+        result = await asyncio.to_thread(visualize_schema,
+           uri=uri,
+           userName=userName,
+           password=password,
+           database=database)
+        if result:
+            logging.info("Graph schema visualization query successful")
+        end = time.time()
+        elapsed_time = end - start
+        logging.info(f'Schema result from DB: {result}')
+        json_obj = {'api_name':'schema_visualization','db_url':uri, 'userName':userName, 'database':database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        logger.log_struct(json_obj, "INFO")
+        return create_api_response('Success', data=result,message=f"Total elapsed API time {elapsed_time:.2f}")
+    except Exception as e:
+        message="Unable to get schema visualization from neo4j database"
+        error_message = str(e)
+        logging.info(message)
+        logging.exception(f'Exception:{error_message}')
+        return create_api_response("Failed", message=message, error=error_message)
+    finally:
+        gc.collect()
+
 if __name__ == "__main__":
     uvicorn.run(app)
