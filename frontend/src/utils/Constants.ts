@@ -126,7 +126,7 @@ export const chatModes =
         },
       ];
 
-export const chunkSize = process.env.VITE_CHUNK_SIZE ? parseInt(process.env.VITE_CHUNK_SIZE) : 100;
+export const chunkSize = process.env.VITE_TOKENS_PER_CHUNK ? parseInt(process.env.VITE_TOKENS_PER_CHUNK) : 100;
 export const chunkOverlap = process.env.VITE_CHUNK_OVERLAP ? parseInt(process.env.VITE_CHUNK_OVERLAP) : 20;
 export const chunksToCombine = process.env.VITE_CHUNK_TO_COMBINE ? parseInt(process.env.VITE_CHUNK_TO_COMBINE) : 1;
 export const defaultChunkSizeOptions = [50, 100, 200, 400, 1000];
