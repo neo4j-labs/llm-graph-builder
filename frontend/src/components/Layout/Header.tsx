@@ -48,7 +48,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
     if (session) {
       const neo4jConnection = JSON.parse(session);
       const { uri } = neo4jConnection;
-      const userName = neo4jConnection.user;
+      const userName = neo4jConnection.userName;
       const { password } = neo4jConnection;
       const { database } = neo4jConnection;
       const [, port] = uri.split(':');

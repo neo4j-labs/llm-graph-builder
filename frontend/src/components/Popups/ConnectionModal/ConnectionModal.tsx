@@ -96,8 +96,8 @@ export default function ConnectionModal({
               'neo4j.connection',
               JSON.stringify({
                 uri: usercredential?.uri,
-                user: usercredential?.userName,
-                password: btoa(usercredential?.password),
+                userName: usercredential?.userName,
+                password: btoa(usercredential.password ?? ''),
                 database: usercredential?.database,
                 userDbVectorIndex: 384,
               })
@@ -246,7 +246,7 @@ export default function ConnectionModal({
           'neo4j.connection',
           JSON.stringify({
             uri: connectionURI,
-            user: username,
+            userName: username,
             password: btoa(password),
             database: database,
             userDbVectorIndex,
@@ -255,6 +255,7 @@ export default function ConnectionModal({
             isGCSActive,
             chunksTobeProcess,
             email: user?.email ?? '',
+            connection:'connectAPI',
           })
         );
         setUserDbVectorIndex(response.data.data.db_vector_dimension);
