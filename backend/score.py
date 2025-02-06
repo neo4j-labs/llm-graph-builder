@@ -511,14 +511,12 @@ async def connect(uri=Form(), userName=Form(), password=Form(), database=Form(),
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, database)
         gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
-        chunk_to_be_created = int(os.environ.get('CHUNKS_TO_BE_CREATED', '50'))
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name':'connect','db_url':uri, 'userName':userName, 'database':database, 'count':1, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
         logger.log_struct(json_obj, "INFO")
         result['elapsed_api_time'] = f'{elapsed_time:.2f}'
         result['gcs_file_cache'] = gcs_file_cache
-        result['chunk_to_be_created']= chunk_to_be_created
         return create_api_response('Success',data=result)
     except Exception as e:
         job_status = "Failed"
@@ -994,7 +992,6 @@ async def backend_connection_configuration():
         database= os.getenv('NEO4J_DATABASE')
         password= os.getenv('NEO4J_PASSWORD')
         gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
-        chunk_to_be_created = int(os.environ.get('CHUNKS_TO_BE_CREATED', '50'))
         if all([uri, username, database, password]):
             graph = Neo4jGraph()
             logging.info(f'login connection status of object: {graph}')
@@ -1009,7 +1006,6 @@ async def backend_connection_configuration():
                 result["database"] = database
                 result["password"] = encoded_password
                 result['gcs_file_cache'] = gcs_file_cache
-                result['chunk_to_be_created']= chunk_to_be_created
                 end = time.time()
                 elapsed_time = end - start
                 result['api_name'] = 'backend_connection_configuration'
