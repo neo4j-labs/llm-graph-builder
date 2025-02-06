@@ -6,7 +6,15 @@ import {
   OptionType,
   showTextFromSchemaDialogType,
 } from '../types';
-import { chatModeLables, getStoredSchema, llms, PRODMODLES , chunkSize, chunkOverlap, chunksToCombine } from '../utils/Constants';
+import {
+  chatModeLables,
+  getStoredSchema,
+  llms,
+  PRODMODLES,
+  chunkSize,
+  chunkOverlap,
+  chunksToCombine,
+} from '../utils/Constants';
 import { useCredentials } from './UserCredentials';
 import Queue from '../utils/Queue';
 

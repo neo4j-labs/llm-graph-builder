@@ -19,7 +19,7 @@ import {
   tooltips,
   chunkSize,
   chunkOverlap,
-  chunksToCombine
+  chunksToCombine,
 } from '../utils/Constants';
 import ButtonWithToolTip from './UI/ButtonWithToolTip';
 import DropdownComponent from './Dropdown';
@@ -568,11 +568,11 @@ const Content: React.FC<ContentProps> = ({
     setSelectedNodes([]);
     setSelectedRels([]);
     localStorage.removeItem('selectedChunk_size');
-    setSelectedChunk_size(chunkSize)
+    setSelectedChunk_size(chunkSize);
     localStorage.removeItem('selectedChunk_overlap');
-    setSelectedChunk_overlap(chunkOverlap)
+    setSelectedChunk_overlap(chunkOverlap);
     localStorage.removeItem('selectedChunks_to_combine');
-    setSelectedChunks_to_combine(chunksToCombine)
+    setSelectedChunks_to_combine(chunksToCombine);
     localStorage.removeItem('instructions');
     setAdditionalInstructions('');
     setMessages([

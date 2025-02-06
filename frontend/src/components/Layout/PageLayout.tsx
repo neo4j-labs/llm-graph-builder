@@ -43,7 +43,7 @@ const PageLayout: React.FC = () => {
     setShowDisconnectButton,
     showDisconnectButton,
     setIsGCSActive,
-    setChunksToBeProces,
+    // setChunksToBeProces,
   } = useCredentials();
   const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(Boolean(isLargeDesktop));
   const [isRightExpanded, setIsRightExpanded] = useState<boolean>(Boolean(isLargeDesktop));
@@ -109,7 +109,7 @@ const PageLayout: React.FC = () => {
         setIsGCSActive(credentials.isGCSActive ?? false);
         setGdsActive(credentials.isgdsActive);
         setIsReadOnlyUser(credentials.isReadonlyUser);
-        setChunksToBeProces(credentials.chunksTobeProcess);
+        // setChunksToBeProces(credentials.chunksTobeProcess);
         localStorage.setItem(
           'neo4j.connection',
           JSON.stringify({
@@ -196,7 +196,7 @@ const PageLayout: React.FC = () => {
             chunksTobeProcess: parseInt(connectionData.data.chunk_to_be_created),
             email: user?.email ?? '',
           };
-          setChunksToBeProces(envCredentials.chunksTobeProcess);
+          // setChunksToBeProces(envCredentials.chunksTobeProcess);
           setIsGCSActive(envCredentials.isGCSActive);
           if (session) {
             const updated = updateSessionIfNeeded(envCredentials, session);

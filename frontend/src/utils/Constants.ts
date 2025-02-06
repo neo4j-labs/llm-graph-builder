@@ -165,6 +165,7 @@ export const tooltips = {
   openChatPopout: 'Chat',
   downloadChat: 'Download Conversation',
   visualizeGraph: 'Visualize Graph Schema',
+  additionalInstructions: 'Analyze instructions for schema',
 };
 export const PRODMODLES = ['openai_gpt_4o', 'openai_gpt_4o_mini', 'diffbot', 'gemini_1.5_flash'];
 export const buttonCaptions = {
@@ -345,7 +346,7 @@ export const getDefaultMessage = () => {
 export const appLabels = {
   ownSchema: 'Or Define your own Schema',
   predefinedSchema: 'Select a Pre-defined Schema',
-  chunkingConfiguration: 'Select a Chunking Configuration'
+  chunkingConfiguration: 'Select a Chunking Configuration',
 };
 
 export const LLMDropdownLabel = {
