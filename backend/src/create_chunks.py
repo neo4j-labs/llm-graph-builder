@@ -25,8 +25,10 @@ class CreateChunksofDocument:
             A list of chunks each of which is a langchain Document.
         """
         logging.info("Split file into smaller chunks")
-        text_splitter = TokenTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)        
-        chunk_to_be_created = int(10000 / chunk_size)
+        text_splitter = TokenTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+        MAX_TOKEN_CHUNK_SIZE = int(os.getenv('MAX_TOKEN_CHUNK_SIZE', 10000))
+        chunk_to_be_created = int(MAX_TOKEN_CHUNK_SIZE / chunk_size)
+        
         if 'page' in self.pages[0].metadata:
             chunks = []
             for i, document in enumerate(self.pages):
