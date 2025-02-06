@@ -52,7 +52,7 @@ export default function ConnectionModal({
     errorMessage,
     setIsGCSActive,
     setShowDisconnectButton,
-    setChunksToBeProces,
+    // setChunksToBeProces,
   } = useCredentials();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -241,7 +241,7 @@ export default function ConnectionModal({
         setIsGCSActive(isGCSActive);
         setGdsActive(isgdsActive);
         setIsReadOnlyUser(isReadOnlyUser);
-        setChunksToBeProces(chunksTobeProcess);
+        // setChunksToBeProces(chunksTobeProcess);
         localStorage.setItem(
           'neo4j.connection',
           JSON.stringify({

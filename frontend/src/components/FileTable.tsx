@@ -76,7 +76,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
   const { connectionStatus, setConnectionStatus, onInspect, onRetry, onChunkView } = props;
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } =
     useFileContext();
-  const { userCredentials, isReadOnlyUser, chunksToBeProces } = useCredentials();
+  const { userCredentials, isReadOnlyUser } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -1038,7 +1038,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                         <span>
                           <InformationCircleIconOutline className='n-size-token-6' />
                         </span>
-                        {`Large files may be partially processed up to ${chunksToBeProces} chunks due to resource limits.`}
+                        {`Large files may be partially processed up to 10K characters due to resource limit.`}
                         <span></span>
                       </Flex>
                     </DataGridComponents.TableResults>
