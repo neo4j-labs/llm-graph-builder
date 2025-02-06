@@ -15,6 +15,13 @@ def get_graphDB_driver(uri, username, password,database="neo4j"):
     """
     try:
         logging.info(f"Attempting to connect to the Neo4j database at {uri}")
+        if all(v is None for v in [uri, username, password]):
+            print(f'condition True')
+            uri = os.getenv('NEO4J_URI')
+            username= os.getenv('NEO4J_USERNAME')
+            database= os.getenv('NEO4J_DATABASE')
+            password= os.getenv('NEO4J_PASSWORD')
+
         enable_user_agent = os.environ.get("ENABLE_USER_AGENT", "False").lower() in ("true", "1", "yes")
         if enable_user_agent:
             driver = GraphDatabase.driver(uri, auth=(username, password),database=database, user_agent=os.environ.get('NEO4J_USER_AGENT'))
@@ -228,7 +235,7 @@ def get_chunktext_results(uri, username, password, database, document_name, page
        offset = 10
        skip = (page_no - 1) * offset
        limit = offset
-       driver = GraphDatabase.driver(uri, auth=(username, password))
+       driver = get_graphDB_driver(uri, username, password,database)  
        with driver.session(database=database) as session:
            total_chunks_result = session.run(COUNT_CHUNKS_QUERY, file_name=document_name)
            total_chunks = total_chunks_result.single()["total_chunks"]

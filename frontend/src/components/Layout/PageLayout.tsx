@@ -142,7 +142,6 @@ const PageLayout: React.FC = () => {
       setIsDeleteChatLoading(true);
       cancel();
       const response = await clearChatAPI(
-        userCredentials as UserCredentials,
         sessionStorage.getItem('session_id') ?? ''
       );
       setIsDeleteChatLoading(false);

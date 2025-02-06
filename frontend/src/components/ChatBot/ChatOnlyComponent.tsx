@@ -75,9 +75,9 @@ const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
     try {
       setClearHistoryData(true);
       setIsDeleteChatLoading(true);
-      const credentials = JSON.parse(localStorage.getItem('neo4j.connection') || '{}') as UserCredentials;
+      // const credentials = JSON.parse(localStorage.getItem('neo4j.connection') || '{}') as UserCredentials;
       const sessionId = sessionStorage.getItem('session_id') || '';
-      const response = await clearChatAPI(credentials, sessionId);
+      const response = await clearChatAPI(sessionId);
       setIsDeleteChatLoading(false);
       if (response.data.status !== 'Success') {
         setClearHistoryData(false);

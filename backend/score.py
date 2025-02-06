@@ -587,14 +587,20 @@ def encode_password(pwd):
     return encoded_pwd_bytes
 
 @app.get("/update_extract_status/{file_name}")
-async def update_extract_status(request: Request, file_name: str, url: str = None, userName: str = None, password: str = None, database: str = None):
+async def update_extract_status(request: Request, file_name: str, uri:str=None, userName:str=None, password:str=None, database:str=None):
     async def generate():
         status = ''
-        decoded_password = decode_password(password)
-        uri = url
-        if " " in url:
-            uri= url.replace(" ","+")
-        graph = create_graph_database_connection(uri, userName, decoded_password, database)
+        
+        if password is not None and password != "null":
+            decoded_password = decode_password(password)
+        else:
+            decoded_password = None
+
+        url = uri
+        if url and " " in url:
+            url= url.replace(" ","+")
+            
+        graph = create_graph_database_connection(url, userName, decoded_password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
         while True:
             try:
