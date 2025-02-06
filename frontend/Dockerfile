@@ -8,7 +8,7 @@ ARG VITE_GOOGLE_CLIENT_ID=""
 ARG VITE_BLOOM_URL="https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true"
 ARG VITE_TIME_PER_PAGE=50
 ARG VITE_LARGE_FILE_SIZE=5242880
-ARG VITE_CHUNK_SIZE=5242880
+ARG VITE_CHUNK_SIZE=100
 ARG VITE_CHAT_MODES=""
 ARG VITE_ENV="DEV"
 ARG VITE_BATCH_SIZE=2

@@ -56,7 +56,7 @@ services:
         - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID-}
         - VITE_BLOOM_URL=${VITE_BLOOM_URL-https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true}
         - VITE_TIME_PER_PAGE=${VITE_TIME_PER_PAGE-50}
-        - VITE_CHUNK_SIZE=${VITE_CHUNK_SIZE-5242880}
+        - VITE_CHUNK_SIZE=${VITE_CHUNK_SIZE-100}
         - VITE_LARGE_FILE_SIZE=${VITE_LARGE_FILE_SIZE-5242880}
         - VITE_ENV=${VITE_ENV-DEV}
         - VITE_CHAT_MODES=${VITE_CHAT_MODES-}

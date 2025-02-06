@@ -433,7 +433,7 @@ Followed best practices for optimizing performance and security of the deployed 
  * VITE_REACT_APP_SOURCES=""
  * VITE_GOOGLE_CLIENT_ID="xxxx"  [For Google GCS integration]
  * VITE_CHAT_MODES=""
- * VITE_CHUNK_SIZE=5242880
+ * VITE_CHUNK_SIZE=100
  * VITE_TIME_PER_PAGE=50
  * VITE_LARGE_FILE_SIZE=5242880
  * VITE_ENV="PROD"/ ‘DEV’
