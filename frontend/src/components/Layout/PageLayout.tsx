@@ -18,6 +18,7 @@ import { useNavigate } from 'react-router';
 import { useAuth0 } from '@auth0/auth0-react';
 import { showErrorToast } from '../../utils/toasts';
 import { APP_SOURCES } from '../../utils/Constants';
+import { createDefaultFormData } from '../../API/Index';
 const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
 const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
 const GenericModal = lazy(() => import('../WebSources/GenericSourceModal'));
@@ -112,7 +113,7 @@ const PageLayout: React.FC = () => {
             isGCSActive: connectionData.data.gcs_file_cache === 'True',
             chunksTobeProcess: parseInt(connectionData.data.chunk_to_be_created),
             email: user?.email ?? '',
-            connection:'backendApi',
+            connection: 'backendApi',
           };
           setChunksToBeProces(credentials.chunksTobeProcess);
           setIsGCSActive(credentials.isGCSActive);
@@ -126,7 +127,8 @@ const PageLayout: React.FC = () => {
           const storedCredentials = localStorage.getItem('neo4j.connection');
           if (storedCredentials) {
             const credentials = JSON.parse(storedCredentials);
-            setUserCredentials(credentials);
+            setUserCredentials({ ...credentials, password: atob(credentials.password) });
+            createDefaultFormData({ ...credentials, password: atob(credentials.password) });
             setChunksToBeProces(credentials.chunksTobeProcess);
             setIsGCSActive(credentials.isGCSActive);
             setGdsActive(credentials.isgdsActive);

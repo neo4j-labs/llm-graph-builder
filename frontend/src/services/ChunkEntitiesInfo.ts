@@ -5,14 +5,12 @@ const chunkEntitiesAPI = async (
   nodeDetails: nodeDetailsProps,
   entities: string[],
   mode: string,
-  database?: string,
 ) => {
   try {
     const formData = new FormData();
     formData.append('nodedetails', JSON.stringify(nodeDetails));
     formData.append('entities', JSON.stringify(entities));
     formData.append('mode', mode);
-    formData.append('database', database ?? '');
 
     const response: ChatInfo_APIResponse = await api.post(`/chunk_entities`, formData, {
       headers: {
