@@ -16,9 +16,7 @@ def get_graphDB_driver(uri, username, password,database="neo4j"):
     """
     try:
         logging.info(f"Attempting to connect to the Neo4j database at {uri}")
-        if all(v is None for v in [uri, username, password]):
-            print(f'condition True')
-            uri = os.getenv('NEO4J_URI')
+        if all(v is None for v in [username, password]):
             username= os.getenv('NEO4J_USERNAME')
             database= os.getenv('NEO4J_DATABASE')
             password= os.getenv('NEO4J_PASSWORD')

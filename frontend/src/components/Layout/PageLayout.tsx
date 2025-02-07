@@ -118,6 +118,7 @@ const PageLayout: React.FC = () => {
           setChunksToBeProces(credentials.chunksTobeProcess);
           setIsGCSActive(credentials.isGCSActive);
           setUserCredentials(credentials);
+          createDefaultFormData({ uri: credentials.uri, email: credentials.email ?? '' });
           setGdsActive(credentials.isgdsActive);
           setConnectionStatus(Boolean(connectionData.data.graph_connection));
           setIsReadOnlyUser(connectionData.data.isReadonlyUser);
