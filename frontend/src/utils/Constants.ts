@@ -126,11 +126,11 @@ export const chatModes =
         },
       ];
 
-export const chunkSize = process.env.VITE_CHUNK_SIZE ? parseInt(process.env.VITE_CHUNK_SIZE) : 5242880;
+export const chunkSize = process.env.VITE_CHUNK_SIZE ? parseInt(process.env.VITE_CHUNK_SIZE) : 1 * 1024 * 1024;
 export const tokenchunkSize = process.env.VITE_TOKENS_PER_CHUNK ? parseInt(process.env.VITE_TOKENS_PER_CHUNK) : 100;
 export const chunkOverlap = process.env.VITE_CHUNK_OVERLAP ? parseInt(process.env.VITE_CHUNK_OVERLAP) : 20;
 export const chunksToCombine = process.env.VITE_CHUNK_TO_COMBINE ? parseInt(process.env.VITE_CHUNK_TO_COMBINE) : 1;
-export const defaultChunkSizeOptions = [50, 100, 200, 400, 1000];
+export const defaultTokenChunkSizeOptions = [50, 100, 200, 400, 1000];
 export const defaultChunkOverlapOptions = [10, 20, 30, 40, 50];
 export const defaultChunksToCombineOptions = [1, 2, 3, 4, 5, 6];
 export const timeperpage = process.env.VITE_TIME_PER_PAGE ? parseInt(process.env.VITE_TIME_PER_PAGE) : 50;

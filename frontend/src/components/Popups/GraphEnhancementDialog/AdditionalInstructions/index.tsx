@@ -3,7 +3,7 @@ import {
   appLabels,
   buttonCaptions,
   defaultChunkOverlapOptions,
-  defaultChunkSizeOptions,
+  defaultTokenChunkSizeOptions,
   defaultChunksToCombineOptions,
   tooltips,
 } from '../../../../utils/Constants';
@@ -25,9 +25,9 @@ export default function AdditionalInstructionsText({
   const {
     additionalInstructions,
     setAdditionalInstructions,
-    setSelectedChunk_size,
+    setSelectedTokenChunkSize,
     setSelectedChunk_overlap,
-    selectedChunk_size,
+    selectedTokenChunkSize,
     selectedChunk_overlap,
     selectedChunks_to_combine,
     setSelectedChunks_to_combine,
@@ -45,7 +45,7 @@ export default function AdditionalInstructionsText({
         showNormalToast('Chunk size must be a valid number');
         return;
       }
-      setSelectedChunk_size(parsedValue);
+      setSelectedTokenChunkSize(parsedValue);
       localStorage.setItem('selectedChunk_size', JSON.stringify({ selectedOption: parsedValue }));
     }
   };
@@ -116,14 +116,14 @@ export default function AdditionalInstructionsText({
           label='Chunk Size'
           size={!tablet ? 'large' : 'medium'}
           selectProps={{
-            options: defaultChunkSizeOptions.map((value) => ({
+            options: defaultTokenChunkSizeOptions.map((value) => ({
               value: value.toString(),
               label: value.toString(),
             })),
             onChange: onChangeChunk_size,
             value: {
-              value: selectedChunk_size.toString(),
-              label: selectedChunk_size.toString(),
+              value: selectedTokenChunkSize.toString(),
+              label: selectedTokenChunkSize.toString(),
             },
             classNamePrefix: `
                   ${

@@ -17,7 +17,7 @@ import {
   llms,
   RETRY_OPIONS,
   tooltips,
-  chunkSize,
+  tokenchunkSize,
   chunkOverlap,
   chunksToCombine,
 } from '../utils/Constants';
@@ -84,13 +84,13 @@ const Content: React.FC<ContentProps> = ({
     setModel,
     selectedNodes,
     selectedRels,
-    selectedChunk_size,
+    selectedTokenChunkSize,
     selectedChunk_overlap,
     selectedChunks_to_combine,
     setSelectedNodes,
     setRowSelection,
     setSelectedRels,
-    setSelectedChunk_size,
+    setSelectedTokenChunkSize,
     setSelectedChunk_overlap,
     setSelectedChunks_to_combine,
     postProcessingTasks,
@@ -292,7 +292,7 @@ const Content: React.FC<ContentProps> = ({
         fileItem.gcsBucketFolder ?? '',
         selectedNodes.map((l) => l.value),
         selectedRels.map((t) => t.value),
-        selectedChunk_size,
+        selectedTokenChunkSize,
         selectedChunk_overlap,
         selectedChunks_to_combine,
         fileItem.googleProjectId,
@@ -567,8 +567,8 @@ const Content: React.FC<ContentProps> = ({
     setUserCredentials({ uri: '', password: '', userName: '', database: '', email: '' });
     setSelectedNodes([]);
     setSelectedRels([]);
-    localStorage.removeItem('selectedChunk_size');
-    setSelectedChunk_size(chunkSize);
+    localStorage.removeItem('selectedTokenChunkSize');
+    setSelectedTokenChunkSize(tokenchunkSize);
     localStorage.removeItem('selectedChunk_overlap');
     setSelectedChunk_overlap(chunkOverlap);
     localStorage.removeItem('selectedChunks_to_combine');
