@@ -268,7 +268,7 @@ def visualize_schema(uri, userName, password, database):
    driver = None
    try:
        logging.info("Starting visualizing graph schema")
-       driver = GraphDatabase.driver(uri, auth=(userName, password),database=database)
+       driver = get_graphDB_driver(uri, userName, password,database)  
        records, summary, keys = driver.execute_query(SCHEMA_VISUALIZATION_QUERY)
        nodes = records[0].get("nodes", [])
        relationships = records[0].get("relationships", [])
