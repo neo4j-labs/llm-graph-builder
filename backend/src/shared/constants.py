@@ -894,6 +894,11 @@ Instead, treat these as properties associated with the relevant entities."""
 
 SCHEMA_VISUALIZATION_QUERY = """
 CALL db.schema.visualization() YIELD nodes, relationships
+WITH 
+  [n IN nodes WHERE NONE(lbl IN labels(n) WHERE lbl IN ['Document','Chunk','_Bloom_Perspective_', '__Community__', '__Entity__','Session','Message'])]
+  AS nodes,
+  [r IN relationships WHERE NOT type(r) IN ['PART_OF', 'NEXT_CHUNK', 'HAS_ENTITY', '_Bloom_Perspective_','FIRST_CHUNK','SIMILAR','IN_COMMUNITY','PARENT_COMMUNITY','NEXT','LAST_MESSAGE']]
+  AS relationships
 RETURN
   [n IN nodes | {
       element_id: elementId(n),
