@@ -14,6 +14,7 @@ from langchain_community.chat_models import ChatOllama
 import boto3
 import google.auth
 from src.shared.constants import ADDITIONAL_INSTRUCTIONS
+import json
 
 def get_llm(model: str):
     """Retrieve the specified language model based on the model name."""
@@ -200,8 +201,11 @@ async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowed
         if  allowedRelationship is None or allowedRelationship=="":   
             allowedRelationship=[]
         else:
-            allowedRelationship = allowedRelationship.split(',')
-            
+            data = json.loads(allowedRelationship)
+            if isinstance(data, list) and data and isinstance(data[0], list):
+                allowedRelationship = [tuple(item) for item in data]
+            else:
+                allowedRelationship = data           
         graph_document_list = await get_graph_document_list(
             llm, combined_chunk_document_list, allowedNodes, allowedRelationship, additional_instructions
         )
