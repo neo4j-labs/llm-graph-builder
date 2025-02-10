@@ -760,8 +760,8 @@ export interface ContextProps {
   setShowDisconnectButton: Dispatch<SetStateAction<boolean>>;
   isGCSActive: boolean;
   setIsGCSActive: Dispatch<SetStateAction<boolean>>;
-  chunksToBeProces: number;
-  setChunksToBeProces: Dispatch<SetStateAction<number>>;
+  // chunksToBeProces: number;
+  // setChunksToBeProces: Dispatch<SetStateAction<number>>;
 }
 export interface MessageContextType {
   messages: Messages[] | [];
@@ -850,6 +850,12 @@ export interface FileContextType {
   setSelectedNodes: Dispatch<SetStateAction<readonly OptionType[]>>;
   selectedRels: readonly OptionType[];
   setSelectedRels: Dispatch<SetStateAction<readonly OptionType[]>>;
+  selectedTokenChunkSize: number;
+  setSelectedTokenChunkSize: Dispatch<SetStateAction<number>>;
+  selectedChunk_overlap: number;
+  setSelectedChunk_overlap: Dispatch<SetStateAction<number>>;
+  selectedChunks_to_combine: number;
+  setSelectedChunks_to_combine: Dispatch<SetStateAction<number>>;
   rowSelection: Record<string, boolean>;
   setRowSelection: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   selectedRows: string[];

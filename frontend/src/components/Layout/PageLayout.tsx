@@ -43,7 +43,7 @@ const PageLayout: React.FC = () => {
     setShowDisconnectButton,
     showDisconnectButton,
     setIsGCSActive,
-    setChunksToBeProces,
+    // setChunksToBeProces,
   } = useCredentials();
   const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(Boolean(isLargeDesktop));
   const [isRightExpanded, setIsRightExpanded] = useState<boolean>(Boolean(isLargeDesktop));
