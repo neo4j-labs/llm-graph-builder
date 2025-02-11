@@ -41,7 +41,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [graphType, setGraphType] = useState<string>('Knowledge Graph Entities');
   const [selectedNodes, setSelectedNodes] = useState<readonly OptionType[]>([]);
   const [selectedRels, setSelectedRels] = useState<readonly OptionType[]>([]);
-  const [selectedTokenChunkSize,setSelectedTokenChunkSize] = useState<number>(tokenchunkSize);
+  const [selectedTokenChunkSize, setSelectedTokenChunkSize] = useState<number>(tokenchunkSize);
   const [selectedChunk_overlap, setSelectedChunk_overlap] = useState<number>(chunkOverlap);
   const [selectedChunks_to_combine, setSelectedChunks_to_combine] = useState<number>(chunksToCombine);
   const [selectedSchemas, setSelectedSchemas] = useState<readonly OptionType[]>(getStoredSchema);
