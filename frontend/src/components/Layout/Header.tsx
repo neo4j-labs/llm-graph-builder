@@ -47,21 +47,21 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
     const isLoading = getIsLoading(messages);
     if (session) {
       const neo4jConnection = JSON.parse(session);
-      const { uri } = neo4jConnection;
-      const userName = neo4jConnection.user;
-      const { password } = neo4jConnection;
-      const { database } = neo4jConnection;
+      const { uri, userName, password, database } = neo4jConnection;
       const [, port] = uri.split(':');
       const encodedPassword = btoa(password);
       const chatUrl = `/chat-only?uri=${encodeURIComponent(
         uri
       )}&user=${userName}&password=${encodedPassword}&database=${database}&port=${port}&connectionStatus=${connectionStatus}`;
       navigate(chatUrl, { state: { messages, isLoading } });
+    } else if (connectionStatus) {
+      const chatUrl = `/chat-only?connectionStatus=${connectionStatus}`;
+      navigate(chatUrl, { state: { messages, isLoading } });
     } else {
       const chatUrl = `/chat-only?openModal=true`;
       window.open(chatUrl, '_blank');
     }
-  }, [messages]);
+  }, [messages, connectionStatus, navigate]);
 
   const onBackButtonClick = () => {
     navigate('/', { state: messages });
