@@ -281,7 +281,7 @@ async def extract_knowledge_graph_from_file(
         failed_file_process(uri,file_name, merged_file_path, source_type)
         node_detail = graphDb_data_Access.get_current_status_document_node(file_name)
         # Set the status "Completed" in logging becuase we are treating these error already handled by application as like custom errors.
-        json_obj = {'api_name':'extract','message':error_message,'file_created_at':node_detail[0]['created_time'],'error_message':error_message, 'file_name': file_name,'status':'Completed',
+        json_obj = {'api_name':'extract','message':error_message,'file_created_at':formatted_time(node_detail[0]['created_time']),'error_message':error_message, 'file_name': file_name,'status':'Completed',
                     'db_url':uri, 'userName':userName, 'database':database,'success_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response("Failed", message = error_message, error=error_message, file_name=file_name)
@@ -292,7 +292,7 @@ async def extract_knowledge_graph_from_file(
         failed_file_process(uri,file_name, merged_file_path, source_type)
         node_detail = graphDb_data_Access.get_current_status_document_node(file_name)
         
-        json_obj = {'api_name':'extract','message':message,'file_created_at':node_detail[0]['created_time'],'error_message':error_message, 'file_name': file_name,'status':'Failed',
+        json_obj = {'api_name':'extract','message':message,'file_created_at':formatted_time(node_detail[0]['created_time']),'error_message':error_message, 'file_name': file_name,'status':'Failed',
                     'db_url':uri, 'userName':userName, 'database':database,'failed_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':email}
         logger.log_struct(json_obj, "ERROR")
         return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = file_name)
