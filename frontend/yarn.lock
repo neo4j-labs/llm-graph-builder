@@ -772,23 +772,21 @@
     "@types/chroma-js" "2.1.4"
     chroma-js "2.4.2"
 
-"@neo4j-ndl/base@^3.2.5":
-  version "3.2.5"
-  resolved "https://registry.yarnpkg.com/@neo4j-ndl/base/-/base-3.2.5.tgz#90287a69c97864f9e9080430b26bab1f83d401a4"
-  integrity sha512-JRMY+5N1cekg0jvRanq1x8W2+mIoeNKsx1gHafCJMYoUcQgUPJqcqqBdCN+GI4M6Myi+JeiluLw51MACHX8RWg==
+"@neo4j-ndl/base@^3.2.9":
+  version "3.2.9"
+  resolved "https://registry.yarnpkg.com/@neo4j-ndl/base/-/base-3.2.9.tgz#19a0e1dcf5569feb2311780da62b9e0cff028ade"
+  integrity sha512-TQxhTbFJjjUHwxJnhROmta2ZiSDnrJa/zofoFHTF2eefnMufeFUOSAw4ELnjSYSRGRDuWJSRpBRXh5EMiOf8BA==
 
-"@neo4j-ndl/react@^3.2.12":
-  version "3.2.12"
-  resolved "https://registry.yarnpkg.com/@neo4j-ndl/react/-/react-3.2.12.tgz#c17aa5be3c32ebf02f980812030fb89ee9d5bb64"
-  integrity sha512-pSZhGAWHDZVpA7l+PaeAtkUgNVLn4kW6B9cS6JFedCWtXLd48AhCPKq2uIwul4oN1H1pcElRxX7O0wf983NLMg==
+"@neo4j-ndl/react@^3.2.18":
+  version "3.2.18"
+  resolved "https://registry.yarnpkg.com/@neo4j-ndl/react/-/react-3.2.18.tgz#1510cfba9cbb8a142376a8a6322b7e3330728c5c"
+  integrity sha512-ql8E7kNI+fq6e0akJZVawp2XAmJ6kRGLQzX/NUE4nmmCE0dzubRHqbiJOZrVLuEtlwUiGQc5xU5/gjio+QpsJA==
   dependencies:
     "@dnd-kit/core" "6.1.0"
     "@dnd-kit/sortable" "8.0.0"
     "@floating-ui/react" "0.26.24"
     "@floating-ui/react-dom" "2.1.2"
     "@heroicons/react" "2.1.5"
-    "@table-nav/core" "0.0.7"
-    "@table-nav/react" "0.0.7"
     classnames "2.5.1"
     date-fns "4.1.0"
     detect-browser "5.3.0"
@@ -2021,16 +2019,6 @@
   integrity sha512-KMZNXiGibsW9kvZAO1Pam2JPTDBm+KSHMMHWdsyI/1DbIZjT2A6Gy3hblVXUMEDvUAKq+e0vL0X0o54owWji7g==
   dependencies:
     tslib "^2.4.0"
-
-"@table-nav/core@0.0.7":
-  version "0.0.7"
-  resolved "https://registry.yarnpkg.com/@table-nav/core/-/core-0.0.7.tgz#2d7f58eb81aacf5bdd1b40a823dbef5a88792995"
-  integrity sha512-pCh18jHDRe3tw9sJZXfKi4cSD6VjHbn40CYdqhp5X91SIX7rakDEQAsTx6F7Fv9TUv265l+5rUDcYNaJ0N0cqQ==
-
-"@table-nav/react@0.0.7":
-  version "0.0.7"
-  resolved "https://registry.yarnpkg.com/@table-nav/react/-/react-0.0.7.tgz#a97699a490e31713fccd5f624ddb62e9fdc06a82"
-  integrity sha512-S+DsD/qDqp50Z4dqt5tZFMWA3sRu0OOT/grMQuq/z/52jPEKJB+b9t+YSH8Ms55vCJOJ0DxuYldJpYrJLMG5ew==
 
 "@tanstack/react-table@^8.20.5":
   version "8.20.5"
