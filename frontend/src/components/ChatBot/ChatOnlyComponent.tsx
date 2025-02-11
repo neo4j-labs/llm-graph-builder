@@ -34,9 +34,17 @@ const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
     const port = urlParams.get('port');
     const email = urlParams.get('email');
     const openModal = urlParams.get('open') === 'true';
+    const connectionStatus = urlParams.get('connectionStatus') === 'true';
     if (openModal || !(uri && user && encodedPassword && database && port)) {
-      setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
-    } else {
+      if (connectionStatus) {
+        setShowBackButton();
+        setConnectionStatus(connectionStatus);
+        setMessages(chatMessages);
+      } else {
+        setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
+      }
+    }
+    else {
       const credentialsForAPI: UserCredentials = {
         uri,
         userName: user,
