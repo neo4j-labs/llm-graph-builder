@@ -326,7 +326,6 @@ export default function EntityExtractionSetting({
               placement='top'
               fill='outlined'
               onClick={handleSchemaView}
-              disabled={!hasSelections || selectedSchemas.length > 0}
             >
               <Hierarchy1Icon />
             </ButtonWithToolTip>
