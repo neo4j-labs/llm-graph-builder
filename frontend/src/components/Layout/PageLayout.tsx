@@ -5,7 +5,7 @@ import DrawerChatbot from './DrawerChatbot';
 import Content from '../Content';
 import { clearChatAPI } from '../../services/QnaAPI';
 import { useCredentials } from '../../context/UserCredentials';
-import { connectionState, UserCredentials } from '../../types';
+import { connectionState } from '../../types';
 import { useMessageContext } from '../../context/UserMessages';
 import { useMediaQuery } from '@mui/material';
 import { useFileContext } from '../../context/UsersFiles';
@@ -16,8 +16,9 @@ import { envConnectionAPI } from '../../services/ConnectAPI';
 import { healthStatus } from '../../services/HealthStatus';
 import { useNavigate } from 'react-router';
 import { useAuth0 } from '@auth0/auth0-react';
-import { createDefaultFormData } from '../../API/Index';
+import { showErrorToast } from '../../utils/toasts';
 import { APP_SOURCES } from '../../utils/Constants';
+import { createDefaultFormData } from '../../API/Index';
 const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
 const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
 const GenericModal = lazy(() => import('../WebSources/GenericSourceModal'));
@@ -32,7 +33,6 @@ const PageLayout: React.FC = () => {
   });
   const isLargeDesktop = useMediaQuery(`(min-width:1440px )`);
   const {
-    userCredentials,
     connectionStatus,
     setIsReadOnlyUser,
     setConnectionStatus,
@@ -90,7 +90,6 @@ const PageLayout: React.FC = () => {
 
   useEffect(() => {
     async function initializeConnection() {
-      const session = localStorage.getItem('neo4j.connection');
       // Fetch backend health status
       try {
         const response = await healthStatus();
@@ -103,133 +102,54 @@ const PageLayout: React.FC = () => {
         setShowDisconnectButton(isModalOpen);
         localStorage.setItem('disconnectButtonState', isModalOpen ? 'true' : 'false');
       };
-      const setUserCredentialsLocally = (credentials: any) => {
-        setUserCredentials(credentials);
-        createDefaultFormData(credentials);
-        setIsGCSActive(credentials.isGCSActive ?? false);
-        setGdsActive(credentials.isgdsActive);
-        setIsReadOnlyUser(credentials.isReadonlyUser);
-        // setChunksToBeProces(credentials.chunksTobeProcess);
-        localStorage.setItem(
-          'neo4j.connection',
-          JSON.stringify({
-            uri: credentials.uri,
-            user: credentials.userName,
-            password: btoa(credentials.password),
-            database: credentials.database,
-            userDbVectorIndex: 384,
-            isReadOnlyUser: credentials.isReadonlyUser,
-            isgdsActive: credentials.isgdsActive,
-            isGCSActive: credentials.isGCSActive,
-            chunksTobeProcess: credentials.chunksTobeProcess,
-            email: credentials.email,
-          })
-        );
-      };
-      const parseSessionAndSetCredentials = (neo4jConnection: string) => {
-        if (!neo4jConnection) {
-          console.error('Invalid session data:', neo4jConnection);
-          setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
-          return;
-        }
-        try {
-          const parsedConnection = JSON.parse(neo4jConnection);
-          const readonlymode = JSON.parse(localStorage.getItem('isReadOnlyMode') ?? 'null');
-          if (parsedConnection.uri && parsedConnection.user && parsedConnection.password && parsedConnection.database) {
-            const credentials = {
-              uri: parsedConnection.uri,
-              userName: parsedConnection.user,
-              password: atob(parsedConnection.password),
-              database: parsedConnection.database,
-              email: parsedConnection.email,
-            };
-            if (readonlymode !== null) {
-              setIsReadOnlyUser(readonlymode);
-            } else {
-              setIsReadOnlyUser(parsedConnection.isReadOnlyUser);
-            }
-            setUserCredentials(credentials);
-            createDefaultFormData(credentials);
-            setGdsActive(parsedConnection.isgdsActive);
-            setIsGCSActive(parsedConnection.isGCSActive);
-          } else {
-            console.error('Invalid parsed session data:', parsedConnection);
-          }
-        } catch (error) {
-          console.error('Failed to parse session data:', error);
-        }
-      };
-      // To update credentials if environment values differ
-      const updateSessionIfNeeded = (envCredentials: any, storedSession: string) => {
-        try {
-          const storedCredentials = JSON.parse(storedSession);
-          const isDiffCreds =
-            envCredentials.uri !== storedCredentials.uri ||
-            envCredentials.userName !== storedCredentials.user ||
-            btoa(envCredentials.password) !== storedCredentials.password ||
-            envCredentials.database !== storedCredentials.database;
-          if (isDiffCreds) {
-            setUserCredentialsLocally(envCredentials);
-            setClearHistoryData(true);
-            return true;
-          }
-          return false;
-        } catch (error) {
-          console.error('Failed to update session:', error);
-          return false;
-        }
-      };
-      // Handle connection initialization
-      let backendApiResponse;
       try {
-        backendApiResponse = await envConnectionAPI();
+        const backendApiResponse = await envConnectionAPI();
         const connectionData = backendApiResponse.data;
         if (connectionData.data && connectionData.status === 'Success') {
-          const envCredentials = {
+          const credentials = {
             uri: connectionData.data.uri,
-            password: atob(connectionData.data.password),
-            userName: connectionData.data.user_name,
-            database: connectionData.data.database,
             isReadonlyUser: !connectionData.data.write_access,
             isgdsActive: connectionData.data.gds_status,
-            isGCSActive: connectionData?.data?.gcs_file_cache === 'True',
+            isGCSActive: connectionData.data.gcs_file_cache === 'True',
             chunksTobeProcess: parseInt(connectionData.data.chunk_to_be_created),
             email: user?.email ?? '',
+            connection: 'backendApi',
           };
-          // setChunksToBeProces(envCredentials.chunksTobeProcess);
-          setIsGCSActive(envCredentials.isGCSActive);
-          if (session) {
-            const updated = updateSessionIfNeeded(envCredentials, session);
-            if (!updated) {
-              parseSessionAndSetCredentials(session);
-            }
-            setConnectionStatus(Boolean(connectionData.data.graph_connection));
-            setIsBackendConnected(true);
-          } else {
-            setUserCredentialsLocally(envCredentials);
-            setConnectionStatus(true);
-          }
+          //setChunksToBeProces(credentials.chunksTobeProcess);
+          setIsGCSActive(credentials.isGCSActive);
+          setUserCredentials(credentials);
+          createDefaultFormData({ uri: credentials.uri, email: credentials.email ?? '' });
+          setGdsActive(credentials.isgdsActive);
+          setConnectionStatus(Boolean(connectionData.data.graph_connection));
+          setIsReadOnlyUser(connectionData.data.isReadonlyUser);
           handleDisconnectButtonState(false);
-        } else {
-          if (session) {
-            parseSessionAndSetCredentials(session);
-            setConnectionStatus(true);
-          } else {
-            setErrorMessage(backendApiResponse?.data?.error);
-            setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
-          }
-          handleDisconnectButtonState(true);
         }
-      } catch (error) {
-        console.error('Error during backend API call:', error);
-        if (session) {
-          parseSessionAndSetCredentials(session);
-          setConnectionStatus(true);
+        else if (!connectionData.data && connectionData.status === 'Success') {
+          const storedCredentials = localStorage.getItem('neo4j.connection');
+          if (storedCredentials) {
+            const credentials = JSON.parse(storedCredentials);
+            setUserCredentials({ ...credentials, password: atob(credentials.password) });
+            createDefaultFormData({ ...credentials, password: atob(credentials.password) });
+            //setChunksToBeProces(credentials.chunksTobeProcess);
+            setIsGCSActive(credentials.isGCSActive);
+            setGdsActive(credentials.isgdsActive);
+            setConnectionStatus(Boolean(credentials.connection === 'connectAPI'));
+            setIsReadOnlyUser(credentials.isReadonlyUser);
+            handleDisconnectButtonState(true);
+          } else {
+            setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
+            handleDisconnectButtonState(true);
+          }
         } else {
           setErrorMessage(backendApiResponse?.data?.error);
           setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
+          handleDisconnectButtonState(true);
+          console.log('from else cndition error is there')
         }
-        handleDisconnectButtonState(true);
+      } catch (error) {
+        if (error instanceof Error) {
+          showErrorToast(error.message);
+        }
       }
     }
     initializeConnection();
@@ -241,7 +161,6 @@ const PageLayout: React.FC = () => {
       setIsDeleteChatLoading(true);
       cancel();
       const response = await clearChatAPI(
-        userCredentials as UserCredentials,
         sessionStorage.getItem('session_id') ?? ''
       );
       setIsDeleteChatLoading(false);
@@ -297,9 +216,8 @@ const PageLayout: React.FC = () => {
       ></SchemaFromTextDialog>
       {isLargeDesktop ? (
         <div
-          className={`layout-wrapper ${!isLeftExpanded ? 'drawerdropzoneclosed' : ''} ${
-            !isRightExpanded ? 'drawerchatbotclosed' : ''
-          } ${!isRightExpanded && !isLeftExpanded ? 'drawerclosed' : ''}`}
+          className={`layout-wrapper ${!isLeftExpanded ? 'drawerdropzoneclosed' : ''} ${!isRightExpanded ? 'drawerchatbotclosed' : ''
+            } ${!isRightExpanded && !isLeftExpanded ? 'drawerclosed' : ''}`}
         >
           <SideNav
             toggles3Modal={toggleS3Modal}

@@ -273,10 +273,7 @@ const Content: React.FC<ContentProps> = ({
         const { name } = fileItem;
         triggerStatusUpdateAPI(
           name as string,
-          userCredentials?.uri,
-          userCredentials?.userName,
-          userCredentials?.password,
-          userCredentials?.database,
+          userCredentials,
           updateStatusForLargeFiles
         );
       }
@@ -544,13 +541,15 @@ const Content: React.FC<ContentProps> = ({
 
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.VITE_BLOOM_URL;
-    const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
-      }`;
-    const encodedURL = encodeURIComponent(connectURL);
-    const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
-    window.open(replacedUrl, '_blank');
-  };
+    let finalUrl = bloomUrl;
+    if (userCredentials?.database && userCredentials.uri && userCredentials.userName) {
+      const uriCoded = userCredentials.uri.replace(/:\d+$/, '');
+      const connectURL = `${uriCoded.split('//')[0]}//${userCredentials.userName}@${uriCoded.split('//')[1]}:${userCredentials.port ?? '7687'}`;
+      const encodedURL = encodeURIComponent(connectURL);
+      finalUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
+    }
+    window.open(finalUrl, '_blank');
+   };
 
   const handleGraphView = () => {
     setOpenGraphView(true);
@@ -889,7 +888,7 @@ const Content: React.FC<ContentProps> = ({
               <DatabaseStatusIcon
                 isConnected={connectionStatus}
                 isGdsActive={isGdsActive}
-                uri={userCredentials && userCredentials?.uri}
+                uri={userCredentials?.uri}
               />
               <div className='pt-1 flex gap-1 items-center'>
                 <div>{!hasSelections ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}</div>
