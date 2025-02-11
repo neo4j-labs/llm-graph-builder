@@ -159,14 +159,14 @@ Allow unauthenticated request : Yes
 ## LLMs Supported 
 1. OpenAI
 2. Gemini
-3. Azure OpenAI(dev)
-4. Anthropic(dev)
-5. Fireworks(dev)
-6. Groq(dev)
-7. Amazon Bedrock(dev)
-8. Ollama(dev)
+3. Azure OpenAI(dev deployed version)
+4. Anthropic(dev deployed version)
+5. Fireworks(dev deployed version)
+6. Groq(dev deployed version)
+7. Amazon Bedrock(dev deployed version)
+8. Ollama(dev deployed version)
 9. Diffbot
-10. Other OpenAI compabtile baseurl models(dev)
+10. Other OpenAI compabtile baseurl models(dev deployed version)
 
 ## For local llms (Ollama)
 1. Pull the docker imgage of ollama
