@@ -30,13 +30,9 @@ export const chatBotAPI = async (
   }
 };
 
-export const clearChatAPI = async (userCredentials: UserCredentials, session_id: string) => {
+export const clearChatAPI = async (session_id: string) => {
   try {
     const formData = new FormData();
-    formData.append('uri', userCredentials?.uri ?? '');
-    formData.append('database', userCredentials?.database ?? '');
-    formData.append('userName', userCredentials?.userName ?? '');
-    formData.append('password', userCredentials?.password ?? '');
     formData.append('session_id', session_id);
     const response = await api.post(`/clear_chat_bot`, formData, {
       headers: {

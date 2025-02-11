@@ -685,10 +685,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
   const handleSmallFile = (item: SourceNode, userCredentials: UserCredentials) => {
     subscribe(
       item.fileName,
-      userCredentials?.uri,
-      userCredentials?.userName,
-      userCredentials?.database,
-      userCredentials?.password,
+      userCredentials,
       updatestatus,
       updateProgress
     ).catch(handleFileUploadError);
@@ -697,10 +694,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
   const handleLargeFile = (item: SourceNode, userCredentials: UserCredentials) => {
     triggerStatusUpdateAPI(
       item.fileName,
-      userCredentials.uri,
-      userCredentials.userName,
-      userCredentials.password,
-      userCredentials.database,
+      userCredentials,
       updateStatusForLargeFiles
     );
   };

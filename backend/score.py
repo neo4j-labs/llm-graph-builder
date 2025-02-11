@@ -101,11 +101,11 @@ app.add_api_route("/health", health([healthy_condition, healthy]))
 
 @app.post("/url/scan")
 async def create_source_knowledge_graph_url(
-    uri=Form(),
-    userName=Form(),
-    password=Form(),
+    uri=Form(None),
+    userName=Form(None),
+    password=Form(None),
     source_url=Form(None),
-    database=Form(),
+    database=Form(None),
     aws_access_key_id=Form(None),
     aws_secret_access_key=Form(None),
     wiki_query=Form(None),
@@ -115,7 +115,7 @@ async def create_source_knowledge_graph_url(
     source_type=Form(None),
     gcs_project_id=Form(None),
     access_token=Form(None),
-    email=Form()
+    email=Form(None)
     ):
     
     try:
@@ -172,11 +172,11 @@ async def create_source_knowledge_graph_url(
 
 @app.post("/extract")
 async def extract_knowledge_graph_from_file(
-    uri=Form(),
-    userName=Form(),
-    password=Form(),
+    uri=Form(None),
+    userName=Form(None),
+    password=Form(None),
     model=Form(),
-    database=Form(),
+    database=Form(None),
     source_url=Form(None),
     aws_access_key_id=Form(None),
     aws_secret_access_key=Form(None),
@@ -196,7 +196,7 @@ async def extract_knowledge_graph_from_file(
     access_token=Form(None),
     retry_condition=Form(None),
     additional_instructions=Form(None),
-    email=Form()
+    email=Form(None)
 ):
     """
     Calls 'extract_graph_from_file' in a new thread to create Neo4jGraph from a
@@ -281,7 +281,7 @@ async def extract_knowledge_graph_from_file(
         failed_file_process(uri,file_name, merged_file_path, source_type)
         node_detail = graphDb_data_Access.get_current_status_document_node(file_name)
         # Set the status "Completed" in logging becuase we are treating these error already handled by application as like custom errors.
-        json_obj = {'api_name':'extract','message':error_message,'file_created_at':node_detail[0]['created_time'],'error_message':error_message, 'file_name': file_name,'status':'Completed',
+        json_obj = {'api_name':'extract','message':error_message,'file_created_at':formatted_time(node_detail[0]['created_time']),'error_message':error_message, 'file_name': file_name,'status':'Completed',
                     'db_url':uri, 'userName':userName, 'database':database,'success_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response("Failed", message = error_message, error=error_message, file_name=file_name)
@@ -292,7 +292,7 @@ async def extract_knowledge_graph_from_file(
         failed_file_process(uri,file_name, merged_file_path, source_type)
         node_detail = graphDb_data_Access.get_current_status_document_node(file_name)
         
-        json_obj = {'api_name':'extract','message':message,'file_created_at':node_detail[0]['created_time'],'error_message':error_message, 'file_name': file_name,'status':'Failed',
+        json_obj = {'api_name':'extract','message':message,'file_created_at':formatted_time(node_detail[0]['created_time']),'error_message':error_message, 'file_name': file_name,'status':'Failed',
                     'db_url':uri, 'userName':userName, 'database':database,'failed_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':email}
         logger.log_struct(json_obj, "ERROR")
         return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = file_name)
@@ -300,13 +300,18 @@ async def extract_knowledge_graph_from_file(
         gc.collect()
             
 @app.get("/sources_list")
-async def get_source_list(uri:str, userName:str, password:str, email:str, database:str=None):
+async def get_source_list(uri:str=None, userName:str=None, password:str=None, email:str=None, database:str=None):
     """
     Calls 'get_source_list_from_graph' which returns list of sources which already exist in databse
     """
     try:
         start = time.time()
-        decoded_password = decode_password(password)
+        if password is not None and password != "null":
+            decoded_password = decode_password(password)
+        else:
+            decoded_password = None
+            userName = None
+            database = None
         if " " in uri:
             uri = uri.replace(" ","+")
         result = await asyncio.to_thread(get_source_list_from_graph,uri,userName,decoded_password,database)
@@ -323,7 +328,7 @@ async def get_source_list(uri:str, userName:str, password:str, email:str, databa
         return create_api_response(job_status, message=message, error=error_message)
 
 @app.post("/post_processing")
-async def post_processing(uri=Form(), userName=Form(), password=Form(), database=Form(), tasks=Form(None), email=Form()):
+async def post_processing(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None), tasks=Form(None), email=Form(None)):
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
         tasks = set(map(str.strip, json.loads(tasks)))
@@ -380,7 +385,7 @@ async def post_processing(uri=Form(), userName=Form(), password=Form(), database
         gc.collect()
                 
 @app.post("/chat_bot")
-async def chat_bot(uri=Form(),model=Form(None),userName=Form(), password=Form(), database=Form(),question=Form(None), document_names=Form(None),session_id=Form(None),mode=Form(None),email=Form()):
+async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password=Form(None), database=Form(None),question=Form(None), document_names=Form(None),session_id=Form(None),mode=Form(None),email=Form(None)):
     logging.info(f"QA_RAG called at {datetime.now()}")
     qa_rag_start_time = time.time()
     try:
@@ -412,10 +417,10 @@ async def chat_bot(uri=Form(),model=Form(None),userName=Form(), password=Form(),
         gc.collect()
 
 @app.post("/chunk_entities")
-async def chunk_entities(uri=Form(),userName=Form(), password=Form(), database=Form(), nodedetails=Form(None),entities=Form(),mode=Form(),email=Form()):
+async def chunk_entities(uri=Form(None),userName=Form(None), password=Form(None), database=Form(None), nodedetails=Form(None),entities=Form(),mode=Form(),email=Form(None)):
     try:
         start = time.time()
-        result = await asyncio.to_thread(get_entities_from_chunkids,uri=uri, username=userName, password=password, database=database,nodedetails=nodedetails,entities=entities,mode=mode)
+        result = await asyncio.to_thread(get_entities_from_chunkids,nodedetails=nodedetails,entities=entities,mode=mode,uri=uri, username=userName, password=password, database=database)
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name':'chunk_entities','db_url':uri, 'userName':userName, 'database':database, 'nodedetails':nodedetails,'entities':entities,
@@ -432,7 +437,7 @@ async def chunk_entities(uri=Form(),userName=Form(), password=Form(), database=F
         gc.collect()
 
 @app.post("/get_neighbours")
-async def get_neighbours(uri=Form(),userName=Form(), password=Form(), database=Form(), elementId=Form(None),email=Form()):
+async def get_neighbours(uri=Form(None),userName=Form(None), password=Form(None), database=Form(None), elementId=Form(None),email=Form(None)):
     try:
         start = time.time()
         result = await asyncio.to_thread(get_neighbour_nodes,uri=uri, username=userName, password=password,database=database, element_id=elementId)
@@ -452,12 +457,12 @@ async def get_neighbours(uri=Form(),userName=Form(), password=Form(), database=F
 
 @app.post("/graph_query")
 async def graph_query(
-    uri: str = Form(),
-    database: str = Form(),
-    userName: str = Form(),
-    password: str = Form(),
+    uri: str = Form(None),
+    database: str = Form(None),
+    userName: str = Form(None),
+    password: str = Form(None),
     document_names: str = Form(None),
-    email=Form()
+    email=Form(None)
 ):
     try:
         start = time.time()
@@ -485,7 +490,7 @@ async def graph_query(
     
 
 @app.post("/clear_chat_bot")
-async def clear_chat_bot(uri=Form(),userName=Form(), password=Form(), database=Form(), session_id=Form(None),email=Form()):
+async def clear_chat_bot(uri=Form(None),userName=Form(None), password=Form(None), database=Form(None), session_id=Form(None),email=Form(None)):
     try:
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
@@ -505,7 +510,7 @@ async def clear_chat_bot(uri=Form(),userName=Form(), password=Form(), database=F
         gc.collect()
             
 @app.post("/connect")
-async def connect(uri=Form(), userName=Form(), password=Form(), database=Form(),email=Form()):
+async def connect(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None),email=Form(None)):
     try:
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
@@ -527,8 +532,8 @@ async def connect(uri=Form(), userName=Form(), password=Form(), database=Form(),
 
 @app.post("/upload")
 async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber=Form(None), totalChunks=Form(None), 
-                                        originalname=Form(None), model=Form(None), uri=Form(), userName=Form(), 
-                                        password=Form(), database=Form(),email=Form()):
+                                        originalname=Form(None), model=Form(None), uri=Form(None), userName=Form(None), 
+                                        password=Form(None), database=Form(None),email=Form(None)):
     try:
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
@@ -552,7 +557,7 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
         gc.collect()
             
 @app.post("/schema")
-async def get_structured_schema(uri=Form(), userName=Form(), password=Form(), database=Form(),email=Form()):
+async def get_structured_schema(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None),email=Form(None)):
     try:
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
@@ -583,14 +588,20 @@ def encode_password(pwd):
     return encoded_pwd_bytes
 
 @app.get("/update_extract_status/{file_name}")
-async def update_extract_status(request:Request, file_name, url, userName, password, database):
+async def update_extract_status(request: Request, file_name: str, uri:str=None, userName:str=None, password:str=None, database:str=None):
     async def generate():
         status = ''
-        decoded_password = decode_password(password)
-        uri = url
-        if " " in url:
-            uri= url.replace(" ","+")
-        graph = create_graph_database_connection(uri, userName, decoded_password, database)
+        
+        if password is not None and password != "null":
+            decoded_password = decode_password(password)
+        else:
+            decoded_password = None
+
+        url = uri
+        if url and " " in url:
+            url= url.replace(" ","+")
+            
+        graph = create_graph_database_connection(url, userName, decoded_password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
         while True:
             try:
@@ -626,14 +637,14 @@ async def update_extract_status(request:Request, file_name, url, userName, passw
     return EventSourceResponse(generate(),ping=60)
 
 @app.post("/delete_document_and_entities")
-async def delete_document_and_entities(uri=Form(), 
-                                       userName=Form(), 
-                                       password=Form(), 
-                                       database=Form(), 
+async def delete_document_and_entities(uri=Form(None), 
+                                       userName=Form(None), 
+                                       password=Form(None), 
+                                       database=Form(None), 
                                        filenames=Form(),
                                        source_types=Form(),
                                        deleteEntities=Form(),
-                                       email=Form()):
+                                       email=Form(None)):
     try:
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
@@ -696,7 +707,7 @@ async def get_document_status(file_name, url, userName, password, database):
         return create_api_response('Failed',message=message)
     
 @app.post("/cancelled_job")
-async def cancelled_job(uri=Form(), userName=Form(), password=Form(), database=Form(), filenames=Form(None), source_types=Form(None),email=Form()):
+async def cancelled_job(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None), filenames=Form(None), source_types=Form(None),email=Form(None)):
     try:
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
@@ -717,7 +728,7 @@ async def cancelled_job(uri=Form(), userName=Form(), password=Form(), database=F
         gc.collect()
 
 @app.post("/populate_graph_schema")
-async def populate_graph_schema(input_text=Form(None), model=Form(None), is_schema_description_checked=Form(None),email=Form()):
+async def populate_graph_schema(input_text=Form(None), model=Form(None), is_schema_description_checked=Form(None),email=Form(None)):
     try:
         start = time.time()
         result = populate_graph_schema_from_text(input_text, model, is_schema_description_checked)
@@ -736,7 +747,7 @@ async def populate_graph_schema(input_text=Form(None), model=Form(None), is_sche
         gc.collect()
         
 @app.post("/get_unconnected_nodes_list")
-async def get_unconnected_nodes_list(uri=Form(), userName=Form(), password=Form(), database=Form(),email=Form()):
+async def get_unconnected_nodes_list(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None),email=Form(None)):
     try:
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
@@ -757,7 +768,7 @@ async def get_unconnected_nodes_list(uri=Form(), userName=Form(), password=Form(
         gc.collect()
         
 @app.post("/delete_unconnected_nodes")
-async def delete_orphan_nodes(uri=Form(), userName=Form(), password=Form(), database=Form(),unconnected_entities_list=Form(),email=Form()):
+async def delete_orphan_nodes(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None),unconnected_entities_list=Form(),email=Form(None)):
     try:
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
@@ -778,7 +789,7 @@ async def delete_orphan_nodes(uri=Form(), userName=Form(), password=Form(), data
         gc.collect()
         
 @app.post("/get_duplicate_nodes")
-async def get_duplicate_nodes(uri=Form(), userName=Form(), password=Form(), database=Form(),email=Form()):
+async def get_duplicate_nodes(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None),email=Form(None)):
     try:
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
@@ -799,7 +810,7 @@ async def get_duplicate_nodes(uri=Form(), userName=Form(), password=Form(), data
         gc.collect()
         
 @app.post("/merge_duplicate_nodes")
-async def merge_duplicate_nodes(uri=Form(), userName=Form(), password=Form(), database=Form(),duplicate_nodes_list=Form(),email=Form()):
+async def merge_duplicate_nodes(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None),duplicate_nodes_list=Form(),email=Form(None)):
     try:
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
@@ -821,7 +832,7 @@ async def merge_duplicate_nodes(uri=Form(), userName=Form(), password=Form(), da
         gc.collect()
         
 @app.post("/drop_create_vector_index")
-async def drop_create_vector_index(uri=Form(), userName=Form(), password=Form(), database=Form(), isVectorIndexExist=Form(),email=Form()):
+async def drop_create_vector_index(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None), isVectorIndexExist=Form(),email=Form(None)):
     try:
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
@@ -843,7 +854,7 @@ async def drop_create_vector_index(uri=Form(), userName=Form(), password=Form(),
         gc.collect()
         
 @app.post("/retry_processing")
-async def retry_processing(uri=Form(), userName=Form(), password=Form(), database=Form(), file_name=Form(), retry_condition=Form(), email=Form()):
+async def retry_processing(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None), file_name=Form(), retry_condition=Form(), email=Form(None)):
     try:
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
@@ -939,13 +950,13 @@ async def calculate_additional_metrics(question: str = Form(),
 
 @app.post("/fetch_chunktext")
 async def fetch_chunktext(
-   uri: str = Form(),
-   database: str = Form(),
-   userName: str = Form(),
-   password: str = Form(),
+   uri: str = Form(None),
+   database: str = Form(None),
+   userName: str = Form(None),
+   password: str = Form(None),
    document_name: str = Form(),
    page_no: int = Form(1),
-   email=Form()
+   email=Form(None)
 ):
    try:
        start = time.time()
@@ -997,19 +1008,16 @@ async def backend_connection_configuration():
             logging.info(f'login connection status of object: {graph}')
             if graph is not None:
                 graph_connection = True        
-                encoded_password = encode_password(password)
                 graphDb_data_Access = graphDBdataAccess(graph)
                 result = graphDb_data_Access.connection_check_and_get_vector_dimensions(database)
-                result["graph_connection"] = graph_connection
-                result["uri"] = uri
-                result["user_name"] = username
-                result["database"] = database
-                result["password"] = encoded_password
                 result['gcs_file_cache'] = gcs_file_cache
+                result['uri'] = uri
                 end = time.time()
                 elapsed_time = end - start
                 result['api_name'] = 'backend_connection_configuration'
                 result['elapsed_api_time'] = f'{elapsed_time:.2f}'
+                result['graph_connection'] = f'{graph_connection}',
+                result['connection_from'] = 'backendAPI'
                 logger.log_struct(result, "INFO")
                 return create_api_response('Success',message=f"Backend connection successful",data=result)
         else:
@@ -1026,7 +1034,7 @@ async def backend_connection_configuration():
         gc.collect()
     
 @app.post("/schema_visualization")
-async def get_schema_visualization(uri=Form(), userName=Form(), password=Form(), database=Form()):
+async def get_schema_visualization(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None)):
     try:
         start = time.time()
         result = await asyncio.to_thread(visualize_schema,
