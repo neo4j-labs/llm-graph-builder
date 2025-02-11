@@ -57,5 +57,6 @@ module "ecs" {
   user_data_path         = "./ec2-user-data.ps1"
   backend_ecr_url        = module.my_ecr_repo.backend_ecr_repository_url
   backend_ecr_arn        = module.my_ecr_repo.backend_repository_arn
-  # frontend_ecr_url = module.my_ecr_repo.frontend_ecr_repository_url
+  frontend_ecr_url = module.my_ecr_repo.frontend_ecr_repository_url
+  frontend_ecr_arn = module.my_ecr_repo.frontend_repository_arn
 }

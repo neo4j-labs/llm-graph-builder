@@ -41,6 +41,12 @@ resource "aws_security_group" "graphbuilder_sg" {
     cidr_blocks = ["0.0.0.0/0"] # Allow ICMP from anywhere (you can restrict this if needed)
   }
 
+  ingress {
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # Adjust based on your needs
+  }  
 
   # Allow Neo4j Bolt protocol for ECS
   ingress {
@@ -48,6 +54,7 @@ resource "aws_security_group" "graphbuilder_sg" {
     to_port     = 7687
     protocol    = "tcp"
     description = "Allow Bolt protocol from ECS"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   # (Optional) Allow Neo4j HTTP API if needed
@@ -56,6 +63,7 @@ resource "aws_security_group" "graphbuilder_sg" {
     to_port     = 7474
     protocol    = "tcp"
     description = "Allow HTTP API from ECS"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   # (Optional) Allow Neo4j HTTPS API if needed
@@ -64,6 +72,7 @@ resource "aws_security_group" "graphbuilder_sg" {
     to_port     = 7473
     protocol    = "tcp"
     description = "Allow HTTPS API from ECS"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
 

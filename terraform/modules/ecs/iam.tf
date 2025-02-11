@@ -103,7 +103,8 @@ resource "aws_iam_policy" "ecs_task_execution_policy" {
           "ecr:BatchGetImage"
         ],
         Resource = [
-          var.backend_ecr_arn
+          var.backend_ecr_arn,
+          var.frontend_ecr_arn
         ]
       },
       # Permissions for CloudWatch Logs

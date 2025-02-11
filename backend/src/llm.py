@@ -25,8 +25,22 @@ class EducationLevelInput(BaseModel):
                         enum=["grade9", "grade10", "grade11", "grade12"])
 
 
+# class LessonTopicInput(BaseModel):
+#     lessonTopic: str = Field(..., description="Call this tool when the user selects an lesson topic. Provide a topic name for a lesson, e.g. History of Astronomy.")
+
 class LessonTopicInput(BaseModel):
-    lessonTopic: str = Field(..., description="Call this tool when the user selects an lesson topic. Provide a topic name for a lesson, e.g. History of Astronomy.")
+    lessonTopic: str = Field(
+        ..., 
+        description=(
+            "Call this tool ONLY when the user explicitly selects a lesson topic, "
+            "such as saying 'I want to select lesson topic X' or 'I choose X'. "
+            "DO NOT call this tool when the user is asking for keywords or selecting keywords or subtopics."
+            "DO NOT call this tool when the user is asking for topic suggestions, "
+            "such as 'Can you suggest some topics?' or 'I want to teach a lesson related to X, "
+            "please suggest some related lesson topics.' "
+            "Provide the specific topic name the user has selected, e.g., 'History of Astronomy'."
+        )
+    )
 
 # Define the enum of subjects
 class SubjectEnum(str, Enum):

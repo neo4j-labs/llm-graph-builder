@@ -470,15 +470,17 @@ def process_chat_response(messages, history, question, model, graph, document_na
 
         tool_calls = None
         if(extract_tools):
-            extract_tool_calls(model, messages)
+            tool_calls = extract_tool_calls(model, messages)
             logging.info("returned tool calls")
             logging.info(tool_calls)
 
         docs,transformed_question = retrieve_documents(doc_retriever, messages)  
 
         if docs:
+            logging.info("documents found, process_documents about to be called")
             content, result, total_tokens,formatted_docs = process_documents(docs, question, messages, llm, model, chat_mode_settings)
         else:
+            logging.info("No document clause running")
             content = "I couldn't find any relevant documents to answer your question."
             result = {"sources": list(), "nodedetails": list(), "entities": list()}
             total_tokens = 0
