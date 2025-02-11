@@ -1,7 +1,13 @@
 version: 2
 updates:
-  - package-ecosystem: 'npm'
+  - package-ecosystem: 'yarn'
     directory: '/frontend'
+    schedule:
+      interval: 'weekly'
+    target-branch: 'dev'
+
+  - package-ecosystem: 'pip'
+    directory: '/backend'
     schedule:
       interval: 'weekly'
     target-branch: 'dev'
