@@ -3,6 +3,7 @@ import logging
 import time
 from langchain_neo4j import Neo4jGraph
 import os
+from src.graph_query import get_graphDB_driver
 from src.shared.common_fn import load_embedding_model
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
@@ -137,7 +138,7 @@ def create_vector_fulltext_indexes(uri, username, password, database):
     logging.info("Starting the process of creating full-text indexes.")
 
     try:
-        driver = GraphDatabase.driver(uri, auth=(username, password), database=database)
+        driver = get_graphDB_driver(uri, username, password,database)
         driver.verify_connectivity()
         logging.info("Database connectivity verified.")
     except Exception as e:

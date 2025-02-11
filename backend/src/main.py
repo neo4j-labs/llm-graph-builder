@@ -123,7 +123,7 @@ def create_source_node_graph_web_url(graph, model, source_url, source_type):
       message = f"Unable to read data for given url : {source_url}"
       raise LLMGraphBuilderException(message)
     try:
-      title = pages[0].metadata['title']
+      title = pages[0].metadata['title'].strip()
       if not title:
         title = last_url_segment(source_url)
       language = pages[0].metadata['language']
