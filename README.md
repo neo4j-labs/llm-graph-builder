@@ -36,10 +36,6 @@ According to enviornment we are configuring the models which is indicated by VIT
 EX:
 ```env
 VITE_LLM_MODELS_PROD="openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash"
-
-You can then run Docker Compose to build and start all components:
-```bash
-docker-compose up --build
 ```
 
 #### Additional configs
