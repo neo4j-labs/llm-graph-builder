@@ -30,7 +30,7 @@ export const extractAPI = async (
   gcs_bucket_name?: string,
   gcs_bucket_folder?: string,
   allowedNodes?: string[],
-  allowedRelationship?: string[],
+  allowedRelationship?: string[] | [string, string, string][],
   token_chunk_size?: number,
   chunk_overlap?: number,
   chunks_to_combine?: number,

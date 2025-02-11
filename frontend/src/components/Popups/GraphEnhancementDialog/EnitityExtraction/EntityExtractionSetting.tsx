@@ -39,6 +39,9 @@ export default function EntityExtractionSetting({
   const hasSelections = useHasSelections(selectedNodes, selectedRels);
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [viewPoint, setViewPoint] = useState<string>('tableView');
+  const [relationshipMode, setRelationshipMode] = useState<'list' | 'tuple'>(
+    selectedRels.length > 0 && selectedRels.every((t) => t.value.split(',').length === 3) ? 'tuple' : 'list'
+  );  
   const removeNodesAndRels = (nodelabels: string[], relationshipTypes: string[]) => {
     const labelsToRemoveSet = new Set(nodelabels);
     const relationshipLabelsToremoveSet = new Set(relationshipTypes);
@@ -133,9 +136,33 @@ export default function EntityExtractionSetting({
         'selectedRelationshipLabels',
         JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] })
       );
+      setSelectedRels([]);
+      return;
     }
-    setSelectedRels(selectedOptions);
-    localStorage.setItem('selectedRelationshipLabels', JSON.stringify({ db: userCredentials?.uri, selectedOptions }));
+    const processedOptions = selectedOptions
+      .map((option) => {
+        const value = option.value.trim();
+        if (relationshipMode === 'tuple' && value.split(',').length !== 3) {
+           showNormalToast(
+              `Invalid tuple format for relationship "${option.label}". Please enter as "Source, Relationship, Target".`
+            );
+            return null;
+        }
+        if (relationshipMode === 'list' && value.includes(',')) {
+          showNormalToast(
+            `Invalid format for relationship "${option.label}". Commas are not allowed in list mode.`
+          );
+          return null;
+        }
+        return { ...option, value: value };
+      })
+      .filter((option): option is OptionType => option !== null);
+  
+    setSelectedRels(processedOptions);
+    localStorage.setItem(
+      'selectedRelationshipLabels',
+      JSON.stringify({ db: userCredentials?.uri, selectedOptions: processedOptions })
+    );
   };
   const [nodeLabelOptions, setnodeLabelOptions] = useState<OptionType[]>([]);
   const [relationshipTypeOptions, setrelationshipTypeOptions] = useState<OptionType[]>([]);
@@ -188,16 +215,16 @@ export default function EntityExtractionSetting({
   const clickHandler: MouseEventHandler<HTMLButtonElement> = useCallback(() => {
     setSelectedSchemas([]);
     setSelectedNodes(nodeLabelOptions);
-    setSelectedRels(relationshipTypeOptions);
+    if(relationshipMode === 'list') setSelectedRels(relationshipTypeOptions);
     localStorage.setItem(
       'selectedNodeLabels',
       JSON.stringify({ db: userCredentials?.uri, selectedOptions: nodeLabelOptions })
     );
-    localStorage.setItem(
+    if(relationshipMode === 'list') localStorage.setItem(
       'selectedRelationshipLabels',
       JSON.stringify({ db: userCredentials?.uri, selectedOptions: relationshipTypeOptions })
     );
-  }, [nodeLabelOptions, relationshipTypeOptions]);
+  }, [nodeLabelOptions, relationshipTypeOptions,relationshipMode]);
 
   const handleClear = () => {
     setSelectedNodes([]);
@@ -303,6 +330,24 @@ export default function EntityExtractionSetting({
           }}
           type='creatable'
         />
+
+        <Flex className='mt-2' justifyContent='center'>
+          <ButtonWithToolTip
+            text="Toggle relationship input mode"
+            onClick={() => setRelationshipMode((prevMode) => (prevMode === 'list' ? 'tuple' : 'list'))}
+            label={
+              relationshipMode === 'list'
+                ? 'Switch to Three-Tuple Mode'
+                : 'Switch to List Mode'
+            }
+            placement="top"
+            disabled={selectedRels.length > 0}
+          >
+            {relationshipMode === 'list'
+              ? 'Switch to Three-Tuple Mode'
+              : 'Switch to List Mode'}
+          </ButtonWithToolTip>
+        </Flex>
 
         <Flex className='!mt-4 mb-2 flex items-center' flexDirection='row' justifyContent='flex-end'>
           <Flex flexDirection='row' gap='4'>
