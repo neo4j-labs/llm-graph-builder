@@ -1,6 +1,10 @@
 import api from '../API/Index';
 
-export const graphQueryAPI = async (query_type: string, document_names: (string | undefined)[] | undefined) => {
+export const graphQueryAPI = async (
+  query_type: string,
+  document_names: (string | undefined)[] | undefined,
+  signal: AbortSignal
+) => {
   try {
     const formData = new FormData();
     formData.append('query_type', query_type ?? 'entities');
@@ -10,6 +14,7 @@ export const graphQueryAPI = async (query_type: string, document_names: (string 
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      signal,
     });
     return response;
   } catch (error) {
