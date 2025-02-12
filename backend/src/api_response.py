@@ -1,6 +1,6 @@
+from fastapi.responses import JSONResponse
 
-
-def create_api_response(status,success_count=None,failed_count=None, data=None, error=None,message=None,file_source=None,file_name=None):
+def create_api_response(status,status_code=200,success_count=None,failed_count=None, data=None, error=None,message=None,file_source=None,file_name=None):
     """
     Create a response to be sent to the API. This is a helper function to create a JSON response that can be sent to the API.
     
@@ -14,7 +14,7 @@ def create_api_response(status,success_count=None,failed_count=None, data=None, 
       A dictionary containing the status data and error if any
     """
     response = {"status": status}
-
+    
     # Set the data of the response
     if data is not None:
       response["data"] = data
@@ -36,4 +36,7 @@ def create_api_response(status,success_count=None,failed_count=None, data=None, 
     if file_name is not None:
       response['file_name']=file_name
       
-    return response
+    if status_code != 200:
+      return JSONResponse(response,status_code=status_code)
+    else:
+      return response
