@@ -14,6 +14,7 @@ export const llms =
     ? (process.env.VITE_LLM_MODELS?.split(',') as string[])
     : [
         'openai_gpt_3.5',
+        'openai-gpt-o3-mini',
         'openai_gpt_4o',
         'openai_gpt_4o_mini',
         'gemini_1.5_pro',
@@ -42,12 +43,14 @@ export const supportedLLmsForRagas = [
   'openai_gpt_4o_mini',
   'gemini_1.5_pro',
   'gemini_1.5_flash',
+  'gemini_2.0_flash',
   'azure_ai_gpt_35',
   'azure_ai_gpt_4o',
   'groq_llama3_70b',
   'anthropic_claude_3_5_sonnet',
   'fireworks_llama_v3_70b',
   'bedrock_claude_3_5_sonnet',
+  'openai-gpt-o3-mini',
 ];
 export const supportedLLmsForGroundTruthMetrics = [
   'openai_gpt_3.5',
@@ -60,6 +63,7 @@ export const supportedLLmsForGroundTruthMetrics = [
   'anthropic_claude_3_5_sonnet',
   'fireworks_llama_v3_70b',
   'bedrock_claude_3_5_sonnet',
+  'openai-gpt-o3-mini',
 ];
 export const prodllms =
   process.env.VITE_LLM_MODELS_PROD?.trim() != ''

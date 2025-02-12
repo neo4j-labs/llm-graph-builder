@@ -47,11 +47,16 @@ def get_llm(model: str):
             )
         elif "openai" in model:
             model_name, api_key = env_value.split(",")
-            llm = ChatOpenAI(
+            if "o3-mini" in model:
+                llm= ChatOpenAI(
+                api_key=api_key,
+                model=model_name)
+            else:
+                llm = ChatOpenAI(
                 api_key=api_key,
                 model=model_name,
                 temperature=0,
-            )
+                )
 
         elif "azure" in model:
             model_name, api_endpoint, api_key, api_version = env_value.split(",")
