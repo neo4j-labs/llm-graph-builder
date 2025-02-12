@@ -1,4 +1,3 @@
-import { UserCredentials } from '../types';
 import api from '../API/Index';
 
 export const chatBotAPI = async (

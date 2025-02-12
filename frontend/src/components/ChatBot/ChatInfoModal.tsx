@@ -18,7 +18,6 @@ import { ExtendedNode, chatInfoMessage } from '../../types';
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import GraphViewButton from '../Graph/GraphViewButton';
 import { chunkEntitiesAPI } from '../../services/ChunkEntitiesInfo';
-import { useCredentials } from '../../context/UserCredentials';
 import { tokens } from '@neo4j-ndl/base';
 import ChunkInfo from './ChunkInfo';
 import EntitiesInfo from './EntitiesInfo';
