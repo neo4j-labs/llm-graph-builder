@@ -12,15 +12,25 @@ const DrawerChatbot: React.FC<DrawerChatbotProps> = ({ isExpanded, clearHistoryD
   const location = useLocation();
 
   useEffect(() => {
-    if (location && location.state && Array.isArray(location.state)) {
-      setMessages(location.state);
-    } else if (location && location.state && Object.prototype.toString.call(location.state) === '[object Object]') {
-      setUserCredentials(location.state.credential);
-      setIsGCSActive(location.state.isGCSActive);
-      setGdsActive(location.state.isgdsActive);
-      setIsReadOnlyUser(location.state.isReadOnlyUser);
+    // const localStorageData = localStorage.getItem('neo4j.connection');
+    // const connectionLocal = JSON.parse(localStorageData ?? '');
+    // if (connectionStatus && (connectionLocal.uri === userCredentials?.uri)) {
+    if (connectionStatus) {
+      if (location && location.state && Array.isArray(location.state)) {
+        setMessages(location.state);
+      } else if (
+        location &&
+        location.state &&
+        typeof location.state === 'object' &&
+        Object.keys(location.state).length > 1
+      ) {
+        setUserCredentials(location.state.credential);
+        setIsGCSActive(location.state.isGCSActive);
+        setGdsActive(location.state.isgdsActive);
+        setIsReadOnlyUser(location.state.isReadOnlyUser);
+      }
     }
-  }, [location]);
+  }, [location, connectionStatus]);
 
   const getIsLoading = (messages: Messages[]) => {
     return messages.length > 1 ? messages.some((msg) => msg.isTyping || msg.isLoading) : false;

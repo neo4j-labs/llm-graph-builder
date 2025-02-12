@@ -6,7 +6,15 @@ import {
   OptionType,
   showTextFromSchemaDialogType,
 } from '../types';
-import { chatModeLables, getStoredSchema, llms, PRODMODLES } from '../utils/Constants';
+import {
+  chatModeLables,
+  getStoredSchema,
+  llms,
+  PRODMODLES,
+  chunkOverlap,
+  chunksToCombine,
+  tokenchunkSize,
+} from '../utils/Constants';
 import { useCredentials } from './UserCredentials';
 import Queue from '../utils/Queue';
 
@@ -16,6 +24,9 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const isProdEnv = process.env.VITE_ENV === 'PROD';
   const selectedNodeLabelstr = localStorage.getItem('selectedNodeLabels');
   const selectedNodeRelsstr = localStorage.getItem('selectedRelationshipLabels');
+  const selectedTokenChunkSizeStr = localStorage.getItem('selectedTokenChunkSize');
+  const selectedChunk_overlapStr = localStorage.getItem('selectedChunk_overlap');
+  const selectedChunks_to_combineStr = localStorage.getItem('selectedChunks_to_combine');
   const persistedQueue = localStorage.getItem('waitingQueue');
   const selectedModel = localStorage.getItem('selectedModel');
   const selectedInstructstr = localStorage.getItem('instructions');
@@ -30,6 +41,9 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [graphType, setGraphType] = useState<string>('Knowledge Graph Entities');
   const [selectedNodes, setSelectedNodes] = useState<readonly OptionType[]>([]);
   const [selectedRels, setSelectedRels] = useState<readonly OptionType[]>([]);
+  const [selectedTokenChunkSize, setSelectedTokenChunkSize] = useState<number>(tokenchunkSize);
+  const [selectedChunk_overlap, setSelectedChunk_overlap] = useState<number>(chunkOverlap);
+  const [selectedChunks_to_combine, setSelectedChunks_to_combine] = useState<number>(chunksToCombine);
   const [selectedSchemas, setSelectedSchemas] = useState<readonly OptionType[]>(getStoredSchema);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
@@ -61,6 +75,18 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
         setSelectedRels(selectedNodeRels.selectedOptions);
       }
     }
+    if (selectedTokenChunkSizeStr != null) {
+      const parsedSelectedChunk_size = JSON.parse(selectedTokenChunkSizeStr);
+      setSelectedTokenChunkSize(parsedSelectedChunk_size.selectedOption);
+    }
+    if (selectedChunk_overlapStr != null) {
+      const parsedSelectedChunk_overlap = JSON.parse(selectedChunk_overlapStr);
+      setSelectedChunk_overlap(parsedSelectedChunk_overlap.selectedOption);
+    }
+    if (selectedChunks_to_combineStr != null) {
+      const parsedSelectedChunks_to_combine = JSON.parse(selectedChunks_to_combineStr);
+      setSelectedChunk_overlap(parsedSelectedChunks_to_combine.selectedOption);
+    }
     if (selectedInstructstr != null) {
       const selectedInstructions = selectedInstructstr;
       setAdditionalInstructions(selectedInstructions);
@@ -80,6 +106,12 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     setSelectedRels,
     selectedNodes,
     setSelectedNodes,
+    selectedTokenChunkSize,
+    setSelectedTokenChunkSize,
+    selectedChunk_overlap,
+    setSelectedChunk_overlap,
+    selectedChunks_to_combine,
+    setSelectedChunks_to_combine,
     rowSelection,
     setRowSelection,
     selectedRows,

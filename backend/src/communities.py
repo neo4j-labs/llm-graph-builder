@@ -193,6 +193,11 @@ COMMUNITY_INDEX_FULL_TEXT_QUERY = f"CREATE FULLTEXT INDEX {COMMUNITY_FULLTEXT_IN
 
 def get_gds_driver(uri, username, password, database):
     try:
+        if all(v is None for v in [username, password]):
+            username= os.getenv('NEO4J_USERNAME')
+            database= os.getenv('NEO4J_DATABASE')
+            password= os.getenv('NEO4J_PASSWORD')
+            
         gds = GraphDataScience(
             endpoint=uri,
             auth=(username, password),

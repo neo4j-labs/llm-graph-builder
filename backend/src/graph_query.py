@@ -3,7 +3,8 @@ from neo4j import time
 from neo4j import GraphDatabase
 import os
 import json
-from src.shared.constants import GRAPH_CHUNK_LIMIT,GRAPH_QUERY,CHUNK_TEXT_QUERY,COUNT_CHUNKS_QUERY
+
+from src.shared.constants import GRAPH_CHUNK_LIMIT,GRAPH_QUERY,CHUNK_TEXT_QUERY,COUNT_CHUNKS_QUERY,SCHEMA_VISUALIZATION_QUERY
 
 def get_graphDB_driver(uri, username, password,database="neo4j"):
     """
@@ -15,6 +16,11 @@ def get_graphDB_driver(uri, username, password,database="neo4j"):
     """
     try:
         logging.info(f"Attempting to connect to the Neo4j database at {uri}")
+        if all(v is None for v in [username, password]):
+            username= os.getenv('NEO4J_USERNAME')
+            database= os.getenv('NEO4J_DATABASE')
+            password= os.getenv('NEO4J_PASSWORD')
+
         enable_user_agent = os.environ.get("ENABLE_USER_AGENT", "False").lower() in ("true", "1", "yes")
         if enable_user_agent:
             driver = GraphDatabase.driver(uri, auth=(username, password),database=database, user_agent=os.environ.get('NEO4J_USER_AGENT'))
@@ -228,7 +234,7 @@ def get_chunktext_results(uri, username, password, database, document_name, page
        offset = 10
        skip = (page_no - 1) * offset
        limit = offset
-       driver = GraphDatabase.driver(uri, auth=(username, password))
+       driver = get_graphDB_driver(uri, username, password,database)  
        with driver.session(database=database) as session:
            total_chunks_result = session.run(COUNT_CHUNKS_QUERY, file_name=document_name)
            total_chunks = total_chunks_result.single()["total_chunks"]
@@ -250,6 +256,25 @@ def get_chunktext_results(uri, username, password, database, document_name, page
    except Exception as e:
        logging.error(f"An error occurred in get_chunktext_results. Error: {str(e)}")
        raise Exception("An error occurred in get_chunktext_results. Please check the logs for more details.") from e
+   finally:
+       if driver:
+           driver.close()
+
+
+def visualize_schema(uri, userName, password, database):
+   """Retrieves graph schema"""
+   driver = None
+   try:
+       logging.info("Starting visualizing graph schema")
+       driver = get_graphDB_driver(uri, userName, password,database)  
+       records, summary, keys = driver.execute_query(SCHEMA_VISUALIZATION_QUERY)
+       nodes = records[0].get("nodes", [])
+       relationships = records[0].get("relationships", [])
+       result = {"nodes": nodes, "relationships": relationships}
+       return result
+   except Exception as e:
+       logging.error(f"An error occurred schema retrieval. Error: {str(e)}")
+       raise Exception(f"An error occurred schema retrieval. Error: {str(e)}")
    finally:
        if driver:
            driver.close()
