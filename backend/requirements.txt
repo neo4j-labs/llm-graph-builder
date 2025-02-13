@@ -53,7 +53,7 @@ youtube-transcript-api==0.6.3
 zipp==3.17.0
 sentence-transformers==3.3.1
 google-cloud-logging==3.11.3
-pypandoc==1.13
+pypandoc==1.15
 graphdatascience==1.12
 Secweb==1.11.0
 ragas==0.2.11
