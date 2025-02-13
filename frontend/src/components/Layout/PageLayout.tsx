@@ -213,9 +213,8 @@ const PageLayout: React.FC = () => {
       ></SchemaFromTextDialog>
       {isLargeDesktop ? (
         <div
-          className={`layout-wrapper ${!isLeftExpanded ? 'drawerdropzoneclosed' : ''} ${
-            !isRightExpanded ? 'drawerchatbotclosed' : ''
-          } ${!isRightExpanded && !isLeftExpanded ? 'drawerclosed' : ''}`}
+          className={`layout-wrapper ${!isLeftExpanded ? 'drawerdropzoneclosed' : ''} ${!isRightExpanded ? 'drawerchatbotclosed' : ''
+            } ${!isRightExpanded && !isLeftExpanded ? 'drawerclosed' : ''}`}
         >
           <SideNav
             toggles3Modal={toggleS3Modal}
