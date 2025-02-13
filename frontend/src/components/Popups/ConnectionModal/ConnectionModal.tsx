@@ -255,7 +255,7 @@ export default function ConnectionModal({
             isGCSActive,
             chunksTobeProcess,
             email: user?.email ?? '',
-            connection:'connectAPI',
+            connection: 'connectAPI',
           })
         );
         setUserDbVectorIndex(response.data.data.db_vector_dimension);

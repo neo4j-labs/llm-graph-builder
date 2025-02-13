@@ -72,6 +72,7 @@ const Content: React.FC<ContentProps> = ({
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [totalPageCount, setTotalPageCount] = useState<number | null>(null);
   const [textChunks, setTextChunks] = useState<chunkdata[]>([]);
+  const chunksTextAbortController = useRef<AbortController>();
 
   const [alertStateForRetry, setAlertStateForRetry] = useState<BannerAlertProps>({
     showAlert: false,
@@ -103,9 +104,9 @@ const Content: React.FC<ContentProps> = ({
     additionalInstructions,
     setAdditionalInstructions,
   } = useFileContext();
-  const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView'|'showSchemaView'>(
-    'tableView'
-  );
+  const [viewPoint, setViewPoint] = useState<
+    'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView' | 'showSchemaView'
+  >('tableView');
   const [showDeletePopUp, setShowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setIsDeleteLoading] = useState<boolean>(false);
 
@@ -221,8 +222,9 @@ const Content: React.FC<ContentProps> = ({
     });
   };
   const getChunks = async (name: string, pageNo: number) => {
+    chunksTextAbortController.current = new AbortController();
     toggleChunksLoading();
-    const response = await getChunkText(name, pageNo);
+    const response = await getChunkText(name, pageNo, chunksTextAbortController.current.signal);
     setTextChunks(response.data.data.pageitems);
     if (!totalPageCount) {
       setTotalPageCount(response.data.data.total_pages);
@@ -271,11 +273,7 @@ const Content: React.FC<ContentProps> = ({
       });
       if (fileItem.name != undefined && userCredentials != null) {
         const { name } = fileItem;
-        triggerStatusUpdateAPI(
-          name as string,
-          userCredentials,
-          updateStatusForLargeFiles
-        );
+        triggerStatusUpdateAPI(name as string, userCredentials, updateStatusForLargeFiles);
       }
 
       const apiResponse = await extractAPI(
@@ -544,12 +542,14 @@ const Content: React.FC<ContentProps> = ({
     let finalUrl = bloomUrl;
     if (userCredentials?.database && userCredentials.uri && userCredentials.userName) {
       const uriCoded = userCredentials.uri.replace(/:\d+$/, '');
-      const connectURL = `${uriCoded.split('//')[0]}//${userCredentials.userName}@${uriCoded.split('//')[1]}:${userCredentials.port ?? '7687'}`;
+      const connectURL = `${uriCoded.split('//')[0]}//${userCredentials.userName}@${uriCoded.split('//')[1]}:${
+        userCredentials.port ?? '7687'
+      }`;
       const encodedURL = encodeURIComponent(connectURL);
       finalUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     }
     window.open(finalUrl, '_blank');
-   };
+  };
 
   const handleGraphView = () => {
     setOpenGraphView(true);
@@ -855,7 +855,10 @@ const Content: React.FC<ContentProps> = ({
       {showChunkPopup && (
         <ChunkPopUp
           chunksLoading={chunksLoading}
-          onClose={() => toggleChunkPopup()}
+          onClose={() => {
+            chunksTextAbortController.current?.abort();
+            toggleChunkPopup();
+          }}
           showChunkPopup={showChunkPopup}
           chunks={textChunks}
           incrementPage={incrementPage}
@@ -885,11 +888,7 @@ const Content: React.FC<ContentProps> = ({
           <div className='connectionstatus__container'>
             <span className='h6 px-1'>Neo4j connection {isReadOnlyUser ? '(Read only Mode)' : ''}</span>
             <Typography variant='body-medium'>
-              <DatabaseStatusIcon
-                isConnected={connectionStatus}
-                isGdsActive={isGdsActive}
-                uri={userCredentials?.uri}
-              />
+              <DatabaseStatusIcon isConnected={connectionStatus} isGdsActive={isGdsActive} uri={userCredentials?.uri} />
               <div className='pt-1 flex gap-1 items-center'>
                 <div>{!hasSelections ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}</div>
                 <div>

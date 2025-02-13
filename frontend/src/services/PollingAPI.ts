@@ -11,10 +11,18 @@ export default async function subscribe(
   let delay = 1000;
   // Build query parameters conditionally
   const queryParams = new URLSearchParams();
-  if (userCredentials.uri) queryParams.append('url', userCredentials.uri);
-  if (userCredentials.userName) queryParams.append('userName', userCredentials.userName);
-  if (userCredentials.password) queryParams.append('password', userCredentials.password);
-  if (userCredentials.database) queryParams.append('database', userCredentials.database);
+  if (userCredentials.uri) {
+    queryParams.append('url', userCredentials.uri);
+  }
+  if (userCredentials.userName) {
+    queryParams.append('userName', userCredentials.userName);
+  }
+  if (userCredentials.password) {
+    queryParams.append('password', userCredentials.password);
+  }
+  if (userCredentials.database) {
+    queryParams.append('database', userCredentials.database);
+  }
   while (pollingAttempts < MAX_POLLING_ATTEMPTS) {
     let currentDelay = delay;
     const response: PollingAPI_Response = await api.get(`/document_status/${fileName}?${queryParams.toString()}`);

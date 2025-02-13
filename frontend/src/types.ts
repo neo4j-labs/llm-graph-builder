@@ -48,11 +48,11 @@ export interface OptionType {
 
 export type UserCredentials = {
   uri?: string;
-  userName?: string
-  password?: string
-  database?: string
+  userName?: string;
+  password?: string;
+  database?: string;
   email: string;
-  connection?: string
+  connection?: string;
 } & { [key: string]: any };
 
 export interface SourceNode extends Omit<CustomFileBase, 'relationshipsCount' | 'createdAt'> {

@@ -107,7 +107,6 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         ? false
         : null
   );
-
   const actions: React.ComponentProps<typeof IconButton<'button'>>[] = useMemo(
     () => [
       {
@@ -132,6 +131,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   );
 
   useEffect(() => {
+    const abortcontroller = new AbortController();
     if (
       (mode != chatModeLables.graph || error?.trim() !== '') &&
       (!nodes.length || !infoEntities.length || !chunks.length)
@@ -139,11 +139,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       (async () => {
         toggleInfoLoading();
         try {
-          const response = await chunkEntitiesAPI(
-            nodeDetails,
-            entities_ids,
-            mode,
-          );
+          const response = await chunkEntitiesAPI(nodeDetails, entities_ids, mode, abortcontroller.signal);
           if (response.data.status === 'Failure') {
             throw new Error(response.data.error);
           }
@@ -195,6 +191,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       if (metricsLoading) {
         toggleMetricsLoading();
       }
+      abortcontroller.abort();
     };
   }, [nodeDetails, mode, error, metricsLoading]);
 
