@@ -58,6 +58,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [disableRefresh, setDisableRefresh] = useState<boolean>(false);
   const [selected, setSelected] = useState<{ type: EntityType; id: string } | undefined>(undefined);
   const [mode, setMode] = useState<boolean>(false);
+  const graphQueryAbortControllerRef = useRef<AbortController>();
 
   const graphQuery: string =
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
@@ -109,17 +110,23 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   }, [allNodes]);
 
   const fetchData = useCallback(async () => {
+    graphQueryAbortControllerRef.current = new AbortController();
     try {
       let nodeRelationshipData;
       if (viewPoint === graphLabels.showGraphView) {
         nodeRelationshipData = await graphQueryAPI(
           graphQuery,
-          selectedRows?.map((f) => f.name)
+          selectedRows?.map((f) => f.name),
+          graphQueryAbortControllerRef.current.signal
         );
       } else if (viewPoint === graphLabels.showSchemaView) {
         nodeRelationshipData = await getGraphSchema();
       } else {
-        nodeRelationshipData = await graphQueryAPI(graphQuery, [inspectedName ?? '']);
+        nodeRelationshipData = await graphQueryAPI(
+          graphQuery,
+          [inspectedName ?? ''],
+          graphQueryAbortControllerRef.current.signal
+        );
       }
       return nodeRelationshipData;
     } catch (error: any) {
@@ -310,6 +317,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
 
   // when modal closes reset all states to default
   const onClose = () => {
+    graphQueryAbortControllerRef?.current?.abort();
     setStatus('unknown');
     setStatusMessage('');
     setGraphViewOpen(false);

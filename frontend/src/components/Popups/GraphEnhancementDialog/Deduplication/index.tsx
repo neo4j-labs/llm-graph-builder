@@ -48,11 +48,12 @@ export default function DeduplicationTab() {
   const [viewPoint, setViewPoint] = useState('');
   const [nodesCount, setNodesCount] = useState<number>(0);
   const { colorMode } = useContext(ThemeWrapperContext);
+  const abortRef = useRef<AbortController>();
 
   const fetchDuplicateNodes = useCallback(async () => {
     try {
       setLoading(true);
-      const duplicateNodesData = await getDuplicateNodes();
+      const duplicateNodesData = await getDuplicateNodes(abortRef?.current?.signal as AbortSignal);
       setLoading(false);
       if (duplicateNodesData.data.status === 'Failed') {
         throw new Error(duplicateNodesData.data.error);
@@ -71,11 +72,15 @@ export default function DeduplicationTab() {
   }, [userCredentials]);
 
   useEffect(() => {
+    abortRef.current = new AbortController();
     if (userCredentials != null) {
       (async () => {
         await fetchDuplicateNodes();
       })();
     }
+    return () => {
+      abortRef.current?.abort();
+    };
   }, [userCredentials]);
 
   const clickHandler = async () => {

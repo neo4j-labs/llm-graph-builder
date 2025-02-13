@@ -5,6 +5,7 @@ const chunkEntitiesAPI = async (
   nodeDetails: nodeDetailsProps,
   entities: string[],
   mode: string,
+  signal: AbortSignal
 ) => {
   try {
     const formData = new FormData();
@@ -16,6 +17,7 @@ const chunkEntitiesAPI = async (
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      signal,
     });
     return response;
   } catch (error) {

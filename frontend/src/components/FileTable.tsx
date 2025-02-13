@@ -683,20 +683,11 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
   };
 
   const handleSmallFile = (item: SourceNode, userCredentials: UserCredentials) => {
-    subscribe(
-      item.fileName,
-      userCredentials,
-      updatestatus,
-      updateProgress
-    ).catch(handleFileUploadError);
+    subscribe(item.fileName, userCredentials, updatestatus, updateProgress).catch(handleFileUploadError);
   };
 
   const handleLargeFile = (item: SourceNode, userCredentials: UserCredentials) => {
-    triggerStatusUpdateAPI(
-      item.fileName,
-      userCredentials,
-      updateStatusForLargeFiles
-    );
+    triggerStatusUpdateAPI(item.fileName, userCredentials, updateStatusForLargeFiles);
   };
   useEffect(() => {
     const waitingQueue: CustomFile[] = JSON.parse(

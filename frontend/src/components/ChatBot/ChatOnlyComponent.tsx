@@ -43,8 +43,7 @@ const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
       } else {
         setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
       }
-    }
-    else {
+    } else {
       const credentialsForAPI: UserCredentials = {
         uri,
         userName: user,

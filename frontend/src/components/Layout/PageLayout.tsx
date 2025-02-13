@@ -115,7 +115,7 @@ const PageLayout: React.FC = () => {
             email: user?.email ?? '',
             connection: 'backendApi',
           };
-          //setChunksToBeProces(credentials.chunksTobeProcess);
+          // setChunksToBeProces(credentials.chunksTobeProcess);
           setIsGCSActive(credentials.isGCSActive);
           setUserCredentials(credentials);
           createDefaultFormData({ uri: credentials.uri, email: credentials.email ?? '' });
@@ -123,14 +123,13 @@ const PageLayout: React.FC = () => {
           setConnectionStatus(Boolean(connectionData.data.graph_connection));
           setIsReadOnlyUser(connectionData.data.isReadonlyUser);
           handleDisconnectButtonState(false);
-        }
-        else if (!connectionData.data && connectionData.status === 'Success') {
+        } else if (!connectionData.data && connectionData.status === 'Success') {
           const storedCredentials = localStorage.getItem('neo4j.connection');
           if (storedCredentials) {
             const credentials = JSON.parse(storedCredentials);
             setUserCredentials({ ...credentials, password: atob(credentials.password) });
             createDefaultFormData({ ...credentials, password: atob(credentials.password) });
-            //setChunksToBeProces(credentials.chunksTobeProcess);
+            // setChunksToBeProces(credentials.chunksTobeProcess);
             setIsGCSActive(credentials.isGCSActive);
             setGdsActive(credentials.isgdsActive);
             setConnectionStatus(Boolean(credentials.connection === 'connectAPI'));
@@ -144,7 +143,7 @@ const PageLayout: React.FC = () => {
           setErrorMessage(backendApiResponse?.data?.error);
           setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
           handleDisconnectButtonState(true);
-          console.log('from else cndition error is there')
+          console.log('from else cndition error is there');
         }
       } catch (error) {
         if (error instanceof Error) {
@@ -160,9 +159,7 @@ const PageLayout: React.FC = () => {
       setClearHistoryData(true);
       setIsDeleteChatLoading(true);
       cancel();
-      const response = await clearChatAPI(
-        sessionStorage.getItem('session_id') ?? ''
-      );
+      const response = await clearChatAPI(sessionStorage.getItem('session_id') ?? '');
       setIsDeleteChatLoading(false);
       if (response.data.status === 'Success') {
         const date = new Date();
@@ -216,8 +213,9 @@ const PageLayout: React.FC = () => {
       ></SchemaFromTextDialog>
       {isLargeDesktop ? (
         <div
-          className={`layout-wrapper ${!isLeftExpanded ? 'drawerdropzoneclosed' : ''} ${!isRightExpanded ? 'drawerchatbotclosed' : ''
-            } ${!isRightExpanded && !isLeftExpanded ? 'drawerclosed' : ''}`}
+          className={`layout-wrapper ${!isLeftExpanded ? 'drawerdropzoneclosed' : ''} ${
+            !isRightExpanded ? 'drawerchatbotclosed' : ''
+          } ${!isRightExpanded && !isLeftExpanded ? 'drawerclosed' : ''}`}
         >
           <SideNav
             toggles3Modal={toggleS3Modal}

@@ -6,10 +6,18 @@ export function triggerStatusUpdateAPI(
   datahandler: (i: eventResponsetypes) => void
 ) {
   const params = new URLSearchParams();
-  if (userCredentials.uri) params.append("uri", userCredentials.uri);
-  if (userCredentials.database) params.append("database", userCredentials.database);
-  if (userCredentials.userName) params.append("userName", userCredentials.userName);
-  if (userCredentials.password) params.append("password", btoa(userCredentials.password));
+  if (userCredentials.uri) {
+    params.append('uri', userCredentials.uri);
+  }
+  if (userCredentials.database) {
+    params.append('database', userCredentials.database);
+  }
+  if (userCredentials.userName) {
+    params.append('userName', userCredentials.userName);
+  }
+  if (userCredentials.password) {
+    params.append('password', btoa(userCredentials.password));
+  }
   const queryString = params.toString();
   const requestUrl = queryString
     ? `${url()}/update_extract_status/${name}?${queryString}`
