@@ -41,7 +41,7 @@ starlette-session==0.4.3
 tqdm==4.67.1
 unstructured[all-docs]
 unstructured==0.16.11
-unstructured-client==0.28.1
+unstructured-client==0.29.0
 unstructured-inference==0.8.1
 urllib3==2.2.2
 uvicorn==0.32.1
