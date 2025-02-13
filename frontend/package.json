@@ -26,7 +26,7 @@
     "axios": "^1.6.5",
     "clsx": "^2.1.1",
     "eslint-plugin-react": "^7.33.2",
-    "neo4j-driver": "^5.14.0",
+    "neo4j-driver": "^5.28.1",
     "re-resizable": "^6.9.16",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

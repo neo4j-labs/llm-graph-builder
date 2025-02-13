@@ -4666,27 +4666,27 @@ natural-compare@^1.4.0:
   resolved "https://registry.yarnpkg.com/natural-compare/-/natural-compare-1.4.0.tgz#4abebfeed7541f2c27acfb29bdbbd15c8d5ba4f7"
   integrity sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==
 
-neo4j-driver-bolt-connection@5.23.0:
-  version "5.23.0"
-  resolved "https://registry.yarnpkg.com/neo4j-driver-bolt-connection/-/neo4j-driver-bolt-connection-5.23.0.tgz#2d3e988d3f9f1f0eef92c5a8533923af7036ae87"
-  integrity sha512-d8aLeeS33KMmUnGCGj/U07AUOch8IVc6hA8Lit/4ExaHnhRoSgEOPAK6/RAbYAfABlVqFfErtV85s1OnrJu64g==
+neo4j-driver-bolt-connection@5.28.1:
+  version "5.28.1"
+  resolved "https://registry.yarnpkg.com/neo4j-driver-bolt-connection/-/neo4j-driver-bolt-connection-5.28.1.tgz#995ba2bd00465576d99a296a80ee4ba14eac7b8a"
+  integrity sha512-nY8GBhjOW7J0rDtpiyJn6kFdk2OiNVZZhZrO8//mwNXnf5VQJ6HqZQTDthH/9pEaX0Jvbastz1xU7ZL8xzqY0w==
   dependencies:
     buffer "^6.0.3"
-    neo4j-driver-core "5.23.0"
+    neo4j-driver-core "5.28.1"
     string_decoder "^1.3.0"
 
-neo4j-driver-core@5.23.0:
-  version "5.23.0"
-  resolved "https://registry.yarnpkg.com/neo4j-driver-core/-/neo4j-driver-core-5.23.0.tgz#8de25804c50a35cdbc7370de4a833ba63fe8453d"
-  integrity sha512-kypv0cym8vB9t36MRKSt/mtNZuvCACg6S47yJMDjJx5XSWx69QbBaLNvoa/2//7NPCCj0Fn0i5HCKqBkcBRa2Q==
+neo4j-driver-core@5.28.1:
+  version "5.28.1"
+  resolved "https://registry.yarnpkg.com/neo4j-driver-core/-/neo4j-driver-core-5.28.1.tgz#6552776ddab11f5eb095ef2f5e8b4b20ed2f87e2"
+  integrity sha512-14vN8TlxC0JvJYfjWic5PwjsZ38loQLOKFTXwk4fWLTbCk6VhrhubB2Jsy9Rz+gM6PtTor4+6ClBEFDp1q/c8g==
 
-neo4j-driver@^5.14.0:
-  version "5.23.0"
-  resolved "https://registry.yarnpkg.com/neo4j-driver/-/neo4j-driver-5.23.0.tgz#fd13a5e5dcd1dc74e4778d2f34a6a6e8b91ab4f4"
-  integrity sha512-jqAyvIIpD1dl0+GuSXfF7Hzy+bscBIRvO2hrMqQji4Gq2baBaRMcsG/8CRhkF7Hm1bUeBUnnArnUNUGO/c+kow==
+neo4j-driver@^5.28.1:
+  version "5.28.1"
+  resolved "https://registry.yarnpkg.com/neo4j-driver/-/neo4j-driver-5.28.1.tgz#bb0b3d3615557886581bd49db890216fbd1122ff"
+  integrity sha512-jbyBwyM0a3RLGcP43q3hIxPUPxA+1bE04RovOKdNAS42EtBMVCKcPSeOvWiHxgXp1ZFd0a8XqK+7LtguInOLUg==
   dependencies:
-    neo4j-driver-bolt-connection "5.23.0"
-    neo4j-driver-core "5.23.0"
+    neo4j-driver-bolt-connection "5.28.1"
+    neo4j-driver-core "5.28.1"
     rxjs "^7.8.1"
 
 new-date@^1.0.3:
