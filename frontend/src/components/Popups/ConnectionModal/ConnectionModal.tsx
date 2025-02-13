@@ -52,7 +52,7 @@ export default function ConnectionModal({
     errorMessage,
     setIsGCSActive,
     setShowDisconnectButton,
-    setChunksToBeProces,
+    // setChunksToBeProces,
   } = useCredentials();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -96,8 +96,8 @@ export default function ConnectionModal({
               'neo4j.connection',
               JSON.stringify({
                 uri: usercredential?.uri,
-                user: usercredential?.userName,
-                password: btoa(usercredential?.password),
+                userName: usercredential?.userName,
+                password: btoa(usercredential.password ?? ''),
                 database: usercredential?.database,
                 userDbVectorIndex: 384,
               })
@@ -241,12 +241,12 @@ export default function ConnectionModal({
         setIsGCSActive(isGCSActive);
         setGdsActive(isgdsActive);
         setIsReadOnlyUser(isReadOnlyUser);
-        setChunksToBeProces(chunksTobeProcess);
+        // setChunksToBeProces(chunksTobeProcess);
         localStorage.setItem(
           'neo4j.connection',
           JSON.stringify({
             uri: connectionURI,
-            user: username,
+            userName: username,
             password: btoa(password),
             database: database,
             userDbVectorIndex,
@@ -255,6 +255,7 @@ export default function ConnectionModal({
             isGCSActive,
             chunksTobeProcess,
             email: user?.email ?? '',
+            connection: 'connectAPI',
           })
         );
         setUserDbVectorIndex(response.data.data.db_vector_dimension);

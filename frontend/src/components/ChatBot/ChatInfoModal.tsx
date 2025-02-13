@@ -18,7 +18,6 @@ import { ExtendedNode, chatInfoMessage } from '../../types';
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import GraphViewButton from '../Graph/GraphViewButton';
 import { chunkEntitiesAPI } from '../../services/ChunkEntitiesInfo';
-import { useCredentials } from '../../context/UserCredentials';
 import { tokens } from '@neo4j-ndl/base';
 import ChunkInfo from './ChunkInfo';
 import EntitiesInfo from './EntitiesInfo';
@@ -82,12 +81,11 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     error?.length
       ? 10
       : mode === chatModeLables['global search+vector+fulltext']
-      ? 7
-      : mode === chatModeLables.graph
-      ? 4
-      : 3
+        ? 7
+        : mode === chatModeLables.graph
+          ? 4
+          : 3
   );
-  const { userCredentials } = useCredentials();
   const [, copy] = useCopyToClipboard();
   const [copiedText, setcopiedText] = useState<boolean>(false);
   const [showMetricsTable, setShowMetricsTable] = useState<boolean>(Boolean(metricDetails));
@@ -99,17 +97,16 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     multiModelMetrics.length > 0 && Object.keys(multiModelMetrics[0]).length > 4
       ? true
       : multiModelMetrics.length > 0 && Object.keys(multiModelMetrics[0]).length <= 4
-      ? false
-      : null
+        ? false
+        : null
   );
   const [isAdditionalMetricsWithSingleMode, setIsAdditionalMetricsWithSingleMode] = useState<boolean | null>(
     metricDetails != undefined && Object.keys(metricDetails).length > 3
       ? true
       : metricDetails != undefined && Object.keys(metricDetails).length <= 3
-      ? false
-      : null
+        ? false
+        : null
   );
-
   const actions: React.ComponentProps<typeof IconButton<'button'>>[] = useMemo(
     () => [
       {
@@ -134,6 +131,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   );
 
   useEffect(() => {
+    const abortcontroller = new AbortController();
     if (
       (mode != chatModeLables.graph || error?.trim() !== '') &&
       (!nodes.length || !infoEntities.length || !chunks.length)
@@ -141,12 +139,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       (async () => {
         toggleInfoLoading();
         try {
-          const response = await chunkEntitiesAPI(
-            userCredentials?.database,
-            nodeDetails,
-            entities_ids,
-            mode
-          );
+          const response = await chunkEntitiesAPI(nodeDetails, entities_ids, mode, abortcontroller.signal);
           if (response.data.status === 'Failure') {
             throw new Error(response.data.error);
           }
@@ -198,6 +191,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       if (metricsLoading) {
         toggleMetricsLoading();
       }
+      abortcontroller.abort();
     };
   }, [nodeDetails, mode, error, metricsLoading]);
 
@@ -355,9 +349,9 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               {mode != chatModeLables.graph ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
               {mode != chatModeLables.graph ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
               {mode === chatModeLables['graph+vector'] ||
-              mode === chatModeLables.graph ||
-              mode === chatModeLables['graph+vector+fulltext'] ||
-              mode === chatModeLables['entity search+vector'] ? (
+                mode === chatModeLables.graph ||
+                mode === chatModeLables['graph+vector+fulltext'] ||
+                mode === chatModeLables['entity search+vector'] ? (
                 <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>
               ) : (
                 <></>

@@ -17,6 +17,9 @@ import {
   llms,
   RETRY_OPIONS,
   tooltips,
+  tokenchunkSize,
+  chunkOverlap,
+  chunksToCombine,
 } from '../utils/Constants';
 import ButtonWithToolTip from './UI/ButtonWithToolTip';
 import DropdownComponent from './Dropdown';
@@ -37,6 +40,7 @@ import { getChunkText } from '../services/getChunkText';
 import ChunkPopUp from './Popups/ChunkPopUp';
 import { isExpired, isFileReadyToProcess } from '../utils/Utils';
 import { useHasSelections } from '../hooks/useHasSelections';
+import { Hierarchy1Icon } from '@neo4j-ndl/react/icons';
 
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
 
@@ -68,6 +72,7 @@ const Content: React.FC<ContentProps> = ({
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [totalPageCount, setTotalPageCount] = useState<number | null>(null);
   const [textChunks, setTextChunks] = useState<chunkdata[]>([]);
+  const chunksTextAbortController = useRef<AbortController>();
 
   const [alertStateForRetry, setAlertStateForRetry] = useState<BannerAlertProps>({
     showAlert: false,
@@ -81,9 +86,15 @@ const Content: React.FC<ContentProps> = ({
     setModel,
     selectedNodes,
     selectedRels,
+    selectedTokenChunkSize,
+    selectedChunk_overlap,
+    selectedChunks_to_combine,
     setSelectedNodes,
     setRowSelection,
     setSelectedRels,
+    setSelectedTokenChunkSize,
+    setSelectedChunk_overlap,
+    setSelectedChunks_to_combine,
     postProcessingTasks,
     queue,
     processedCount,
@@ -93,9 +104,9 @@ const Content: React.FC<ContentProps> = ({
     additionalInstructions,
     setAdditionalInstructions,
   } = useFileContext();
-  const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView'>(
-    'tableView'
-  );
+  const [viewPoint, setViewPoint] = useState<
+    'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView' | 'showSchemaView'
+  >('tableView');
   const [showDeletePopUp, setShowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setIsDeleteLoading] = useState<boolean>(false);
 
@@ -143,10 +154,10 @@ const Content: React.FC<ContentProps> = ({
               ? postProcessingTasks.filter((task) => task !== 'graph_schema_consolidation')
               : postProcessingTasks
             : hasSelections
-            ? postProcessingTasks.filter(
+              ? postProcessingTasks.filter(
                 (task) => task !== 'graph_schema_consolidation' && task !== 'enable_communities'
               )
-            : postProcessingTasks.filter((task) => task !== 'enable_communities');
+              : postProcessingTasks.filter((task) => task !== 'enable_communities');
           if (payload.length) {
             const response = await postProcessing(payload);
             if (response.data.status === 'Success') {
@@ -211,8 +222,9 @@ const Content: React.FC<ContentProps> = ({
     });
   };
   const getChunks = async (name: string, pageNo: number) => {
+    chunksTextAbortController.current = new AbortController();
     toggleChunksLoading();
-    const response = await getChunkText(name, pageNo);
+    const response = await getChunkText(name, pageNo, chunksTextAbortController.current.signal);
     setTextChunks(response.data.data.pageitems);
     if (!totalPageCount) {
       setTotalPageCount(response.data.data.total_pages);
@@ -261,14 +273,7 @@ const Content: React.FC<ContentProps> = ({
       });
       if (fileItem.name != undefined && userCredentials != null) {
         const { name } = fileItem;
-        triggerStatusUpdateAPI(
-          name as string,
-          userCredentials?.uri,
-          userCredentials?.userName,
-          userCredentials?.password,
-          userCredentials?.database,
-          updateStatusForLargeFiles
-        );
+        triggerStatusUpdateAPI(name as string, userCredentials, updateStatusForLargeFiles);
       }
 
       const apiResponse = await extractAPI(
@@ -283,6 +288,9 @@ const Content: React.FC<ContentProps> = ({
         fileItem.gcsBucketFolder ?? '',
         selectedNodes.map((l) => l.value),
         selectedRels.map((t) => t.value),
+        selectedTokenChunkSize,
+        selectedChunk_overlap,
+        selectedChunks_to_combine,
         fileItem.googleProjectId,
         fileItem.language,
         fileItem.accessToken,
@@ -531,12 +539,16 @@ const Content: React.FC<ContentProps> = ({
 
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.VITE_BLOOM_URL;
-    const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${userCredentials?.port ?? '7687'
+    let finalUrl = bloomUrl;
+    if (userCredentials?.database && userCredentials.uri && userCredentials.userName) {
+      const uriCoded = userCredentials.uri.replace(/:\d+$/, '');
+      const connectURL = `${uriCoded.split('//')[0]}//${userCredentials.userName}@${uriCoded.split('//')[1]}:${
+        userCredentials.port ?? '7687'
       }`;
-    const encodedURL = encodeURIComponent(connectURL);
-    const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
-    window.open(replacedUrl, '_blank');
+      const encodedURL = encodeURIComponent(connectURL);
+      finalUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
+    }
+    window.open(finalUrl, '_blank');
   };
 
   const handleGraphView = () => {
@@ -554,6 +566,12 @@ const Content: React.FC<ContentProps> = ({
     setUserCredentials({ uri: '', password: '', userName: '', database: '', email: '' });
     setSelectedNodes([]);
     setSelectedRels([]);
+    localStorage.removeItem('selectedTokenChunkSize');
+    setSelectedTokenChunkSize(tokenchunkSize);
+    localStorage.removeItem('selectedChunk_overlap');
+    setSelectedChunk_overlap(chunkOverlap);
+    localStorage.removeItem('selectedChunks_to_combine');
+    setSelectedChunks_to_combine(chunksToCombine);
     localStorage.removeItem('instructions');
     setAdditionalInstructions('');
     setMessages([
@@ -593,12 +611,12 @@ const Content: React.FC<ContentProps> = ({
           return prev.map((f) => {
             return f.name === filename
               ? {
-                  ...f,
-                  status: 'Ready to Reprocess',
-                  processingProgress: isStartFromBegining ? 0 : f.processingProgress,
-                  nodesCount: isStartFromBegining ? 0 : f.nodesCount,
-                  relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
-                }
+                ...f,
+                status: 'Ready to Reprocess',
+                processingProgress: isStartFromBegining ? 0 : f.processingProgress,
+                nodesCount: isStartFromBegining ? 0 : f.nodesCount,
+                relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
+              }
               : f;
           });
         });
@@ -702,7 +720,8 @@ const Content: React.FC<ContentProps> = ({
     const selectedRows = childRef.current?.getSelectedRows();
     if (selectedRows?.length) {
       const expiredFilesExists = selectedRows.some(
-        (c) => isFileReadyToProcess(c, true) && isExpired((c?.createdAt as Date) ?? new Date()));
+        (c) => isFileReadyToProcess(c, true) && isExpired((c?.createdAt as Date) ?? new Date())
+      );
       const largeFileExists = selectedRows.some(
         (c) => isFileReadyToProcess(c, true) && typeof c.size === 'number' && c.size > largeFileSize
       );
@@ -754,6 +773,11 @@ const Content: React.FC<ContentProps> = ({
       alertType: 'neutral',
     });
   }, []);
+
+  const handleSchemaView = () => {
+    setOpenGraphView(true);
+    setViewPoint('showSchemaView');
+  };
 
   return (
     <>
@@ -831,7 +855,10 @@ const Content: React.FC<ContentProps> = ({
       {showChunkPopup && (
         <ChunkPopUp
           chunksLoading={chunksLoading}
-          onClose={() => toggleChunkPopup()}
+          onClose={() => {
+            chunksTextAbortController.current?.abort();
+            toggleChunkPopup();
+          }}
           showChunkPopup={showChunkPopup}
           chunks={textChunks}
           incrementPage={incrementPage}
@@ -861,11 +888,7 @@ const Content: React.FC<ContentProps> = ({
           <div className='connectionstatus__container'>
             <span className='h6 px-1'>Neo4j connection {isReadOnlyUser ? '(Read only Mode)' : ''}</span>
             <Typography variant='body-medium'>
-              <DatabaseStatusIcon
-                isConnected={connectionStatus}
-                isGdsActive={isGdsActive}
-                uri={userCredentials && userCredentials?.uri}
-              />
+              <DatabaseStatusIcon isConnected={connectionStatus} isGdsActive={isGdsActive} uri={userCredentials?.uri} />
               <div className='pt-1 flex gap-1 items-center'>
                 <div>{!hasSelections ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}</div>
                 <div>
@@ -976,6 +999,15 @@ const Content: React.FC<ContentProps> = ({
               size={isTablet ? 'small' : 'medium'}
             >
               {buttonCaptions.showPreviewGraph} {selectedfileslength && completedfileNo ? `(${completedfileNo})` : ''}
+            </ButtonWithToolTip>
+            <ButtonWithToolTip
+              label={'Graph Schema'}
+              text={tooltips.visualizeGraph}
+              placement='top'
+              fill='outlined'
+              onClick={handleSchemaView}
+            >
+              <Hierarchy1Icon />
             </ButtonWithToolTip>
             <ButtonWithToolTip
               text={tooltips.bloomGraph}

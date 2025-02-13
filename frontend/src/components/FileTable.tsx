@@ -10,6 +10,7 @@ import {
   useCopyToClipboard,
   Checkbox,
   useMediaQuery,
+  Dialog,
 } from '@neo4j-ndl/react';
 import {
   forwardRef,
@@ -66,6 +67,8 @@ import { showErrorToast, showNormalToast } from '../utils/toasts';
 import { ThemeWrapperContext } from '../context/ThemeWrapper';
 import BreakDownPopOver from './BreakDownPopOver';
 import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
+import { useLocation } from 'react-router';
+import Login from './Login/Index';
 
 let onlyfortheFirstRender = true;
 
@@ -73,7 +76,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
   const { connectionStatus, setConnectionStatus, onInspect, onRetry, onChunkView } = props;
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } =
     useFileContext();
-  const { userCredentials, isReadOnlyUser, chunksToBeProces } = useCredentials();
+  const { userCredentials, isReadOnlyUser } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -86,7 +89,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
   const { colorMode } = useContext(ThemeWrapperContext);
   const [copyRow, setCopyRow] = useState<boolean>(false);
   const islargeDesktop = useMediaQuery(`(min-width:1440px )`);
-
+  const { pathname } = useLocation();
   const tableRef = useRef(null);
 
   const { updateStatusForLargeFiles } = useServerSideEvent(
@@ -680,26 +683,11 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
   };
 
   const handleSmallFile = (item: SourceNode, userCredentials: UserCredentials) => {
-    subscribe(
-      item.fileName,
-      userCredentials?.uri,
-      userCredentials?.userName,
-      userCredentials?.database,
-      userCredentials?.password,
-      updatestatus,
-      updateProgress
-    ).catch(handleFileUploadError);
+    subscribe(item.fileName, userCredentials, updatestatus, updateProgress).catch(handleFileUploadError);
   };
 
   const handleLargeFile = (item: SourceNode, userCredentials: UserCredentials) => {
-    triggerStatusUpdateAPI(
-      item.fileName,
-      userCredentials.uri,
-      userCredentials.userName,
-      userCredentials.password,
-      userCredentials.database,
-      updateStatusForLargeFiles
-    );
+    triggerStatusUpdateAPI(item.fileName, userCredentials, updateStatusForLargeFiles);
   };
   useEffect(() => {
     const waitingQueue: CustomFile[] = JSON.parse(
@@ -999,6 +987,13 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
     <>
       {filesData ? (
         <>
+          {filesData.length === 0 && pathname === '/readonly' && (
+            <Dialog hasDisabledCloseButton={true} isOpen={true}>
+              <Dialog.Content>
+                <Login />
+              </Dialog.Content>
+            </Dialog>
+          )}
           <DataGrid
             ref={tableRef}
             isResizable={true}
@@ -1028,7 +1023,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                         <span>
                           <InformationCircleIconOutline className='n-size-token-6' />
                         </span>
-                        {`Large files may be partially processed up to ${chunksToBeProces} chunks due to resource limits.`}
+                        {`Large files may be partially processed up to 10K characters due to resource limit.`}
                         <span></span>
                       </Flex>
                     </DataGridComponents.TableResults>

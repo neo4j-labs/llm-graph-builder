@@ -1,11 +1,11 @@
-import { lazy, Suspense, useEffect, useReducer, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useReducer, useState } from 'react';
 import SideNav from './SideNav';
 import DrawerDropzone from './DrawerDropzone';
 import DrawerChatbot from './DrawerChatbot';
 import Content from '../Content';
 import { clearChatAPI } from '../../services/QnaAPI';
 import { useCredentials } from '../../context/UserCredentials';
-import { connectionState, UserCredentials } from '../../types';
+import { connectionState } from '../../types';
 import { useMessageContext } from '../../context/UserMessages';
 import { useMediaQuery } from '@mui/material';
 import { useFileContext } from '../../context/UsersFiles';
@@ -16,8 +16,12 @@ import { envConnectionAPI } from '../../services/ConnectAPI';
 import { healthStatus } from '../../services/HealthStatus';
 import { useNavigate } from 'react-router';
 import { useAuth0 } from '@auth0/auth0-react';
+import { showErrorToast } from '../../utils/toasts';
+import { APP_SOURCES } from '../../utils/Constants';
 import { createDefaultFormData } from '../../API/Index';
-
+const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
+const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
+const GenericModal = lazy(() => import('../WebSources/GenericSourceModal'));
 const ConnectionModal = lazy(() => import('../Popups/ConnectionModal/ConnectionModal'));
 
 const PageLayout: React.FC = () => {
@@ -28,14 +32,28 @@ const PageLayout: React.FC = () => {
     chunksExistsWithDifferentDimension: false,
   });
   const isLargeDesktop = useMediaQuery(`(min-width:1440px )`);
-  const { userCredentials, connectionStatus, setIsReadOnlyUser } = useCredentials();
+  const {
+    connectionStatus,
+    setIsReadOnlyUser,
+    setConnectionStatus,
+    setGdsActive,
+    setIsBackendConnected,
+    setUserCredentials,
+    setErrorMessage,
+    setShowDisconnectButton,
+    showDisconnectButton,
+    setIsGCSActive,
+    // setChunksToBeProces,
+  } = useCredentials();
   const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(Boolean(isLargeDesktop));
   const [isRightExpanded, setIsRightExpanded] = useState<boolean>(Boolean(isLargeDesktop));
   const [showChatBot, setShowChatBot] = useState<boolean>(false);
   const [showDrawerChatbot, setShowDrawerChatbot] = useState<boolean>(true);
   const [showEnhancementDialog, toggleEnhancementDialog] = useReducer((s) => !s, false);
   const [shows3Modal, toggleS3Modal] = useReducer((s) => !s, false);
-  const [showGCSModal, toggleGCSModal] = useReducer((s) => !s, false);
+  const [showGCSModal, toggleGCSModal] = useReducer((s) => {
+    return !s;
+  }, false);
   const [showGenericModal, toggleGenericModal] = useReducer((s) => !s, false);
   const { user, isAuthenticated } = useAuth0();
 
@@ -54,25 +72,24 @@ const PageLayout: React.FC = () => {
       setIsRightExpanded(false);
     }
   };
-
+  const isYoutubeOnly = useMemo(
+    () => APP_SOURCES.includes('youtube') && !APP_SOURCES.includes('wiki') && !APP_SOURCES.includes('web'),
+    []
+  );
+  const isWikipediaOnly = useMemo(
+    () => APP_SOURCES.includes('wiki') && !APP_SOURCES.includes('youtube') && !APP_SOURCES.includes('web'),
+    []
+  );
+  const isWebOnly = useMemo(
+    () => APP_SOURCES.includes('web') && !APP_SOURCES.includes('youtube') && !APP_SOURCES.includes('wiki'),
+    []
+  );
   const { messages, setClearHistoryData, clearHistoryData, setMessages, setIsDeleteChatLoading } = useMessageContext();
   const { setShowTextFromSchemaDialog, showTextFromSchemaDialog } = useFileContext();
-  const {
-    setConnectionStatus,
-    setGdsActive,
-    setIsBackendConnected,
-    setUserCredentials,
-    setErrorMessage,
-    setShowDisconnectButton,
-    showDisconnectButton,
-    setIsGCSActive,
-    setChunksToBeProces,
-  } = useCredentials();
   const { cancel } = useSpeechSynthesis();
 
   useEffect(() => {
     async function initializeConnection() {
-      const session = localStorage.getItem('neo4j.connection');
       // Fetch backend health status
       try {
         const response = await healthStatus();
@@ -85,128 +102,53 @@ const PageLayout: React.FC = () => {
         setShowDisconnectButton(isModalOpen);
         localStorage.setItem('disconnectButtonState', isModalOpen ? 'true' : 'false');
       };
-      const setUserCredentialsLocally = (credentials: any) => {
-        setUserCredentials(credentials);
-        createDefaultFormData(credentials);
-        setIsGCSActive(credentials.isGCSActive ?? false);
-        setGdsActive(credentials.isgdsActive);
-        setIsReadOnlyUser(credentials.isReadonlyUser);
-        setChunksToBeProces(credentials.chunksTobeProcess);
-        localStorage.setItem(
-          'neo4j.connection',
-          JSON.stringify({
-            uri: credentials.uri,
-            user: credentials.userName,
-            password: btoa(credentials.password),
-            database: credentials.database,
-            userDbVectorIndex: 384,
-            isReadOnlyUser: credentials.isReadonlyUser,
-            isgdsActive: credentials.isgdsActive,
-            isGCSActive: credentials.isGCSActive,
-            chunksTobeProcess: credentials.chunksTobeProcess,
-            email: credentials.email,
-          })
-        );
-      };
-      const parseSessionAndSetCredentials = (neo4jConnection: string) => {
-        if (!neo4jConnection) {
-          console.error('Invalid session data:', neo4jConnection);
-          setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
-          return;
-        }
-        try {
-          const parsedConnection = JSON.parse(neo4jConnection);
-          if (parsedConnection.uri && parsedConnection.user && parsedConnection.password && parsedConnection.database) {
-            const credentials = {
-              uri: parsedConnection.uri,
-              userName: parsedConnection.user,
-              password: atob(parsedConnection.password),
-              database: parsedConnection.database,
-              email: parsedConnection.email,
-            };
-            setUserCredentials(credentials);
-            createDefaultFormData(credentials);
-            setGdsActive(parsedConnection.isgdsActive);
-            setIsReadOnlyUser(parsedConnection.isReadOnlyUser);
-            setIsGCSActive(parsedConnection.isGCSActive);
-          } else {
-            console.error('Invalid parsed session data:', parsedConnection);
-          }
-        } catch (error) {
-          console.error('Failed to parse session data:', error);
-        }
-      };
-      // To update credentials if environment values differ
-      const updateSessionIfNeeded = (envCredentials: any, storedSession: string) => {
-        try {
-          const storedCredentials = JSON.parse(storedSession);
-          const isDiffCreds =
-            envCredentials.uri !== storedCredentials.uri ||
-            envCredentials.userName !== storedCredentials.user ||
-            btoa(envCredentials.password) !== storedCredentials.password ||
-            envCredentials.database !== storedCredentials.database;
-          if (isDiffCreds) {
-            setUserCredentialsLocally(envCredentials);
-            setClearHistoryData(true);
-            return true;
-          }
-          return false;
-        } catch (error) {
-          console.error('Failed to update session:', error);
-          return false;
-        }
-      };
-      // Handle connection initialization
-      let backendApiResponse;
       try {
-        backendApiResponse = await envConnectionAPI();
+        const backendApiResponse = await envConnectionAPI();
         const connectionData = backendApiResponse.data;
         if (connectionData.data && connectionData.status === 'Success') {
-          const envCredentials = {
+          const credentials = {
             uri: connectionData.data.uri,
-            password: atob(connectionData.data.password),
-            userName: connectionData.data.user_name,
-            database: connectionData.data.database,
             isReadonlyUser: !connectionData.data.write_access,
             isgdsActive: connectionData.data.gds_status,
-            isGCSActive: connectionData?.data?.gcs_file_cache === 'True',
+            isGCSActive: connectionData.data.gcs_file_cache === 'True',
             chunksTobeProcess: parseInt(connectionData.data.chunk_to_be_created),
             email: user?.email ?? '',
+            connection: 'backendApi',
           };
-          setChunksToBeProces(envCredentials.chunksTobeProcess);
-          setIsGCSActive(envCredentials.isGCSActive);
-          if (session) {
-            const updated = updateSessionIfNeeded(envCredentials, session);
-            if (!updated) {
-              parseSessionAndSetCredentials(session);
-            }
-            setConnectionStatus(Boolean(connectionData.data.graph_connection));
-            setIsBackendConnected(true);
-          } else {
-            setUserCredentialsLocally(envCredentials);
-            setConnectionStatus(true);
-          }
+          // setChunksToBeProces(credentials.chunksTobeProcess);
+          setIsGCSActive(credentials.isGCSActive);
+          setUserCredentials(credentials);
+          createDefaultFormData({ uri: credentials.uri, email: credentials.email ?? '' });
+          setGdsActive(credentials.isgdsActive);
+          setConnectionStatus(Boolean(connectionData.data.graph_connection));
+          setIsReadOnlyUser(connectionData.data.isReadonlyUser);
           handleDisconnectButtonState(false);
-        } else {
-          if (session) {
-            parseSessionAndSetCredentials(session);
-            setConnectionStatus(true);
+        } else if (!connectionData.data && connectionData.status === 'Success') {
+          const storedCredentials = localStorage.getItem('neo4j.connection');
+          if (storedCredentials) {
+            const credentials = JSON.parse(storedCredentials);
+            setUserCredentials({ ...credentials, password: atob(credentials.password) });
+            createDefaultFormData({ ...credentials, password: atob(credentials.password) });
+            // setChunksToBeProces(credentials.chunksTobeProcess);
+            setIsGCSActive(credentials.isGCSActive);
+            setGdsActive(credentials.isgdsActive);
+            setConnectionStatus(Boolean(credentials.connection === 'connectAPI'));
+            setIsReadOnlyUser(credentials.isReadonlyUser);
+            handleDisconnectButtonState(true);
           } else {
-            setErrorMessage(backendApiResponse?.data?.error);
             setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
+            handleDisconnectButtonState(true);
           }
-          handleDisconnectButtonState(true);
-        }
-      } catch (error) {
-        console.error('Error during backend API call:', error);
-        if (session) {
-          parseSessionAndSetCredentials(session);
-          setConnectionStatus(true);
         } else {
           setErrorMessage(backendApiResponse?.data?.error);
           setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
+          handleDisconnectButtonState(true);
+          console.log('from else cndition error is there');
         }
-        handleDisconnectButtonState(true);
+      } catch (error) {
+        if (error instanceof Error) {
+          showErrorToast(error.message);
+        }
       }
     }
     initializeConnection();
@@ -217,10 +159,7 @@ const PageLayout: React.FC = () => {
       setClearHistoryData(true);
       setIsDeleteChatLoading(true);
       cancel();
-      const response = await clearChatAPI(
-        userCredentials as UserCredentials,
-        sessionStorage.getItem('session_id') ?? ''
-      );
+      const response = await clearChatAPI(sessionStorage.getItem('session_id') ?? '');
       setIsDeleteChatLoading(false);
       if (response.data.status === 'Success') {
         const date = new Date();
@@ -274,9 +213,8 @@ const PageLayout: React.FC = () => {
       ></SchemaFromTextDialog>
       {isLargeDesktop ? (
         <div
-          className={`layout-wrapper ${!isLeftExpanded ? 'drawerdropzoneclosed' : ''} ${
-            !isRightExpanded ? 'drawerchatbotclosed' : ''
-          } ${!isRightExpanded && !isLeftExpanded ? 'drawerclosed' : ''}`}
+          className={`layout-wrapper ${!isLeftExpanded ? 'drawerdropzoneclosed' : ''} ${!isRightExpanded ? 'drawerchatbotclosed' : ''
+            } ${!isRightExpanded && !isLeftExpanded ? 'drawerclosed' : ''}`}
         >
           <SideNav
             toggles3Modal={toggleS3Modal}
@@ -335,16 +273,21 @@ const PageLayout: React.FC = () => {
         </div>
       ) : (
         <>
-          <DrawerDropzone
-            shows3Modal={shows3Modal}
-            showGCSModal={showGCSModal}
-            showGenericModal={showGenericModal}
-            toggleGCSModal={toggleGCSModal}
-            toggleGenericModal={toggleGenericModal}
-            toggleS3Modal={toggleS3Modal}
-            isExpanded={isLeftExpanded}
-          />
-
+          <Suspense fallback={<FallBackDialog />}>
+            <GCSModal openGCSModal={toggleGCSModal} open={showGCSModal} hideModal={toggleGCSModal} />
+          </Suspense>
+          <Suspense fallback={<FallBackDialog />}>
+            <S3Modal hideModal={toggleS3Modal} open={shows3Modal} />
+          </Suspense>
+          <Suspense fallback={<FallBackDialog />}>
+            <GenericModal
+              isOnlyYoutube={isYoutubeOnly}
+              isOnlyWikipedia={isWikipediaOnly}
+              isOnlyWeb={isWebOnly}
+              open={showGenericModal}
+              closeHandler={toggleGenericModal}
+            />
+          </Suspense>
           <div className='layout-wrapper drawerclosed'>
             <SideNav
               toggles3Modal={toggleS3Modal}

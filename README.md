@@ -36,10 +36,6 @@ According to enviornment we are configuring the models which is indicated by VIT
 EX:
 ```env
 VITE_LLM_MODELS_PROD="openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash"
-
-You can then run Docker Compose to build and start all components:
-```bash
-docker-compose up --build
 ```
 
 #### Additional configs
@@ -159,14 +155,14 @@ Allow unauthenticated request : Yes
 ## LLMs Supported 
 1. OpenAI
 2. Gemini
-3. Azure OpenAI(dev)
-4. Anthropic(dev)
-5. Fireworks(dev)
-6. Groq(dev)
-7. Amazon Bedrock(dev)
-8. Ollama(dev)
+3. Azure OpenAI(dev deployed version)
+4. Anthropic(dev deployed version)
+5. Fireworks(dev deployed version)
+6. Groq(dev deployed version)
+7. Amazon Bedrock(dev deployed version)
+8. Ollama(dev deployed version)
 9. Diffbot
-10. Other OpenAI compabtile baseurl models(dev)
+10. Other OpenAI compabtile baseurl models(dev deployed version)
 
 ## For local llms (Ollama)
 1. Pull the docker imgage of ollama
@@ -177,23 +173,27 @@ docker pull ollama/ollama
 ```bash
 docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
 ```
-3. Execute any llm model ex🦙3
+3. Pull specific ollama model.
+```bash
+ollama pull llama3
+```
+4. Execute any llm model ex🦙3
 ```bash
 docker exec -it ollama ollama run llama3
 ```
-4. Configure  env variable in docker compose or backend environment.
+5. Configure  env variable in docker compose.
 ```env
 LLM_MODEL_CONFIG_ollama_<model_name>
 #example
 LLM_MODEL_CONFIG_ollama_llama3=${LLM_MODEL_CONFIG_ollama_llama3-llama3,
 http://host.docker.internal:11434}
 ```
-5. Configure the backend API url
+6. Configure the backend API url
 ```env
 VITE_BACKEND_API_URL=${VITE_BACKEND_API_URL-backendurl}
 ```
-6. Open the application in browser and select the ollama model for the extraction.
-7. Enjoy Graph Building.
+7. Open the application in browser and select the ollama model for the extraction.
+8. Enjoy Graph Building.
 
 
 ## Usage

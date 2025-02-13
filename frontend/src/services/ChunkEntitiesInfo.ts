@@ -2,14 +2,13 @@ import { ChatInfo_APIResponse, nodeDetailsProps } from '../types';
 import api from '../API/Index';
 
 const chunkEntitiesAPI = async (
-  database: string = 'neo4j',
   nodeDetails: nodeDetailsProps,
   entities: string[],
-  mode: string
+  mode: string,
+  signal: AbortSignal
 ) => {
   try {
     const formData = new FormData();
-    formData.append('database', database);
     formData.append('nodedetails', JSON.stringify(nodeDetails));
     formData.append('entities', JSON.stringify(entities));
     formData.append('mode', mode);
@@ -18,6 +17,7 @@ const chunkEntitiesAPI = async (
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      signal,
     });
     return response;
   } catch (error) {

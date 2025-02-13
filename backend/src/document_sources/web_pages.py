@@ -6,7 +6,7 @@ def get_documents_from_web_page(source_url:str):
   try:
     pages = WebBaseLoader(source_url, verify_ssl=False).load()
     try:
-      file_name = pages[0].metadata['title']
+      file_name = pages[0].metadata['title'].strip()
       if not file_name:
         file_name = last_url_segment(source_url)      
     except:

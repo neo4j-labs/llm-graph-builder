@@ -1,5 +1,6 @@
-import { createContext, useState, useContext, FunctionComponent, ReactNode } from 'react';
+import { createContext, useState, useContext, FunctionComponent, ReactNode, useEffect } from 'react';
 import { ContextProps, UserCredentials } from '../types';
+import { useLocation } from 'react-router';
 
 type Props = {
   children: ReactNode;
@@ -22,8 +23,8 @@ export const UserConnection = createContext<ContextProps>({
   setShowDisconnectButton: () => null,
   isGCSActive: false,
   setIsGCSActive: () => null,
-  chunksToBeProces: 50,
-  setChunksToBeProces: () => null,
+  //  chunksToBeProces: 50,
+  // setChunksToBeProces: () => null,
 });
 export const useCredentials = () => {
   const userCredentials = useContext(UserConnection);
@@ -38,7 +39,7 @@ const UserCredentialsWrapper: FunctionComponent<Props> = (props) => {
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showDisconnectButton, setShowDisconnectButton] = useState<boolean>(false);
   const [isGCSActive, setIsGCSActive] = useState<boolean>(false);
-  const [chunksToBeProces, setChunksToBeProces] = useState<number>(50);
+  // const [chunksToBeProces, setChunksToBeProces] = useState<number>(50);
   const value = {
     userCredentials,
     setUserCredentials,
@@ -56,10 +57,16 @@ const UserCredentialsWrapper: FunctionComponent<Props> = (props) => {
     setShowDisconnectButton,
     isGCSActive,
     setIsGCSActive,
-    chunksToBeProces,
-    setChunksToBeProces,
+    // chunksToBeProces,
+    // setChunksToBeProces,
   };
-
+  const { pathname } = useLocation();
+  useEffect(() => {
+    if (pathname === '/readonly') {
+      setIsReadOnlyUser(true);
+      localStorage.setItem('isReadOnlyMode', 'true');
+    }
+  }, [pathname]);
   return <UserConnection.Provider value={value}>{props.children}</UserConnection.Provider>;
 };
 export default UserCredentialsWrapper;

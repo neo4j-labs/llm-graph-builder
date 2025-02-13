@@ -9,11 +9,21 @@ const api = axios.create({
 
 export const createDefaultFormData = (userCredentials: UserCredentials) => {
   const formData = new FormData();
-  formData.append('uri', userCredentials?.uri ?? '');
-  formData.append('database', userCredentials?.database ?? '');
-  formData.append('userName', userCredentials?.userName ?? '');
-  formData.append('password', userCredentials?.password ?? '');
-  formData.append('email', userCredentials?.email ?? '');
+  if (userCredentials?.uri) {
+    formData.append('uri', userCredentials?.uri);
+  }
+  if (userCredentials?.database) {
+    formData.append('database', userCredentials?.database);
+  }
+  if (userCredentials?.userName) {
+    formData.append('userName', userCredentials?.userName);
+  }
+  if (userCredentials?.password) {
+    formData.append('password', userCredentials?.password);
+  }
+  if (userCredentials?.email) {
+    formData.append('email', userCredentials?.email);
+  }
   api.interceptors.request.use(
     (config) => {
       if (config.data instanceof FormData) {
