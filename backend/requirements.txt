@@ -4,7 +4,7 @@ botocore==1.36.2
 certifi==2024.8.30
 fastapi==0.115.6
 fastapi-health==0.4.0
-google-api-core==2.24.0
+google-api-core==2.24.1
 google-auth==2.37.0
 google_auth_oauthlib==1.2.1
 google-cloud-core==2.4.1
