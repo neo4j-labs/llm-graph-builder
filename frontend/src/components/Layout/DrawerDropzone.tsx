@@ -118,7 +118,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
         ) : (
           <Drawer.Body className='!overflow-hidden !w-[294px]'>
             <Typography variant='subheading-medium'>
-              You are not logged in. Please Login to access the content.
+              You are not logged in. Please Connect to a database to access the content.
             </Typography>
           </Drawer.Body>
         )}
