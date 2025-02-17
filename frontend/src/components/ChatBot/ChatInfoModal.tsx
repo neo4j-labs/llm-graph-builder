@@ -81,10 +81,10 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     error?.length
       ? 10
       : mode === chatModeLables['global search+vector+fulltext']
-        ? 7
-        : mode === chatModeLables.graph
-          ? 4
-          : 3
+      ? 7
+      : mode === chatModeLables.graph
+      ? 4
+      : 3
   );
   const [, copy] = useCopyToClipboard();
   const [copiedText, setcopiedText] = useState<boolean>(false);
@@ -97,15 +97,15 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     multiModelMetrics.length > 0 && Object.keys(multiModelMetrics[0]).length > 4
       ? true
       : multiModelMetrics.length > 0 && Object.keys(multiModelMetrics[0]).length <= 4
-        ? false
-        : null
+      ? false
+      : null
   );
   const [isAdditionalMetricsWithSingleMode, setIsAdditionalMetricsWithSingleMode] = useState<boolean | null>(
     metricDetails != undefined && Object.keys(metricDetails).length > 3
       ? true
       : metricDetails != undefined && Object.keys(metricDetails).length <= 3
-        ? false
-        : null
+      ? false
+      : null
   );
   const actions: React.ComponentProps<typeof IconButton<'button'>>[] = useMemo(
     () => [
@@ -349,9 +349,9 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               {mode != chatModeLables.graph ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
               {mode != chatModeLables.graph ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
               {mode === chatModeLables['graph+vector'] ||
-                mode === chatModeLables.graph ||
-                mode === chatModeLables['graph+vector+fulltext'] ||
-                mode === chatModeLables['entity search+vector'] ? (
+              mode === chatModeLables.graph ||
+              mode === chatModeLables['graph+vector+fulltext'] ||
+              mode === chatModeLables['entity search+vector'] ? (
                 <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>
               ) : (
                 <></>

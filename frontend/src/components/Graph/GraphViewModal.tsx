@@ -64,10 +64,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
       ? queryMap.DocChunkEntities
       : graphType.includes('DocumentChunk')
-        ? queryMap.DocChunks
-        : graphType.includes('Entities')
-          ? queryMap.Entities
-          : '';
+      ? queryMap.DocChunks
+      : graphType.includes('Entities')
+      ? queryMap.Entities
+      : '';
 
   // fit graph to original position
   const handleZoomToFit = () => {
@@ -266,8 +266,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     viewPoint === graphLabels.showGraphView || viewPoint === graphLabels.chatInfoView
       ? graphLabels.generateGraph
       : viewPoint === graphLabels.showSchemaView
-        ? graphLabels.renderSchemaGraph
-        : `${graphLabels.inspectGeneratedGraphFrom} ${inspectedName}`;
+      ? graphLabels.renderSchemaGraph
+      : `${graphLabels.inspectGeneratedGraphFrom} ${inspectedName}`;
 
   const checkBoxView = viewPoint !== graphLabels.chatInfoView;
 
