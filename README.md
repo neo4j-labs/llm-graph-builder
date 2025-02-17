@@ -164,8 +164,9 @@ Allow unauthenticated request : Yes
 6. Groq(dev deployed version)
 7. Amazon Bedrock(dev deployed version)
 8. Ollama(dev deployed version)
-9. Diffbot
-10. Other OpenAI compabtile baseurl models(dev deployed version)
+9. Deepseek(dev deployed version)
+10. Diffbot
+11. Other OpenAI compabtile baseurl models(dev deployed version)
 
 ## For local llms (Ollama)
 1. Pull the docker imgage of ollama
