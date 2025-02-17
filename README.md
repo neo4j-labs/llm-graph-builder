@@ -158,14 +158,14 @@ Allow unauthenticated request : Yes
 ## LLMs Supported 
 1. OpenAI
 2. Gemini
-3. Azure OpenAI(dev deployed version)
-4. Anthropic(dev deployed version)
-5. Fireworks(dev deployed version)
-6. Groq(dev deployed version)
-7. Amazon Bedrock(dev deployed version)
-8. Ollama(dev deployed version)
-9. Deepseek(dev deployed version)
-10. Diffbot
+3. Diffbot
+4. Azure OpenAI(dev deployed version)
+5. Anthropic(dev deployed version)
+6. Fireworks(dev deployed version)
+7. Groq(dev deployed version)
+8. Amazon Bedrock(dev deployed version)
+9. Ollama(dev deployed version)
+10. Deepseek(dev deployed version)
 11. Other OpenAI compabtile baseurl models(dev deployed version)
 
 ## For local llms (Ollama)
