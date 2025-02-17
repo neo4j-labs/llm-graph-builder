@@ -151,6 +151,9 @@ Allow unauthenticated request : Yes
 | VITE_AUTH0_CLIENT_ID | Mandatory if you are enabling Authentication otherwise it is optional |       |Okta Oauth Client ID for authentication
 | VITE_AUTH0_DOMAIN | Mandatory if you are enabling Authentication otherwise it is optional |           | Okta Oauth Cliend Domain
 | VITE_SKIP_AUTH | Optional | true | Flag to skip the authentication 
+| VITE_CHUNK_OVERLAP | Optional |     | variable to configure chunk overlap
+| VITE_TOKENS_PER_CHUNK | Optional |    | variable to configure tokens count per chunk
+| VITE_CHUNK_TO_COMBINE | Optional |     | variable to configure number of chunks to combine for parllel processing. 
 
 ## LLMs Supported 
 1. OpenAI
