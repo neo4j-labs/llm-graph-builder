@@ -363,15 +363,14 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       >
         <Dialog.Header htmlAttributes={{ id: 'graph-title' }}>
           {headerTitle}
-          {viewPoint !== graphLabels.chatInfoView ||
-            (viewPoint === graphLabels.showSchemaView && (
+          {viewPoint !== graphLabels.chatInfoView && (
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <span>
                   <InformationCircleIconOutline className='n-size-token-6' />
                 </span>
                 <span className='n-body-small ml-1'>{graphLabels.chunksInfo}</span>
               </div>
-            ))}
+            )}
           <Flex className='w-full' alignItems='center' flexDirection='row'>
             {checkBoxView && (
               <CheckboxSelection
