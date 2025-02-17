@@ -50,7 +50,7 @@
     "postcss": "^8.4.33",
     "prettier": "^2.7.1",
     "react-dropzone": "^14.2.3",
-    "tailwindcss": "^3.4.1",
+    "tailwindcss": "^4.0.6",
     "typescript": "^5.0.2",
     "vite": "^4.5.3"
   }
