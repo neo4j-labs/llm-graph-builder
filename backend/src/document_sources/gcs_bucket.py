@@ -115,7 +115,7 @@ def merge_file_gcs(bucket_name, original_file_name: str, folder_name_sha1_hashed
         if blob.exists():
           logging.info(f'Blob Name: {blob.name}')
           chunks.append(blob.download_as_bytes())
-        blob.delete()
+          blob.delete()
       
       merged_file = b"".join(chunks)
       file_name_with__hashed_folder = folder_name_sha1_hashed +'/'+original_file_name
