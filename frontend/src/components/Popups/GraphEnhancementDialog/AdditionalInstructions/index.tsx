@@ -113,7 +113,7 @@ export default function AdditionalInstructionsText({
           <h5>{appLabels.chunkingConfiguration}</h5>
         </div>
         <Select
-          label='Chunk Size'
+          label='Token Count Per Chunk'
           size={!tablet ? 'large' : 'medium'}
           selectProps={{
             options: defaultTokenChunkSizeOptions.map((value) => ({
@@ -134,6 +134,7 @@ export default function AdditionalInstructionsText({
                 `,
           }}
           type='creatable'
+          helpText='The maximum token limit is 10,000 for LLM processing. The total number of chunks will be calculated as 10,000 divided by the tokens per chunk you select. For example, selecting 500 tokens per chunk results in 20 chunks (10,000 / 500).'
         />
         <Select
           label='Chunk Overlap'
