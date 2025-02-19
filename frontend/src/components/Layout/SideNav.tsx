@@ -77,6 +77,66 @@ const SideNav: React.FC<SideNavProps> = ({
     }
   };
 
+
+  const renderDataSourceItems = () => {
+    const dataSourceItems = [];
+
+    if (!isLargeDesktop && !isReadOnlyUser && position === 'left') {
+      if (connectionStatus) {
+        dataSourceItems.push(
+          <SideNavigation.Item
+            key="local"
+            icon={
+              <TooltipWrapper tooltip='Local Files' placement='right'>
+                <DropZoneForSmallLayouts />
+              </TooltipWrapper>
+            }
+          />
+        );
+      }
+
+      if (APP_SOURCES.includes('gcs') && connectionStatus && position === 'left') {
+        dataSourceItems.push(
+          <SideNavigation.Item
+            key="gcs"
+            icon={
+              <TooltipWrapper tooltip='GCS Files' placement='right'>
+                <GCSButton isLargeDesktop={false} openModal={toggleGCSModal}></GCSButton>
+              </TooltipWrapper>
+            }
+          />
+        );
+      }
+
+      if (APP_SOURCES.includes('s3') && connectionStatus && position === 'left') {
+        dataSourceItems.push(
+          <SideNavigation.Item
+            key="s3"
+            icon={
+              <TooltipWrapper tooltip='S3 Files' placement='right'>
+                <S3Component isLargeDesktop={false} openModal={toggles3Modal}></S3Component>
+              </TooltipWrapper>
+            }
+          />
+        );
+      }
+
+      if (APP_SOURCES.includes('web') && connectionStatus && position === 'left') {
+        dataSourceItems.push(
+          <SideNavigation.Item
+            key="web"
+            icon={
+              <TooltipWrapper tooltip='Web Sources' placement='right'>
+                <WebButton isLargeDesktop={false} openModal={toggleGenericModal}></WebButton>
+              </TooltipWrapper>
+            }
+          />
+        );
+      }
+    }
+    return dataSourceItems;
+  };
+
   return (
     <div style={{ height: 'calc(100vh - 58px)', minHeight: '200px', display: 'flex' }}>
       <SideNavigation hasIconMenu={true} isExpanded={false} position={position}>
@@ -114,43 +174,7 @@ const SideNav: React.FC<SideNavProps> = ({
               }
             />
           )}
-
-          {!isLargeDesktop && position === 'left' && !isReadOnlyUser && (
-            <SideNavigation.Item
-              icon={
-                <TooltipWrapper tooltip='Local Files' placement='right'>
-                  <DropZoneForSmallLayouts />
-                </TooltipWrapper>
-              }
-            />
-          )}
-          {!isLargeDesktop && APP_SOURCES.includes('gcs') && position === 'left' && !isReadOnlyUser && (
-            <SideNavigation.Item
-              icon={
-                <TooltipWrapper tooltip='GCS Files' placement='right'>
-                  <GCSButton isLargeDesktop={isLargeDesktop} openModal={toggleGCSModal}></GCSButton>
-                </TooltipWrapper>
-              }
-            />
-          )}
-          {!isLargeDesktop && APP_SOURCES.includes('s3') && position === 'left' && !isReadOnlyUser && (
-            <SideNavigation.Item
-              icon={
-                <TooltipWrapper tooltip='S3 Files' placement='right'>
-                  <S3Component isLargeDesktop={isLargeDesktop} openModal={toggles3Modal}></S3Component>
-                </TooltipWrapper>
-              }
-            />
-          )}
-          {!isLargeDesktop && APP_SOURCES.includes('web') && position === 'left' && !isReadOnlyUser && (
-            <SideNavigation.Item
-              icon={
-                <TooltipWrapper tooltip='Web Sources' placement='right'>
-                  <WebButton isLargeDesktop={isLargeDesktop} openModal={toggleGenericModal}></WebButton>
-                </TooltipWrapper>
-              }
-            ></SideNavigation.Item>
-          )}
+          {renderDataSourceItems()}
           {position === 'right' && isExpanded && (
             <>
               <Tooltip type='simple' placement={'left'}>
