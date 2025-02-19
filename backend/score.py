@@ -302,22 +302,27 @@ async def extract_knowledge_graph_from_file(
     finally:
         gc.collect()
             
-@app.get("/sources_list")
-async def get_source_list(uri:str=None, userName:str=None, password:str=None, email:str=None, database:str=None):
+@app.post("/sources_list")
+async def get_source_list(
+    uri=Form(None),
+    userName=Form(None),
+    password=Form(None),
+    database=Form(None),
+    email=Form(None)):
     """
     Calls 'get_source_list_from_graph' which returns list of sources which already exist in databse
     """
     try:
         start = time.time()
-        if password is not None and password != "null":
-            decoded_password = decode_password(password)
-        else:
-            decoded_password = None
-            userName = None
-            database = None
-        if " " in uri:
-            uri = uri.replace(" ","+")
-        result = await asyncio.to_thread(get_source_list_from_graph,uri,userName,decoded_password,database)
+        # if password is not None and password != "null":
+        #     decoded_password = decode_password(password)
+        # else:
+        #     decoded_password = None
+        #     userName = None
+        #     database = None
+        # if " " in uri:
+        #     uri = uri.replace(" ","+")
+        result = await asyncio.to_thread(get_source_list_from_graph,uri,userName,password,database)
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name':'sources_list','db_url':uri, 'userName':userName, 'database':database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
