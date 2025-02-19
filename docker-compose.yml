@@ -34,8 +34,6 @@ services:
 #      - LLM_MODEL_CONFIG_bedrock_claude_3_5_sonnet=${LLM_MODEL_CONFIG_bedrock_claude_3_5_sonnet-}
 #     - LLM_MODEL_CONFIG_fireworks_qwen_72b=${LLM_MODEL_CONFIG_fireworks_qwen_72b-}
       - LLM_MODEL_CONFIG_ollama_llama3=${LLM_MODEL_CONFIG_ollama_llama3-}
-    # env_file:
-    #   - ./backend/.env
     container_name: backend
     extra_hosts:
       - host.docker.internal:host-gateway
