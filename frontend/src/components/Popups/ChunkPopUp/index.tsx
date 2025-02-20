@@ -79,7 +79,7 @@ const ChunkPopUp = ({
         )}
       </Dialog.Content>
       {totalPageCount != null && totalPageCount > 1 && (
-        <Dialog.Actions className='flex !justify-center items-center'>
+        <Dialog.Actions className='flex justify-center! items-center'>
           <Flex flexDirection='row'>
             <IconButton ariaLabel='decrementButton' isDisabled={currentPage === 1} onClick={decrementPage}>
               <ArrowLeftIconOutline />

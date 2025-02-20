@@ -20,9 +20,10 @@ class graphDBdataAccess:
         try:
             job_status = "Failed"
             result = self.get_current_status_document_node(file_name)
-            is_cancelled_status = result[0]['is_cancelled']
-            if bool(is_cancelled_status) == True:
-                job_status = 'Cancelled'
+            if len(result) > 0:
+                is_cancelled_status = result[0]['is_cancelled']
+                if bool(is_cancelled_status) == True:
+                    job_status = 'Cancelled'
             if retry_condition is not None: 
                 retry_condition = None
                 self.graph.query("""MERGE(d:Document {fileName :$fName}) SET d.status = $status, d.errorMessage = $error_msg, d.retry_condition = $retry_condition""",

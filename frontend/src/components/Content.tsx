@@ -909,7 +909,7 @@ const Content: React.FC<ContentProps> = ({
               placement='top'
               text='Enhance graph quality'
               label='Graph Enhancemnet Settings'
-              className='mr-2.5'
+              className='mr-2!'
               onClick={toggleEnhancementDialog}
               disabled={!connectionStatus || isReadOnlyUser}
               size={isTablet ? 'small' : 'medium'}
@@ -919,7 +919,7 @@ const Content: React.FC<ContentProps> = ({
             {!connectionStatus ? (
               <Button
                 size={isTablet ? 'small' : 'medium'}
-                className='mr-2.5'
+                className='mr-2!'
                 onClick={() => setOpenConnection((prev) => ({ ...prev, openPopUp: true }))}
               >
                 {buttonCaptions.connectToNeo4j}
@@ -1006,6 +1006,7 @@ const Content: React.FC<ContentProps> = ({
               placement='top'
               fill='outlined'
               onClick={handleSchemaView}
+              disabled={!connectionStatus}
             >
               <Hierarchy1Icon />
             </ButtonWithToolTip>
