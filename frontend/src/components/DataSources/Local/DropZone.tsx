@@ -200,7 +200,7 @@ const DropZone: FunctionComponent = () => {
       <Dropzone
         loadingComponent={isLoading && <Loader title='Uploading' />}
         isTesting={true}
-        className='!bg-none dropzoneContainer'
+        className='bg-none! dropzoneContainer'
         supportedFilesDescription={
           <Typography variant='body-small'>
             <Flex>

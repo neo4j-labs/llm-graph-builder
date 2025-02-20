@@ -77,7 +77,6 @@ const SideNav: React.FC<SideNavProps> = ({
     }
   };
 
-
   const renderDataSourceItems = () => {
     const dataSourceItems = [];
 
@@ -85,7 +84,7 @@ const SideNav: React.FC<SideNavProps> = ({
       if (connectionStatus) {
         dataSourceItems.push(
           <SideNavigation.Item
-            key="local"
+            key='local'
             icon={
               <TooltipWrapper tooltip='Local Files' placement='right'>
                 <DropZoneForSmallLayouts />
@@ -98,7 +97,7 @@ const SideNav: React.FC<SideNavProps> = ({
       if (APP_SOURCES.includes('gcs') && connectionStatus && position === 'left') {
         dataSourceItems.push(
           <SideNavigation.Item
-            key="gcs"
+            key='gcs'
             icon={
               <TooltipWrapper tooltip='GCS Files' placement='right'>
                 <GCSButton isLargeDesktop={false} openModal={toggleGCSModal}></GCSButton>
@@ -111,7 +110,7 @@ const SideNav: React.FC<SideNavProps> = ({
       if (APP_SOURCES.includes('s3') && connectionStatus && position === 'left') {
         dataSourceItems.push(
           <SideNavigation.Item
-            key="s3"
+            key='s3'
             icon={
               <TooltipWrapper tooltip='S3 Files' placement='right'>
                 <S3Component isLargeDesktop={false} openModal={toggles3Modal}></S3Component>
@@ -124,7 +123,7 @@ const SideNav: React.FC<SideNavProps> = ({
       if (APP_SOURCES.includes('web') && connectionStatus && position === 'left') {
         dataSourceItems.push(
           <SideNavigation.Item
-            key="web"
+            key='web'
             icon={
               <TooltipWrapper tooltip='Web Sources' placement='right'>
                 <WebButton isLargeDesktop={false} openModal={toggleGenericModal}></WebButton>
@@ -138,7 +137,7 @@ const SideNav: React.FC<SideNavProps> = ({
   };
 
   return (
-    <div style={{ height: 'calc(100vh - 58px)', minHeight: '200px', display: 'flex' }}>
+    <div className='sidenav-container'>
       <SideNavigation hasIconMenu={true} isExpanded={false} position={position}>
         <SideNavigation.List>
           {isExpanded && isLargeDesktop && (
@@ -221,7 +220,7 @@ const SideNav: React.FC<SideNavProps> = ({
                       </Tooltip.Trigger>
                       <Tooltip.Content>
                         Download Conversation
-                        <TextLink ref={downloadLinkRef} className='!hidden'>
+                        <TextLink ref={downloadLinkRef} className='hidden!'>
                           ""
                         </TextLink>
                       </Tooltip.Content>

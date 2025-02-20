@@ -94,7 +94,7 @@ export default function AdditionalInstructionsText({
             size='small'
           />
         </Flex>
-        <Flex className='!mt-4 mb-2 flex items-center' flexDirection='row' justifyContent='flex-end'>
+        <Flex className='mt-4! mb-2 flex items-center' flexDirection='row' justifyContent='flex-end'>
           <Flex flexDirection='row' gap='4'>
             <ButtonWithToolTip
               placement='top'

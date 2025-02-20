@@ -154,10 +154,10 @@ const Content: React.FC<ContentProps> = ({
               ? postProcessingTasks.filter((task) => task !== 'graph_schema_consolidation')
               : postProcessingTasks
             : hasSelections
-              ? postProcessingTasks.filter(
+            ? postProcessingTasks.filter(
                 (task) => task !== 'graph_schema_consolidation' && task !== 'enable_communities'
               )
-              : postProcessingTasks.filter((task) => task !== 'enable_communities');
+            : postProcessingTasks.filter((task) => task !== 'enable_communities');
           if (payload.length) {
             const response = await postProcessing(payload);
             if (response.data.status === 'Success') {
@@ -542,8 +542,9 @@ const Content: React.FC<ContentProps> = ({
     let finalUrl = bloomUrl;
     if (userCredentials?.database && userCredentials.uri && userCredentials.userName) {
       const uriCoded = userCredentials.uri.replace(/:\d+$/, '');
-      const connectURL = `${uriCoded.split('//')[0]}//${userCredentials.userName}@${uriCoded.split('//')[1]}:${userCredentials.port ?? '7687'
-        }`;
+      const connectURL = `${uriCoded.split('//')[0]}//${userCredentials.userName}@${uriCoded.split('//')[1]}:${
+        userCredentials.port ?? '7687'
+      }`;
       const encodedURL = encodeURIComponent(connectURL);
       finalUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     }
@@ -610,12 +611,12 @@ const Content: React.FC<ContentProps> = ({
           return prev.map((f) => {
             return f.name === filename
               ? {
-                ...f,
-                status: 'Ready to Reprocess',
-                processingProgress: isStartFromBegining ? 0 : f.processingProgress,
-                nodesCount: isStartFromBegining ? 0 : f.nodesCount,
-                relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
-              }
+                  ...f,
+                  status: 'Ready to Reprocess',
+                  processingProgress: isStartFromBegining ? 0 : f.processingProgress,
+                  nodesCount: isStartFromBegining ? 0 : f.nodesCount,
+                  relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
+                }
               : f;
           });
         });
@@ -908,7 +909,7 @@ const Content: React.FC<ContentProps> = ({
               placement='top'
               text='Enhance graph quality'
               label='Graph Enhancemnet Settings'
-              className='mr-2.5'
+              className='mr-2!'
               onClick={toggleEnhancementDialog}
               disabled={!connectionStatus || isReadOnlyUser}
               size={isTablet ? 'small' : 'medium'}
@@ -918,7 +919,7 @@ const Content: React.FC<ContentProps> = ({
             {!connectionStatus ? (
               <Button
                 size={isTablet ? 'small' : 'medium'}
-                className='mr-2.5'
+                className='mr-2!'
                 onClick={() => setOpenConnection((prev) => ({ ...prev, openPopUp: true }))}
               >
                 {buttonCaptions.connectToNeo4j}

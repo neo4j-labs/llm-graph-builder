@@ -335,7 +335,7 @@
 .layout-wrapper{
   display: grid;
   grid-template-rows: auto;
-  grid-template-columns: 64px 1fr minmax(min-content,4fr) 1.4fr 64px;
+  grid-template-columns: 64px 1fr minmax(min-content,4fr) 1.1fr 64px;
   max-height: calc(100vh - 58px);
   max-width: 100%;
 }
@@ -355,4 +355,9 @@
   max-width: 100%;
   position: relative;
   height: 100%;
+}
+.sidenav-container{
+  height: calc(100vh - 58px);
+  min-height: 200px;
+  display: flex
 }

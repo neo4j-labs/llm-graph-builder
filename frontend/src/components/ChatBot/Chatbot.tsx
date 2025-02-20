@@ -436,7 +436,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                         className='-ml-4'
                         hasStatus
                         name='KM'
-                        size='x-large'
+                        size='large'
                         source={ChatBotAvatar}
                         status={connectionStatus ? 'online' : 'offline'}
                         shape='square'
@@ -447,7 +447,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                         className=''
                         hasStatus
                         name='KM'
-                        size='x-large'
+                        size='large'
                         status={connectionStatus ? 'online' : 'offline'}
                         shape='square'
                         type='image'
@@ -457,7 +457,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                   <Widget
                     header=''
                     isElevated={true}
-                    className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${
+                    className={`p-3! self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${
                       chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
                     }`}
                   >
@@ -612,7 +612,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
               }}
             >
               <ArrowDownTrayIconOutline className='n-size-token-7' />
-              <TextLink ref={downloadLinkRef} className='!hidden'>
+              <TextLink ref={downloadLinkRef} className='hidden!'>
                 ""
               </TextLink>
             </IconButton>

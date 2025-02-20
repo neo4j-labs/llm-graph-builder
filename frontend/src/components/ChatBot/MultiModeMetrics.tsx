@@ -336,7 +336,7 @@ export default function MultiModeMetrics({
             }}
             isAutoResizingColumns={true}
             isLoading={metricsLoading}
-            // rootProps={{ className: isWithAdditionalMetrics === false ? '!w-[465px]' : 'auto' }}
+            // rootProps={{ className: isWithAdditionalMetrics === false ? 'w-[465px]!' : 'auto' }}
             components={{
               Body: () => (
                 <DataGridComponents.Body

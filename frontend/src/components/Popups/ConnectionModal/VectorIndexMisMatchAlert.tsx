@@ -48,7 +48,7 @@ To proceed, please choose one of the following options:
             await recreateVectorIndex();
             setVectorIndexLoading(false);
           }}
-          className='!w-full'
+          className='w-full!'
           color='danger'
           disabled={userCredentials === null}
         >
