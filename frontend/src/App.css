@@ -368,3 +368,7 @@
   border: 1px solid rgb(var(--theme-palette-neutral-border-strong));
   border-radius: 12px;
 }
+.websource-btn-container{
+  display: flex;
+  gap: 10px;
+}
