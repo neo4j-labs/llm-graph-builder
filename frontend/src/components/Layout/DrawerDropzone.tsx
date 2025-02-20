@@ -51,7 +51,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
       >
         {connectionStatus ? (
           !isReadOnlyUser ? (
-            <Drawer.Body className='!overflow-hidden !w-[294px]'>
+            <Drawer.Body className='overflow-hidden! w-[294px]!'>
               {alertState.showAlert && (
                 <CustomAlert
                   severity={alertState.alertType}
@@ -109,14 +109,14 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
               </div>
             </Drawer.Body>
           ) : (
-            <Drawer.Body className='!overflow-hidden !w-[294px]'>
+            <Drawer.Body className='overflow-hidden! w-[294px]!'>
               <Typography variant='subheading-medium'>
                 This user account does not have permission to access or manage data sources.
               </Typography>
             </Drawer.Body>
           )
         ) : (
-          <Drawer.Body className='!overflow-hidden !w-[294px]'>
+          <Drawer.Body className='overflow-hidden! w-[294px]!'>
             <Typography variant='subheading-medium'>
               You are not logged in. Please Connect to a database to access the content.
             </Typography>

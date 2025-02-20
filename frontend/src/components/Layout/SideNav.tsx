@@ -138,7 +138,7 @@ const SideNav: React.FC<SideNavProps> = ({
   };
 
   return (
-    <div style={{ height: 'calc(100vh - 58px)', minHeight: '200px', display: 'flex' }}>
+    <div className='sidenav-container'>
       <SideNavigation hasIconMenu={true} isExpanded={false} position={position}>
         <SideNavigation.List>
           {isExpanded && isLargeDesktop && (
@@ -221,7 +221,7 @@ const SideNav: React.FC<SideNavProps> = ({
                       </Tooltip.Trigger>
                       <Tooltip.Content>
                         Download Conversation
-                        <TextLink ref={downloadLinkRef} className='!hidden'>
+                        <TextLink ref={downloadLinkRef} className='hidden!'>
                           ""
                         </TextLink>
                       </Tooltip.Content>

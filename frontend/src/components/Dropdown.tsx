@@ -32,7 +32,7 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
           type='select'
           label='LLM Models'
           helpText={
-            <div className='!w-max flex gap-1 items-center'>
+            <div className='w-max! flex gap-1 items-center'>
               <span>
                 <InformationCircleIconOutline title='info' aria-label='infoicon' className='n-size-token-6' />
               </span>

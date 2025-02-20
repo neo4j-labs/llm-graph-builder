@@ -116,7 +116,7 @@ export default function DeletePopUpForOrphanNodes({
           return (
             <div className='textellipsis'>
               <TextLink
-                className='!cursor-pointer !inline'
+                className='cursor-pointer! inline!'
                 htmlAttributes={{
                   onClick: () => handleOrphanNodeClick(info.row.id, 'chatInfoView'),
                   title: info.getValue() ? info.getValue() : info.row.id,
@@ -259,7 +259,7 @@ export default function DeletePopUpForOrphanNodes({
             headerStyle: 'clean',
           }}
           rootProps={{
-            className: 'max-h-[355px] !overflow-y-auto',
+            className: 'max-h-[355px] overflow-y-auto!',
           }}
           isLoading={isLoading}
           components={{
