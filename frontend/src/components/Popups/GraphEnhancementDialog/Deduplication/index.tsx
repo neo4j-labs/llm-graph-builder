@@ -156,7 +156,7 @@ export default function DeduplicationTab() {
           return (
             <div className='textellipsis'>
               <TextLink
-                className='!cursor-pointer'
+                className='cursor-pointer!'
                 htmlAttributes={{
                   onClick: () => handleDuplicateNodeClick(info.row.id, 'chatInfoView'),
                   title: info.getValue(),
@@ -295,7 +295,7 @@ export default function DeduplicationTab() {
             headerStyle: 'clean',
           }}
           rootProps={{
-            className: 'max-h-[355px] !overflow-y-auto',
+            className: 'max-h-[355px] overflow-y-auto!',
           }}
           isLoading={isLoading}
           components={{

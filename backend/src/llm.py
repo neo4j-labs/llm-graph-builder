@@ -194,24 +194,20 @@ async def get_graph_document_list(
     return graph_document_list
 
 async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship, chunks_to_combine, additional_instructions=None):
-    try:
-        llm, model_name = get_llm(model)
-        combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list, chunks_to_combine)
+    
+    llm, model_name = get_llm(model)
+    combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list, chunks_to_combine)
+    
+    if  allowedNodes is None or allowedNodes=="":
+        allowedNodes =[]
+    else:
+        allowedNodes = allowedNodes.split(',')    
+    if  allowedRelationship is None or allowedRelationship=="":   
+        allowedRelationship=[]
+    else:
+        allowedRelationship = allowedRelationship.split(',')
         
-        if  allowedNodes is None or allowedNodes=="":
-            allowedNodes =[]
-        else:
-            allowedNodes = allowedNodes.split(',')    
-        if  allowedRelationship is None or allowedRelationship=="":   
-            allowedRelationship=[]
-        else:
-            allowedRelationship = allowedRelationship.split(',')
-            
-        graph_document_list = await get_graph_document_list(
-            llm, combined_chunk_document_list, allowedNodes, allowedRelationship, additional_instructions
-        )
-        return graph_document_list
-    except Exception as e:
-        err = f"Error during extracting graph with llm: {e}"
-        logging.error(err)
-        raise 
+    graph_document_list = await get_graph_document_list(
+        llm, combined_chunk_document_list, allowedNodes, allowedRelationship, additional_instructions
+    )
+    return graph_document_list

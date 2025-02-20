@@ -111,7 +111,7 @@ const SchemaFromTextDialog = ({ open, onClose }: { open: boolean; onClose: () =>
           }}
           size='large'
         />
-        <Dialog.Actions className='!mt-4'>
+        <Dialog.Actions className='mt-4!'>
           <Checkbox
             label='Text is schema description'
             onChange={(e) => {

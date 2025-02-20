@@ -229,7 +229,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                     <ArrowDownTrayIconOutline />
                   </IconButtonWithToolTip>
                   <>
-                    <TextLink ref={downloadLinkRef} className='!hidden'>
+                    <TextLink ref={downloadLinkRef} className='hidden!'>
                       ""
                     </TextLink>
                   </>

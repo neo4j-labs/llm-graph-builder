@@ -19,7 +19,7 @@ const GraphPropertiesTable = ({ propertiesWithTypes }: GraphPropertiesTableProps
               <div className='shrink basis-1/3 overflow-hidden whitespace-nowrap'>
                 <GraphLabel
                   type='propertyKey'
-                  className='pointer-events-none !max-w-full overflow-ellipsis'
+                  className='pointer-events-none max-w-full! text-ellipsis'
                   htmlAttributes={{
                     tabIndex: -1,
                   }}

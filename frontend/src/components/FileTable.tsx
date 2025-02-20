@@ -696,7 +696,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
     const fetchFiles = async () => {
       try {
         setIsLoading(true);
-        const res = await getSourceNodes(userCredentials as UserCredentials);
+        const res = await getSourceNodes();
         if (!res.data) {
           throw new Error('Please check backend connection');
         }

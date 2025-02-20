@@ -36,22 +36,22 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.7",
     "@types/node": "^20.11.10",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
-    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "@vitejs/plugin-react": "^4.0.3",
-    "autoprefixer": "^10.4.17",
     "eslint": "^8.45.0",
     "eslint-config-prettier": "^8.5.0",
-    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.3",
     "postcss": "^8.4.33",
     "prettier": "^2.7.1",
-    "react-dropzone": "^14.2.3",
-    "tailwindcss": "^4.0.6",
-    "typescript": "^5.0.2",
+    "react-dropzone": "^14.3.5",
+    "tailwindcss": "^4.0.7",
+    "typescript": "^5.7.3",
     "vite": "^4.5.3"
   }
 }
