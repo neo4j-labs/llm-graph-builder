@@ -36,7 +36,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
   return (
     <>
       {loading ? (
-        <div className='flex justify-center items-center'>
+        <div className='flex! justify-center items-center'>
           <LoadingSpinner size='small' />
         </div>
       ) : chunks?.length > 0 ? (
@@ -46,7 +46,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
               <li key={chunk.id} className='mb-2'>
                 {chunk?.page_number ? (
                   <>
-                    <div className='flex flex-row inline-block items-center'>
+                    <div className='flex! flex-row inline-block items-center'>
                       <>
                         <DocumentTextIconOutline className='w-4 h-4 inline-block mr-2' />
                         <Typography
@@ -79,7 +79,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                   </>
                 ) : chunk?.url && chunk?.start_time ? (
                   <>
-                    <div className='flex flex-row inline-block justiy-between items-center'>
+                    <div className='flex! flex-row inline-block justiy-between items-center'>
                       <img src={youtubelogo} width={20} height={20} className='mr-2' />
                       <TextLink href={generateYouTubeLink(chunk?.url, chunk?.start_time)} isExternalLink={true}>
                         <Typography
@@ -111,7 +111,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                   </>
                 ) : chunk?.url && new URL(chunk.url).host === 'wikipedia.org' ? (
                   <>
-                    <div className='flex flex-row inline-block justiy-between items-center'>
+                    <div className='flex! flex-row inline-block justiy-between items-center'>
                       <img src={wikipedialogo} width={20} height={20} className='mr-2' />
                       <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
                     </div>
@@ -135,7 +135,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                   </>
                 ) : chunk?.url && new URL(chunk.url).host === 'storage.googleapis.com' ? (
                   <>
-                    <div className='flex flex-row inline-block justiy-between items-center'>
+                    <div className='flex! flex-row inline-block justiy-between items-center'>
                       <img src={gcslogo} width={20} height={20} className='mr-2' />
                       <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
                     </div>
@@ -159,7 +159,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                   </>
                 ) : chunk?.url && chunk?.url.startsWith('s3://') ? (
                   <>
-                    <div className='flex flex-row inline-block justiy-between items-center'>
+                    <div className='flex! flex-row inline-block justiy-between items-center'>
                       <img src={s3logo} width={20} height={20} className='mr-2' />
                       <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
                     </div>
@@ -185,7 +185,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                   !chunk?.url.startsWith('s3://') &&
                   !isAllowedHost(chunk?.url, ['storage.googleapis.com', 'wikipedia.org', 'youtube.com']) ? (
                   <>
-                    <div className='flex flex-row inline-block items-center'>
+                    <div className='flex! flex-row inline-block items-center'>
                       <GlobeAltIconOutline className='n-size-token-7' />
                       <TextLink href={chunk?.url} isExternalLink={true}>
                         <Typography variant='body-medium'>{chunk?.url}</Typography>
@@ -211,7 +211,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                   </>
                 ) : (
                   <>
-                    <div className='flex flex-row inline-block items-center'>
+                    <div className='flex! flex-row inline-block items-center'>
                       {chunk.fileSource === 'local file' ? (
                         <DocumentTextIconOutline className='n-size-token-7 mr-2' />
                       ) : (

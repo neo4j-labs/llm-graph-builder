@@ -889,7 +889,7 @@ const Content: React.FC<ContentProps> = ({
             <span className='h6 px-1'>Neo4j connection {isReadOnlyUser ? '(Read only Mode)' : ''}</span>
             <Typography variant='body-medium'>
               <DatabaseStatusIcon isConnected={connectionStatus} isGdsActive={isGdsActive} uri={userCredentials?.uri} />
-              <div className='pt-1 flex gap-1 items-center'>
+              <div className='pt-1 flex! gap-1 items-center'>
                 <div>{!hasSelections ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}</div>
                 <div>
                   {hasSelections ? (
