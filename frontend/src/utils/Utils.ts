@@ -523,7 +523,7 @@ export function getNodes<Type extends Entity | ExtendedNode>(nodesData: Array<Ty
     return n;
   });
 }
-export function getParsedDate(neo4jdate: number) {
+export function getParsedDate(neo4jdate: filedate) {
   const { _Date__year, _Date__month, _Date__day } = neo4jdate._DateTime__date;
   const { _Time__hour, _Time__minute, _Time__second } = neo4jdate._DateTime__time;
   const currentdate = new Date(`${_Date__month}/${_Date__day}/${_Date__year}`);
