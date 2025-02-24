@@ -3,10 +3,25 @@ from pathlib import Path
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_community.document_loaders import UnstructuredFileLoader
 from langchain_core.documents import Document
+import chardet
 
+def detect_encoding(file_path):
+   """Detects the file encoding to avoid UnicodeDecodeError."""
+   with open(file_path, 'rb') as f:
+       raw_data = f.read(4096)
+       result = chardet.detect(raw_data)
+       return result['encoding'] or "utf-8"
+   
 def load_document_content(file_path):
-    if Path(file_path).suffix.lower() == '.pdf':
+    file_extension = Path(file_path).suffix.lower()
+    if file_extension == '.pdf':
         return PyMuPDFLoader(file_path)
+    elif file_extension == ".txt":
+        encoding = detect_encoding(file_path)
+        logging.info(f"Detected encoding for {file_path}: {encoding}")
+        with open(file_path, encoding=encoding, errors="replace") as f:
+               content = f.read()
+        return [Document(page_content=content, metadata={"source": file_path})]
     else:
         return UnstructuredFileLoader(file_path, mode="elements",autodetect_encoding=True)
     
@@ -19,6 +34,8 @@ def get_documents_from_file_by_path(file_path,file_name):
             loader = load_document_content(file_path)
             if file_extension == ".pdf":
                 pages = loader.load()
+            elif file_extension == ".txt":
+                pages = loader
             else:
                 unstructured_pages = loader.load()   
                 pages= get_pages_with_page_numbers(unstructured_pages)      
