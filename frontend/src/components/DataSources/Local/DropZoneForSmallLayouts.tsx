@@ -8,7 +8,7 @@ import { chunkSize } from '../../../utils/Constants';
 import { uploadAPI } from '../../../utils/FileAPI';
 import { v4 as uuidv4 } from 'uuid';
 import { LoadingSpinner } from '@neo4j-ndl/react';
-import { showErrorToast, showSuccessToast } from '../../../utils/toasts';
+import { showErrorToast, showSuccessToast } from '../../../utils/Toasts';
 
 export default function DropZoneForSmallLayouts() {
   const { filesData, setFilesData, model } = useFileContext();

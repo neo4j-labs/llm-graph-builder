@@ -8,7 +8,7 @@ import { OnChangeValue, ActionMeta } from 'react-select';
 import { OptionType, schema } from '../../../../types';
 import { getNodeLabelsAndRelTypes } from '../../../../services/GetNodeLabelsRelTypes';
 import { tokens } from '@neo4j-ndl/base';
-import { showNormalToast } from '../../../../utils/toasts';
+import { showNormalToast } from '../../../../utils/Toasts';
 import { useHasSelections } from '../../../../hooks/useHasSelections';
 import { Hierarchy1Icon } from '@neo4j-ndl/react/icons';
 import GraphViewModal from '../../../Graph/GraphViewModal';

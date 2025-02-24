@@ -63,7 +63,7 @@ import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
 import { IconButtonWithToolTip } from './UI/IconButtonToolTip';
 import { batchSize, largeFileSize, llms } from '../utils/Constants';
-import { showErrorToast, showNormalToast } from '../utils/toasts';
+import { showErrorToast, showNormalToast } from '../utils/Toasts';
 import { ThemeWrapperContext } from '../context/ThemeWrapper';
 import BreakDownPopOver from './BreakDownPopOver';
 import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
