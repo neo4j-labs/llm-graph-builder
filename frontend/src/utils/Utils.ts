@@ -146,7 +146,7 @@ export const getIcon = (node: any) => {
   }
   return undefined;
 };
-export function extractPdfFileName(url: string): string {
+export function extractPdfFileName(url: string): number {
   const splitUrl = url.split('/');
   const [encodedFileName] = splitUrl[splitUrl.length - 1].split('?');
   const decodedFileName = decodeURIComponent(encodedFileName);
