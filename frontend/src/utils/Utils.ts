@@ -146,7 +146,7 @@ export const getIcon = (node: any) => {
   }
   return undefined;
 };
-export function extractPdfFileName(url: string): string[] {
+export function extractPdfFileName(url: string): string {
   const splitUrl = url.split('/');
   const [encodedFileName] = splitUrl[splitUrl.length - 1].split('?');
   const decodedFileName = decodeURIComponent(encodedFileName);
@@ -538,7 +538,7 @@ export function isExpired(itemdate: Date) {
   return daysdifference > EXPIRATION_DAYS;
 }
 
-export function isFileReadyToProcess(file: number, withLocalCheck: string) {
+export function isFileReadyToProcess(file: CustomFile, withLocalCheck: string) {
   if (withLocalCheck) {
     return file.fileSource === 'local file' && file.status === 'New';
   }
