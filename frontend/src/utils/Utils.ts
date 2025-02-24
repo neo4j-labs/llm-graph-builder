@@ -531,7 +531,7 @@ export function getParsedDate(neo4jdate: filedate) {
   return currentdate;
 }
 
-export function isExpired(itemdate: Date) {
+export function isExpired(itemdate: number) {
   const currentDate = new Date();
   const timedifference = currentDate.getTime() - itemdate.getTime();
   const daysdifference = timedifference / (1000 * 3600 * 24);
