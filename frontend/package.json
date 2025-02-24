@@ -9,7 +9,7 @@
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "lint": "eslint --ext .ts --ext .tsx . --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "prepare": "cd .. && husky frontend/.husky"
+    "postinstall": "husky"
   },
   "dependencies": {
     "@auth0/auth0-react": "^2.2.4",
