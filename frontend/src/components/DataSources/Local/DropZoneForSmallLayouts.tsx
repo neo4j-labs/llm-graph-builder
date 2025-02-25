@@ -1,4 +1,4 @@
-import { CloudArrowUpIconSolid } from '@neo4j-ndl/react/icons';
+import { DocumentPlusIconSolid } from '@neo4j-ndl/react/icons';
 import { useDropzone } from 'react-dropzone';
 import { useFileContext } from '../../../context/UsersFiles';
 import { useEffect, useState } from 'react';
@@ -219,7 +219,7 @@ export default function DropZoneForSmallLayouts() {
     <>
       <div {...getRootProps({ className: 'dropzone' })}>
         <input {...getInputProps()} aria-label='dropzone' />
-        {isLoading ? <LoadingSpinner size='medium' /> : <CloudArrowUpIconSolid className='n-size-token-7' />}
+        {isLoading ? <LoadingSpinner size='medium' /> : <DocumentPlusIconSolid className='n-size-token-7' />}
       </div>
     </>
   );
