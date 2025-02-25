@@ -3,12 +3,36 @@ from pathlib import Path
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_community.document_loaders import UnstructuredFileLoader
 from langchain_core.documents import Document
+import chardet
 
+def detect_encoding(file_path):
+   """Detects the file encoding to avoid UnicodeDecodeError."""
+   with open(file_path, 'rb') as f:
+       raw_data = f.read(4096)
+       result = chardet.detect(raw_data)
+       return result['encoding'] or "utf-8"
+   
 def load_document_content(file_path):
-    if Path(file_path).suffix.lower() == '.pdf':
-        return PyMuPDFLoader(file_path)
+    file_extension = Path(file_path).suffix.lower()
+    encoding_flag = False
+    if file_extension == '.pdf':
+        loader = PyMuPDFLoader(file_path)
+        return loader,encoding_flag
+    elif file_extension == ".txt":
+        encoding = detect_encoding(file_path)
+        logging.info(f"Detected encoding for {file_path}: {encoding}")
+        if encoding.lower() == "utf-8":
+            loader = UnstructuredFileLoader(file_path, mode="elements",autodetect_encoding=True)
+            return loader,encoding_flag
+        else:
+            with open(file_path, encoding=encoding, errors="replace") as f:
+               content = f.read()
+            loader = [Document(page_content=content, metadata={"source": file_path})]
+            encoding_flag =  True
+            return loader,encoding_flag
     else:
-        return UnstructuredFileLoader(file_path, mode="elements",autodetect_encoding=True)
+        loader = UnstructuredFileLoader(file_path, mode="elements",autodetect_encoding=True)
+        return loader,encoding_flag
     
 def get_documents_from_file_by_path(file_path,file_name):
     file_path = Path(file_path)
@@ -16,14 +40,20 @@ def get_documents_from_file_by_path(file_path,file_name):
         logging.info(f'file {file_name} processing')        
         file_extension = file_path.suffix.lower()
         try:
-            loader = load_document_content(file_path)
+            loader,encoding_flag = load_document_content(file_path)
             if file_extension == ".pdf":
                 pages = loader.load()
+            elif file_extension == ".txt":
+                if encoding_flag:
+                    pages = loader
+                else:
+                    unstructured_pages = loader.load()   
+                    pages= get_pages_with_page_numbers(unstructured_pages)   
             else:
                 unstructured_pages = loader.load()   
                 pages= get_pages_with_page_numbers(unstructured_pages)      
         except Exception as e:
-            raise Exception('Error while reading the file content or metadata')
+            raise Exception(f'Error while reading the file content or metadata ,{e}')
     else:
         logging.info(f'File {file_name} does not exist')
         raise Exception(f'File {file_name} does not exist')
