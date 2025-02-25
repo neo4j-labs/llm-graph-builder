@@ -51,7 +51,7 @@
     "eslint-plugin-react-refresh": "^0.4.19",
     "husky": "^9.1.7",
     "lint-staged": "^15.4.3",
-    "postcss": "^8.4.33",
+    "postcss": "^8.5.3",
     "prettier": "^2.7.1",
     "react-dropzone": "^14.3.5",
     "tailwindcss": "^4.0.7",
