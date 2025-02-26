@@ -747,14 +747,13 @@ def set_status_retry(graph, file_name, retry_condition):
     logging.info(obj_source_node)
     graphDb_data_Access.update_source_node(obj_source_node)
 
-def failed_file_process(uri,file_name, merged_file_path, source_type):
+def failed_file_process(uri,file_name, merged_file_path):
   gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
-  if source_type == 'local file':
-    if gcs_file_cache == 'True':
-        folder_name = create_gcs_bucket_folder_name_hashed(uri,file_name)
-        copy_failed_file(BUCKET_UPLOAD, BUCKET_FAILED_FILE, folder_name, file_name)
-        time.sleep(5)
-        delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
-    else:
-        logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
-        delete_uploaded_local_file(merged_file_path,file_name)
+  if gcs_file_cache == 'True':
+      folder_name = create_gcs_bucket_folder_name_hashed(uri,file_name)
+      copy_failed_file(BUCKET_UPLOAD, BUCKET_FAILED_FILE, folder_name, file_name)
+      time.sleep(5)
+      delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
+  else:
+      logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
+      delete_uploaded_local_file(merged_file_path,file_name)
