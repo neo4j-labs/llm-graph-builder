@@ -2,6 +2,7 @@
   border: 1px solid #d1d5db;
   width: 95% !important;
 }
+
 .s3Container {
   display: flex;
   align-items: center;
@@ -335,7 +336,7 @@
 .layout-wrapper{
   display: grid;
   grid-template-rows: auto;
-  grid-template-columns: 64px 1fr minmax(min-content,4fr) 1.1fr 64px;
+  grid-template-columns: 64px 1fr minmax(min-content, 4fr) 1.1fr 64px;
   max-height: calc(100vh - 58px);
   max-width: 100%;
 }
@@ -361,3 +362,6 @@
   min-height: 200px;
   display: flex
 }
+ .resource-sections.blur-sm {
+  filter: blur(2px);
+ }
