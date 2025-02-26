@@ -538,7 +538,7 @@ export function isExpired(itemdate: Date) {
   return daysdifference > EXPIRATION_DAYS;
 }
 
-export function isFileReadyToProcess(file: CustomFile, withLocalCheck: string) {
+export function isFileReadyToProcess(file: CustomFile, withLocalCheck: boolean) {
   if (withLocalCheck) {
     return file.fileSource === 'local file' && file.status === 'New';
   }
