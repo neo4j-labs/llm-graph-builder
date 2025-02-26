@@ -49,7 +49,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
         isCloseable={false}
         htmlAttributes={{ style: { height: 'initial' } }}
       >
-        {connectionStatus ? (
+        {
           !isReadOnlyUser ? (
             <Drawer.Body className='overflow-hidden! w-[294px]!'>
               {alertState.showAlert && (
@@ -70,41 +70,54 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
                       </Typography>
                     </div>
                   )}
-                  <Flex gap='6' className='h-full source-container'>
-                    {APP_SOURCES.includes('local') && (
-                      <div className='px-6 outline-dashed outline-2 outline-offset-2 outline-gray-100 mt-3 imageBg'>
-                        <DropZone />
-                      </div>
-                    )}
-                    {APP_SOURCES.some((source) => ['youtube', 'wiki', 'web'].includes(source)) && (
-                      <div className='outline-dashed imageBg w-[245px]'>
-                        <GenericButton openModal={toggleGenericModal} />
-                        <GenericModal
-                          isOnlyYoutube={isYoutubeOnly}
-                          isOnlyWikipedia={isWikipediaOnly}
-                          isOnlyWeb={isWebOnly}
-                          open={showGenericModal}
-                          closeHandler={toggleGenericModal}
-                        />
-                      </div>
-                    )}
-                    {APP_SOURCES.includes('s3') && (
-                      <div className='outline-dashed imageBg w-[245px]'>
-                        <S3Component openModal={toggleS3Modal} />
-                        <Suspense fallback={<FallBackDialog />}>
-                          <S3Modal hideModal={toggleS3Modal} open={shows3Modal} />
-                        </Suspense>
-                      </div>
-                    )}
-                    {APP_SOURCES.includes('gcs') && (
-                      <div className='outline-dashed imageBg w-[245px]'>
-                        <GCSButton openModal={toggleGCSModal} />
-                        <Suspense fallback={<FallBackDialog />}>
-                          <GCSModal openGCSModal={toggleGCSModal} open={showGCSModal} hideModal={toggleGCSModal} />
-                        </Suspense>
-                      </div>
-                    )}
-                  </Flex>
+                  {!connectionStatus && (
+                    <div className='mx-6 flex items-center justify-between pb-6'>
+                      <Typography variant='body-medium' className='flex items-center gap-1'>
+                        <StatusIndicator type={connectionStatus ? 'success' : 'danger'} />
+                        <span>Connect to Neo4j to upload documents</span>
+                      </Typography>
+                    </div>
+                  )}
+                  <div className={`${!connectionStatus ? 'cursor-not-allowed' : ''} h-full`}>
+                    <div className={`resource-sections ${!connectionStatus ? 'blur-sm pointer-events-none' : ''}`}>
+                      <Flex gap='6' className='h-full source-container'>
+                        {APP_SOURCES.includes('local') && (
+                          <div className='px-6 outline-dashed outline-2 outline-offset-2 outline-gray-100 mt-3 imageBg'>
+                            <DropZone />
+                          </div>
+                        )}
+                        {APP_SOURCES.some((source) => ['youtube', 'wiki', 'web'].includes(source)) && (
+                          <div className='outline-dashed imageBg w-[245px]'>
+                            <GenericButton openModal={toggleGenericModal} />
+                            <GenericModal
+                              isOnlyYoutube={isYoutubeOnly}
+                              isOnlyWikipedia={isWikipediaOnly}
+                              isOnlyWeb={isWebOnly}
+                              open={showGenericModal}
+                              closeHandler={toggleGenericModal}
+                            />
+                          </div>
+                        )}
+                        {APP_SOURCES.includes('s3') && (
+                          <div className='outline-dashed imageBg w-[245px]'>
+                            <S3Component openModal={toggleS3Modal} />
+                            <Suspense fallback={<FallBackDialog />}>
+                              <S3Modal hideModal={toggleS3Modal} open={shows3Modal} />
+                            </Suspense>
+                          </div>
+                        )}
+                        {APP_SOURCES.includes('gcs') && (
+                          <div className='outline-dashed imageBg w-[245px]'>
+                            <GCSButton openModal={toggleGCSModal} />
+                            <Suspense fallback={<FallBackDialog />}>
+                              <GCSModal openGCSModal={toggleGCSModal} open={showGCSModal} hideModal={toggleGCSModal} />
+                            </Suspense>
+                          </div>
+                        )}
+                      </Flex>
+                    </div>
+                  </div>
+
                 </div>
               </div>
             </Drawer.Body>
@@ -114,14 +127,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
                 This user account does not have permission to access or manage data sources.
               </Typography>
             </Drawer.Body>
-          )
-        ) : (
-          <Drawer.Body className='overflow-hidden! w-[294px]!'>
-            <Typography variant='subheading-medium'>
-              You are not logged in. Please Connect to a database to access the content.
-            </Typography>
-          </Drawer.Body>
-        )}
+          )}
       </Drawer>
     </div>
   );
