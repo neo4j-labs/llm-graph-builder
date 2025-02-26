@@ -300,6 +300,8 @@ async def extract_knowledge_graph_from_file(
         return create_api_response('Success', data=result, file_source= source_type)
     except LLMGraphBuilderException as e:
         error_message = str(e)
+        graph = create_graph_database_connection(uri, userName, password, database)   
+        graphDb_data_Access = graphDBdataAccess(graph)
         graphDb_data_Access.update_exception_db(file_name,error_message, retry_condition)
         if source_type == 'local file':
             failed_file_process(uri,file_name, merged_file_path)
@@ -313,6 +315,8 @@ async def extract_knowledge_graph_from_file(
     except Exception as e:
         message=f"Failed To Process File:{file_name} or LLM Unable To Parse Content "
         error_message = str(e)
+        graph = create_graph_database_connection(uri, userName, password, database)   
+        graphDb_data_Access = graphDBdataAccess(graph)
         graphDb_data_Access.update_exception_db(file_name,error_message, retry_condition)
         if source_type == 'local file':
             failed_file_process(uri,file_name, merged_file_path)
