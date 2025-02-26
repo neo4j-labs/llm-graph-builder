@@ -9,7 +9,7 @@ import { buttonCaptions, chunkSize } from '../../../utils/Constants';
 import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
 import { IconButtonWithToolTip } from '../../UI/IconButtonToolTip';
 import { uploadAPI } from '../../../utils/FileAPI';
-import { showErrorToast, showSuccessToast } from '../../../utils/toasts';
+import { showErrorToast, showSuccessToast } from '../../../utils/Toasts';
 
 const DropZone: FunctionComponent = () => {
   const { filesData, setFilesData, model } = useFileContext();

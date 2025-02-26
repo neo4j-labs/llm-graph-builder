@@ -31,7 +31,7 @@ const LargeFilesAlert: FC<LargefilesProps> = ({ Files, handleToggle, checked }) 
   );
   return (
     <div className='n-bg-palette-neutral-bg-weak p-4'>
-      <div className='flex flex-row pb-6 items-center mb-2'>
+      <div className='flex! flex-row pb-6 items-center mb-2'>
         <img
           style={{ width: 95, height: 95, marginRight: 10, alignSelf: 'flex-start' }}
           src={BellImage}

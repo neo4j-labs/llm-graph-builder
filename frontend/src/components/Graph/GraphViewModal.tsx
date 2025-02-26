@@ -385,19 +385,19 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         <Dialog.Content className='flex flex-col n-gap-token-4 w-full grow overflow-auto border border-palette-neutral-border-weak'>
           <div className='bg-white relative w-full h-full max-h-full'>
             {loading ? (
-              <div className='my-40 flex items-center justify-center'>
+              <div className='my-40 flex! items-center justify-center'>
                 <LoadingSpinner size='large' />
               </div>
             ) : status !== 'unknown' ? (
-              <div className='my-40 flex items-center justify-center'>
+              <div className='my-40 flex! items-center justify-center'>
                 <Banner name='graph banner' description={statusMessage} type={status} usage='inline' />
               </div>
             ) : nodes.length === 0 && relationships.length === 0 && graphType.length !== 0 ? (
-              <div className='my-40 flex items-center justify-center'>
+              <div className='my-40 flex! items-center justify-center'>
                 <Banner name='graph banner' description={graphLabels.noNodesRels} type='danger' usage='inline' />
               </div>
             ) : graphType.length === 0 && checkBoxView ? (
-              <div className='my-40 flex items-center justify-center'>
+              <div className='my-40 flex! items-center justify-center'>
                 <Banner name='graph banner' description={graphLabels.selectCheckbox} type='danger' usage='inline' />
               </div>
             ) : (

@@ -11,7 +11,7 @@ import { tokens } from '@neo4j-ndl/base';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
 import { useCallback } from 'react';
 import { useFileContext } from '../../../../context/UsersFiles';
-import { showNormalToast } from '../../../../utils/toasts';
+import { showNormalToast } from '../../../../utils/Toasts';
 import { OnChangeValue } from 'react-select';
 import { OptionType } from '../../../../types';
 
@@ -94,7 +94,7 @@ export default function AdditionalInstructionsText({
             size='small'
           />
         </Flex>
-        <Flex className='mt-4! mb-2 flex items-center' flexDirection='row' justifyContent='flex-end'>
+        <Flex className='mt-4! mb-2 flex! items-center' flexDirection='row' justifyContent='flex-end'>
           <Flex flexDirection='row' gap='4'>
             <ButtonWithToolTip
               placement='top'

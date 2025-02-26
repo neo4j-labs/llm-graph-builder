@@ -9,5 +9,5 @@ updates:
   - package-ecosystem: 'pip'
     directory: '/backend'
     schedule:
-      interval: 'weekly'
+      interval: 'monthly'
     target-branch: 'dev'

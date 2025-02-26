@@ -8,7 +8,7 @@ import CustomModal from '../../../HOC/CustomModal';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useAlertContext } from '../../../context/Alert';
 import { buttonCaptions } from '../../../utils/Constants';
-import { showErrorToast, showNormalToast } from '../../../utils/toasts';
+import { showErrorToast, showNormalToast } from '../../../utils/Toasts';
 
 const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) => {
   const [bucketName, setBucketName] = useState<string>('');

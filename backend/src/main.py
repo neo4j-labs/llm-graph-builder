@@ -124,7 +124,12 @@ def create_source_node_graph_web_url(graph, model, source_url, source_type):
       raise LLMGraphBuilderException(message)
     try:
       title = pages[0].metadata['title'].strip()
-      if not title:
+      if title:
+        graphDb_data_Access = graphDBdataAccess(graph)
+        existing_url = graphDb_data_Access.get_websource_url(title)
+        if existing_url != source_url:
+          title = str(title) + "-" + str(last_url_segment(source_url)).strip()
+      else:
         title = last_url_segment(source_url)
       language = pages[0].metadata['language']
     except:
@@ -253,7 +258,7 @@ async def extract_graph_from_file_s3(uri, userName, password, database, model, s
   
 async def extract_graph_from_web_page(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions):
   if not retry_condition:
-    file_name, pages = get_documents_from_web_page(source_url)
+    pages = get_documents_from_web_page(source_url)
     if pages==None or len(pages)==0:
       raise LLMGraphBuilderException(f'Content is not available for given URL : {file_name}')
     return await processing_source(uri, userName, password, database, model, file_name, pages, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, additional_instructions=additional_instructions)
@@ -742,14 +747,13 @@ def set_status_retry(graph, file_name, retry_condition):
     logging.info(obj_source_node)
     graphDb_data_Access.update_source_node(obj_source_node)
 
-def failed_file_process(uri,file_name, merged_file_path, source_type):
+def failed_file_process(uri,file_name, merged_file_path):
   gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
-  if source_type == 'local file':
-    if gcs_file_cache == 'True':
-        folder_name = create_gcs_bucket_folder_name_hashed(uri,file_name)
-        copy_failed_file(BUCKET_UPLOAD, BUCKET_FAILED_FILE, folder_name, file_name)
-        time.sleep(5)
-        delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
-    else:
-        logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
-        delete_uploaded_local_file(merged_file_path,file_name)
+  if gcs_file_cache == 'True':
+      folder_name = create_gcs_bucket_folder_name_hashed(uri,file_name)
+      copy_failed_file(BUCKET_UPLOAD, BUCKET_FAILED_FILE, folder_name, file_name)
+      time.sleep(5)
+      delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
+  else:
+      logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
+      delete_uploaded_local_file(merged_file_path,file_name)

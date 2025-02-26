@@ -63,7 +63,7 @@ import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
 import { IconButtonWithToolTip } from './UI/IconButtonToolTip';
 import { batchSize, largeFileSize, llms } from '../utils/Constants';
-import { showErrorToast, showNormalToast } from '../utils/toasts';
+import { showErrorToast, showNormalToast } from '../utils/Toasts';
 import { ThemeWrapperContext } from '../context/ThemeWrapper';
 import BreakDownPopOver from './BreakDownPopOver';
 import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
@@ -177,7 +177,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
           if (info.getValue() != 'Processing') {
             return (
               <div
-                className='cellClass flex gap-1 items-center'
+                className='cellClass flex! gap-1 items-center'
                 title={info.row.original?.status === 'Failed' ? info.row.original?.errorMessage : ''}
               >
                 <div>
@@ -203,7 +203,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
             );
           } else if (info.getValue() === 'Processing' && info.row.original.processingProgress === undefined) {
             return (
-              <div className='cellClass flex gap-1 items-center'>
+              <div className='cellClass flex! gap-1 items-center'>
                 <div>
                   <StatusIndicator type={statusCheck(info.getValue())} />
                 </div>
@@ -268,7 +268,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
             );
           }
           return (
-            <div className='cellClass flex gap-1'>
+            <div className='cellClass flex! gap-1'>
               <div>
                 <StatusIndicator type={statusCheck(info.getValue())} />
               </div>
@@ -341,7 +341,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
         cell: (info: CellContext<CustomFile, string>) => {
           if (parseInt(info.getValue()) === 100 || info.row.original?.status === 'New') {
             return (
-              <div className='flex gap-1 items-center'>
+              <div className='flex! gap-1 items-center'>
                 <Typography variant='body-medium'>
                   <StatusIndicator type='success' />
                 </Typography>
@@ -352,7 +352,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
             return <CustomProgressBar value={parseInt(info?.getValue())}></CustomProgressBar>;
           } else if (info.row.original?.status === 'Failed') {
             return (
-              <div className='flex gap-1 items-center'>
+              <div className='flex! gap-1 items-center'>
                 <Typography variant='body-medium'>
                   <StatusIndicator type='danger' />
                 </Typography>
@@ -361,7 +361,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
             );
           }
           return (
-            <div className='flex items-center gap-1'>
+            <div className='flex! items-center gap-1'>
               <Typography variant='body-medium'>
                 <StatusIndicator type='success' />
               </Typography>

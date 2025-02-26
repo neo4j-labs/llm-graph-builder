@@ -1,6 +1,6 @@
 import { getNeighbors } from '../../services/GraphQuery';
 import { NeoNode, NeoRelationship } from '../../types';
-import { showNormalToast } from '../../utils/toasts';
+import { showNormalToast } from '../../utils/Toasts';
 
 export const handleGraphNodeClick = async (
   elementId: string,
