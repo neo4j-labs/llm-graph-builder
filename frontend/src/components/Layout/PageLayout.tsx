@@ -133,7 +133,9 @@ const PageLayout: React.FC = () => {
             setIsGCSActive(credentials.isGCSActive);
             setGdsActive(credentials.isgdsActive);
             setConnectionStatus(Boolean(credentials.connection === 'connectAPI'));
-            setIsReadOnlyUser(credentials.isReadonlyUser);
+            if (credentials.isReadonlyUser !== undefined) {
+              setIsReadOnlyUser(credentials.isReadonlyUser);
+            }
             handleDisconnectButtonState(true);
           } else {
             setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
