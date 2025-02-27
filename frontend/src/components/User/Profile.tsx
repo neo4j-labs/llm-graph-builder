@@ -30,11 +30,7 @@ export default function Profile() {
   }
   if (isAuthenticated) {
     return (
-      <div
-        className='hidden 
-    md:flex md:p-1.5 md:gap-2 md:h-12 md:items-center md:inline-block 
-    md:border md:border-[rgb(var(--theme-palette-neutral-border-strong))] md:rounded-xl'
-      >
+      <div className=' p-1.5 h-12 profile-container'>
         <>
           <Avatar
             className='md:flex hidden'

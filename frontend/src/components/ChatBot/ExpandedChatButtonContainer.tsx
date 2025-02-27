@@ -22,7 +22,7 @@ const ExpandedChatButtonContainer: React.FC<IconProps> = ({ closeChatBot, delete
         menuAnchor={chatAnchor}
         isRoot={false}
       />
-      <div className='!h-[48px] mx-2 flex items-center'>
+      <div className='h-[48px]! mx-2 flex! items-center'>
         <div ref={chatAnchor}>
           <IconButtonWithToolTip
             onClick={() => {

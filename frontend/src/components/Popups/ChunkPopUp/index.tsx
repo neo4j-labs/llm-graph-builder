@@ -33,7 +33,7 @@ const ChunkPopUp = ({
   return (
     <Dialog isOpen={showChunkPopup} onClose={onClose}>
       <Dialog.Header>
-        <div className='flex flex-row items-center mb-2'>
+        <div className='flex! flex-row items-center mb-2'>
           <img
             src={chunklogo}
             style={{ width: isTablet ? 100 : 140, height: isTablet ? 100 : 140, marginRight: 10 }}
@@ -48,7 +48,7 @@ const ChunkPopUp = ({
           </div>
         </div>
         {!chunksLoading && totalPageCount != null && totalPageCount > 0 && (
-          <div className='flex flex-row justify-end'>
+          <div className='flex! flex-row justify-end'>
             <Typography variant='subheading-small'>Total Pages: {totalPageCount}</Typography>
           </div>
         )}
@@ -57,9 +57,9 @@ const ChunkPopUp = ({
         {chunksLoading ? (
           <Loader title='loading...'></Loader>
         ) : (
-          <ol className='max-h-80 overflow-y-auto flex flex-col gap-4'>
+          <ol className='max-h-80 overflow-y-auto flex! flex-col gap-4'>
             {sortedChunksData.map((c) => (
-              <li key={`${c.position}`} className='flex flex-row gap-1'>
+              <li key={`${c.position}`} className='flex! flex-row gap-1'>
                 <Flex flexDirection='column' gap='2'>
                   <Flex flexDirection='row'>
                     <Typography variant='label'>Position :</Typography>
@@ -79,7 +79,7 @@ const ChunkPopUp = ({
         )}
       </Dialog.Content>
       {totalPageCount != null && totalPageCount > 1 && (
-        <Dialog.Actions className='flex !justify-center items-center'>
+        <Dialog.Actions className='flex justify-center! items-center'>
           <Flex flexDirection='row'>
             <IconButton ariaLabel='decrementButton' isDisabled={currentPage === 1} onClick={decrementPage}>
               <ArrowLeftIconOutline />

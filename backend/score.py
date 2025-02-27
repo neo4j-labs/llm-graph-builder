@@ -41,6 +41,27 @@ logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
 MERGED_DIR = os.path.join(os.path.dirname(__file__), "merged_files")
 
+def sanitize_filename(filename):
+   """
+   Sanitize the user-provided filename to prevent directory traversal and remove unsafe characters.
+   """
+   # Remove path separators and collapse redundant separators
+   filename = os.path.basename(filename)
+   filename = os.path.normpath(filename)
+   return filename
+
+def validate_file_path(directory, filename):
+   """
+   Construct the full file path and ensure it is within the specified directory.
+   """
+   file_path = os.path.join(directory, filename)
+   abs_directory = os.path.abspath(directory)
+   abs_file_path = os.path.abspath(file_path)
+   # Ensure the file path starts with the intended directory path
+   if not abs_file_path.startswith(abs_directory):
+       raise ValueError("Invalid file path")
+   return abs_file_path
+
 def healthy_condition():
     output = {"healthy": True}
     return output
@@ -159,13 +180,14 @@ async def create_source_knowledge_graph_url(
         # Set the status "Success" becuase we are treating these error already handled by application as like custom errors.
         json_obj = {'error_message':error_message, 'status':'Success','db_url':uri, 'userName':userName, 'database':database,'success_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':email}
         logger.log_struct(json_obj, "INFO")
+        logging.exception(f'File Failed in upload: {e}')
         return create_api_response('Failed',message=message + error_message[:80],error=error_message,file_source=source_type)
     except Exception as e:
         error_message = str(e)
         message = f" Unable to create source node for source type: {source_type} and source: {source}"
         json_obj = {'error_message':error_message, 'status':'Failed','db_url':uri, 'userName':userName, 'database':database,'failed_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':email}
         logger.log_struct(json_obj, "ERROR")
-        logging.exception(f'Exception Stack trace:')
+        logging.exception(f'Exception Stack trace upload:{e}')
         return create_api_response('Failed',message=message + error_message[:80],error=error_message,file_source=source_type)
     finally:
         gc.collect()
@@ -216,8 +238,9 @@ async def extract_knowledge_graph_from_file(
         start_time = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)   
         graphDb_data_Access = graphDBdataAccess(graph)
-        merged_file_path = os.path.join(MERGED_DIR,file_name)
         if source_type == 'local file':
+            file_name = sanitize_filename(file_name)
+            merged_file_path = validate_file_path(MERGED_DIR, file_name)
             uri_latency, result = await extract_graph_from_file_local_file(uri, userName, password, database, model, merged_file_path, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions)
 
         elif source_type == 's3 bucket' and source_url:
@@ -277,44 +300,57 @@ async def extract_knowledge_graph_from_file(
         return create_api_response('Success', data=result, file_source= source_type)
     except LLMGraphBuilderException as e:
         error_message = str(e)
+        graph = create_graph_database_connection(uri, userName, password, database)   
+        graphDb_data_Access = graphDBdataAccess(graph)
         graphDb_data_Access.update_exception_db(file_name,error_message, retry_condition)
-        failed_file_process(uri,file_name, merged_file_path, source_type)
+        if source_type == 'local file':
+            failed_file_process(uri,file_name, merged_file_path)
         node_detail = graphDb_data_Access.get_current_status_document_node(file_name)
         # Set the status "Completed" in logging becuase we are treating these error already handled by application as like custom errors.
         json_obj = {'api_name':'extract','message':error_message,'file_created_at':formatted_time(node_detail[0]['created_time']),'error_message':error_message, 'file_name': file_name,'status':'Completed',
                     'db_url':uri, 'userName':userName, 'database':database,'success_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':email}
         logger.log_struct(json_obj, "INFO")
+        logging.exception(f'File Failed in extraction: {e}')
         return create_api_response("Failed", message = error_message, error=error_message, file_name=file_name)
     except Exception as e:
         message=f"Failed To Process File:{file_name} or LLM Unable To Parse Content "
         error_message = str(e)
+        graph = create_graph_database_connection(uri, userName, password, database)   
+        graphDb_data_Access = graphDBdataAccess(graph)
         graphDb_data_Access.update_exception_db(file_name,error_message, retry_condition)
-        failed_file_process(uri,file_name, merged_file_path, source_type)
+        if source_type == 'local file':
+            failed_file_process(uri,file_name, merged_file_path)
         node_detail = graphDb_data_Access.get_current_status_document_node(file_name)
         
         json_obj = {'api_name':'extract','message':message,'file_created_at':formatted_time(node_detail[0]['created_time']),'error_message':error_message, 'file_name': file_name,'status':'Failed',
                     'db_url':uri, 'userName':userName, 'database':database,'failed_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':email}
         logger.log_struct(json_obj, "ERROR")
+        logging.exception(f'File Failed in extraction: {e}')
         return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = file_name)
     finally:
         gc.collect()
             
-@app.get("/sources_list")
-async def get_source_list(uri:str=None, userName:str=None, password:str=None, email:str=None, database:str=None):
+@app.post("/sources_list")
+async def get_source_list(
+    uri=Form(None),
+    userName=Form(None),
+    password=Form(None),
+    database=Form(None),
+    email=Form(None)):
     """
     Calls 'get_source_list_from_graph' which returns list of sources which already exist in databse
     """
     try:
         start = time.time()
-        if password is not None and password != "null":
-            decoded_password = decode_password(password)
-        else:
-            decoded_password = None
-            userName = None
-            database = None
-        if " " in uri:
-            uri = uri.replace(" ","+")
-        result = await asyncio.to_thread(get_source_list_from_graph,uri,userName,decoded_password,database)
+        # if password is not None and password != "null":
+        #     decoded_password = decode_password(password)
+        # else:
+        #     decoded_password = None
+        #     userName = None
+        #     database = None
+        # if " " in uri:
+        #     uri = uri.replace(" ","+")
+        result = await asyncio.to_thread(get_source_list_from_graph,uri,userName,password,database)
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name':'sources_list','db_url':uri, 'userName':userName, 'database':database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}

@@ -69,7 +69,7 @@ function RetryConfirmationDialog({
           })}
         </Flex>
         <Dialog.Actions>
-          <Dialog.Actions className='!mt-3'>
+          <Dialog.Actions className='mt-3!'>
             <ButtonWithToolTip
               placement='left'
               label='Retry action button'

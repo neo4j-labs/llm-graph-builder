@@ -20,9 +20,10 @@ class graphDBdataAccess:
         try:
             job_status = "Failed"
             result = self.get_current_status_document_node(file_name)
-            is_cancelled_status = result[0]['is_cancelled']
-            if bool(is_cancelled_status) == True:
-                job_status = 'Cancelled'
+            if len(result) > 0:
+                is_cancelled_status = result[0]['is_cancelled']
+                if bool(is_cancelled_status) == True:
+                    job_status = 'Cancelled'
             if retry_condition is not None: 
                 retry_condition = None
                 self.graph.query("""MERGE(d:Document {fileName :$fName}) SET d.status = $status, d.errorMessage = $error_msg, d.retry_condition = $retry_condition""",
@@ -563,3 +564,12 @@ class graphDBdataAccess:
         except Exception as e:
             print(f"Error in getting node labels/relationship types from db: {e}")
             return []
+
+    def get_websource_url(self,file_name):
+        logging.info("Checking if same title with different URL exist in db ")
+        query = """
+                MATCH(d:Document {fileName : $file_name}) WHERE d.fileSource = "web-url" 
+                RETURN d.url AS url
+                """
+        param = {"file_name" : file_name}
+        return self.execute_query(query, param)

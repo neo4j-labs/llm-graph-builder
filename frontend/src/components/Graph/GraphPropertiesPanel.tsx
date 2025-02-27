@@ -69,7 +69,7 @@ const GraphPropertiesPanel = ({ inspectedItem, newScheme }: GraphPropertiesPanel
         <h6 className='mr-auto'>{inspectedItemType === 'node' ? 'Node details' : 'Relationship details'}</h6>
       </ResizePanelDetails.Title>
       <ResizePanelDetails.Content>
-        <div className='mx-4 flex flex-row flex-wrap gap-2'>
+        <div className='mx-4 flex! flex-row flex-wrap gap-2'>
           {isNode(inspectedItem) ? (
             labelsSorted.map((label) => (
               <LegendsChip type='node' key={`node ${label}`} label={label} scheme={newScheme} />

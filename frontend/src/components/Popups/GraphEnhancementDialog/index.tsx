@@ -39,9 +39,9 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
       hasDisabledCloseButton={false}
       onClose={onClose}
     >
-      <Dialog.Header className='flex justify-between self-end !mb-0 '>
+      <Dialog.Header className='flex justify-between self-end mb-0! '>
         <div className='n-bg-palette-neutral-bg-weak px-4'>
-          <div className='flex flex-row items-center mb-2'>
+          <div className='flex! flex-row items-center mb-2'>
             <img
               src={graphenhancement}
               style={{

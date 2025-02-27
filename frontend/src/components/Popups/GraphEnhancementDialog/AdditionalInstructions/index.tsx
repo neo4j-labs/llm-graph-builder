@@ -11,7 +11,7 @@ import { tokens } from '@neo4j-ndl/base';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
 import { useCallback } from 'react';
 import { useFileContext } from '../../../../context/UsersFiles';
-import { showNormalToast } from '../../../../utils/toasts';
+import { showNormalToast } from '../../../../utils/Toasts';
 import { OnChangeValue } from 'react-select';
 import { OptionType } from '../../../../types';
 
@@ -94,7 +94,7 @@ export default function AdditionalInstructionsText({
             size='small'
           />
         </Flex>
-        <Flex className='!mt-4 mb-2 flex items-center' flexDirection='row' justifyContent='flex-end'>
+        <Flex className='mt-4! mb-2 flex! items-center' flexDirection='row' justifyContent='flex-end'>
           <Flex flexDirection='row' gap='4'>
             <ButtonWithToolTip
               placement='top'
@@ -113,7 +113,7 @@ export default function AdditionalInstructionsText({
           <h5>{appLabels.chunkingConfiguration}</h5>
         </div>
         <Select
-          label='Chunk Size'
+          label='Token Count Per Chunk'
           size={!tablet ? 'large' : 'medium'}
           selectProps={{
             options: defaultTokenChunkSizeOptions.map((value) => ({
@@ -134,6 +134,7 @@ export default function AdditionalInstructionsText({
                 `,
           }}
           type='creatable'
+          helpText='The maximum token limit is 10,000 for LLM processing. The total number of chunks will be calculated as 10,000 divided by the tokens per chunk you select. For example, selecting 500 tokens per chunk results in 20 chunks (10,000 / 500).'
         />
         <Select
           label='Chunk Overlap'

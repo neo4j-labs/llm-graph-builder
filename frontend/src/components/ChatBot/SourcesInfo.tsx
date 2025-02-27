@@ -37,8 +37,8 @@ const SourcesInfo: FC<SourcesProps> = ({ loading, mode, chunks, sources }) => {
             .map((c) => ({ fileName: c.fileName, fileSource: c.fileSource }))
             .map((s, index) => {
               return (
-                <li key={index} className='flex flex-row inline-block justify-between items-center p-2'>
-                  <div className='flex flex-row inline-block justify-between items-center'>
+                <li key={index} className='flex! flex-row inline-block justify-between items-center p-2'>
+                  <div className='flex! flex-row inline-block justify-between items-center'>
                     {s.fileSource === 'local file' ? (
                       <DocumentTextIconOutline className='n-size-token-7 mr-2' />
                     ) : (
@@ -59,11 +59,11 @@ const SourcesInfo: FC<SourcesProps> = ({ loading, mode, chunks, sources }) => {
         <ul className='list-class list-none'>
           {sources.map((link, index) => {
             return (
-              <li key={index} className='flex flex-row inline-block justify-between items-center p-2'>
+              <li key={index} className='flex! flex-row inline-block justify-between items-center p-2'>
                 {link?.startsWith('http') || link?.startsWith('https') ? (
                   <>
                     {isAllowedHost(link, ['wikipedia.org']) && (
-                      <div className='flex flex-row inline-block justify-between items-center'>
+                      <div className='flex! flex-row inline-block justify-between items-center'>
                         <img src={wikipedialogo} width={20} height={20} className='mr-2' alt='Wikipedia Logo' />
                         <TextLink href={link} isExternalLink={true}>
                           <HoverableLink url={link}>
@@ -78,7 +78,7 @@ const SourcesInfo: FC<SourcesProps> = ({ loading, mode, chunks, sources }) => {
                       </div>
                     )}
                     {isAllowedHost(link, ['storage.googleapis.com']) && (
-                      <div className='flex flex-row inline-block justify-between items-center'>
+                      <div className='flex! flex-row inline-block justify-between items-center'>
                         <img src={gcslogo} width={20} height={20} className='mr-2' alt='Google Cloud Storage Logo' />
                         <Typography
                           variant='body-medium'
@@ -90,7 +90,7 @@ const SourcesInfo: FC<SourcesProps> = ({ loading, mode, chunks, sources }) => {
                     )}
                     {youtubeLinkValidation(link) && (
                       <>
-                        <div className='flex flex-row inline-block justiy-between items-center'>
+                        <div className='flex! flex-row inline-block justiy-between items-center'>
                           <img src={youtubelogo} width={20} height={20} className='mr-2' />
                           <TextLink href={link} isExternalLink={true}>
                             <HoverableLink url={link}>
@@ -107,7 +107,7 @@ const SourcesInfo: FC<SourcesProps> = ({ loading, mode, chunks, sources }) => {
                     )}
                     {!link?.startsWith('s3://') &&
                       !isAllowedHost(link, ['storage.googleapis.com', 'wikipedia.org', 'www.youtube.com']) && (
-                        <div className='flex flex-row inline-block justify-between items-center'>
+                        <div className='flex! flex-row inline-block justify-between items-center'>
                           <GlobeAltIconOutline className='n-size-token-7' />
                           <TextLink href={link} isExternalLink={true}>
                             <Typography variant='body-medium'>{link}</Typography>
@@ -116,7 +116,7 @@ const SourcesInfo: FC<SourcesProps> = ({ loading, mode, chunks, sources }) => {
                       )}
                   </>
                 ) : link?.startsWith('s3://') ? (
-                  <div className='flex flex-row inline-block justify-between items-center'>
+                  <div className='flex! flex-row inline-block justify-between items-center'>
                     <img src={s3logo} width={20} height={20} className='mr-2' alt='S3 Logo' />
                     <Typography
                       variant='body-medium'
@@ -126,7 +126,7 @@ const SourcesInfo: FC<SourcesProps> = ({ loading, mode, chunks, sources }) => {
                     </Typography>
                   </div>
                 ) : (
-                  <div className='flex flex-row inline-block justify-between items-center'>
+                  <div className='flex! flex-row inline-block justify-between items-center'>
                     <DocumentTextIconOutline className='n-size-token-7 mr-2' />
                     <Typography
                       variant='body-medium'

@@ -5,7 +5,7 @@ import { useCredentials } from '../../../context/UserCredentials';
 import { useFileContext } from '../../../context/UsersFiles';
 import { buttonCaptions } from '../../../utils/Constants';
 import ButtonWithToolTip from '../../UI/ButtonWithToolTip';
-import { showNormalToast, showSuccessToast } from '../../../utils/toasts';
+import { showNormalToast, showSuccessToast } from '../../../utils/Toasts';
 
 const SchemaFromTextDialog = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
   const [userText, setUserText] = useState<string>('');
@@ -111,7 +111,7 @@ const SchemaFromTextDialog = ({ open, onClose }: { open: boolean; onClose: () =>
           }}
           size='large'
         />
-        <Dialog.Actions className='!mt-4'>
+        <Dialog.Actions className='mt-4!'>
           <Checkbox
             label='Text is schema description'
             onChange={(e) => {

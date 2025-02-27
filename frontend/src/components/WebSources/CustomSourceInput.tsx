@@ -62,7 +62,7 @@ export default function CustomSourceInput({
         </div>
       </Box>
       <Flex flexDirection='row' justifyContent='flex-end'>
-        <div>
+        <div className='websource-btn-container'>
           <Button
             isDisabled={value.trim() === ''}
             color='neutral'

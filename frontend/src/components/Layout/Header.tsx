@@ -83,7 +83,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
             <Typography variant='h6' as='a' href='#app-bar-with-responsive-menu'>
               <img
                 src={colorMode === 'dark' ? Neo4jLogoBW : Neo4jLogoColor}
-                className='h-8 min-h-8 min-w-8'
+                className='h-8! min-h-8 min-w-8'
                 alt='Neo4j Logo'
               />
             </Typography>
@@ -229,7 +229,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                     <ArrowDownTrayIconOutline />
                   </IconButtonWithToolTip>
                   <>
-                    <TextLink ref={downloadLinkRef} className='!hidden'>
+                    <TextLink ref={downloadLinkRef} className='hidden!'>
                       ""
                     </TextLink>
                   </>

@@ -1,8 +1,7 @@
 import os
 import logging
 from google.cloud import storage
-from langchain_community.document_loaders import GCSFileLoader, GCSDirectoryLoader
-from langchain_community.document_loaders import PyMuPDFLoader
+from langchain_community.document_loaders import GCSFileLoader
 from langchain_core.documents import Document
 from PyPDF2 import PdfReader
 import io
@@ -42,8 +41,9 @@ def get_gcs_bucket_files_info(gcs_project_id, gcs_bucket_name, gcs_bucket_folder
       logging.exception(f'Exception Stack trace: {error_message}')
       raise LLMGraphBuilderException(error_message)
 
-def load_pdf(file_path):
-    return PyMuPDFLoader(file_path)
+def gcs_loader_func(file_path):
+   loader, _ = load_document_content(file_path)
+   return loader
 
 def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token=None):
   nltk.download('punkt')
@@ -64,7 +64,7 @@ def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, g
     blob = bucket.blob(blob_name) 
     
     if blob.exists():
-        loader = GCSFileLoader(project_name=gcs_project_id, bucket=gcs_bucket_name, blob=blob_name, loader_func=load_document_content)
+        loader = GCSFileLoader(project_name=gcs_project_id, bucket=gcs_bucket_name, blob=blob_name, loader_func=gcs_loader_func)
         pages = loader.load() 
     else :
       raise LLMGraphBuilderException('File does not exist, Please re-upload the file and try again.')
@@ -115,7 +115,7 @@ def merge_file_gcs(bucket_name, original_file_name: str, folder_name_sha1_hashed
         if blob.exists():
           logging.info(f'Blob Name: {blob.name}')
           chunks.append(blob.download_as_bytes())
-        blob.delete()
+          blob.delete()
       
       merged_file = b"".join(chunks)
       file_name_with__hashed_folder = folder_name_sha1_hashed +'/'+original_file_name

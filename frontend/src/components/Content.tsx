@@ -32,8 +32,8 @@ import { tokens } from '@neo4j-ndl/base';
 import axios from 'axios';
 import DatabaseStatusIcon from './UI/DatabaseStatusIcon';
 import RetryConfirmationDialog from './Popups/RetryConfirmation/Index';
-import retry from '../services/retry';
-import { showErrorToast, showNormalToast, showSuccessToast } from '../utils/toasts';
+import retry from '../services/Retry';
+import { showErrorToast, showNormalToast, showSuccessToast } from '../utils/Toasts';
 import { useMessageContext } from '../context/UserMessages';
 import PostProcessingToast from './Popups/GraphEnhancementDialog/PostProcessingCheckList/PostProcessingToast';
 import { getChunkText } from '../services/getChunkText';
@@ -154,10 +154,10 @@ const Content: React.FC<ContentProps> = ({
               ? postProcessingTasks.filter((task) => task !== 'graph_schema_consolidation')
               : postProcessingTasks
             : hasSelections
-              ? postProcessingTasks.filter(
+            ? postProcessingTasks.filter(
                 (task) => task !== 'graph_schema_consolidation' && task !== 'enable_communities'
               )
-              : postProcessingTasks.filter((task) => task !== 'enable_communities');
+            : postProcessingTasks.filter((task) => task !== 'enable_communities');
           if (payload.length) {
             const response = await postProcessing(payload);
             if (response.data.status === 'Success') {
@@ -611,12 +611,12 @@ const Content: React.FC<ContentProps> = ({
           return prev.map((f) => {
             return f.name === filename
               ? {
-                ...f,
-                status: 'Ready to Reprocess',
-                processingProgress: isStartFromBegining ? 0 : f.processingProgress,
-                nodesCount: isStartFromBegining ? 0 : f.nodesCount,
-                relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
-              }
+                  ...f,
+                  status: 'Ready to Reprocess',
+                  processingProgress: isStartFromBegining ? 0 : f.processingProgress,
+                  nodesCount: isStartFromBegining ? 0 : f.nodesCount,
+                  relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
+                }
               : f;
           });
         });
@@ -889,7 +889,7 @@ const Content: React.FC<ContentProps> = ({
             <span className='h6 px-1'>Neo4j connection {isReadOnlyUser ? '(Read only Mode)' : ''}</span>
             <Typography variant='body-medium'>
               <DatabaseStatusIcon isConnected={connectionStatus} isGdsActive={isGdsActive} uri={userCredentials?.uri} />
-              <div className='pt-1 flex gap-1 items-center'>
+              <div className='pt-1 flex! gap-1 items-center'>
                 <div>{!hasSelections ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}</div>
                 <div>
                   {hasSelections ? (
@@ -909,7 +909,7 @@ const Content: React.FC<ContentProps> = ({
               placement='top'
               text='Enhance graph quality'
               label='Graph Enhancemnet Settings'
-              className='mr-2.5'
+              className='mr-2!'
               onClick={toggleEnhancementDialog}
               disabled={!connectionStatus || isReadOnlyUser}
               size={isTablet ? 'small' : 'medium'}
@@ -919,7 +919,7 @@ const Content: React.FC<ContentProps> = ({
             {!connectionStatus ? (
               <Button
                 size={isTablet ? 'small' : 'medium'}
-                className='mr-2.5'
+                className='mr-2!'
                 onClick={() => setOpenConnection((prev) => ({ ...prev, openPopUp: true }))}
               >
                 {buttonCaptions.connectToNeo4j}
@@ -1006,6 +1006,7 @@ const Content: React.FC<ContentProps> = ({
               placement='top'
               fill='outlined'
               onClick={handleSchemaView}
+              disabled={!connectionStatus}
             >
               <Hierarchy1Icon />
             </ButtonWithToolTip>

@@ -118,23 +118,34 @@ Allow unauthenticated request : Yes
 |-------------------------|--------------------|---------------|--------------------------------------------------------------------------------------------------|
 |                                                                                                                                                                 |
 | **BACKEND ENV** 
-| EMBEDDING_MODEL         | Optional           | all-MiniLM-L6-v2 | Model for generating the text embedding (all-MiniLM-L6-v2 , openai , vertexai)                |
-| IS_EMBEDDING            | Optional           | true          | Flag to enable text embedding                                                                    |
-| KNN_MIN_SCORE           | Optional           | 0.94          | Minimum score for KNN algorithm                                                                  |
-| GEMINI_ENABLED          | Optional           | False         | Flag to enable Gemini                                                                             |
-| GCP_LOG_METRICS_ENABLED | Optional           | False         | Flag to enable Google Cloud logs                                                                 |
-| NUMBER_OF_CHUNKS_TO_COMBINE | Optional       | 5             | Number of chunks to combine when processing embeddings                                           |
-| UPDATE_GRAPH_CHUNKS_PROCESSED | Optional     | 20            | Number of chunks processed before updating progress                                        |
-| NEO4J_URI               | Optional           | neo4j://database:7687 | URI for Neo4j database                                                                  |
-| NEO4J_USERNAME          | Optional           | neo4j         | Username for Neo4j database                                                                       |
-| NEO4J_PASSWORD          | Optional           | password      | Password for Neo4j database                                                                       |
-| LANGCHAIN_API_KEY       | Optional           |               | API key for Langchain                                                                             |
-| LANGCHAIN_PROJECT       | Optional           |               | Project for Langchain                                                                             |
-| LANGCHAIN_TRACING_V2    | Optional           | true          | Flag to enable Langchain tracing                                                                  |
-| GCS_FILE_CACHE          | Optional           | False         | If set to True, will save the files to process into GCS. If set to False, will save the files locally   |
-| LANGCHAIN_ENDPOINT      | Optional           | https://api.smith.langchain.com | Endpoint for Langchain API                                                            |
-| ENTITY_EMBEDDING        | Optional           | False         | If set to True, It will add embeddings for each entity in database |
-| LLM_MODEL_CONFIG_ollama_<model_name>         | Optional      |               | Set ollama config as - model_name,model_local_url for local deployments |
+| OPENAI_API_KEY          | Mandatory           |            |An OpenAPI Key is required to use open LLM model to authenticate andn track requests                |
+| DIFFBOT_API_KEY         | Mandatory           |            |API key is required to use Diffbot's NLP service to extraction entities and relatioship from unstructured data|
+| BUCKET                  | Mandatory           |            |bucket name to store uploaded file on GCS                                                           |
+| NEO4J_USER_AGENT        | Optional            | llm-graph-builder        | Name of the user agent to track neo4j database activity                              |
+| ENABLE_USER_AGENT       | Optional            | true       | Boolean value to enable/disable neo4j user agent                                                   |
+| DUPLICATE_TEXT_DISTANCE | Mandatory            | 5 | This value used to find distance for all node pairs in the graph and calculated based on node properties    |
+| DUPLICATE_SCORE_VALUE   | Mandatory            | 0.97 | Node score value to match duplicate node                                                                 |
+| EFFECTIVE_SEARCH_RATIO  | Mandatory            | 1 |                 |
+| GRAPH_CLEANUP_MODEL     | Optional            | 0.97 |  Model name to clean-up graph in post processing                                                           |
+| MAX_TOKEN_CHUNK_SIZE    | Optional            | 10000 | Maximum token size to process file content                                                               |
+| YOUTUBE_TRANSCRIPT_PROXY| Optional            |   | Proxy key to process youtube video for getting transcript                                                   |
+| EMBEDDING_MODEL         | Optional            | all-MiniLM-L6-v2 | Model for generating the text embedding (all-MiniLM-L6-v2 , openai , vertexai)                |
+| IS_EMBEDDING            | Optional            | true          | Flag to enable text embedding                                                                    |
+| KNN_MIN_SCORE           | Optional            | 0.94          | Minimum score for KNN algorithm                                                                  |
+| GEMINI_ENABLED          | Optional            | False         | Flag to enable Gemini                                                                             |
+| GCP_LOG_METRICS_ENABLED | Optional            | False         | Flag to enable Google Cloud logs                                                                 |
+| NUMBER_OF_CHUNKS_TO_COMBINE | Optional        | 5             | Number of chunks to combine when processing embeddings                                           |
+| UPDATE_GRAPH_CHUNKS_PROCESSED | Optional      | 20            | Number of chunks processed before updating progress                                        |
+| NEO4J_URI               | Optional            | neo4j://database:7687 | URI for Neo4j database                                                                  |
+| NEO4J_USERNAME          | Optional            | neo4j         | Username for Neo4j database                                                                       |
+| NEO4J_PASSWORD          | Optional            | password      | Password for Neo4j database                                                                       |
+| LANGCHAIN_API_KEY       | Optional            |               | API key for Langchain                                                                             |
+| LANGCHAIN_PROJECT       | Optional            |               | Project for Langchain                                                                             |
+| LANGCHAIN_TRACING_V2    | Optional            | true          | Flag to enable Langchain tracing                                                                  |
+| GCS_FILE_CACHE          | Optional            | False         | If set to True, will save the files to process into GCS. If set to False, will save the files locally   |
+| LANGCHAIN_ENDPOINT      | Optional            | https://api.smith.langchain.com | Endpoint for Langchain API                                                            |
+| ENTITY_EMBEDDING        | Optional            | False         | If set to True, It will add embeddings for each entity in database |
+| LLM_MODEL_CONFIG_ollama_<model_name>          | Optional      |               | Set ollama config as - model_name,model_local_url for local deployments |
 | RAGAS_EMBEDDING_MODEL         | Optional      | openai              | embedding model used by ragas evaluation framework                               |
 |                                                                                                                                                                        |
 | **FRONTEND ENV** 
@@ -151,18 +162,22 @@ Allow unauthenticated request : Yes
 | VITE_AUTH0_CLIENT_ID | Mandatory if you are enabling Authentication otherwise it is optional |       |Okta Oauth Client ID for authentication
 | VITE_AUTH0_DOMAIN | Mandatory if you are enabling Authentication otherwise it is optional |           | Okta Oauth Cliend Domain
 | VITE_SKIP_AUTH | Optional | true | Flag to skip the authentication 
+| VITE_CHUNK_OVERLAP | Optional |   20  | variable to configure chunk overlap
+| VITE_TOKENS_PER_CHUNK | Optional |  100  | variable to configure tokens count per chunk.This gives flexibility for users who may require different chunk sizes for various tokenization tasks, especially when working with large datasets or specific language models.
+| VITE_CHUNK_TO_COMBINE | Optional |   1  | variable to configure number of chunks to combine for parllel processing. 
 
 ## LLMs Supported 
 1. OpenAI
 2. Gemini
-3. Azure OpenAI(dev deployed version)
-4. Anthropic(dev deployed version)
-5. Fireworks(dev deployed version)
-6. Groq(dev deployed version)
-7. Amazon Bedrock(dev deployed version)
-8. Ollama(dev deployed version)
-9. Diffbot
-10. Other OpenAI compabtile baseurl models(dev deployed version)
+3. Diffbot
+4. Azure OpenAI(dev deployed version)
+5. Anthropic(dev deployed version)
+6. Fireworks(dev deployed version)
+7. Groq(dev deployed version)
+8. Amazon Bedrock(dev deployed version)
+9. Ollama(dev deployed version)
+10. Deepseek(dev deployed version)
+11. Other OpenAI compabtile baseurl models(dev deployed version)
 
 ## For local llms (Ollama)
 1. Pull the docker imgage of ollama

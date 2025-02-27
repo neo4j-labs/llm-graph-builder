@@ -81,10 +81,10 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     error?.length
       ? 10
       : mode === chatModeLables['global search+vector+fulltext']
-        ? 7
-        : mode === chatModeLables.graph
-          ? 4
-          : 3
+      ? 7
+      : mode === chatModeLables.graph
+      ? 4
+      : 3
   );
   const [, copy] = useCopyToClipboard();
   const [copiedText, setcopiedText] = useState<boolean>(false);
@@ -97,15 +97,15 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     multiModelMetrics.length > 0 && Object.keys(multiModelMetrics[0]).length > 4
       ? true
       : multiModelMetrics.length > 0 && Object.keys(multiModelMetrics[0]).length <= 4
-        ? false
-        : null
+      ? false
+      : null
   );
   const [isAdditionalMetricsWithSingleMode, setIsAdditionalMetricsWithSingleMode] = useState<boolean | null>(
     metricDetails != undefined && Object.keys(metricDetails).length > 3
       ? true
       : metricDetails != undefined && Object.keys(metricDetails).length <= 3
-        ? false
-        : null
+      ? false
+      : null
   );
   const actions: React.ComponentProps<typeof IconButton<'button'>>[] = useMemo(
     () => [
@@ -315,13 +315,13 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   );
   return (
     <div className='n-bg-palette-neutral-bg-weak p-4'>
-      <div className='flex flex-row pb-6 items-center mb-2'>
+      <div className='flex! flex-row pb-6 items-center mb-2'>
         <img
           src={Neo4jRetrievalLogo}
           style={{ width: isTablet ? 80 : 95, height: isTablet ? 80 : 95, marginRight: 10 }}
           loading='lazy'
         />
-        <div className='flex flex-col'>
+        <div className='flex! flex-col'>
           <Typography variant='h2'>Retrieval information</Typography>
           <Typography variant='body-medium' className='mb-2'>
             To generate this response, the process took <span className='font-bold'>{response_time} seconds,</span>
@@ -349,9 +349,9 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               {mode != chatModeLables.graph ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
               {mode != chatModeLables.graph ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
               {mode === chatModeLables['graph+vector'] ||
-                mode === chatModeLables.graph ||
-                mode === chatModeLables['graph+vector+fulltext'] ||
-                mode === chatModeLables['entity search+vector'] ? (
+              mode === chatModeLables.graph ||
+              mode === chatModeLables['graph+vector+fulltext'] ||
+              mode === chatModeLables['entity search+vector'] ? (
                 <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>
               ) : (
                 <></>
@@ -499,7 +499,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         )}
       </Flex>
       {activeTab == 4 && nodes?.length && relationships?.length && mode !== chatModeLables.graph ? (
-        <div className='button-container flex mt-2 justify-center'>
+        <div className='button-container flex! mt-2 justify-center'>
           <GraphViewButton
             nodeValues={nodes}
             relationshipValues={relationships}

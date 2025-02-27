@@ -4,7 +4,7 @@ import { connectAPI } from '../../../services/ConnectAPI';
 import { useCredentials } from '../../../context/UserCredentials';
 import { useSearchParams } from 'react-router-dom';
 import { buttonCaptions } from '../../../utils/Constants';
-import { createVectorIndex } from '../../../services/vectorIndexCreation';
+import { createVectorIndex } from '../../../services/VectorIndexCreation';
 import { ConnectionModalProps, Message, UserCredentials } from '../../../types';
 import VectorIndexMisMatchAlert from './VectorIndexMisMatchAlert';
 import { useAuth0 } from '@auth0/auth0-react';

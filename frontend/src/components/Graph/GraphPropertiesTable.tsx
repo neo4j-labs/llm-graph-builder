@@ -5,7 +5,7 @@ const GraphPropertiesTable = ({ propertiesWithTypes }: GraphPropertiesTableProps
   console.log('proerties', propertiesWithTypes);
   return (
     <div className='flex w-full flex-col break-all px-4 text-sm' data-testid='viz-details-pane-properties-table'>
-      <div className='mb-1 flex flex-row pl-2'>
+      <div className='mb-1 flex! flex-row pl-2'>
         <Typography variant='body-medium' className='basis-1/3'>
           Key
         </Typography>
@@ -15,11 +15,11 @@ const GraphPropertiesTable = ({ propertiesWithTypes }: GraphPropertiesTableProps
         .filter(({ value }) => value !== undefined && value !== null && value !== '' && !Array.isArray(value))
         .map(({ key, value }, _) => {
           return (
-            <div key={key} className='border-palette-neutral-border-weak flex border-t py-1 pl-2 first:border-none'>
+            <div key={key} className='border-palette-neutral-border-weak flex! border-t py-1 pl-2 first:border-none'>
               <div className='shrink basis-1/3 overflow-hidden whitespace-nowrap'>
                 <GraphLabel
                   type='propertyKey'
-                  className='pointer-events-none !max-w-full overflow-ellipsis'
+                  className='pointer-events-none max-w-full! text-ellipsis'
                   htmlAttributes={{
                     tabIndex: -1,
                   }}

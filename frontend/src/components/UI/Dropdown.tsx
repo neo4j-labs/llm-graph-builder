@@ -29,7 +29,7 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
         <Select
           type='select'
           label='LLM Models'
-          helpText={<div className='!w-max'> LLM Model used for Extraction & Chat</div>}
+          helpText={<div className='w-max!'> LLM Model used for Extraction & Chat</div>}
           selectProps={{
             onChange: handleChange,
             // @ts-ignore
