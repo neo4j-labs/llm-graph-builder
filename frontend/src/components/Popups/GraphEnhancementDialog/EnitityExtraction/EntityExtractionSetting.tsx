@@ -257,7 +257,7 @@ export default function EntityExtractionSetting({
         <Select
           helpText='Schema Examples'
           label='Predefined Schema'
-          size={view === 'Tabs' && !isTablet ? 'large' : isTablet ? 'small' : 'medium'}
+          size='medium'
           selectProps={{
             isClearable: true,
             isMulti: true,
@@ -274,32 +274,30 @@ export default function EntityExtractionSetting({
         <Select
           helpText='You can select more than one values'
           label='Node Labels'
-          size={view === 'Tabs' && !isTablet ? 'large' : isTablet ? 'small' : 'medium'}
+          size='medium'
           selectProps={{
             isClearable: true,
             isMulti: true,
             options: nodeLabelOptions,
             onChange: onChangenodes,
             value: selectedNodes,
-            classNamePrefix: `${
-              isTablet ? 'tablet_entity_extraction_Tab_node_label' : 'entity_extraction_Tab_node_label'
-            }`,
+            classNamePrefix: `${isTablet ? 'tablet_entity_extraction_Tab_node_label' : 'entity_extraction_Tab_node_label'
+              }`,
           }}
           type='creatable'
         />
         <Select
           helpText='You can select more than one values'
           label='Relationship Types'
-          size={view === 'Tabs' && !isTablet ? 'large' : isTablet ? 'small' : 'medium'}
+          size='medium'
           selectProps={{
             isClearable: true,
             isMulti: true,
             options: relationshipTypeOptions,
             onChange: onChangerels,
             value: selectedRels,
-            classNamePrefix: `${
-              isTablet ? 'tablet_entity_extraction_Tab_relationship_label' : 'entity_extraction_Tab_relationship_label'
-            }`,
+            classNamePrefix: `${isTablet ? 'tablet_entity_extraction_Tab_relationship_label' : 'entity_extraction_Tab_relationship_label'
+              }`,
           }}
           type='creatable'
         />

@@ -114,7 +114,7 @@ export default function AdditionalInstructionsText({
         </div>
         <Select
           label='Token Count Per Chunk'
-          size={!tablet ? 'large' : 'medium'}
+          size='medium'
           selectProps={{
             options: defaultTokenChunkSizeOptions.map((value) => ({
               value: value.toString(),
@@ -138,7 +138,7 @@ export default function AdditionalInstructionsText({
         />
         <Select
           label='Chunk Overlap'
-          size={!tablet ? 'large' : 'medium'}
+          size='medium'
           selectProps={{
             isMulti: false,
             options: defaultChunkOverlapOptions.map((value) => ({
@@ -155,7 +155,7 @@ export default function AdditionalInstructionsText({
         />
         <Select
           label='Chunks to combine'
-          size={!tablet ? 'large' : 'medium'}
+          size='medium'
           selectProps={{
             isMulti: false,
             options: defaultChunksToCombineOptions.map((value) => ({
