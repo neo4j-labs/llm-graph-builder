@@ -45,10 +45,10 @@ function DeletePopUp({
         )}
       </Dialog.Content>
       <Dialog.Actions className='mt-3'>
-        <Button onClick={deleteCloseHandler} size='large' isDisabled={loading}>
+        <Button onClick={deleteCloseHandler} isDisabled={loading}>
           Cancel
         </Button>
-        <Button onClick={() => deleteHandler(deleteEntities)} size='large' isLoading={loading}>
+        <Button onClick={() => deleteHandler(deleteEntities)} isLoading={loading}>
           Continue
         </Button>
       </Dialog.Actions>
