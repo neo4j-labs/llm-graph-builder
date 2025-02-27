@@ -332,7 +332,6 @@ export default function DeduplicationTab() {
               await clickHandler();
               await fetchDuplicateNodes();
             }}
-            size='large'
             loading={mergeAPIloading}
             text={
               isLoading

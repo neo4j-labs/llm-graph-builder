@@ -122,7 +122,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
         ) : (
           <Drawer.Body className='overflow-hidden! w-[294px]!'>
             <Typography variant='subheading-medium'>
-              This user account does not have permission to access or manage data sources.
+              The database connection or anonymous access does not have permission to access or manage data sources.
             </Typography>
           </Drawer.Body>
         )}
