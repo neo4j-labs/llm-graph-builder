@@ -982,12 +982,12 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
   useEffect(() => {
     setSelectedRows(table.getSelectedRowModel().rows.map((i) => i.id));
   }, [table.getSelectedRowModel()]);
-
+  const shouldRender = filesData.length === 0 && pathname === '/readonly' && connectionStatus === true;
   return (
     <>
       {filesData ? (
         <>
-          {filesData.length === 0 && pathname === '/readonly' && connectionStatus && (
+          {shouldRender && connectionStatus === true && (
             <Dialog hasDisabledCloseButton={true} isOpen={true}>
               <Dialog.Content>
                 <Login />
