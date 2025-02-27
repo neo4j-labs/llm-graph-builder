@@ -45,12 +45,12 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
                 label: !isModelSupported ? (
                   <Tooltip type='simple' placement={isLargeDesktop ? 'left' : 'right'}>
                     <Tooltip.Trigger>
-                      <span>{label}</span>
+                      <span className='text-nowrap'>{label}</span>
                     </Tooltip.Trigger>
                     <Tooltip.Content>Available In Development Version</Tooltip.Content>
                   </Tooltip>
                 ) : (
-                  <span>{label}</span>
+                  <span className='text-nowrap'>{label}</span>
                 ),
                 value,
                 isDisabled: !isModelSupported,
