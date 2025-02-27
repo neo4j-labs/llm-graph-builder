@@ -987,7 +987,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
     <>
       {filesData ? (
         <>
-          {filesData.length === 0 && pathname === '/readonly' && (
+          {filesData.length === 0 && pathname === '/readonly' && connectionStatus && (
             <Dialog hasDisabledCloseButton={true} isOpen={true}>
               <Dialog.Content>
                 <Login />
