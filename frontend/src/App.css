@@ -90,7 +90,26 @@
     box-shadow: -12px 0 #FFF, 12px 0 rgb(var(--theme-palette-primary-bg-strong));
   }
 }
-
+.dropdownbtn{
+  background-color: #014063;
+  color: white !important;
+  border-radius: unset !important;
+  width: 35px;
+  padding: 0.5rem;
+}
+.dropdownbtn:hover{
+  background-color: #02293d !important;
+}
+.graphbtn{
+  border-top-right-radius: 0px !important;
+  border-bottom-right-radius: 0px !important;
+}
+.dropdownbtn.darktheme{
+  background-color: #51A6B1;
+}
+.darktheme:hover{
+  background-color: #44929c !important;
+}
 .ndl-dropzone>div {
   padding-top: 10px !important;
   padding-bottom: 10px !important;
