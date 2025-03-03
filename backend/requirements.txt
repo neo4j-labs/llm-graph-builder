@@ -29,7 +29,7 @@ neo4j-rust-ext
 nltk==3.9.1
 openai==1.59.9
 opencv-python==4.10.0.84
-psutil==6.1.0
+psutil==7.0.0
 pydantic==2.9.2
 python-dotenv==1.0.1
 python-magic==0.4.27
