@@ -81,7 +81,6 @@ function RetryConfirmationDialog({
               onClick={() => {
                 retryHandler(file?.name as string, file?.retryOption as string);
               }}
-              size='large'
             >
               Continue
             </ButtonWithToolTip>
