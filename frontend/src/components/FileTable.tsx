@@ -983,13 +983,13 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
     setSelectedRows(table.getSelectedRowModel().rows.map((i) => i.id));
   }, [table.getSelectedRowModel()]);
   const hasEmptydatabase = filesData.length === 0 && pathname === '/readonly';
-  const isConnected = connectionStatus;
+  const isConnected = connectionStatus && !isLoading;
   return (
     <>
       {filesData ? (
         <>
           {hasEmptydatabase && isConnected && (
-            <Dialog hasDisabledCloseButton={true} isOpen={true}>
+            <Dialog isOpen={true}>
               <Dialog.Content>
                 <Login />
               </Dialog.Content>
