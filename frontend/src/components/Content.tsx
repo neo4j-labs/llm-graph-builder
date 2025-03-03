@@ -1043,7 +1043,7 @@ const Content: React.FC<ContentProps> = ({
                   id: 'default-menu',
                 }}
               >
-                <Menu.Item title='Graph Scehma' onClick={handleSchemaView} isDisabled={!connectionStatus} />
+                <Menu.Item title='Graph Schema' onClick={handleSchemaView} isDisabled={!connectionStatus} />
                 <Menu.Item
                   title='Explore Graph in Neo4j'
                   onClick={handleOpenGraphClick}
