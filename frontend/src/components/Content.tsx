@@ -964,11 +964,7 @@ const Content: React.FC<ContentProps> = ({
           handleGenerateGraph={processWaitingFilesOnRefresh}
         ></FileTable>
 
-        <Flex
-          className={`p-2.5  mt-1.5 absolute bottom-0 w-full`}
-          justifyContent='space-between'
-          flexDirection={isTablet ? 'column' : 'row'}
-        >
+        <Flex className={`p-2.5  mt-1.5 absolute bottom-0 w-full`} justifyContent='space-between' flexDirection={'row'}>
           <div>
             <DropdownComponent
               onSelect={handleDropdownChange}
@@ -1011,6 +1007,7 @@ const Content: React.FC<ContentProps> = ({
                 onClick={handleGraphView}
                 isDisabled={showGraphCheck}
                 className='px-0! flex! items-center justify-between gap-4 graphbtn'
+                size={isTablet ? 'small' : 'medium'}
               >
                 <span className='mx-2'>
                   {buttonCaptions.showPreviewGraph}{' '}
@@ -1018,7 +1015,9 @@ const Content: React.FC<ContentProps> = ({
                 </span>
               </Button>
               <div
-                className={`ndl-icon-btn ndl-clean dropdownbtn ${colorMode === 'dark' ? 'darktheme' : ''}`}
+                className={`ndl-icon-btn ndl-clean dropdownbtn ${colorMode === 'dark' ? 'darktheme' : ''} ${
+                  isTablet ? 'small' : 'medium'
+                }`}
                 onClick={(e) => {
                   setIsGraphBtnMenuOpen((old) => !old);
                   e.stopPropagation();

@@ -51,8 +51,8 @@ import { useCredentials } from '../context/UserCredentials';
 import {
   ArrowPathIconSolid,
   ClipboardDocumentIconSolid,
-  MagnifyingGlassCircleIconSolid,
   DocumentTextIconSolid,
+  ExploreIcon,
 } from '@neo4j-ndl/react/icons';
 import CustomProgressBar from './UI/CustomProgressBar';
 import subscribe from '../services/PollingAPI';
@@ -389,7 +389,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
             return (
               <Flex>
                 <span>
-                  <TextLink isExternalLink={true} href={info.row.original.sourceUrl}>
+                  <TextLink type='external' target='_blank' href={info.row.original.sourceUrl}>
                     {info.row.original.fileSource}
                   </TextLink>
                 </span>
@@ -580,7 +580,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
               clean
               onClick={() => onInspect(info?.row?.original?.name as string)}
             >
-              <MagnifyingGlassCircleIconSolid className='n-size-token-7' />
+              <ExploreIcon className='n-size-token-7' />
             </IconButtonWithToolTip>
             <IconButtonWithToolTip
               placement='left'

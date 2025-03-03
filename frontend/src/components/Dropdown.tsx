@@ -29,6 +29,7 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
       <div className={view === 'ContentView' ? 'w-[150px]' : ''}>
         <Select
           type='select'
+          aria-label='llm-dropdown'
           label={
             <div className='w-max! flex! gap-1 items-center'>
               <span>LLM Model for Processing & Chat</span>
