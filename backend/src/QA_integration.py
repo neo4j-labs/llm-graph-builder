@@ -198,8 +198,15 @@ def format_documents(documents, model):
             source = doc.metadata.get('source', "unknown")
             sources.add(source)
 
-            entities = doc.metadata['entities'] if 'entities'in doc.metadata.keys() else entities
-            global_communities = doc.metadata["communitydetails"] if 'communitydetails'in doc.metadata.keys() else global_communities
+            if 'entities' in doc.metadata:
+                if 'entityids' in doc.metadata['entities']:
+                    entities.setdefault('entityids', set()).update(doc.metadata['entities']['entityids'])
+                if 'relationshipids' in doc.metadata['entities']:
+                    entities.setdefault('relationshipids', set()).update(doc.metadata['entities']['relationshipids'])
+            if 'communitydetails' in doc.metadata:
+                existing_ids = {entry['id'] for entry in global_communities}
+                new_entries = [entry for entry in doc.metadata["communitydetails"] if entry['id'] not in existing_ids]
+                global_communities.extend(new_entries)
 
             formatted_doc = (
                 "Document start\n"
