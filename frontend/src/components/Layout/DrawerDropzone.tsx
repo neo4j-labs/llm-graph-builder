@@ -11,6 +11,7 @@ import { APP_SOURCES } from '../../utils/Constants';
 import GenericButton from '../WebSources/GenericSourceButton';
 import GenericModal from '../WebSources/GenericSourceModal';
 import { DrawerProps } from '../../types';
+import { useAuth0 } from '@auth0/auth0-react';
 const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
 const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
 const DrawerDropzone: React.FC<DrawerProps> = ({
@@ -24,6 +25,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
 }) => {
   const { closeAlert, alertState } = useAlertContext();
   const { isReadOnlyUser, isBackendConnected, connectionStatus } = useCredentials();
+  const { loginWithRedirect } = useAuth0();
   const isLargeDesktop = useMediaQuery('(min-width:1440px)');
   const isYoutubeOnly = useMemo(
     () => APP_SOURCES.includes('youtube') && !APP_SOURCES.includes('wiki') && !APP_SOURCES.includes('web'),
@@ -121,11 +123,13 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
           </Drawer.Body>
         ) : (
           <Drawer.Body className='overflow-hidden! w-[294px]!'>
-            <Typography variant='subheading-small'>
-              <StatusIndicator type={'danger'} /> The database connection does not have permission to access data
-              sources.
+            <Typography variant='body-small'>
+              <StatusIndicator type={'danger'} />{' '}
+              <span className='text-center mx-1'>
+                The database connection does not have permission to access data sources.
+              </span>
             </Typography>
-            <div className={`cursor-not-allowed h-full`}>
+            <div className={`h-full cursor-pointer`} onClick={() => loginWithRedirect()}>
               <div className={`resource-sections blur-sm pointer-events-none`}>
                 <Flex gap='6' className='h-full source-container'>
                   {APP_SOURCES.includes('local') && (
