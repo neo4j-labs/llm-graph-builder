@@ -204,7 +204,7 @@ def format_documents(documents, model):
                 if 'relationshipids' in doc.metadata['entities']:
                     entities.setdefault('relationshipids', set()).update(doc.metadata['entities']['relationshipids'])
             if 'communitydetails' in doc.metadata:
-                existing_ids = {entry['id'] for entry in global_communities}  # Store existing IDs
+                existing_ids = {entry['id'] for entry in global_communities}
                 new_entries = [entry for entry in doc.metadata["communitydetails"] if entry['id'] not in existing_ids]
                 global_communities.extend(new_entries)
 
