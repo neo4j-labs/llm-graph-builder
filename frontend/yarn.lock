@@ -5188,10 +5188,10 @@ re-resizable@6.10.0:
   resolved "https://registry.yarnpkg.com/re-resizable/-/re-resizable-6.10.0.tgz#d684a096ab438f1a93f59ad3a580a206b0ce31ee"
   integrity sha512-hysSK0xmA5nz24HBVztlk4yCqCLCvS32E6ZpWxVKop9x3tqCa4yAj1++facrmkOf62JsJHjmjABdKxXofYioCw==
 
-re-resizable@^6.9.16:
-  version "6.9.17"
-  resolved "https://registry.yarnpkg.com/re-resizable/-/re-resizable-6.9.17.tgz#78e4349934ff24a8fcb4b6b5a43ff9ed5f319d2a"
-  integrity sha512-OBqd1BwVXpEJJn/yYROG+CbeqIDBWIp6wathlpB0kzZWWZIY1gPTsgK2yJEui5hOvkCdC2mcexF2V3DZVfLq2g==
+re-resizable@^6.11.2:
+  version "6.11.2"
+  resolved "https://registry.yarnpkg.com/re-resizable/-/re-resizable-6.11.2.tgz#2e8f7119ca3881d5b5aea0ffa014a80e5c1252b3"
+  integrity sha512-2xI2P3OHs5qw7K0Ud1aLILK6MQxW50TcO+DetD9eIV58j84TqYeHoZcL9H4GXFXXIh7afhH8mv5iUCXII7OW7A==
 
 react-aria@3.35.0:
   version "3.35.0"
