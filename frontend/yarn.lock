@@ -5646,10 +5646,10 @@ react-dropzone@14.2.9:
     file-selector "^0.6.0"
     prop-types "^15.8.1"
 
-react-dropzone@^14.3.5:
-  version "14.3.5"
-  resolved "https://registry.yarnpkg.com/react-dropzone/-/react-dropzone-14.3.5.tgz#1a8bd312c8a353ec78ef402842ccb3589c225add"
-  integrity sha512-9nDUaEEpqZLOz5v5SUcFA0CjM4vq8YbqO0WRls+EYT7+DvxUdzDPKNCPLqGfj3YL9MsniCLCD4RFA6M95V6KMQ==
+react-dropzone@^14.3.8:
+  version "14.3.8"
+  resolved "https://registry.yarnpkg.com/react-dropzone/-/react-dropzone-14.3.8.tgz#a7eab118f8a452fe3f8b162d64454e81ba830582"
+  integrity sha512-sBgODnq+lcA4P296DY4wacOZz3JFpD99fp+hb//iBO2HHnyeZU3FwWyXJ6salNpqQdsZrgMrotuko/BdJMV8Ug==
   dependencies:
     attr-accept "^2.2.4"
     file-selector "^2.1.0"
