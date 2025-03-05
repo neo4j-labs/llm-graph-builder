@@ -257,7 +257,7 @@ export default function EntityExtractionSetting({
         <Select
           helpText='Schema Examples'
           label='Predefined Schema'
-          size={view === 'Tabs' && !isTablet ? 'large' : isTablet ? 'small' : 'medium'}
+          size='medium'
           selectProps={{
             isClearable: true,
             isMulti: true,
@@ -274,7 +274,7 @@ export default function EntityExtractionSetting({
         <Select
           helpText='You can select more than one values'
           label='Node Labels'
-          size={view === 'Tabs' && !isTablet ? 'large' : isTablet ? 'small' : 'medium'}
+          size='medium'
           selectProps={{
             isClearable: true,
             isMulti: true,
@@ -290,7 +290,7 @@ export default function EntityExtractionSetting({
         <Select
           helpText='You can select more than one values'
           label='Relationship Types'
-          size={view === 'Tabs' && !isTablet ? 'large' : isTablet ? 'small' : 'medium'}
+          size='medium'
           selectProps={{
             isClearable: true,
             isMulti: true,

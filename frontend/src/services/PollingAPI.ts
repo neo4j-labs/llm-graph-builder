@@ -18,7 +18,7 @@ export default async function subscribe(
     queryParams.append('userName', userCredentials.userName);
   }
   if (userCredentials.password) {
-    queryParams.append('password', userCredentials.password);
+    queryParams.append('password', btoa(userCredentials.password));
   }
   if (userCredentials.database) {
     queryParams.append('database', userCredentials.database);
