@@ -907,7 +907,7 @@ const Content: React.FC<ContentProps> = ({
               </div>
             </Typography>
           </div>
-          <div>
+          <div className='enhancement-btn__wrapper'>
             <ButtonWithToolTip
               placement='top'
               text='Enhance graph quality'

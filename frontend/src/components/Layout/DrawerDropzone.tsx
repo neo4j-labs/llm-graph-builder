@@ -12,6 +12,7 @@ import GenericButton from '../WebSources/GenericSourceButton';
 import GenericModal from '../WebSources/GenericSourceModal';
 import { DrawerProps } from '../../types';
 import { useAuth0 } from '@auth0/auth0-react';
+import { useFileContext } from '../../context/UsersFiles';
 const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
 const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
 const DrawerDropzone: React.FC<DrawerProps> = ({
@@ -27,6 +28,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
   const { isReadOnlyUser, isBackendConnected, connectionStatus } = useCredentials();
   const { loginWithRedirect } = useAuth0();
   const isLargeDesktop = useMediaQuery('(min-width:1440px)');
+  const { filesData } = useFileContext();
   const isYoutubeOnly = useMemo(
     () => APP_SOURCES.includes('youtube') && !APP_SOURCES.includes('wiki') && !APP_SOURCES.includes('web'),
     []
@@ -124,9 +126,11 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
         ) : (
           <Drawer.Body className='overflow-hidden! w-[294px]!'>
             <Typography variant='body-small'>
-              <StatusIndicator type={'danger'} />{' '}
+              <StatusIndicator type={'danger'} />
               <span className='text-center mx-1'>
-                The database connection does not have permission to access data sources.
+                {filesData.length === 0
+                  ? `It seems like you haven't ingested any data yet Please log in and connect to your database to proceed.`
+                  : 'You must be logged in to process this data. Please log in and connect to your database to proceed.'}
               </span>
             </Typography>
             <div className={`h-full cursor-pointer`} onClick={() => loginWithRedirect()}>
