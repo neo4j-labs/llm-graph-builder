@@ -1,5 +1,6 @@
 import hashlib
 import logging
+from src.shared.constants import PROJECT_ID
 from src.document_sources.youtube import create_youtube_url
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_google_vertexai import VertexAIEmbeddings
@@ -9,6 +10,11 @@ from langchain_community.graphs.graph_document import GraphDocument
 from typing import List
 import re
 import os
+import json
+import logging
+from typing import Any
+from google.cloud import secretmanager
+from google.api_core.exceptions import NotFound, PermissionDenied
 from pathlib import Path
 from urllib.parse import urlparse
 import boto3
@@ -174,3 +180,50 @@ def get_bedrock_embeddings():
    except Exception as e:
        print(f"An unexpected error occurred: {e}")
        raise
+
+def get_secret_value(secret_name: str, default_value: Any = None, data_type: type = str):
+  """
+  Fetches a secret from Google Cloud Secret Manager.
+  If GET_VALUE_FROM_SECRET_MANAGER env value True, Otherwise get from local .env file
+  Converts the value to the specified data type.
+  Args:
+      secret_name (str): Name of the secret in Secret Manager.
+      data_type (type): Expected data type (str, int, float, bool, list, dict).
+  Returns:
+      Converted value of the secret or environment variable.
+  """
+  get_value_from_secret_manager = bool(os.getenv("GET_VALUE_FROM_SECRET_MANAGER",False).lower() in ["true", "1", "yes"])
+  try:
+    if get_value_from_secret_manager:
+      client = secretmanager.SecretManagerServiceClient()
+      secret_path = f"projects/{PROJECT_ID}/secrets/{secret_name}/versions/latest"
+    
+      response = client.access_secret_version(request={"name": secret_path})
+      secret_value = response.payload.data.decode("UTF-8")
+    else:
+      secret_value = os.getenv(secret_name, None) 
+  except (NotFound, PermissionDenied):
+    logging.warning(f"Secret '{secret_name}' not found in Secret Manager. Checking environment variable.")
+    secret_value = os.getenv(secret_name, None)
+
+  if secret_value is None:
+    return convert_type(default_value, data_type) # Return the default value when key not found in secret manager not in .env file.
+  
+  return convert_type(secret_value, data_type)
+
+
+def convert_type(value: str, data_type: type):
+  """Convert string value to the specified data type."""
+  try:
+    if data_type == "int":
+      return int(value)
+    elif data_type == "float":
+      return float(value)
+    elif data_type == "bool":
+      return bool(value.lower() in ["true", "1", "yes"])
+    elif data_type == "list" or data_type == "dict":
+      return json.loads(value)  # Convert JSON strings to list/dict
+    return value  # Default to string
+  except Exception as e:
+    logging.error(f"Type conversion error: {e}")
+    return None

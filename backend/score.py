@@ -112,7 +112,7 @@ app.add_middleware(
 )
 app.add_middleware(SessionMiddleware, secret_key=os.urandom(24))
 
-is_gemini_enabled = os.environ.get("GEMINI_ENABLED", "False").lower() in ("true", "1", "yes")
+is_gemini_enabled = get_secret_value("GEMINI_ENABLED", False, "bool")
 if is_gemini_enabled:
     add_routes(app,ChatVertexAI(), path="/vertexai")
 
@@ -1034,10 +1034,10 @@ async def fetch_chunktext(
 async def backend_connection_configuration():
     try:
         start = time.time()
-        uri = os.getenv('NEO4J_URI')
-        username= os.getenv('NEO4J_USERNAME')
-        database= os.getenv('NEO4J_DATABASE')
-        password= os.getenv('NEO4J_PASSWORD')
+        uri = get_secret_value("NEO4J_URI")
+        username= get_secret_value("NEO4J_USERNAME")
+        database= get_secret_value("NEO4J_DATABASE")
+        password= get_secret_value("NEO4J_PASSWORD")
         gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
         if all([uri, username, database, password]):
             graph = Neo4jGraph()
