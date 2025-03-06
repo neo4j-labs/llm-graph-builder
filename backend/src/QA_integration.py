@@ -177,7 +177,7 @@ def get_rag_chain(llm, system_template=CHAT_SYSTEM_TEMPLATE):
         logging.error(f"Error creating RAG chain: {e}")
         raise
 
-def format_documents(documents, model):
+def format_documents(documents, model,chat_mode_settings):
     prompt_token_cutoff = 4
     for model_names, value in CHAT_TOKEN_CUT_OFF.items():
         if model in model_names:
@@ -197,9 +197,20 @@ def format_documents(documents, model):
         try:
             source = doc.metadata.get('source', "unknown")
             sources.add(source)
-
-            entities = doc.metadata['entities'] if 'entities'in doc.metadata.keys() else entities
-            global_communities = doc.metadata["communitydetails"] if 'communitydetails'in doc.metadata.keys() else global_communities
+            if 'entities' in doc.metadata:
+                if chat_mode_settings["mode"] == CHAT_ENTITY_VECTOR_MODE:
+                    entity_ids = [entry['entityids'] for entry in doc.metadata['entities'] if 'entityids' in entry]
+                    entities.setdefault('entityids', set()).update(entity_ids)
+                else:
+                    if 'entityids' in doc.metadata['entities']:
+                        entities.setdefault('entityids', set()).update(doc.metadata['entities']['entityids'])
+                    if 'relationshipids' in doc.metadata['entities']:
+                        entities.setdefault('relationshipids', set()).update(doc.metadata['entities']['relationshipids'])
+                
+            if 'communitydetails' in doc.metadata:
+                existing_ids = {entry['id'] for entry in global_communities}
+                new_entries = [entry for entry in doc.metadata["communitydetails"] if entry['id'] not in existing_ids]
+                global_communities.extend(new_entries)
 
             formatted_doc = (
                 "Document start\n"
@@ -218,7 +229,7 @@ def process_documents(docs, question, messages, llm, model,chat_mode_settings):
     start_time = time.time()
     
     try:
-        formatted_docs, sources, entitydetails, communities = format_documents(docs, model)
+        formatted_docs, sources, entitydetails, communities = format_documents(docs, model,chat_mode_settings)
         
         rag_chain = get_rag_chain(llm=llm)
         

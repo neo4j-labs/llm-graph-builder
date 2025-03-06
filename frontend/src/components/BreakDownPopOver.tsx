@@ -9,13 +9,13 @@ export default function BreakDownPopOver({ file, isNodeCount = true }: { file: C
   return (
     <CustomPopOver Trigger={<InformationCircleIconOutline className='n-size-token-6' />}>
       {isNodeCount ? (
-        <ul className='p-2'>
+        <ul className='p-2!'>
           <li>Chunk Nodes: {file.chunkNodeCount}</li>
           <li>Entity Nodes: {file.entityNodeCount}</li>
           {isGdsActive && <li>Community Nodes: {file.communityNodeCount}</li>}
         </ul>
       ) : (
-        <ul className='p-2'>
+        <ul className='p-2!'>
           <li>Chunk Relations: {file.chunkRelCount}</li>
           <li>Entity Relations: {file.entityEntityRelCount}</li>
           {isGdsActive && <li>Community Relations: {file.communityRelCount}</li>}

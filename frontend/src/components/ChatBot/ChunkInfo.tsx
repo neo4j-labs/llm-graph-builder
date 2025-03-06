@@ -1,7 +1,7 @@
 import { FC, useContext, useState } from 'react';
 import { ChunkProps } from '../../types';
-import { LoadingSpinner, TextLink, Typography } from '@neo4j-ndl/react';
-import { DocumentTextIconOutline, GlobeAltIconOutline } from '@neo4j-ndl/react/icons';
+import { Flex, LoadingSpinner, TextLink, Typography } from '@neo4j-ndl/react';
+import { DocumentTextIconOutline, ExploreIcon, GlobeAltIconOutline } from '@neo4j-ndl/react/icons';
 import wikipedialogo from '../../assets/images/wikipedia.svg';
 import youtubelogo from '../../assets/images/youtube.svg';
 import gcslogo from '../../assets/images/gcs.webp';
@@ -12,6 +12,7 @@ import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 import { chatModeLables } from '../../utils/Constants';
 import GraphViewModal from '../Graph/GraphViewModal';
 import { handleGraphNodeClick } from './chatInfo';
+import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
 
 const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
   const themeUtils = useContext(ThemeWrapperContext);
@@ -46,7 +47,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
               <li key={chunk.id} className='mb-2'>
                 {chunk?.page_number ? (
                   <>
-                    <div className='flex! flex-row inline-block items-center'>
+                    <div className='flex! flex-row inline-block items-center gap-1'>
                       <>
                         <DocumentTextIconOutline className='w-4 h-4 inline-block mr-2' />
                         <Typography
@@ -61,27 +62,32 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                       mode !== chatModeLables['entity search+vector'] &&
                       mode !== chatModeLables.graph &&
                       chunk.score && (
-                        <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                        <Flex alignItems='center' flexDirection='row' justifyContent='space-between'>
+                          <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                          <IconButtonWithToolTip
+                            placement='top'
+                            text='View Graph'
+                            label='View Graph btn'
+                            className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
+                            onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
+                          >
+                            <ExploreIcon className='n-size-token-5' />
+                          </IconButtonWithToolTip>
+                        </Flex>
                       )}
                     <div>
                       <Typography variant='subheading-small'>Page: {chunk?.page_number}</Typography>
                     </div>
-                    <div>
-                      <TextLink
-                        className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
-                        htmlAttributes={{
-                          onClick: () => handleChunkClick(chunk.element_id, 'Chunk'),
-                        }}
-                      >
-                        {'View Graph'}
-                      </TextLink>
-                    </div>
                   </>
                 ) : chunk?.url && chunk?.start_time ? (
                   <>
-                    <div className='flex! flex-row inline-block justiy-between items-center'>
+                    <div className='flex! flex-row inline-block justiy-between items-center gap-1'>
                       <img src={youtubelogo} width={20} height={20} className='mr-2' />
-                      <TextLink href={generateYouTubeLink(chunk?.url, chunk?.start_time)} isExternalLink={true}>
+                      <TextLink
+                        href={generateYouTubeLink(chunk?.url, chunk?.start_time)}
+                        type={'external'}
+                        target='_blank'
+                      >
                         <Typography
                           variant='body-medium'
                           className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
@@ -94,9 +100,22 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                       mode !== chatModeLables['entity search+vector'] &&
                       mode !== chatModeLables.graph && (
                         <>
-                          <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
-                          <div>
-                            <TextLink
+                          <Flex alignItems='center' flexDirection='column' justifyContent='space-between'>
+                            <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                            <IconButtonWithToolTip
+                              placement='top'
+                              text='View Graph'
+                              label='View Graph btn'
+                              className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
+                              onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
+                            >
+                              <ExploreIcon className='n-size-token-5' />
+                            </IconButtonWithToolTip>
+                          </Flex>
+
+                          {/* <div> */}
+
+                          {/* <TextLink
                               as='small'
                               className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                               htmlAttributes={{
@@ -104,14 +123,14 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                               }}
                             >
                               {'View Graph'}
-                            </TextLink>
-                          </div>
+                            </TextLink> */}
+                          {/* </div> */}
                         </>
                       )}
                   </>
                 ) : chunk?.url && new URL(chunk.url).host === 'wikipedia.org' ? (
                   <>
-                    <div className='flex! flex-row inline-block justiy-between items-center'>
+                    <div className='flex! flex-row inline-block justiy-between items-center gap-1'>
                       <img src={wikipedialogo} width={20} height={20} className='mr-2' />
                       <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
                     </div>
@@ -119,23 +138,35 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                       mode !== chatModeLables['entity search+vector'] &&
                       mode !== chatModeLables.graph && (
                         <>
-                          <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                          <Flex alignItems='center' flexDirection='row' justifyContent='space-between'>
+                            <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+
+                            <IconButtonWithToolTip
+                              placement='top'
+                              text='View Graph'
+                              label='View Graph btn'
+                              className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
+                              onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
+                            >
+                              <ExploreIcon className='n-size-token-5' />
+                            </IconButtonWithToolTip>
+                          </Flex>
                           <div>
-                            <TextLink
+                            {/* <TextLink
                               className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                               htmlAttributes={{
                                 onClick: () => handleChunkClick(chunk.element_id, 'Chunk'),
                               }}
                             >
                               {'View Graph'}
-                            </TextLink>
+                            </TextLink> */}
                           </div>
                         </>
                       )}
                   </>
                 ) : chunk?.url && new URL(chunk.url).host === 'storage.googleapis.com' ? (
                   <>
-                    <div className='flex! flex-row inline-block justiy-between items-center'>
+                    <div className='flex! flex-row inline-block justiy-between items-center gap-1'>
                       <img src={gcslogo} width={20} height={20} className='mr-2' />
                       <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
                     </div>
@@ -143,8 +174,20 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                       mode !== chatModeLables['entity search+vector'] &&
                       mode !== chatModeLables.graph && (
                         <>
-                          <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
-                          <div>
+                          <Flex alignItems='center' flexDirection='row' justifyContent='space-between'>
+                            <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                            <IconButtonWithToolTip
+                              placement='top'
+                              text='View Graph'
+                              label='View Graph btn'
+                              className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
+                              onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
+                            >
+                              <ExploreIcon className='n-size-token-5' />
+                            </IconButtonWithToolTip>
+                          </Flex>
+
+                          {/* <div>
                             <TextLink
                               className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                               htmlAttributes={{
@@ -153,13 +196,13 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                             >
                               {'View Graph'}
                             </TextLink>
-                          </div>
+                          </div> */}
                         </>
                       )}
                   </>
                 ) : chunk?.url && chunk?.url.startsWith('s3://') ? (
                   <>
-                    <div className='flex! flex-row inline-block justiy-between items-center'>
+                    <div className='flex! flex-row inline-block justiy-between items-center gap-1'>
                       <img src={s3logo} width={20} height={20} className='mr-2' />
                       <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
                     </div>
@@ -167,16 +210,27 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                       mode !== chatModeLables['entity search+vector'] &&
                       mode !== chatModeLables.graph && (
                         <>
-                          <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                          <Flex alignItems='center' flexDirection='row' justifyContent='space-between'>
+                            <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                            <IconButtonWithToolTip
+                              placement='top'
+                              text='View Graph'
+                              label='View Graph btn'
+                              className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
+                              onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
+                            >
+                              <ExploreIcon className='n-size-token-5' />
+                            </IconButtonWithToolTip>
+                          </Flex>
                           <div>
-                            <TextLink
+                            {/* <TextLink
                               className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                               htmlAttributes={{
                                 onClick: () => handleChunkClick(chunk.element_id, 'Chunk'),
                               }}
                             >
                               {'View Graph'}
-                            </TextLink>
+                            </TextLink> */}
                           </div>
                         </>
                       )}
@@ -185,9 +239,9 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                   !chunk?.url.startsWith('s3://') &&
                   !isAllowedHost(chunk?.url, ['storage.googleapis.com', 'wikipedia.org', 'youtube.com']) ? (
                   <>
-                    <div className='flex! flex-row inline-block items-center'>
+                    <div className='flex! flex-row inline-block items-center gap-1'>
                       <GlobeAltIconOutline className='n-size-token-7' />
-                      <TextLink href={chunk?.url} isExternalLink={true}>
+                      <TextLink href={chunk?.url} type='external' target='_blank'>
                         <Typography variant='body-medium'>{chunk?.url}</Typography>
                       </TextLink>
                     </div>
@@ -195,50 +249,74 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                       mode !== chatModeLables['entity search+vector'] &&
                       mode !== chatModeLables.graph && (
                         <>
-                          <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                          <Flex alignItems='center' flexDirection='row' justifyContent='space-between'>
+                            <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                            <IconButtonWithToolTip
+                              placement='top'
+                              text='View Graph'
+                              label='View Graph btn'
+                              className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
+                              onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
+                            >
+                              <ExploreIcon className='n-size-token-5' />
+                            </IconButtonWithToolTip>
+                          </Flex>
                           <div>
-                            <TextLink
+                            {/* <TextLink
                               className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                               htmlAttributes={{
                                 onClick: () => handleChunkClick(chunk.element_id, 'Chunk'),
                               }}
                             >
                               {'View Graph'}
-                            </TextLink>
+                            </TextLink> */}
                           </div>
                         </>
                       )}
                   </>
                 ) : (
                   <>
-                    <div className='flex! flex-row inline-block items-center'>
-                      {chunk.fileSource === 'local file' ? (
-                        <DocumentTextIconOutline className='n-size-token-7 mr-2' />
-                      ) : (
-                        <img
-                          src={getLogo(themeUtils.colorMode)[chunk.fileSource]}
-                          width={20}
-                          height={20}
-                          className='mr-2'
-                        />
-                      )}
+                    <div className='flex! flex-col inline-block'>
+                      <Flex flexDirection='row' justifyContent='space-between'>
+                        <div className='flex items-center'>
+                          {chunk.fileSource === 'local file' ? (
+                            <DocumentTextIconOutline className='n-size-token-7 mr-2' />
+                          ) : (
+                            <img
+                              src={getLogo(themeUtils.colorMode)[chunk.fileSource]}
+                              width={20}
+                              height={20}
+                              className='mr-2'
+                            />
+                          )}
+                          <Typography
+                            variant='body-medium'
+                            className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
+                          >
+                            {chunk.fileName}
+                          </Typography>
+                        </div>
+                        <IconButtonWithToolTip
+                          placement='top'
+                          text='View Graph'
+                          label='View Graph btn'
+                          className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
+                          onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
+                          <ExploreIcon className='n-size-token-5' />
+                        </IconButtonWithToolTip>
+                      </Flex>
                       <>
-                        <Typography
-                          variant='body-medium'
-                          className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
-                        >
-                          {chunk.fileName}
-                        </Typography>
-                        <div>
-                          <TextLink
+                        {/* <div> */}
+
+                        {/* <TextLink
                             className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                             htmlAttributes={{
                               onClick: () => handleChunkClick(chunk.element_id, 'Chunk'),
                             }}
                           >
                             {'View Graph'}
-                          </TextLink>
-                        </div>
+                          </TextLink> */}
+                        {/* </div> */}
                       </>
                     </div>
                   </>

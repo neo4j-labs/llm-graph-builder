@@ -41,6 +41,27 @@ logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
 MERGED_DIR = os.path.join(os.path.dirname(__file__), "merged_files")
 
+def sanitize_filename(filename):
+   """
+   Sanitize the user-provided filename to prevent directory traversal and remove unsafe characters.
+   """
+   # Remove path separators and collapse redundant separators
+   filename = os.path.basename(filename)
+   filename = os.path.normpath(filename)
+   return filename
+
+def validate_file_path(directory, filename):
+   """
+   Construct the full file path and ensure it is within the specified directory.
+   """
+   file_path = os.path.join(directory, filename)
+   abs_directory = os.path.abspath(directory)
+   abs_file_path = os.path.abspath(file_path)
+   # Ensure the file path starts with the intended directory path
+   if not abs_file_path.startswith(abs_directory):
+       raise ValueError("Invalid file path")
+   return abs_file_path
+
 def healthy_condition():
     output = {"healthy": True}
     return output
@@ -217,8 +238,9 @@ async def extract_knowledge_graph_from_file(
         start_time = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)   
         graphDb_data_Access = graphDBdataAccess(graph)
-        merged_file_path = os.path.join(MERGED_DIR,file_name)
         if source_type == 'local file':
+            file_name = sanitize_filename(file_name)
+            merged_file_path = validate_file_path(MERGED_DIR, file_name)
             uri_latency, result = await extract_graph_from_file_local_file(uri, userName, password, database, model, merged_file_path, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions)
 
         elif source_type == 's3 bucket' and source_url:
@@ -278,8 +300,11 @@ async def extract_knowledge_graph_from_file(
         return create_api_response('Success', data=result, file_source= source_type)
     except LLMGraphBuilderException as e:
         error_message = str(e)
+        graph = create_graph_database_connection(uri, userName, password, database)   
+        graphDb_data_Access = graphDBdataAccess(graph)
         graphDb_data_Access.update_exception_db(file_name,error_message, retry_condition)
-        failed_file_process(uri,file_name, merged_file_path, source_type)
+        if source_type == 'local file':
+            failed_file_process(uri,file_name, merged_file_path)
         node_detail = graphDb_data_Access.get_current_status_document_node(file_name)
         # Set the status "Completed" in logging becuase we are treating these error already handled by application as like custom errors.
         json_obj = {'api_name':'extract','message':error_message,'file_created_at':formatted_time(node_detail[0]['created_time']),'error_message':error_message, 'file_name': file_name,'status':'Completed',
@@ -290,8 +315,11 @@ async def extract_knowledge_graph_from_file(
     except Exception as e:
         message=f"Failed To Process File:{file_name} or LLM Unable To Parse Content "
         error_message = str(e)
+        graph = create_graph_database_connection(uri, userName, password, database)   
+        graphDb_data_Access = graphDBdataAccess(graph)
         graphDb_data_Access.update_exception_db(file_name,error_message, retry_condition)
-        failed_file_process(uri,file_name, merged_file_path, source_type)
+        if source_type == 'local file':
+            failed_file_process(uri,file_name, merged_file_path)
         node_detail = graphDb_data_Access.get_current_status_document_node(file_name)
         
         json_obj = {'api_name':'extract','message':message,'file_created_at':formatted_time(node_detail[0]['created_time']),'error_message':error_message, 'file_name': file_name,'status':'Failed',

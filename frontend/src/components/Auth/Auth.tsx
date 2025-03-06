@@ -1,6 +1,6 @@
 import React from 'react';
-import { AppState, Auth0Provider, withAuthenticationRequired } from '@auth0/auth0-react';
-import { useNavigate } from 'react-router';
+import { AppState, Auth0Provider, useAuth0 } from '@auth0/auth0-react';
+import { Navigate, useNavigate } from 'react-router';
 const domain = process.env.VITE_AUTH0_DOMAIN;
 const clientId = process.env.VITE_AUTH0_CLIENT_ID;
 const Auth0ProviderWithHistory: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -24,7 +24,13 @@ const Auth0ProviderWithHistory: React.FC<{ children: React.ReactNode }> = ({ chi
 };
 
 export const AuthenticationGuard: React.FC<{ component: React.ComponentType<object> }> = ({ component }) => {
-  const Component = withAuthenticationRequired(component);
+  const { isAuthenticated } = useAuth0();
+  const Component = component;
+
+  if (!isAuthenticated) {
+    localStorage.setItem('isReadOnlyMode', 'true');
+    return <Navigate to='/readonly' replace />;
+  }
   return <Component />;
 };
 

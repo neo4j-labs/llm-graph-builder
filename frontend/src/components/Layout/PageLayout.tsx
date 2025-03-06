@@ -16,7 +16,7 @@ import { envConnectionAPI } from '../../services/ConnectAPI';
 import { healthStatus } from '../../services/HealthStatus';
 import { useNavigate } from 'react-router';
 import { useAuth0 } from '@auth0/auth0-react';
-import { showErrorToast } from '../../utils/toasts';
+import { showErrorToast } from '../../utils/Toasts';
 import { APP_SOURCES } from '../../utils/Constants';
 import { createDefaultFormData } from '../../API/Index';
 const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
@@ -133,7 +133,9 @@ const PageLayout: React.FC = () => {
             setIsGCSActive(credentials.isGCSActive);
             setGdsActive(credentials.isgdsActive);
             setConnectionStatus(Boolean(credentials.connection === 'connectAPI'));
-            setIsReadOnlyUser(credentials.isReadonlyUser);
+            if (credentials.isReadonlyUser !== undefined) {
+              setIsReadOnlyUser(credentials.isReadonlyUser);
+            }
             handleDisconnectButtonState(true);
           } else {
             setOpenConnection((prev) => ({ ...prev, openPopUp: true }));

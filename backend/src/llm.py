@@ -14,6 +14,7 @@ from langchain_community.chat_models import ChatOllama
 import boto3
 import google.auth
 from src.shared.constants import ADDITIONAL_INSTRUCTIONS
+import re
 
 def get_llm(model: str):
     """Retrieve the specified language model based on the model name."""
@@ -166,7 +167,8 @@ def get_chunk_id_as_doc_metadata(chunkId_chunkDoc_list):
 async def get_graph_document_list(
     llm, combined_chunk_document_list, allowedNodes, allowedRelationship, additional_instructions=None
 ):
-    futures = []
+    if additional_instructions:
+        additional_instructions = sanitize_additional_instruction(additional_instructions)
     graph_document_list = []
     if "diffbot_api_key" in dir(llm):
         llm_transformer = llm
@@ -211,3 +213,25 @@ async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowed
         llm, combined_chunk_document_list, allowedNodes, allowedRelationship, additional_instructions
     )
     return graph_document_list
+
+def sanitize_additional_instruction(instruction: str) -> str:
+   """
+   Sanitizes additional instruction by:
+   - Replacing curly braces `{}` with `[]` to prevent variable interpretation.
+   - Removing potential injection patterns like `os.getenv()`, `eval()`, `exec()`.
+   - Stripping problematic special characters.
+   - Normalizing whitespace.
+   Args:
+       instruction (str): Raw additional instruction input.
+   Returns:
+       str: Sanitized instruction safe for LLM processing.
+   """
+   logging.info("Sanitizing additional instructions")
+   instruction = instruction.replace("{", "[").replace("}", "]")  # Convert `{}` to `[]` for safety
+   # Step 2: Block dangerous function calls
+   injection_patterns = [r"os\.getenv\(", r"eval\(", r"exec\(", r"subprocess\.", r"import os", r"import subprocess"]
+   for pattern in injection_patterns:
+       instruction = re.sub(pattern, "[BLOCKED]", instruction, flags=re.IGNORECASE)
+   # Step 4: Normalize spaces
+   instruction = re.sub(r'\s+', ' ', instruction).strip()
+   return instruction
