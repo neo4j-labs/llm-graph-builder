@@ -302,6 +302,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                           label='View Graph btn'
                           className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                           onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
+                        >
                           <ExploreIcon className='n-size-token-5' />
                         </IconButtonWithToolTip>
                       </Flex>
