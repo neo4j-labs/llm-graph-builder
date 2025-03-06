@@ -198,10 +198,7 @@ class graphDBdataAccess:
     def check_gds_version(self):
         try:
             gds_procedure_count = """
-            SHOW PROCEDURES
-            YIELD name
-            WHERE name STARTS WITH "gds."
-            RETURN COUNT(*) AS totalGdsProcedures
+            SHOW FUNCTIONS YIELD name WHERE name STARTS WITH 'gds.version' RETURN COUNT(*) AS totalGdsProcedures
             """
             result = self.graph.query(gds_procedure_count)
             total_gds_procedures = result[0]['totalGdsProcedures'] if result else 0
