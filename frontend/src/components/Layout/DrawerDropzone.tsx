@@ -129,8 +129,8 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
               <StatusIndicator type={'danger'} />
               <span className='text-center mx-1'>
                 {filesData.length === 0
-                  ? `It seems like you haven't ingested any data yet Please log in and connect to your database to proceed.`
-                  : 'You must be logged in to process this data. Please log in and connect to your database to proceed.'}
+                  ? `It seems like you haven't ingested any data yet Please log in to the main application.`
+                  : 'You must be logged in to process this data. Please log in to the main application'}
               </span>
             </Typography>
             <div className={`h-full cursor-pointer`} onClick={() => loginWithRedirect()}>

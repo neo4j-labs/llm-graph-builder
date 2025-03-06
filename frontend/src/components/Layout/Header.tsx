@@ -83,7 +83,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
           id='navigation'
           aria-label='main navigation'
         >
-          <section className='flex w-1/3 shrink-0 grow-0 items-center grow min-w-[200px]'>
+          <section className='flex w-1/3 shrink-0 grow-0 items-center min-w-[200px]'>
             <Typography variant='h6' as='a' href='#app-bar-with-responsive-menu'>
               <img
                 src={colorMode === 'dark' ? Neo4jLogoBW : Neo4jLogoColor}
