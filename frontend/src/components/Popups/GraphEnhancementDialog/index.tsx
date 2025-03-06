@@ -4,6 +4,7 @@ import { useState } from 'react';
 import DeletePopUpForOrphanNodes from './DeleteTabForOrphanNodes';
 import deleteOrphanAPI from '../../../services/DeleteOrphanNodes';
 import EntityExtractionSettings from './EnitityExtraction/EntityExtractionSetting';
+import EntitySchemaExtractionSettings from './EnititySchemaExtraction/EntitySchemaExtractionSetting';
 import { useFileContext } from '../../../context/UsersFiles';
 import DeduplicationTab from './Deduplication';
 import { tokens } from '@neo4j-ndl/base';
@@ -72,6 +73,14 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
                     Entity Extraction Settings
                   </Tabs.Tab>
                   <Tabs.Tab
+                    tabId={5}
+                    htmlAttributes={{
+                      'aria-label': 'Entity Extraction Settings',
+                    }}
+                  >
+                    Entity Schema Extraction Settings
+                  </Tabs.Tab>
+                  <Tabs.Tab
                     tabId={1}
                     htmlAttributes={{
                       'aria-label': 'Additional Instructions',
@@ -109,8 +118,8 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
           </div>
         </div>
       </Dialog.Header>
-      <Dialog.Content className='flex flex-col n-gap-token- grow w-[90%] mx-auto'>
-        <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4' value={activeTab} tabId={0}>
+      <Dialog.Content className='flex flex-col n-gap-token- grow w-[100%] mx-auto'>
+      <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4' value={activeTab} tabId={0}>
           <div className='w-[80%] mx-auto'>
             <EntityExtractionSettings
               view='Tabs'
@@ -119,6 +128,18 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
               }}
               closeEnhanceGraphSchemaDialog={onClose}
               settingView='headerView'
+            />
+          </div>
+        </Tabs.TabPanel><Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4' value={activeTab} tabId={5}>
+          <div className='w-[100%] mx-auto'>
+            <EntitySchemaExtractionSettings
+              view='Tabs'
+              openTextSchema={() => {
+                setShowTextFromSchemaDialog({ triggeredFrom: 'enhancementtab', show: true });
+              }}
+              closeEnhanceGraphSchemaDialog={onClose}
+              settingView='headerView'
+              open={open}
             />
           </div>
         </Tabs.TabPanel>

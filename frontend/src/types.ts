@@ -662,6 +662,12 @@ export interface ExtendedNode extends Node {
   };
 }
 
+export interface SchemaNode extends Node{
+  description:string;
+  labels: string[];
+  properties:string[];
+}
+
 export interface NeoNode {
   element_id: string;
   labels: string[];
@@ -676,6 +682,10 @@ export interface NeoRelationship {
 
 export interface ExtendedRelationship extends Relationship {
   count?: number;
+}
+export interface SchemaRelationship extends Relationship {
+  labels: string[];
+  properties:string[];
 }
 export interface connectionState {
   openPopUp: boolean;
