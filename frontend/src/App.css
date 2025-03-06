@@ -397,6 +397,7 @@
   min-height: 200px;
   display: flex
 }
+
  .resource-sections.blur-sm {
   filter: blur(2px);
  }
