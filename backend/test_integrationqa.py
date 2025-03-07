@@ -103,7 +103,7 @@ def test_graph_website(model_name):
        create_source_node_graph_web_url(graph, model_name, source_url, "web-url")
        result = asyncio.run(
            extract_graph_from_web_page(
-               URI, USERNAME, PASSWORD, DATABASE, model_name, source_url, "Google Cloud Skills Boost", '', '',100,20,1, None,''
+               URI, USERNAME, PASSWORD, DATABASE, model_name, source_url, "Google Cloud Skills Boost-www", '', '',100,20,1, None,''
            )
        )
        logging.info(f"Web URL test result: {result}")
@@ -171,6 +171,54 @@ def get_duplicate_nodes():
        else:
            return "Unable to load data"
 
+def flatten_extract_dataframe(df: pd.DataFrame):
+   rows = []
+   for _, row in df.iterrows():
+       try:
+           col1, col2, execution_date = row[0], row[1], row[2] if len(row) > 2 else None
+           data_dict = ast.literal_eval(col1) if isinstance(col1, str) and col1.startswith("{") else {}
+           meta_dict = ast.literal_eval(col2) if isinstance(col2, str) and col2.startswith("{") else {}
+           combined_dict = {**data_dict, **meta_dict}
+           for key in combined_dict.keys():
+               if isinstance(combined_dict[key], dict) and key.startswith("processed_chunk_detail"):
+                   combined_dict[key] = str(combined_dict[key])
+           combined_dict["execution_date"] = execution_date
+           rows.append(combined_dict)
+       except (SyntaxError, ValueError, TypeError) as e:
+           print(f"Error parsing row: {row} - {e}")
+           continue
+   flat_df = pd.DataFrame(rows)
+   return flat_df
+
+def flatten_chatbot_dataframe(df: pd.DataFrame):
+   rows = []
+   for _, row in df.iterrows():
+       try:
+           model_name, mode, result, execution_date = row[0], row[1], row[2], row[3] if len(row) > 3 else None
+           result_dict = ast.literal_eval(result) if isinstance(result, str) and result.startswith("{") else {}
+           session_id = result_dict.get("session_id", None)
+           message = result_dict.get("message", None)
+           info_dict = result_dict.get("info", {})
+           sources = str(info_dict.get("sources", None))
+           model = info_dict.get("model", None)
+           nodedetails = str(info_dict.get("nodedetails", None))  
+           extracted_data = {
+               "model_name": model_name,
+               "mode": mode,
+               "session_id": session_id,
+               "message": message,
+               "sources": sources,
+               "model": model,
+               "nodedetails": nodedetails,
+               "execution_date": execution_date,
+           }
+           rows.append(extracted_data)
+       except (SyntaxError, ValueError, TypeError) as e:
+           print(f"Error parsing row: {row} - {e}")
+           continue
+   flat_df = pd.DataFrame(rows)
+   return flat_df
+
 def run_tests():
    """Runs all integration tests and logs results."""
    extract_list = []
@@ -178,8 +226,7 @@ def run_tests():
    chatbot_list = []
    chatbot_error_list = []
    other_api_list = []
-   #models = ['openai_gpt_4','openai_gpt_4o','openai_gpt_4o_mini','gemini_1.5_pro','gemini_1.5_flash','gemini_2.0_flash','bedrock_nova_micro_v1','bedrock_nova_lite_v1','bedrock_nova_pro_v1','fireworks_qwen72b_instruct']
-   models = ['gemini_2.0_flash']
+   models = ['openai_gpt_4','openai_gpt_4o','openai_gpt_4o_mini','gemini_1.5_pro','gemini_1.5_flash','gemini_2.0_flash','bedrock_nova_micro_v1','bedrock_nova_lite_v1','bedrock_nova_pro_v1','fireworks_qwen72b_instruct']
    chatbot_modes = [
        "vector",
        "graph+vector",
@@ -239,10 +286,12 @@ def run_tests():
    # Convert results to DataFrame
    df_extract = pd.DataFrame(extract_list)
    df_extract['execution_date'] = dt.today().strftime('%Y-%m-%d')
+   df_extract=flatten_chatbot_dataframe(df_chatbot)
    df_extract.to_csv(f"test_results/Extract_Integration_TestResult_{dt.now().strftime('%Y%m%d_%H%M%S')}.csv", index=False)
 
    df_chatbot = pd.DataFrame(chatbot_list)
    df_chatbot['execution_date'] = dt.today().strftime('%Y-%m-%d')
+   df_chatbot=flatten_chatbot_dataframe(df_chatbot)
    df_chatbot.to_csv(f"test_results/chatbot_Integration_TestResult_{dt.now().strftime('%Y%m%d_%H%M%S')}.csv", index=False)
 
    other_api_dict = {'disconnected_nodes':dis_status,'delete_disconnected_nodes' : delete_status,'get_duplicate_nodes':dup,'test_populate_graph_schema_from_text':other_api_list}
