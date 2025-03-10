@@ -298,7 +298,9 @@ export default function EntitySchemaExtractionSetting({
       if (selected.type === 'node') {
         return nodes.find((node) => node.id === selected.id);
       }
-      return relationships.find((relationship) => relationship.id === selected.id);
+      if (selected.type === 'relationship') {
+        return relationships.find((relationship) => relationship.id === selected.id);
+      }
     }, [selected, relationships, nodes]);
 
     const addNewNodeSchema = () => {
