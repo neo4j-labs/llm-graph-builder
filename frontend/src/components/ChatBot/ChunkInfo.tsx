@@ -47,7 +47,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
               <li key={chunk.id} className='mb-2'>
                 {chunk?.page_number ? (
                   <>
-                    <div className='flex! flex-row inline-block items-center gap-1'>
+                    <div className='flex! flex-row items-center gap-1'>
                       <>
                         <DocumentTextIconOutline className='w-4 h-4 inline-block mr-2' />
                         <Typography
@@ -81,7 +81,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                   </>
                 ) : chunk?.url && chunk?.start_time ? (
                   <>
-                    <div className='flex! flex-row inline-block justiy-between items-center gap-1'>
+                    <div className='flex! flex-row justiy-between items-center gap-1'>
                       <img src={youtubelogo} width={20} height={20} className='mr-2' />
                       <TextLink
                         href={generateYouTubeLink(chunk?.url, chunk?.start_time)}
@@ -100,7 +100,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                       mode !== chatModeLables['entity search+vector'] &&
                       mode !== chatModeLables.graph && (
                         <>
-                          <Flex alignItems='center' flexDirection='column' justifyContent='space-between'>
+                          <Flex alignItems='center' flexDirection='row' justifyContent='space-between'>
                             <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
                             <IconButtonWithToolTip
                               placement='top'
@@ -112,25 +112,12 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                               <ExploreIcon className='n-size-token-5' />
                             </IconButtonWithToolTip>
                           </Flex>
-
-                          {/* <div> */}
-
-                          {/* <TextLink
-                              as='small'
-                              className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
-                              htmlAttributes={{
-                                onClick: () => handleChunkClick(chunk.element_id, 'Chunk'),
-                              }}
-                            >
-                              {'View Graph'}
-                            </TextLink> */}
-                          {/* </div> */}
                         </>
                       )}
                   </>
                 ) : chunk?.url && new URL(chunk.url).host === 'wikipedia.org' ? (
                   <>
-                    <div className='flex! flex-row inline-block justiy-between items-center gap-1'>
+                    <div className='flex! flex-row justiy-between items-center gap-1'>
                       <img src={wikipedialogo} width={20} height={20} className='mr-2' />
                       <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
                     </div>
@@ -151,22 +138,13 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                               <ExploreIcon className='n-size-token-5' />
                             </IconButtonWithToolTip>
                           </Flex>
-                          <div>
-                            {/* <TextLink
-                              className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
-                              htmlAttributes={{
-                                onClick: () => handleChunkClick(chunk.element_id, 'Chunk'),
-                              }}
-                            >
-                              {'View Graph'}
-                            </TextLink> */}
-                          </div>
+                          <div></div>
                         </>
                       )}
                   </>
                 ) : chunk?.url && new URL(chunk.url).host === 'storage.googleapis.com' ? (
                   <>
-                    <div className='flex! flex-row inline-block justiy-between items-center gap-1'>
+                    <div className='flex! flex-row justiy-between items-center gap-1'>
                       <img src={gcslogo} width={20} height={20} className='mr-2' />
                       <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
                     </div>
@@ -186,23 +164,12 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                               <ExploreIcon className='n-size-token-5' />
                             </IconButtonWithToolTip>
                           </Flex>
-
-                          {/* <div>
-                            <TextLink
-                              className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
-                              htmlAttributes={{
-                                onClick: () => handleChunkClick(chunk.element_id, 'Chunk'),
-                              }}
-                            >
-                              {'View Graph'}
-                            </TextLink>
-                          </div> */}
                         </>
                       )}
                   </>
                 ) : chunk?.url && chunk?.url.startsWith('s3://') ? (
                   <>
-                    <div className='flex! flex-row inline-block justiy-between items-center gap-1'>
+                    <div className='flex! flex-row  justiy-between items-center gap-1'>
                       <img src={s3logo} width={20} height={20} className='mr-2' />
                       <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
                     </div>
@@ -222,16 +189,6 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                               <ExploreIcon className='n-size-token-5' />
                             </IconButtonWithToolTip>
                           </Flex>
-                          <div>
-                            {/* <TextLink
-                              className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
-                              htmlAttributes={{
-                                onClick: () => handleChunkClick(chunk.element_id, 'Chunk'),
-                              }}
-                            >
-                              {'View Graph'}
-                            </TextLink> */}
-                          </div>
                         </>
                       )}
                   </>
@@ -239,7 +196,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                   !chunk?.url.startsWith('s3://') &&
                   !isAllowedHost(chunk?.url, ['storage.googleapis.com', 'wikipedia.org', 'youtube.com']) ? (
                   <>
-                    <div className='flex! flex-row inline-block items-center gap-1'>
+                    <div className='flex! flex-row items-center gap-1'>
                       <GlobeAltIconOutline className='n-size-token-7' />
                       <TextLink href={chunk?.url} type='external' target='_blank'>
                         <Typography variant='body-medium'>{chunk?.url}</Typography>
@@ -261,22 +218,12 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                               <ExploreIcon className='n-size-token-5' />
                             </IconButtonWithToolTip>
                           </Flex>
-                          <div>
-                            {/* <TextLink
-                              className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
-                              htmlAttributes={{
-                                onClick: () => handleChunkClick(chunk.element_id, 'Chunk'),
-                              }}
-                            >
-                              {'View Graph'}
-                            </TextLink> */}
-                          </div>
                         </>
                       )}
                   </>
                 ) : (
                   <>
-                    <div className='flex! flex-col inline-block'>
+                    <div className='flex! flex-col'>
                       <Flex flexDirection='row' justifyContent='space-between'>
                         <div className='flex items-center'>
                           {chunk.fileSource === 'local file' ? (
@@ -306,19 +253,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                           <ExploreIcon className='n-size-token-5' />
                         </IconButtonWithToolTip>
                       </Flex>
-                      <>
-                        {/* <div> */}
-
-                        {/* <TextLink
-                            className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
-                            htmlAttributes={{
-                              onClick: () => handleChunkClick(chunk.element_id, 'Chunk'),
-                            }}
-                          >
-                            {'View Graph'}
-                          </TextLink> */}
-                        {/* </div> */}
-                      </>
+                      <></>
                     </div>
                   </>
                 )}
