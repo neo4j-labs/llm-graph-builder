@@ -226,7 +226,7 @@ def run_tests():
    chatbot_list = []
    chatbot_error_list = []
    other_api_list = []
-   models = ['openai_gpt_4','openai_gpt_4o','openai_gpt_4o_mini','gemini_1.5_pro','gemini_1.5_flash','gemini_2.0_flash','bedrock_nova_micro_v1','bedrock_nova_lite_v1','bedrock_nova_pro_v1','fireworks_qwen72b_instruct']
+   models = ['openai_gpt_4o','openai_gpt_4o_mini','gemini_2.0_flash','openai-gpt-o3-mini','fireworks_deepseek_r1']
    chatbot_modes = [
        "vector",
        "graph+vector",
@@ -286,7 +286,7 @@ def run_tests():
    # Convert results to DataFrame
    df_extract = pd.DataFrame(extract_list)
    df_extract['execution_date'] = dt.today().strftime('%Y-%m-%d')
-   df_extract=flatten_chatbot_dataframe(df_chatbot)
+   df_extract=flatten_extract_dataframe(df_extract)
    df_extract.to_csv(f"test_results/Extract_Integration_TestResult_{dt.now().strftime('%Y%m%d_%H%M%S')}.csv", index=False)
 
    df_chatbot = pd.DataFrame(chatbot_list)
