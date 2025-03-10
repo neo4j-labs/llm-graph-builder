@@ -1,5 +1,5 @@
 asyncio==3.4.3
-boto3==1.36.2
+boto3==1.37.9
 botocore==1.36.2
 certifi==2024.8.30
 fastapi==0.115.6
