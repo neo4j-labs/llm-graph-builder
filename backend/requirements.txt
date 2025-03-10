@@ -13,7 +13,7 @@ pip-install==1.3.5
 langchain==0.3.15
 langchain-aws==0.2.11
 langchain-anthropic==0.3.3
-langchain-fireworks==0.2.6
+langchain-fireworks==0.2.7
 langchain-community==0.3.15
 langchain-core==0.3.31
 langchain-experimental==0.3.4
