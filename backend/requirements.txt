@@ -7,7 +7,7 @@ fastapi-health==0.4.0
 google-api-core==2.24.0
 google-auth==2.37.0
 google_auth_oauthlib==1.2.1
-google-cloud-core==2.4.1
+google-cloud-core==2.4.3
 json-repair==0.30.2
 pip-install==1.3.5
 langchain==0.3.15
