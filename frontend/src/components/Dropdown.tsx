@@ -3,7 +3,6 @@ import { OptionType, ReusableDropdownProps } from '../types';
 import { memo, useMemo } from 'react';
 import { capitalize, capitalizeWithUnderscore } from '../utils/Utils';
 import { prodllms } from '../utils/Constants';
-import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
 
 const DropdownComponent: React.FC<ReusableDropdownProps> = ({
   options,
@@ -30,13 +29,10 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
       <div className={view === 'ContentView' ? 'w-[150px]' : ''}>
         <Select
           type='select'
-          label='LLM Models'
-          helpText={
-            <div className='w-max! flex gap-1 items-center'>
-              <span>
-                <InformationCircleIconOutline title='info' aria-label='infoicon' className='n-size-token-6' />
-              </span>
-              <span>LLM Model used for Extraction & Chat</span>
+          aria-label='llm-dropdown'
+          label={
+            <div className='w-max! flex! gap-1 items-center'>
+              <span>LLM Model for Processing & Chat</span>
             </div>
           }
           selectProps={{
@@ -50,12 +46,12 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
                 label: !isModelSupported ? (
                   <Tooltip type='simple' placement={isLargeDesktop ? 'left' : 'right'}>
                     <Tooltip.Trigger>
-                      <span>{label}</span>
+                      <span className='text-nowrap'>{label}</span>
                     </Tooltip.Trigger>
                     <Tooltip.Content>Available In Development Version</Tooltip.Content>
                   </Tooltip>
                 ) : (
-                  <span>{label}</span>
+                  <span className='text-nowrap'>{label}</span>
                 ),
                 value,
                 isDisabled: !isModelSupported,

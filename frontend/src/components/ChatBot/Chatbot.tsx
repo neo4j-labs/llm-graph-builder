@@ -406,26 +406,26 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   }, []);
 
   return (
-    <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden relative'>
+    <div className='n-bg-palette-neutral-bg-weak flex! flex-col justify-between min-h-full max-h-full overflow-hidden relative'>
       {isDeleteChatLoading && (
         <div className='chatbot-deleteLoader'>
           <Loader title='Deleting...'></Loader>
         </div>
       )}
       <div
-        className={`flex overflow-y-auto pb-12 min-w-full pl-5 pr-5 chatBotContainer ${
+        className={`flex! overflow-y-auto pb-12 min-w-full pl-5 pr-5 chatBotContainer ${
           isChatOnly ? 'min-h-[calc(100dvh-114px)] max-h-[calc(100dvh-114px)]' : ''
         } `}
       >
         <Widget className='n-bg-palette-neutral-bg-weak w-full' header='' isElevated={false}>
-          <div className='flex flex-col gap-4 gap-y-4'>
+          <div className='flex! flex-col gap-4 gap-y-4'>
             {listMessages.map((chat, index) => {
               const messagechatModes = Object.keys(chat.modes);
               return (
                 <div
                   ref={messagesEndRef}
                   key={chat.id}
-                  className={clsx(`flex gap-2.5`, {
+                  className={clsx(`flex! gap-2.5`, {
                     'flex-row': chat.user === 'chatbot',
                     'flex-row-reverse': chat.user !== 'chatbot',
                   })}
@@ -545,8 +545,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           </div>
         </Widget>
       </div>
-      <div className='n-bg-palette-neutral-bg-weak flex gap-2.5 bottom-0 p-2.5 w-full'>
-        <form onSubmit={handleSubmit} className={`flex gap-2.5 w-full ${!isFullScreen ? 'justify-between' : ''}`}>
+      <div className='n-bg-palette-neutral-bg-weak flex! gap-2.5 bottom-0 p-2.5 w-full'>
+        <form onSubmit={handleSubmit} className={`flex! gap-2.5 w-full ${!isFullScreen ? 'justify-between' : ''}`}>
           <TextInput
             className={`n-bg-palette-neutral-bg-default flex-grow-7 ${
               isFullScreen ? 'w-[calc(100%-105px)]' : 'w-[70%]'

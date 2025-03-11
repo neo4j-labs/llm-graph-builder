@@ -1,6 +1,6 @@
-import { useEffect, useState, useMemo, useRef, Suspense, useReducer, useCallback } from 'react';
+import { useEffect, useState, useMemo, useRef, Suspense, useReducer, useCallback, useContext } from 'react';
 import FileTable from './FileTable';
-import { Button, Typography, Flex, StatusIndicator, useMediaQuery } from '@neo4j-ndl/react';
+import { Button, Typography, Flex, StatusIndicator, useMediaQuery, Menu } from '@neo4j-ndl/react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { extractAPI } from '../utils/FileAPI';
@@ -32,15 +32,16 @@ import { tokens } from '@neo4j-ndl/base';
 import axios from 'axios';
 import DatabaseStatusIcon from './UI/DatabaseStatusIcon';
 import RetryConfirmationDialog from './Popups/RetryConfirmation/Index';
-import retry from '../services/retry';
-import { showErrorToast, showNormalToast, showSuccessToast } from '../utils/toasts';
+import retry from '../services/Retry';
+import { showErrorToast, showNormalToast, showSuccessToast } from '../utils/Toasts';
 import { useMessageContext } from '../context/UserMessages';
 import PostProcessingToast from './Popups/GraphEnhancementDialog/PostProcessingCheckList/PostProcessingToast';
 import { getChunkText } from '../services/getChunkText';
 import ChunkPopUp from './Popups/ChunkPopUp';
 import { isExpired, isFileReadyToProcess } from '../utils/Utils';
 import { useHasSelections } from '../hooks/useHasSelections';
-import { Hierarchy1Icon } from '@neo4j-ndl/react/icons';
+import { ChevronUpIconOutline, ChevronDownIconOutline } from '@neo4j-ndl/react/icons';
+import { ThemeWrapperContext } from '../context/ThemeWrapper';
 
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
 
@@ -55,7 +56,6 @@ const Content: React.FC<ContentProps> = ({
 }) => {
   const { breakpoints } = tokens;
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
-  // const [init, setInit] = useState<boolean>(false);
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
   const [documentName, setDocumentName] = useState<string>('');
@@ -72,7 +72,10 @@ const Content: React.FC<ContentProps> = ({
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [totalPageCount, setTotalPageCount] = useState<number | null>(null);
   const [textChunks, setTextChunks] = useState<chunkdata[]>([]);
+  const [isGraphBtnMenuOpen, setIsGraphBtnMenuOpen] = useState<boolean>(false);
+  const graphbtnRef = useRef<HTMLDivElement>(null);
   const chunksTextAbortController = useRef<AbortController>();
+  const { colorMode } = useContext(ThemeWrapperContext);
 
   const [alertStateForRetry, setAlertStateForRetry] = useState<BannerAlertProps>({
     showAlert: false,
@@ -889,7 +892,7 @@ const Content: React.FC<ContentProps> = ({
             <span className='h6 px-1'>Neo4j connection {isReadOnlyUser ? '(Read only Mode)' : ''}</span>
             <Typography variant='body-medium'>
               <DatabaseStatusIcon isConnected={connectionStatus} isGdsActive={isGdsActive} uri={userCredentials?.uri} />
-              <div className='pt-1 flex gap-1 items-center'>
+              <div className='pt-1 flex! gap-1 items-center'>
                 <div>{!hasSelections ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}</div>
                 <div>
                   {hasSelections ? (
@@ -904,7 +907,7 @@ const Content: React.FC<ContentProps> = ({
               </div>
             </Typography>
           </div>
-          <div>
+          <div className='enhancement-btn__wrapper'>
             <ButtonWithToolTip
               placement='top'
               text='Enhance graph quality'
@@ -961,11 +964,7 @@ const Content: React.FC<ContentProps> = ({
           handleGenerateGraph={processWaitingFilesOnRefresh}
         ></FileTable>
 
-        <Flex
-          className={`p-2.5  mt-1.5 absolute bottom-0 w-full`}
-          justifyContent='space-between'
-          flexDirection={isTablet ? 'column' : 'row'}
-        >
+        <Flex className={`p-2.5  mt-1.5 absolute bottom-0 w-full`} justifyContent='space-between' flexDirection={'row'}>
           <div>
             <DropdownComponent
               onSelect={handleDropdownChange}
@@ -990,38 +989,6 @@ const Content: React.FC<ContentProps> = ({
               {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
             </ButtonWithToolTip>
             <ButtonWithToolTip
-              text={tooltips.showGraph}
-              placement='top'
-              onClick={handleGraphView}
-              disabled={showGraphCheck}
-              className='mr-0.5'
-              label='show graph'
-              size={isTablet ? 'small' : 'medium'}
-            >
-              {buttonCaptions.showPreviewGraph} {selectedfileslength && completedfileNo ? `(${completedfileNo})` : ''}
-            </ButtonWithToolTip>
-            <ButtonWithToolTip
-              label={'Graph Schema'}
-              text={tooltips.visualizeGraph}
-              placement='top'
-              fill='outlined'
-              onClick={handleSchemaView}
-              disabled={!connectionStatus}
-            >
-              <Hierarchy1Icon />
-            </ButtonWithToolTip>
-            <ButtonWithToolTip
-              text={tooltips.bloomGraph}
-              placement='top'
-              onClick={handleOpenGraphClick}
-              disabled={!filesData.some((f) => f?.status === 'Completed')}
-              className='ml-0.5'
-              label='Open Graph with Bloom'
-              size={isTablet ? 'small' : 'medium'}
-            >
-              {buttonCaptions.exploreGraphWithBloom}
-            </ButtonWithToolTip>
-            <ButtonWithToolTip
               text={
                 !selectedfileslength ? tooltips.deleteFile : `${selectedfileslength} ${tooltips.deleteSelectedFiles}`
               }
@@ -1035,6 +1002,55 @@ const Content: React.FC<ContentProps> = ({
               {buttonCaptions.deleteFiles}
               {selectedfileslength != undefined && selectedfileslength > 0 && `(${selectedfileslength})`}
             </ButtonWithToolTip>
+            <Flex flexDirection='row' gap='0'>
+              <Button
+                onClick={handleGraphView}
+                isDisabled={showGraphCheck}
+                className='px-0! flex! items-center justify-between gap-4 graphbtn'
+                size={isTablet ? 'small' : 'medium'}
+              >
+                <span className='mx-2'>
+                  {buttonCaptions.showPreviewGraph}{' '}
+                  {selectedfileslength && completedfileNo ? `(${completedfileNo})` : ''}
+                </span>
+              </Button>
+              <div
+                className={`ndl-icon-btn ndl-clean dropdownbtn ${colorMode === 'dark' ? 'darktheme' : ''} ${
+                  isTablet ? 'small' : 'medium'
+                }`}
+                onClick={(e) => {
+                  setIsGraphBtnMenuOpen((old) => !old);
+                  e.stopPropagation();
+                }}
+                ref={graphbtnRef}
+              >
+                {!isGraphBtnMenuOpen ? (
+                  <ChevronUpIconOutline className='n-size-token-5' />
+                ) : (
+                  <ChevronDownIconOutline className='n-size-token-' />
+                )}
+              </div>
+            </Flex>
+
+            <Menu
+              placement='top-end-bottom-end'
+              isOpen={isGraphBtnMenuOpen}
+              anchorRef={graphbtnRef}
+              onClose={() => setIsGraphBtnMenuOpen(false)}
+            >
+              <Menu.Items
+                htmlAttributes={{
+                  id: 'default-menu',
+                }}
+              >
+                <Menu.Item title='Graph Schema' onClick={handleSchemaView} isDisabled={!connectionStatus} />
+                <Menu.Item
+                  title='Explore Graph in Neo4j'
+                  onClick={handleOpenGraphClick}
+                  isDisabled={!filesData.some((f) => f?.status === 'Completed')}
+                />
+              </Menu.Items>
+            </Menu>
           </Flex>
         </Flex>
       </div>

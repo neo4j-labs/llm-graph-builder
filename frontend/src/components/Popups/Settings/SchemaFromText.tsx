@@ -5,7 +5,7 @@ import { useCredentials } from '../../../context/UserCredentials';
 import { useFileContext } from '../../../context/UsersFiles';
 import { buttonCaptions } from '../../../utils/Constants';
 import ButtonWithToolTip from '../../UI/ButtonWithToolTip';
-import { showNormalToast, showSuccessToast } from '../../../utils/toasts';
+import { showNormalToast, showSuccessToast } from '../../../utils/Toasts';
 
 const SchemaFromTextDialog = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
   const [userText, setUserText] = useState<string>('');

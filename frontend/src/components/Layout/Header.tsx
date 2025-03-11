@@ -16,13 +16,14 @@ import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
 import { buttonCaptions, SKIP_AUTH, tooltips } from '../../utils/Constants';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 import { useCredentials } from '../../context/UserCredentials';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { useMessageContext } from '../../context/UserMessages';
 import { RiChatSettingsLine } from 'react-icons/ri';
 import ChatModeToggle from '../ChatBot/ChatModeToggle';
 import { connectionState } from '../../types';
 import { downloadClickHandler, getIsLoading } from '../../utils/Utils';
 import Profile from '../User/Profile';
+import { useAuth0 } from '@auth0/auth0-react';
 
 interface HeaderProp {
   chatOnly?: boolean;
@@ -39,8 +40,11 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
     window.open(url, '_blank');
   }, []);
   const downloadLinkRef = useRef<HTMLAnchorElement>(null);
+  const { loginWithRedirect } = useAuth0();
+
   const { connectionStatus } = useCredentials();
   const chatAnchor = useRef<HTMLDivElement>(null);
+  const { pathname } = useLocation();
   const [showChatModeOption, setShowChatModeOption] = useState<boolean>(false);
   const openChatPopout = useCallback(() => {
     let session = localStorage.getItem('neo4j.connection');
@@ -79,11 +83,11 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
           id='navigation'
           aria-label='main navigation'
         >
-          <section className='flex w-1/3 shrink-0 grow-0 items-center grow min-w-[200px]'>
+          <section className='flex w-1/3 shrink-0 grow-0 items-center min-w-[200px]'>
             <Typography variant='h6' as='a' href='#app-bar-with-responsive-menu'>
               <img
                 src={colorMode === 'dark' ? Neo4jLogoBW : Neo4jLogoColor}
-                className='h-8 min-h-8 min-w-8'
+                className='h-8! min-h-8 min-w-8'
                 alt='Neo4j Logo'
               />
             </Typography>
@@ -144,6 +148,11 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                     <ArrowTopRightOnSquareIconOutline />
                   </IconButtonWithToolTip>
                   {!SKIP_AUTH && <Profile />}
+                  {pathname === '/readonly' && (
+                    <Button type='button' fill='outlined' onClick={() => loginWithRedirect()}>
+                      Login
+                    </Button>
+                  )}
                 </div>
               </div>
             </section>

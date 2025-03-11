@@ -11,7 +11,7 @@ import { tokens } from '@neo4j-ndl/base';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
 import { useCallback } from 'react';
 import { useFileContext } from '../../../../context/UsersFiles';
-import { showNormalToast } from '../../../../utils/toasts';
+import { showNormalToast } from '../../../../utils/Toasts';
 import { OnChangeValue } from 'react-select';
 import { OptionType } from '../../../../types';
 
@@ -94,7 +94,7 @@ export default function AdditionalInstructionsText({
             size='small'
           />
         </Flex>
-        <Flex className='mt-4! mb-2 flex items-center' flexDirection='row' justifyContent='flex-end'>
+        <Flex className='mt-4! mb-2 flex! items-center' flexDirection='row' justifyContent='flex-end'>
           <Flex flexDirection='row' gap='4'>
             <ButtonWithToolTip
               placement='top'
@@ -114,7 +114,7 @@ export default function AdditionalInstructionsText({
         </div>
         <Select
           label='Token Count Per Chunk'
-          size={!tablet ? 'large' : 'medium'}
+          size='medium'
           selectProps={{
             options: defaultTokenChunkSizeOptions.map((value) => ({
               value: value.toString(),
@@ -138,7 +138,7 @@ export default function AdditionalInstructionsText({
         />
         <Select
           label='Chunk Overlap'
-          size={!tablet ? 'large' : 'medium'}
+          size='medium'
           selectProps={{
             isMulti: false,
             options: defaultChunkOverlapOptions.map((value) => ({
@@ -155,7 +155,7 @@ export default function AdditionalInstructionsText({
         />
         <Select
           label='Chunks to combine'
-          size={!tablet ? 'large' : 'medium'}
+          size='medium'
           selectProps={{
             isMulti: false,
             options: defaultChunksToCombineOptions.map((value) => ({

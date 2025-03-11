@@ -39,7 +39,7 @@ export default function GenericModal({
       }}
     >
       <Dialog.Header>
-        <div className='flex flex-row pb-6 items-center mb-2'>
+        <div className='flex! flex-row pb-6 items-center mb-2'>
           <img src={Neo4jDataImportFromCloud} style={{ width: 95, height: 95, marginRight: 10 }} loading='lazy' />
           <div className='flex flex-col'>
             <Typography variant='h2'>Web Sources</Typography>

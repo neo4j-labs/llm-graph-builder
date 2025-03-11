@@ -198,10 +198,7 @@ class graphDBdataAccess:
     def check_gds_version(self):
         try:
             gds_procedure_count = """
-            SHOW PROCEDURES
-            YIELD name
-            WHERE name STARTS WITH "gds."
-            RETURN COUNT(*) AS totalGdsProcedures
+            SHOW FUNCTIONS YIELD name WHERE name STARTS WITH 'gds.version' RETURN COUNT(*) AS totalGdsProcedures
             """
             result = self.graph.query(gds_procedure_count)
             total_gds_procedures = result[0]['totalGdsProcedures'] if result else 0
@@ -564,3 +561,12 @@ class graphDBdataAccess:
         except Exception as e:
             print(f"Error in getting node labels/relationship types from db: {e}")
             return []
+
+    def get_websource_url(self,file_name):
+        logging.info("Checking if same title with different URL exist in db ")
+        query = """
+                MATCH(d:Document {fileName : $file_name}) WHERE d.fileSource = "web-url" 
+                RETURN d.url AS url
+                """
+        param = {"file_name" : file_name}
+        return self.execute_query(query, param)

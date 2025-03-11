@@ -521,7 +521,7 @@ LOCAL_COMMUNITY_TOP_OUTSIDE_RELS = 10
 LOCAL_COMMUNITY_SEARCH_QUERY = """
 WITH collect(node) AS nodes, 
      avg(score) AS score, 
-     collect({{id: elementId(node), score: score}}) AS metadata
+     collect({{entityids: elementId(node), score: score}}) AS metadata
 
 WITH score, nodes, metadata,
 
