@@ -791,12 +791,12 @@
     tinycolor2 "1.6.0"
     usehooks-ts "3.1.0"
 
-"@neo4j-nvl/base@0.3.6", "@neo4j-nvl/base@^0.3.6":
-  version "0.3.6"
-  resolved "https://registry.yarnpkg.com/@neo4j-nvl/base/-/base-0.3.6.tgz#e5f8020fc641412ccc638f32d25edeaa037113ae"
-  integrity sha512-mxWbg6Lsrp7jjR4O4eqIPVJBMpRTzQ8Jir8liJ2HOLVL2QvpEYGQc8NP/F5GfpkVSUHj/uE5dlWKhNaaB6Lo1g==
+"@neo4j-nvl/base@0.3.7", "@neo4j-nvl/base@^0.3.6":
+  version "0.3.7"
+  resolved "https://registry.yarnpkg.com/@neo4j-nvl/base/-/base-0.3.7.tgz#0ec95c528324648bc55d50999e8f3c5c00a84aab"
+  integrity sha512-/3gKtk9eCAw3tW8p+uSs4HBkK9jn2KeDqbG6fM2a+QLgHGJNj0iMSbWpKJNJPN5VNrQ5asRx+MOKd8/OezTzvg==
   dependencies:
-    "@neo4j-nvl/layout-workers" "0.3.6"
+    "@neo4j-nvl/layout-workers" "0.3.7"
     "@segment/analytics-next" "^1.70.0"
     color-string "^1.9.1"
     d3-force "^3.0.0"
@@ -810,19 +810,19 @@
     tinycolor2 "1.6.0"
     uuid "^8.3.2"
 
-"@neo4j-nvl/interaction-handlers@0.3.6":
-  version "0.3.6"
-  resolved "https://registry.yarnpkg.com/@neo4j-nvl/interaction-handlers/-/interaction-handlers-0.3.6.tgz#48d1db20c2febf095cb4084dc1bffa7dd825bcfe"
-  integrity sha512-ul99QZVwJ9h6btWXOTvMDWQJhs7qnZjBnwfq9gZ+QeBHhWT960Zw8VST39Qre8L7jLzLTa38HPfSbnabIiH2hg==
+"@neo4j-nvl/interaction-handlers@0.3.7":
+  version "0.3.7"
+  resolved "https://registry.yarnpkg.com/@neo4j-nvl/interaction-handlers/-/interaction-handlers-0.3.7.tgz#22f4ae44c90884aa2e780d3af9bedeb531520212"
+  integrity sha512-U0Yh08R6ihn4b+pKIkLhMmSADSrrHwyR0N2/zP30N0ZRM59gZjpFbOpXYeKnwn+YWar3DHYKyCrb8xpqEtBaYg==
   dependencies:
-    "@neo4j-nvl/base" "0.3.6"
+    "@neo4j-nvl/base" "0.3.7"
     concaveman "^1.2.1"
     lodash "4.17.21"
 
-"@neo4j-nvl/layout-workers@0.3.6":
-  version "0.3.6"
-  resolved "https://registry.yarnpkg.com/@neo4j-nvl/layout-workers/-/layout-workers-0.3.6.tgz#88f97a93d9f44e5efa5d7396108e0e30cf95b01c"
-  integrity sha512-yHq2FVPgOU8gGj42zgqXgH2BQyjW0xRozqFGNb7OutgP9jbJh/fATC9zyUTtBkO2KGjsmNnujujtzrI0yQ+Qsw==
+"@neo4j-nvl/layout-workers@0.3.7":
+  version "0.3.7"
+  resolved "https://registry.yarnpkg.com/@neo4j-nvl/layout-workers/-/layout-workers-0.3.7.tgz#0bf534b376fa5630ef40c6bde5c5c369a35a0176"
+  integrity sha512-o+MY4BG9aNjTbDiqNOhWCgDTI9O5woKe361ub0YwWyr5bI9Hs8VjGuyjyxd+cqmRZQeSgogu+onkz2kritt3+w==
   dependencies:
     "@neo4j-bloom/dagre" "^0.8.14"
     bin-pack "^1.0.2"
@@ -830,13 +830,13 @@
     cytoscape-cose-bilkent "^4.1.0"
     graphlib "^2.1.8"
 
-"@neo4j-nvl/react@^0.3.6":
-  version "0.3.6"
-  resolved "https://registry.yarnpkg.com/@neo4j-nvl/react/-/react-0.3.6.tgz#5f16ddc1f4c89dcc2ac0ae2c19cb14b4dd3af08f"
-  integrity sha512-tv2jkDxYDq9o5RN4FANPYMk3EAnTBmO4XNI6K9S6Km0EsINuWsG0EC/10rht3StDjubkJN6qyV8/he8T603fmg==
+"@neo4j-nvl/react@^0.3.7":
+  version "0.3.7"
+  resolved "https://registry.yarnpkg.com/@neo4j-nvl/react/-/react-0.3.7.tgz#4d99dd8c7d5e6818c8d105c9119fbc931335fecc"
+  integrity sha512-HKwz7HySVloM58IzOcMsFY/uTeHHbtE4d36wU4n8pGCqZqR3MpHDDdOVVLqnDMMrW+H16A4/tZk8R6pI8Ztx7A==
   dependencies:
-    "@neo4j-nvl/base" "0.3.6"
-    "@neo4j-nvl/interaction-handlers" "0.3.6"
+    "@neo4j-nvl/base" "0.3.7"
+    "@neo4j-nvl/interaction-handlers" "0.3.7"
     lodash "4.17.21"
     react "^18.2.0"
     react-dom "^18.2.0"
@@ -4545,8 +4545,8 @@ iterator.prototype@^1.1.4:
     get-proto "^1.0.0"
     has-symbols "^1.1.0"
     set-function-name "^2.0.2"
-jiti@^2.4.2:
 
+jiti@^2.4.2:
   version "2.4.2"
   resolved "https://registry.yarnpkg.com/jiti/-/jiti-2.4.2.tgz#d19b7732ebb6116b06e2038da74a55366faef560"
   integrity sha512-rg9zJN+G4n2nfJl5MW3BMygZX56zKPNVEYYqq7adpmMh4Jn2QNEwhvQlFy6jPVdcod7txZtKHWnyZiA3a0zP7A==
@@ -6424,6 +6424,7 @@ tailwindcss@4.0.7, tailwindcss@^4.0.7:
   version "4.0.7"
   resolved "https://registry.yarnpkg.com/tailwindcss/-/tailwindcss-4.0.7.tgz#b3e26a5dda77651808a873f1b535cc8c39fcb0ae"
   integrity sha512-yH5bPPyapavo7L+547h3c4jcBXcrKwybQRjwdEIVAd9iXRvy/3T1CC6XSQEgZtRySjKfqvo3Cc0ZF1DTheuIdA==
+
 tapable@^2.2.0:
   version "2.2.1"
   resolved "https://registry.yarnpkg.com/tapable/-/tapable-2.2.1.tgz#1967a73ef4060a82f12ab96af86d52fdb76eeca0"
