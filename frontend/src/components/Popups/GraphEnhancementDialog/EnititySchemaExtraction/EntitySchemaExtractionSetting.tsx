@@ -4,8 +4,8 @@ import { appLabels, buttonCaptions, getDefaultSchemaExamples, nvlOptions, toolti
 import { Select, Flex, Typography, useMediaQuery, IconButtonArray, TextInput } from '@neo4j-ndl/react';
 import { useCredentials } from '../../../../context/UserCredentials';
 import { useFileContext } from '../../../../context/UsersFiles';
-import { OnChangeValue, ActionMeta } from 'react-select';
-import { BasicNode, BasicRelationship, EntityType, ExtendedNode, ExtendedRelationship, OptionType, schema, SchemaNode, SchemaRelationship, Scheme } from '../../../../types';
+import { OnChangeValue, ActionMeta, SingleValue } from 'react-select';
+import { BasicNode, BasicRelationship, EntityType, ExtendedNode, ExtendedRelationship, NodeSchema, OptionType, RelationshipSchema, schema, Scheme } from '../../../../types';
 import { getNodeLabelsAndRelTypes } from '../../../../services/GetNodeLabelsRelTypes';
 import { tokens } from '@neo4j-ndl/base';
 import { showNormalToast } from '../../../../utils/toasts';
@@ -17,6 +17,8 @@ import { IconButtonWithToolTip } from '../../../UI/IconButtonToolTip';
 import { ResizePanelDetails } from '../../../Graph/ResizePanel';
 import type { Node, NVL, Relationship } from '@neo4j-nvl/base';
 import Legend from '../../../UI/Legend';
+import { DataSet, Network } from 'vis-network/standalone/esm/vis-network';
+import { Button } from '@mui/material';
 
 
 export default function EntitySchemaExtractionSetting({
@@ -246,119 +248,206 @@ export default function EntitySchemaExtractionSetting({
   };
 
   /*************************************/
-  const [nodes, setNodes] = useState<SchemaNode[]>([]);
-  const [relationships, setRelationships] = useState<SchemaRelationship[]>([]);
-  const nvlRef = useRef<NVL>(null);
-  const [selected, setSelected] = useState<{ type: EntityType; id: string } | undefined>(undefined);
+  type SelectedElement =
+  | { type: 'node'; data: NodeSchema }
+  | { type: 'edge'; data: RelationshipSchema }
+  | null;
 
-  const [newNodeSchemaType, setNewNodeSchemaType] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
+  const networkRef = useRef<Network | null>(null);
+  const nodesRef = useRef<DataSet<NodeSchema> | null>(null);
+  const edgesRef = useRef<DataSet<RelationshipSchema> | null>(null);
+  const nextNodeIdRef = useRef<number>(0); // Starting from 6 (initial nodes have IDs 1-5).
+  const nextEdgeIdRef = useRef<number>(0); // Starting from 5 (initial edges have IDs 1-4).
 
-  const mouseEventCallbacks = {
-    onNodeClick: (clickedNode: Node) => {
-      setSelected({ type: 'node', id: clickedNode.id });
-    },
-    onRelationshipClick: (clickedRelationship: Relationship) => {
-      setSelected({ type: 'relationship', id: clickedRelationship.id });
-    },
-    onCanvasClick: () => {
-      setSelected(undefined);
-    },
-    onPan: true,
-    onZoom: true,
-    onDrag: true,
-  };
+  // State for node inputs.
+  const [newNodeLabel, setNewNodeLabel] = useState<string>('');
+  const [newNodeProperties, setNewNodeProperties] = useState<string[]>([]);
 
-  const nvlCallbacks = {
-    onLayoutComputing(isComputing: boolean) {
-      if (!isComputing) {
-        handleZoomToFit();
-      }
-    },
-  };
+  // State for edge inputs.
+  const [newEdgeLabel, setNewEdgeLabel] = useState<string>('');
+  const [newEdgeProperties, setNewEdgeProperties] = useState<string[]>([]);
+  const newEdgeLabelRef = useRef<string>('');
+  const newEdgePropertiesRef = useRef<string[]>([]);
 
-  const handleZoomToFit = () => {
-    nvlRef.current?.fit(
-      nodes.map((node) => node.id),
-      {}
-    );
-  };
 
-  const handleZoomIn = () => {
-    nvlRef.current?.setZoom(nvlRef.current.getScale() * 1.3);
-  };
+  // State for the currently selected element.
+  const [selectedElement, setSelectedElement] = useState<SelectedElement>(null);
 
-  const handleZoomOut = () => {
-    nvlRef.current?.setZoom(nvlRef.current.getScale() * 0.7);
-  };
+  useEffect(() => {
+    // Initialize nodes DataSet.
+    nodesRef.current = new DataSet<NodeSchema>([]);
 
-  const selectedItem = useMemo(() => {
-      if (selected === undefined) {
-        return undefined;
-      }
-      if (selected.type === 'node') {
-        return nodes.find((node) => node.id === selected.id);
-      }
-      if (selected.type === 'relationship') {
-        return relationships.find((relationship) => relationship.id === selected.id);
-      }
-    }, [selected, relationships, nodes]);
+    // Initialize edges DataSet.
+    edgesRef.current = new DataSet<RelationshipSchema>([]);
 
-    const addNewNodeSchema = () => {
-      if (!newNodeSchemaType && newNodeSchemaType!=="") return;
-      setNodes((prevNodes) => {
-        const exists = prevNodes.some(node => node.labels.includes(newNodeSchemaType));
-        if (exists) return prevNodes;
-
-        const newNode:SchemaNode = {
-          id: newNodeSchemaType,
-          description:"",
-          captionAlign: 'bottom',
-          caption: newNodeSchemaType,
-          labels: [newNodeSchemaType],
-          properties: []
+    if (containerRef.current) {
+      networkRef.current = new Network(
+        containerRef.current,
+        { nodes: nodesRef.current, edges: edgesRef.current },
+        {
+          physics: { stabilization: false },
+          nodes: { 
+            shape: "circle",
+            widthConstraint: {maximum: 50,minimum:50},
+          }, 
+          manipulation: {
+            enabled: false,
+            addEdge: (edgeData: any, callback: any) => {
+              // Assign the edge label and properties from the inputs.
+              edgeData.label = newEdgeLabelRef.current;
+              edgeData.proprities = newEdgePropertiesRef.current;
+              edgeData.id = nextEdgeIdRef.current++;
+              callback(edgeData);
+              setNewEdgeLabel('');
+              setNewEdgeProperties([]);
+              newEdgeLabelRef.current = '';
+              newEdgePropertiesRef.current = [];
+            },
+            initiallyActive: false,
+          },
         }
-        
-        return [...prevNodes, newNode];
-      });
-      setNewNodeSchemaType("")
-    };
+      );
 
-    const addNodeSchema = (NodeId: string) => {
-      if (!newNodeSchemaType && newNodeSchemaType == "") return;
-      
-      setNodes((prevNodes) => {
-        return prevNodes.map((node) => {
-          if (node.id === NodeId) {
-            if (node.labels.includes(newNodeSchemaType)) return node;
-            return {
-              ...node,
-              labels: [...node.labels, newNodeSchemaType],
-            };
+      // Listen for selection events.
+      networkRef.current.on('select', (params: any) => {
+        if (params.nodes && params.nodes.length > 0) {
+          const nodeId = params.nodes[0];
+          const nodeDataCandidate = nodesRef.current?.get(nodeId);
+          const nodeData = Array.isArray(nodeDataCandidate)
+            ? nodeDataCandidate[0]
+            : nodeDataCandidate;
+          if (nodeData) {
+            setSelectedElement({ type: 'node', data: nodeData });
+          } else {
+            setSelectedElement(null);
           }
-          return node;
-        });
+        } else if (params.edges && params.edges.length > 0) {
+          const edgeId = params.edges[0];
+          const edgeDataCandidate = edgesRef.current?.get(edgeId);
+          const edgeData = Array.isArray(edgeDataCandidate)
+            ? edgeDataCandidate[0]
+            : edgeDataCandidate;
+          if (edgeData) {
+            setSelectedElement({ type: 'edge', data: edgeData });
+          } else {
+            setSelectedElement(null);
+          }
+        } else {
+          setSelectedElement(null);
+        }
       });
-      setNewNodeSchemaType("");
+    }
+
+    return () => {
+      networkRef.current?.destroy();
     };
-    
+  }, []);
+
+  // Function to add a new node using the provided label and properties.
+  const addNode = () => {
+    if (nodesRef.current) {
+      const newId = nextNodeIdRef.current++;
+      const label = newNodeLabel.trim() || `Node ${newId}`;
+      nodesRef.current.add({ id: newId, label, proprities: newNodeProperties });
+      setNewNodeLabel('');
+      setNewNodeProperties([]);
+    }
+  };
+
+  // Function to activate edge creation mode.
+  const addEdge = () => {
+    if (networkRef.current) {
+      networkRef.current.addEdgeMode();
+    }
+  };
+
+  // Handle Zoom To Fit
+  const handleZoomToFit = () => {
+    if (networkRef.current) {
+      networkRef.current.fit();
+    }
+  };
+
+  // Handle Zoom In: if a node is selected, zoom in centered on that node.
+  const handleZoomIn = () => {
+    if (networkRef.current) {
+      const currentScale = networkRef.current.getScale();
+      if (selectedElement && selectedElement.type === 'node') {
+        const positions = networkRef.current.getPositions([selectedElement.data.id]);
+        const nodePosition = positions[selectedElement.data.id];
+        networkRef.current.moveTo({ position: nodePosition, scale: currentScale * 1.2 });
+      } else {
+        networkRef.current.moveTo({ scale: currentScale * 1.2 });
+      }
+    }
+  };
+
+  // Handle Zoom Out (scale down by 0.8).
+  const handleZoomOut = () => {
+    if (networkRef.current) {
+      const currentScale = networkRef.current.getScale();
+      networkRef.current.moveTo({ scale: currentScale * 0.8 });
+    }
+  };
+
+  // Delete selected node and its connected relationships.
+  const deleteSelectedNode = () => {
+    if (selectedElement && selectedElement.type === 'node' && nodesRef.current) {
+      const nodeId = selectedElement.data.id;
+      // Remove the node.
+      nodesRef.current.remove(nodeId);
+      // Remove all edges connected to that node.
+      if (edgesRef.current) {
+        const edgeIds = edgesRef.current.getIds({
+          filter: (edge: RelationshipSchema) =>
+            edge.from === nodeId || edge.to === nodeId,
+        });
+        edgesRef.current.remove(edgeIds);
+      }
+      setSelectedElement(null);
+    }
+  };
+
+  // Delete selected relationship.
+  const deleteSelectedEdge = () => {
+    if (selectedElement && selectedElement.type === 'edge' && edgesRef.current) {
+      const edgeId = selectedElement.data.id;
+      edgesRef.current.remove(edgeId);
+      setSelectedElement(null);
+    }
+  };
+
+  const onChangenode = (selectedOption: SingleValue<OptionType>, actionMeta: ActionMeta<OptionType>) => {
+    if(selectedOption)
+    setNewNodeLabel(selectedOption.value.toString());
+  };
+  const onChangenodeProperties = (selectedOptions: OnChangeValue<OptionType, true>, actionMeta: ActionMeta<OptionType>) => {
+    setNewNodeProperties(selectedOptions.map(p => p.value));
+  };
+  const onChangeedge = (selectedOption: SingleValue<OptionType>, actionMeta: ActionMeta<OptionType>) => {
+    if(selectedOption)
+    {
+      setNewEdgeLabel(selectedOption.value.toString());
+    newEdgeLabelRef.current = selectedOption.value.toString();
+    }
+  };
+  const onChangeedgeProperties = (selectedOptions: OnChangeValue<OptionType, true>, actionMeta: ActionMeta<OptionType>) => {
+    setNewEdgeProperties(selectedOptions.map(p => p.value));
+    newEdgePropertiesRef.current = selectedOptions.map(p => p.value)
+  };
+  
 
 
-   
 
   return (
     <div >
       <div className='flex h-[60vh]'>
         <div className='bg-palette-neutral-bg-default relative' style={{ width: '100%', flex: '1' }}>
-          <InteractiveNvlWrapper
-            nodes={nodes}
-            rels={relationships}
-            nvlOptions={nvlOptions}
-            ref={nvlRef}
-            mouseEventCallbacks={{ ...mouseEventCallbacks }}
-            interactionOptions={{
-              selectOnClick: true,
-            }}
-            nvlCallbacks={nvlCallbacks}
+        <div
+            ref={containerRef}
+            className="border border-gray-300"
+            style={{ height: '100%', width: '100%' }}
           />
           <IconButtonArray orientation='vertical' isFloating={true} className='absolute bottom-4 right-4'>
             <IconButtonWithToolTip label='Zoomin' text='Zoom in' onClick={handleZoomIn} placement='left'>
@@ -378,65 +467,139 @@ export default function EntitySchemaExtractionSetting({
           </IconButtonArray>
         </div>
         <ResizePanelDetails open={true}>
-          {selectedItem !== undefined ? (
-            <>
-            <div className='flex gap-2 flex-wrap ml-2'>
-              {selectedItem.labels.map((label) => (
-                <Legend
-                  type="node"
-                  key={label}
-                  title={label}
-                  bgColor={"blue"}
-                  onClick={() => {}}
-                />
-              ))}
-              <>
-                <TextInput
-                  htmlAttributes={{
-                    type: "text",
-                    "aria-label": "node schema type",
-                    placeholder: "Node Schema Type",
-                  }}
-                  value={newNodeSchemaType}
-                  onChange={(e) => {
-                    setNewNodeSchemaType(e.target.value);
-                  }}
-                  isFluid={true}
-                  rightElement={
-                    <ButtonWithToolTip
-                      text={"Add Node Type"}
-                      onClick={() => addNodeSchema(selectedItem.id)}
-                      label="Add Node Type"
-                      >
-                      +
-                    </ButtonWithToolTip>
-                  }
-                />
-              </>
+          {selectedElement  ? (
+            
+            <div className="mt-4 border border-gray-300 p-4">
+              {/* Selected element panel */}
+              {selectedElement.type === 'node' ? (
+                <div>
+                  <h3 className="text-xl font-bold mb-2">Selected Node</h3>
+                  <p>
+                    <span className="font-semibold">Label:</span> {selectedElement.data.label}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Properties:</span>{' '}
+                    {selectedElement.data.proprities.length > 0
+                      ? selectedElement.data.proprities.join(', ')
+                      : 'None'}
+                  </p>
+                  <ButtonWithToolTip
+                    text={"Delete Node"}
+                    onClick={deleteSelectedNode}
+                    label='Delete Node'
+                    placement='top'
+                  >
+                    Delete Node
+                  </ButtonWithToolTip>
+                </div>
+              ) : (
+                <div>
+                  <h3 className="text-xl font-bold mb-2">Selected Relationship</h3>
+                  <p>
+                    <span className="font-semibold">From:</span>
+                    {nodesRef.current?.get(selectedElement.data.from) && (
+                      <> {nodesRef.current.get(selectedElement.data.from)?.label}</>
+                    )}
+                  </p>
+                  <p>
+                    <span className="font-semibold">To:</span>
+                    {nodesRef.current?.get(selectedElement.data.to) && (
+                      <> {nodesRef.current.get(selectedElement.data.to)?.label}</>
+                    )}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Label:</span> {selectedElement.data.label}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Properties:</span>{' '}
+                    {selectedElement.data.proprities.length > 0
+                      ? selectedElement.data.proprities.join(', ')
+                      : 'None'}
+                  </p>
+                  <ButtonWithToolTip
+                    text={"Delete Relationship"}
+                    onClick={deleteSelectedEdge}
+                    label='Delete Relationship'
+                    placement='top'
+                  >
+                    Delete Relationship
+                  </ButtonWithToolTip>
+                </div>
+              )}
             </div>
-          </>
          
           ) : (
            <>
-            <TextInput
-              htmlAttributes={{
-                type: 'text',
-                'aria-label': 'node schema type',
-                placeholder: 'Node Schema Type',
-              }}
-              value={newNodeSchemaType}
-              onChange={(e) => {
-                setNewNodeSchemaType(e.target.value);
-              }}
-              isFluid={true}
-            />
-            <ButtonWithToolTip
-              text={"Add Node Type"}
-              onClick={addNewNodeSchema}
-              label='Add Node Type'
-            >
-              Add Node Type
-            </ButtonWithToolTip>
+            <div className="m-4">
+              <Select
+                helpText='You can select one value'
+                label='Node Label'
+                selectProps={{
+                  isClearable: true,
+                  isMulti: false,
+                  options: nodeLabelOptions,
+                  onChange: onChangenode,
+                  value: {label:newNodeLabel,value:newNodeLabel},
+                }}
+                type='creatable'
+              />
+              <Select
+                helpText='You can select more than one values'
+                label='Node Properties'
+                selectProps={{
+                  isClearable: true,
+                  isMulti: true,
+                  options: [],
+                  onChange: onChangenodeProperties,
+                  value: newNodeProperties.map(p=> { return {label:p,value:p}}),
+                }}
+                type='creatable'
+              />
+              <ButtonWithToolTip
+                text={"Add Node"}
+                disabled={newNodeLabel==""}
+                onClick={addNode}
+                label='Add Node'
+                placement='top'
+              >
+                Add Node
+              </ButtonWithToolTip>
+            </div>
+            <div className="m-4">
+              <Select
+                helpText='You can select one value'
+                label='Relationship Type'
+                selectProps={{
+                  isClearable: true,
+                  isMulti: false,
+                  options: relationshipTypeOptions,
+                  onChange: onChangeedge,
+                  value: {label:newEdgeLabel,value:newEdgeLabel},
+                }}
+                type='creatable'
+              />
+              <Select
+                helpText='You can select more than one values'
+                label='Relationship Properties'
+                selectProps={{
+                  isClearable: true,
+                  isMulti: true,
+                  options: [],
+                  onChange: onChangeedgeProperties,
+                  value: newEdgeProperties.map(p=> { return {label:p,value:p}}),
+                }}
+                type='creatable'
+              />
+              <ButtonWithToolTip
+                text={"Add Edge"}
+                disabled={newEdgeLabel==""}
+                onClick={addEdge}
+                label='Add Edge'
+                placement='top'
+              >
+                Add Edge
+              </ButtonWithToolTip>
+            </div>
            </>
           )}
         </ResizePanelDetails>
