@@ -54,7 +54,7 @@ zipp==3.17.0
 sentence-transformers==3.3.1
 google-cloud-logging==3.11.3
 pypandoc==1.13
-graphdatascience==1.12
+graphdatascience==1.14
 Secweb==1.11.0
 ragas==0.2.11
 rouge_score==0.1.2
