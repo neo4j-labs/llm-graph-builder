@@ -296,7 +296,7 @@ export default function EntitySchemaExtractionSetting({
             addEdge: (edgeData: any, callback: any) => {
               // Assign the edge label and properties from the inputs.
               edgeData.label = newEdgeLabelRef.current;
-              edgeData.proprities = newEdgePropertiesRef.current;
+              edgeData.properties = newEdgePropertiesRef.current;
               edgeData.id = nextEdgeIdRef.current++;
               callback(edgeData);
               setNewEdgeLabel('');
@@ -349,7 +349,7 @@ export default function EntitySchemaExtractionSetting({
     if (nodesRef.current) {
       const newId = nextNodeIdRef.current++;
       const label = newNodeLabel.trim() || `Node ${newId}`;
-      nodesRef.current.add({ id: newId, label, proprities: newNodeProperties });
+      nodesRef.current.add({ id: newId, label, properties: newNodeProperties });
       setNewNodeLabel('');
       setNewNodeProperties([]);
     }
@@ -479,8 +479,8 @@ export default function EntitySchemaExtractionSetting({
                   </p>
                   <p>
                     <span className="font-semibold">Properties:</span>{' '}
-                    {selectedElement.data.proprities.length > 0
-                      ? selectedElement.data.proprities.join(', ')
+                    {selectedElement.data.properties.length > 0
+                      ? selectedElement.data.properties.join(', ')
                       : 'None'}
                   </p>
                   <ButtonWithToolTip
@@ -512,8 +512,8 @@ export default function EntitySchemaExtractionSetting({
                   </p>
                   <p>
                     <span className="font-semibold">Properties:</span>{' '}
-                    {selectedElement.data.proprities.length > 0
-                      ? selectedElement.data.proprities.join(', ')
+                    {selectedElement.data.properties.length > 0
+                      ? selectedElement.data.properties.join(', ')
                       : 'None'}
                   </p>
                   <ButtonWithToolTip

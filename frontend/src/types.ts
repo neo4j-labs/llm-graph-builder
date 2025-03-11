@@ -665,7 +665,7 @@ export interface ExtendedNode extends Node {
 export interface NodeSchema {
   id: number;
   label: string;
-  proprities: string[];
+  properties: string[];
 }
 
 export interface RelationshipSchema {
@@ -673,7 +673,7 @@ export interface RelationshipSchema {
   from: number;
   to: number;
   label: string;
-  proprities: string[];
+  properties: string[];
 }
 
 export interface NeoNode {
