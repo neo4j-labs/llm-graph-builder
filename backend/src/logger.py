@@ -5,7 +5,7 @@ from src.shared.common_fn import get_value_from_env_or_secret_manager
 
 class CustomLogger:
     def __init__(self):
-        self.is_gcp_log_enabled = get_value_from_env_or_secret_manager("GCP_LOG_METRICS_ENABLED", False, "bool")
+        self.is_gcp_log_enabled = get_value_from_env_or_secret_manager("GCP_LOG_METRICS_ENABLED", "False", "bool")
         if self.is_gcp_log_enabled:
             self.logging_client = gclogger.Client()
             self.logger_name = "llm_experiments_metrics"

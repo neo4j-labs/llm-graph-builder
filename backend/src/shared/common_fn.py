@@ -20,6 +20,8 @@ from urllib.parse import urlparse
 import boto3
 from langchain_community.embeddings import BedrockEmbeddings
 
+
+
 def check_url_source(source_type, yt_url:str=None, wiki_query:str=None):
     language=''
     try:
@@ -65,9 +67,9 @@ def get_chunk_and_graphDocument(graph_document_list, chunkId_chunkDoc_list):
   return lst_chunk_chunkId_document  
                  
 def create_graph_database_connection(uri, userName, password, database):
-  enable_user_agent = get_value_from_env_or_secret_manager("ENABLE_USER_AGENT",False,"bool")
+  enable_user_agent = get_value_from_env_or_secret_manager("ENABLE_USER_AGENT", "False" ,"bool")
   if enable_user_agent:
-    graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, refresh_schema=False, sanitize=True,driver_config={'user_agent':get_value_from_env_or_secret_manager("NEO4J_USER_AGENT","LLM-Graph-Builder")})  
+    graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, refresh_schema=False, sanitize=True,driver_config={'user_agent':get_value_from_env_or_secret_manager("USER_AGENT","LLM-Graph-Builder")})  
   else:
     graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, refresh_schema=False, sanitize=True)    
   return graph
@@ -228,3 +230,8 @@ def convert_type(value: str, data_type: type):
   except Exception as e:
     logging.error(f"Type conversion error: {e}")
     return None
+
+GCS_FILE_CACHE = get_value_from_env_or_secret_manager("GCS_FILE_CACHE","False", "bool")  
+BUCKET_UPLOAD = get_value_from_env_or_secret_manager("BUCKET_UPLOAD")
+BUCKET_FAILED_FILE = get_value_from_env_or_secret_manager("BUCKET_FAILED_FILE")
+EMBEDDING_MODEL = get_value_from_env_or_secret_manager("EMBEDDING_MODEL")

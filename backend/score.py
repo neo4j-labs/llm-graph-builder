@@ -112,7 +112,7 @@ app.add_middleware(
 )
 app.add_middleware(SessionMiddleware, secret_key=os.urandom(24))
 
-is_gemini_enabled = get_value_from_env_or_secret_manager("GEMINI_ENABLED", False, "bool")
+is_gemini_enabled = get_value_from_env_or_secret_manager("GEMINI_ENABLED", "False", "bool")
 if is_gemini_enabled:
     add_routes(app,ChatVertexAI(), path="/vertexai")
 
@@ -381,7 +381,7 @@ async def post_processing(uri=Form(None), userName=Form(None), password=Form(Non
             api_name = 'post_processing/enable_hybrid_search_and_fulltext_search_in_bloom'
             logging.info(f'Full Text index created')
 
-        if get_value_from_env_or_secret_manager("ENTITY_EMBEDDING",False,"bool") and "materialize_entity_similarities" in tasks:
+        if get_value_from_env_or_secret_manager("ENTITY_EMBEDDING","False","bool") and "materialize_entity_similarities" in tasks:
             await asyncio.to_thread(create_entity_embedding, graph)
             api_name = 'post_processing/create_entity_embedding'
             logging.info(f'Entity Embeddings created')
@@ -551,13 +551,12 @@ async def connect(uri=Form(None), userName=Form(None), password=Form(None), data
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
         result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, database)
-        gcs_file_cache = get_value_from_env_or_secret_manager("GCS_FILE_CACHE",False, "bool")
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name':'connect','db_url':uri, 'userName':userName, 'database':database, 'count':1, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
         logger.log_struct(json_obj, "INFO")
         result['elapsed_api_time'] = f'{elapsed_time:.2f}'
-        result['gcs_file_cache'] = gcs_file_cache
+        result['gcs_file_cache'] = GCS_FILE_CACHE
         return create_api_response('Success',data=result)
     except Exception as e:
         job_status = "Failed"
@@ -1038,7 +1037,6 @@ async def backend_connection_configuration():
         username= get_value_from_env_or_secret_manager("NEO4J_USERNAME")
         database= get_value_from_env_or_secret_manager("NEO4J_DATABASE")
         password= get_value_from_env_or_secret_manager("NEO4J_PASSWORD")
-        gcs_file_cache = get_value_from_env_or_secret_manager("GCS_FILE_CACHE",False, "bool")
         if all([uri, username, database, password]):
             graph = Neo4jGraph()
             logging.info(f'login connection status of object: {graph}')
@@ -1046,7 +1044,7 @@ async def backend_connection_configuration():
                 graph_connection = True        
                 graphDb_data_Access = graphDBdataAccess(graph)
                 result = graphDb_data_Access.connection_check_and_get_vector_dimensions(database)
-                result['gcs_file_cache'] = gcs_file_cache
+                result['gcs_file_cache'] = GCS_FILE_CACHE
                 result['uri'] = uri
                 end = time.time()
                 elapsed_time = end - start

@@ -33,11 +33,10 @@ from langchain_community.chat_models import ChatOllama
 
 # Local imports
 from src.llm import get_llm
-from src.shared.common_fn import get_value_from_env_or_secret_manager, load_embedding_model
+from src.shared.common_fn import *
 from src.shared.constants import *
 load_dotenv() 
 
-EMBEDDING_MODEL = get_value_from_env_or_secret_manager("EMBEDDING_MODEL")
 EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL) 
 
 class SessionChatHistory:

@@ -1,12 +1,13 @@
 from langchain_neo4j import Neo4jGraph
-from src.shared.constants import (BUCKET_UPLOAD,BUCKET_FAILED_FILE, PROJECT_ID, QUERY_TO_GET_CHUNKS, 
+from src.shared.common_fn import *
+from src.shared.constants import (QUERY_TO_GET_CHUNKS, 
                                   QUERY_TO_DELETE_EXISTING_ENTITIES, 
                                   QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION,
                                   QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY,
                                   START_FROM_BEGINNING,
                                   START_FROM_LAST_PROCESSED_POSITION,
                                   DELETE_ENTITIES_AND_START_FROM_BEGINNING,
-                                  QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT,GCS_FILE_CACHE)
+                                  QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT)
 from src.shared.schema_extraction import schema_extraction_from_text
 from dotenv import load_dotenv
 from datetime import datetime
@@ -20,7 +21,7 @@ from src.document_sources.gcs_bucket import *
 from src.document_sources.s3_bucket import *
 from src.document_sources.wikipedia import *
 from src.document_sources.youtube import *
-from src.shared.common_fn import *
+
 from src.make_relationships import *
 from src.document_sources.web_pages import *
 import re

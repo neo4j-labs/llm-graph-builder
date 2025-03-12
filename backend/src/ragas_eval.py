@@ -16,9 +16,9 @@ import nltk
 nltk.download('punkt')
 load_dotenv()
 
-EMBEDDING_MODEL = get_value_from_env_or_secret_manager("RAGAS_EMBEDDING_MODEL","openai")
-logging.info(f"Loading embedding model '{EMBEDDING_MODEL}' for ragas evaluation")
-EMBEDDING_FUNCTION, _ = load_embedding_model(EMBEDDING_MODEL)
+RAGAS_EMBEDDING_MODEL = get_value_from_env_or_secret_manager("RAGAS_EMBEDDING_MODEL","openai")
+logging.info(f"Loading embedding model '{RAGAS_EMBEDDING_MODEL}' for ragas evaluation")
+EMBEDDING_FUNCTION, _ = load_embedding_model(RAGAS_EMBEDDING_MODEL)
 
 def get_ragas_metrics(question: str, context: list, answer: list, model: str):
     """Calculates RAGAS metrics."""
