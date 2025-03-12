@@ -13,7 +13,8 @@ def get_youtube_transcript(youtube_id):
   try:
     proxy = os.environ.get("YOUTUBE_TRANSCRIPT_PROXY") 
     proxies = { 'https': proxy }
-    transcript_pieces = YouTubeTranscriptApi.get_transcript(youtube_id, proxies = proxies)
+    transcript_pieces = YouTubeTranscriptApi.fetch(youtube_id, proxies = proxies)
+    print(f" KAUSTUBH {transcript_pieces}")
     return transcript_pieces
   except Exception as e:
     message = f"Youtube transcript is not available for youtube Id: {youtube_id}"
