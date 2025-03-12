@@ -4,8 +4,8 @@ from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 
 def get_documents_from_Wikipedia(wiki_query:str, language:str):
   try:
-    pages = WikipediaLoader(query=wiki_query.strip(), lang=language, load_all_available_meta=False,doc_content_chars_max=100000,load_max_docs=1).load()
     file_name = wiki_query.strip()
+    pages = WikipediaLoader(query=wiki_query.strip(), lang=language, load_all_available_meta=False,doc_content_chars_max=100000,load_max_docs=1).load()
     logging.info(f"Total Pages from Wikipedia = {len(pages)}") 
     return file_name, pages
   except Exception as e:

@@ -6,7 +6,7 @@ from datasets import Dataset
 from dotenv import load_dotenv
 from ragas import evaluate
 from ragas.metrics import answer_relevancy, faithfulness,context_entity_recall
-from src.shared.common_fn import load_embedding_model 
+from src.shared.common_fn import get_value_from_env_or_secret_manager, load_embedding_model 
 from ragas.dataset_schema import SingleTurnSample
 from ragas.metrics import RougeScore, SemanticSimilarity, ContextEntityRecall
 from ragas.llms import LangchainLLMWrapper
@@ -16,9 +16,9 @@ import nltk
 nltk.download('punkt')
 load_dotenv()
 
-EMBEDDING_MODEL = os.getenv("RAGAS_EMBEDDING_MODEL")
-logging.info(f"Loading embedding model '{EMBEDDING_MODEL}' for ragas evaluation")
-EMBEDDING_FUNCTION, _ = load_embedding_model(EMBEDDING_MODEL)
+RAGAS_EMBEDDING_MODEL = get_value_from_env_or_secret_manager("RAGAS_EMBEDDING_MODEL","openai")
+logging.info("Loading embedding model for ragas evaluation")
+EMBEDDING_FUNCTION, _ = load_embedding_model(RAGAS_EMBEDDING_MODEL)
 
 def get_ragas_metrics(question: str, context: list, answer: list, model: str):
     """Calculates RAGAS metrics."""
