@@ -8,6 +8,10 @@ GROQ_MODELS = ["groq-llama3"]
 
 GRAPH_CHUNK_LIMIT = 50 
 PROJECT_ID = os.getenv("PROJECT_ID")
+GCS_FILE_CACHE = os.getenv("GCS_FILE_CACHE","False").lower() in ["true", "1", "yes"]
+BUCKET_UPLOAD = os.getenv("BUCKET_UPLOAD_FILE")
+BUCKET_FAILED_FILE = os.getenv("BUCKET_FAILED_FILE")
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL")
 
 #query 
 GRAPH_QUERY = """

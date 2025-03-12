@@ -1,4 +1,5 @@
 import logging
+from src.shared.constants import EMBEDDING_MODEL
 from graphdatascience import GraphDataScience
 from src.llm import get_llm
 from langchain_core.prompts import ChatPromptTemplate

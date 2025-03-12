@@ -1,6 +1,6 @@
 from langchain_neo4j import Neo4jGraph
 from src.shared.common_fn import *
-from src.shared.constants import (QUERY_TO_GET_CHUNKS, 
+from src.shared.constants import (BUCKET_UPLOAD, GCS_FILE_CACHE, QUERY_TO_GET_CHUNKS, 
                                   QUERY_TO_DELETE_EXISTING_ENTITIES, 
                                   QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION,
                                   QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY,

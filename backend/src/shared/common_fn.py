@@ -1,7 +1,7 @@
 import hashlib
 import logging
 from src.shared.constants import PROJECT_ID
-from src.document_sources.youtube import create_youtube_url
+
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_google_vertexai import VertexAIEmbeddings
 from langchain_openai import OpenAIEmbeddings
@@ -24,6 +24,7 @@ from langchain_community.embeddings import BedrockEmbeddings
 
 def check_url_source(source_type, yt_url:str=None, wiki_query:str=None):
     language=''
+    from src.document_sources.youtube import create_youtube_url
     try:
       logging.info(f"incoming URL: {yt_url}")
       if source_type == 'youtube':
@@ -230,8 +231,3 @@ def convert_type(value: str, data_type: type):
   except Exception as e:
     logging.error(f"Type conversion error: {e}")
     return None
-
-GCS_FILE_CACHE = get_value_from_env_or_secret_manager("GCS_FILE_CACHE","False", "bool")  
-BUCKET_UPLOAD = get_value_from_env_or_secret_manager("BUCKET_UPLOAD_FILE")
-BUCKET_FAILED_FILE = get_value_from_env_or_secret_manager("BUCKET_FAILED_FILE")
-EMBEDDING_MODEL = get_value_from_env_or_secret_manager("EMBEDDING_MODEL")

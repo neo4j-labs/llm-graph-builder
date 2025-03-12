@@ -5,6 +5,7 @@ from langchain_neo4j import Neo4jGraph
 import os
 from src.graph_query import get_graphDB_driver
 from src.shared.common_fn import *
+from src.shared.constants import EMBEDDING_MODEL
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from src.shared.constants import GRAPH_CLEANUP_PROMPT

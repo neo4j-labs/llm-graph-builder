@@ -1,5 +1,5 @@
 from langchain.docstore.document import Document
-from src.shared.common_fn import *
+
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from youtube_transcript_api import YouTubeTranscriptApi 
 import logging
@@ -9,6 +9,7 @@ from datetime import timedelta
 from src.shared.constants import YOUTUBE_CHUNK_SIZE_SECONDS
 import os
 import re
+from src.shared.common_fn import get_value_from_env_or_secret_manager
 
 def get_youtube_transcript(youtube_id):
   try:

@@ -7,6 +7,7 @@ from src.shared.constants import NODEREL_COUNT_QUERY_WITH_COMMUNITY, NODEREL_COU
 from src.entities.source_node import sourceNode
 from src.communities import MAX_COMMUNITY_LEVELS
 from src.shared.common_fn import *
+from src.shared.constants import EMBEDDING_MODEL
 import json
 from dotenv import load_dotenv
 
