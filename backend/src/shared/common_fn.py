@@ -207,7 +207,7 @@ def get_value_from_env_or_secret_manager(secret_name: str, default_value: Any = 
     else:
       secret_value = os.getenv(secret_name, None) 
   except (NotFound, PermissionDenied):
-    logging.warning(f"Secret '{secret_name}' not found in Secret Manager. Checking environment variable.")
+    logging.warning(f"key not found in Secret Manager. Checking environment variable.")
     secret_value = os.getenv(secret_name, None)
 
   if secret_value is None:
