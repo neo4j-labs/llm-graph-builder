@@ -1,9 +1,14 @@
+from src.shared.common_fn import get_value_from_env_or_secret_manager
+
+
 OPENAI_MODELS = ["openai-gpt-3.5", "openai-gpt-4o", "openai-gpt-4o-mini"]
 GEMINI_MODELS = ["gemini-1.0-pro", "gemini-1.5-pro", "gemini-1.5-flash"]
 GROQ_MODELS = ["groq-llama3"]
-BUCKET_UPLOAD = 'llm-graph-builder-upload'
-BUCKET_FAILED_FILE = 'llm-graph-builder-failed'
-PROJECT_ID = 'llm-experiments-387609' 
+BUCKET_UPLOAD = get_value_from_env_or_secret_manager("BUCKET_UPLOAD")
+BUCKET_FAILED_FILE = get_value_from_env_or_secret_manager("BUCKET_FAILED_FILE")
+PROJECT_ID = get_value_from_env_or_secret_manager("PROJECT_ID")
+GCS_FILE_CACHE = get_value_from_env_or_secret_manager("GCS_FILE_CACHE",False, "bool")
+EMBEDDING_MODEL = get_value_from_env_or_secret_manager("EMBEDDING_MODEL")
 GRAPH_CHUNK_LIMIT = 50 
 
 

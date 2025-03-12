@@ -4,10 +4,10 @@ import time
 from langchain_neo4j import Neo4jGraph
 import os
 from src.graph_query import get_graphDB_driver
-from src.shared.common_fn import load_embedding_model
+from src.shared.common_fn import get_value_from_env_or_secret_manager, load_embedding_model
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from src.shared.constants import GRAPH_CLEANUP_PROMPT
+from src.shared.constants import EMBEDDING_MODEL, GRAPH_CLEANUP_PROMPT
 from src.llm import get_llm
 from src.graphDB_dataAccess import graphDBdataAccess
 import time 
@@ -131,8 +131,7 @@ def create_fulltext(driver,type):
 
 def create_vector_fulltext_indexes(uri, username, password, database):
     types = ["entities", "hybrid"]
-    embedding_model = os.getenv('EMBEDDING_MODEL')
-    embeddings, dimension = load_embedding_model(embedding_model)
+    embeddings, dimension = load_embedding_model(EMBEDDING_MODEL)
     if not dimension:
         dimension = CHUNK_VECTOR_EMBEDDING_DIMENSION
     logging.info("Starting the process of creating full-text indexes.")
@@ -184,8 +183,7 @@ def fetch_entities_for_embedding(graph):
     return [{"elementId": record["elementId"], "text": record["text"]} for record in result]
 
 def update_embeddings(rows, graph):
-    embedding_model = os.getenv('EMBEDDING_MODEL')
-    embeddings, dimension = load_embedding_model(embedding_model)
+    embeddings, dimension = load_embedding_model(EMBEDDING_MODEL)
     logging.info(f"update embedding for entities")
     for row in rows:
         row['embedding'] = embeddings.embed_query(row['text'])                        
@@ -204,7 +202,7 @@ def graph_schema_consolidation(graph):
         messages=[("system", GRAPH_CLEANUP_PROMPT), ("human", "{input}")],
         partial_variables={"format_instructions": parser.get_format_instructions()}
     )
-    graph_cleanup_model = os.getenv("GRAPH_CLEANUP_MODEL", 'openai_gpt_4o')
+    graph_cleanup_model = get_value_from_env_or_secret_manager("GRAPH_CLEANUP_MODEL", 'openai_gpt_4o')
     llm, _ = get_llm(graph_cleanup_model)
     chain = prompt | llm | parser
 

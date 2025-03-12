@@ -1,4 +1,5 @@
 import logging
+from src.shared.common_fn import get_value_from_env_or_secret_manager
 from neo4j import time 
 from neo4j import GraphDatabase
 import os
@@ -21,9 +22,9 @@ def get_graphDB_driver(uri, username, password,database="neo4j"):
             database= os.getenv('NEO4J_DATABASE')
             password= os.getenv('NEO4J_PASSWORD')
 
-        enable_user_agent = os.environ.get("ENABLE_USER_AGENT", "False").lower() in ("true", "1", "yes")
+        enable_user_agent = get_value_from_env_or_secret_manager("ENABLE_USER_AGENT",False,"bool")
         if enable_user_agent:
-            driver = GraphDatabase.driver(uri, auth=(username, password),database=database, user_agent=os.environ.get('NEO4J_USER_AGENT'))
+            driver = GraphDatabase.driver(uri, auth=(username, password),database=database, user_agent= get_value_from_env_or_secret_manager("NEO4J_USER_AGENT","LLM-Graph-Builder"))
         else:
             driver = GraphDatabase.driver(uri, auth=(username, password),database=database)
         logging.info("Connection successful")

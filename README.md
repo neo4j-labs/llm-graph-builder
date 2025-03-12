@@ -118,24 +118,23 @@ Allow unauthenticated request : Yes
 |-------------------------|--------------------|---------------|--------------------------------------------------------------------------------------------------|
 |                                                                                                                                                                 |
 | **BACKEND ENV** 
-| OPENAI_API_KEY          | Mandatory           |            |An OpenAPI Key is required to use open LLM model to authenticate andn track requests                |
+| OPENAI_API_KEY          | Optional           |            |An Open AI key to use incase of openai embeddings                |
 | DIFFBOT_API_KEY         | Mandatory           |            |API key is required to use Diffbot's NLP service to extraction entities and relatioship from unstructured data|
-| BUCKET                  | Mandatory           |            |bucket name to store uploaded file on GCS                                                           |
+| BUCKET_UPLOAD_FILE      | Optional           |            |bucket name to store uploaded file on GCS                                                           |
+| BUCKET_FAILED_FILE      | Optional           |            |bucket name to store failed file on GCS while extraction                                             |
 | NEO4J_USER_AGENT        | Optional            | llm-graph-builder        | Name of the user agent to track neo4j database activity                              |
 | ENABLE_USER_AGENT       | Optional            | true       | Boolean value to enable/disable neo4j user agent                                                   |
-| DUPLICATE_TEXT_DISTANCE | Mandatory            | 5 | This value used to find distance for all node pairs in the graph and calculated based on node properties    |
-| DUPLICATE_SCORE_VALUE   | Mandatory            | 0.97 | Node score value to match duplicate node                                                                 |
-| EFFECTIVE_SEARCH_RATIO  | Mandatory            | 1 |                 |
-| GRAPH_CLEANUP_MODEL     | Optional            | 0.97 |  Model name to clean-up graph in post processing                                                           |
+| DUPLICATE_TEXT_DISTANCE | Optional            | 5 | This value used to find distance for all node pairs in the graph and calculated based on node properties    |
+| DUPLICATE_SCORE_VALUE   | Optional            | 0.97 | Node score value to match duplicate node                                                                 |
+| EFFECTIVE_SEARCH_RATIO  | Optional            | 5 |                 |
+| GRAPH_CLEANUP_MODEL     | Optional            | openai_gpt_4o |  Model name to clean-up graph in post processing                                                           |
 | MAX_TOKEN_CHUNK_SIZE    | Optional            | 10000 | Maximum token size to process file content                                                               |
-| YOUTUBE_TRANSCRIPT_PROXY| Optional            |   | Proxy key to process youtube video for getting transcript                                                   |
+| YOUTUBE_TRANSCRIPT_PROXY| Mandatory            |   | Proxy key required to process youtube video for getting transcript                                                   |
 | EMBEDDING_MODEL         | Optional            | all-MiniLM-L6-v2 | Model for generating the text embedding (all-MiniLM-L6-v2 , openai , vertexai)                |
 | IS_EMBEDDING            | Optional            | true          | Flag to enable text embedding                                                                    |
-| KNN_MIN_SCORE           | Optional            | 0.94          | Minimum score for KNN algorithm                                                                  |
+| KNN_MIN_SCORE           | Optional            | 0.8          | Minimum score for KNN algorithm                                                                  |
 | GEMINI_ENABLED          | Optional            | False         | Flag to enable Gemini                                                                             |
 | GCP_LOG_METRICS_ENABLED | Optional            | False         | Flag to enable Google Cloud logs                                                                 |
-| NUMBER_OF_CHUNKS_TO_COMBINE | Optional        | 5             | Number of chunks to combine when processing embeddings                                           |
-| UPDATE_GRAPH_CHUNKS_PROCESSED | Optional      | 20            | Number of chunks processed before updating progress                                        |
 | NEO4J_URI               | Optional            | neo4j://database:7687 | URI for Neo4j database                                                                  |
 | NEO4J_USERNAME          | Optional            | neo4j         | Username for Neo4j database                                                                       |
 | NEO4J_PASSWORD          | Optional            | password      | Password for Neo4j database                                                                       |

@@ -33,11 +33,11 @@ from langchain_community.chat_models import ChatOllama
 
 # Local imports
 from src.llm import get_llm
-from src.shared.common_fn import load_embedding_model
+from src.shared.common_fn import get_value_from_env_or_secret_manager, load_embedding_model
 from src.shared.constants import *
 load_dotenv() 
 
-EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
+EMBEDDING_MODEL = get_value_from_env_or_secret_manager("EMBEDDING_MODEL")
 EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL) 
 
 class SessionChatHistory:
@@ -397,7 +397,7 @@ def get_neo4j_retriever(graph, document_names,chat_mode_settings, score_threshol
         neo_db = initialize_neo4j_vector(graph, chat_mode_settings)
         # document_names= list(map(str.strip, json.loads(document_names)))
         search_k = chat_mode_settings["top_k"]
-        ef_ratio = int(os.getenv("EFFECTIVE_SEARCH_RATIO", "2")) if os.getenv("EFFECTIVE_SEARCH_RATIO", "2").isdigit() else 2
+        ef_ratio = get_value_from_env_or_secret_manager("EFFECTIVE_SEARCH_RATIO", 5, "int")
         retriever = create_retriever(neo_db, document_names,chat_mode_settings, search_k, score_threshold,ef_ratio)
         return retriever
     except Exception as e:
@@ -410,7 +410,7 @@ def setup_chat(model, graph, document_names, chat_mode_settings):
     start_time = time.time()
     try:
         if model == "diffbot":
-            model = os.getenv('DEFAULT_DIFFBOT_CHAT_MODEL')
+            model = get_value_from_env_or_secret_manager("DEFAULT_DIFFBOT_CHAT_MODEL","openai_gpt_4o")
         
         llm, model_name = get_llm(model=model)
         logging.info(f"Model called in chat: {model} (version: {model_name})")

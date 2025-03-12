@@ -6,7 +6,7 @@ from src.shared.constants import (BUCKET_UPLOAD,BUCKET_FAILED_FILE, PROJECT_ID, 
                                   START_FROM_BEGINNING,
                                   START_FROM_LAST_PROCESSED_POSITION,
                                   DELETE_ENTITIES_AND_START_FROM_BEGINNING,
-                                  QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT)
+                                  QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT,GCS_FILE_CACHE)
 from src.shared.schema_extraction import schema_extraction_from_text
 from dotenv import load_dotenv
 from datetime import datetime
@@ -230,8 +230,7 @@ async def extract_graph_from_file_local_file(uri, userName, password, database, 
 
   logging.info(f'Process file name :{fileName}')
   if not retry_condition:
-    gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
-    if gcs_file_cache == 'True':
+    if GCS_FILE_CACHE:
       folder_name = create_gcs_bucket_folder_name_hashed(uri, fileName)
       file_name, pages = get_documents_from_gcs( PROJECT_ID, BUCKET_UPLOAD, folder_name, fileName)
     else:
@@ -365,7 +364,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
       uri_latency["update_source_node"] = f'{elapsed_update_source_node:.2f}'
 
       logging.info('Update the status as Processing')
-      update_graph_chunk_processed = int(os.environ.get('UPDATE_GRAPH_CHUNKS_PROCESSED'))
+      update_graph_chunk_processed = get_value_from_env_or_secret_manager("UPDATE_GRAPH_CHUNKS_PROCESSED",20,"int")
       # selected_chunks = []
       is_cancelled_status = False
       job_status = "Completed"
@@ -431,8 +430,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
       # merged_file_path have value only when file uploaded from local
       
       if is_uploaded_from_local:
-        gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
-        if gcs_file_cache == 'True':
+        if GCS_FILE_CACHE:
           folder_name = create_gcs_bucket_folder_name_hashed(uri, file_name)
           delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
         else:
@@ -630,10 +628,7 @@ def merge_chunks_local(file_name, total_chunks, chunk_dir, merged_dir):
 
 def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, originalname, uri, chunk_dir, merged_dir):
   
-  gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
-  logging.info(f'gcs file cache: {gcs_file_cache}')
-  
-  if gcs_file_cache == 'True':
+  if GCS_FILE_CACHE:
     folder_name = create_gcs_bucket_folder_name_hashed(uri,originalname)
     upload_file_to_gcs(chunk, chunk_number, originalname, BUCKET_UPLOAD, folder_name)
   else:
@@ -648,7 +643,7 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
 
   if int(chunk_number) == int(total_chunks):
       # If this is the last chunk, merge all chunks into a single file
-      if gcs_file_cache == 'True':
+      if GCS_FILE_CACHE:
         file_size = merge_file_gcs(BUCKET_UPLOAD, originalname, folder_name, int(total_chunks))
       else:
         file_size = merge_chunks_local(originalname, int(total_chunks), chunk_dir, merged_dir)
@@ -695,7 +690,6 @@ def manually_cancelled_job(graph, filenames, source_types, merged_dir, uri):
   
   filename_list= list(map(str.strip, json.loads(filenames)))
   source_types_list= list(map(str.strip, json.loads(source_types)))
-  gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
   
   for (file_name,source_type) in zip(filename_list, source_types_list):
       obj_source_node = sourceNode()
@@ -708,7 +702,7 @@ def manually_cancelled_job(graph, filenames, source_types, merged_dir, uri):
       count_response = graphDb_data_Access.update_node_relationship_count(file_name)
       obj_source_node = None
       merged_file_path = os.path.join(merged_dir, file_name)
-      if source_type == 'local file' and gcs_file_cache == 'True':
+      if source_type == 'local file' and GCS_FILE_CACHE:
           folder_name = create_gcs_bucket_folder_name_hashed(uri, file_name)
           delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
       else:
@@ -748,8 +742,7 @@ def set_status_retry(graph, file_name, retry_condition):
     graphDb_data_Access.update_source_node(obj_source_node)
 
 def failed_file_process(uri,file_name, merged_file_path):
-  gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
-  if gcs_file_cache == 'True':
+  if GCS_FILE_CACHE:
       folder_name = create_gcs_bucket_folder_name_hashed(uri,file_name)
       copy_failed_file(BUCKET_UPLOAD, BUCKET_FAILED_FILE, folder_name, file_name)
       time.sleep(5)

@@ -1,4 +1,5 @@
 from langchain.docstore.document import Document
+from src.shared.common_fn import *
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from youtube_transcript_api import YouTubeTranscriptApi 
 import logging
@@ -11,7 +12,7 @@ import re
 
 def get_youtube_transcript(youtube_id):
   try:
-    proxy = os.environ.get("YOUTUBE_TRANSCRIPT_PROXY") 
+    proxy = get_value_from_env_or_secret_manager("YOUTUBE_TRANSCRIPT_PROXY")
     proxies = { 'https': proxy }
     transcript_pieces = YouTubeTranscriptApi.get_transcript(youtube_id, proxies = proxies)
     return transcript_pieces
