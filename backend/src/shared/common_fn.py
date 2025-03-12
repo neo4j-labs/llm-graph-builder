@@ -232,6 +232,6 @@ def convert_type(value: str, data_type: type):
     return None
 
 GCS_FILE_CACHE = get_value_from_env_or_secret_manager("GCS_FILE_CACHE","False", "bool")  
-BUCKET_UPLOAD = get_value_from_env_or_secret_manager("BUCKET_UPLOAD")
+BUCKET_UPLOAD = get_value_from_env_or_secret_manager("BUCKET_UPLOAD_FILE")
 BUCKET_FAILED_FILE = get_value_from_env_or_secret_manager("BUCKET_FAILED_FILE")
 EMBEDDING_MODEL = get_value_from_env_or_secret_manager("EMBEDDING_MODEL")

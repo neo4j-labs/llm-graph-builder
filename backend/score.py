@@ -1,6 +1,8 @@
 from fastapi import FastAPI, File, UploadFile, Form, Request, HTTPException
 from fastapi_health import health
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+load_dotenv()
 from src.main import *
 from src.QA_integration import *
 from src.shared.common_fn import *

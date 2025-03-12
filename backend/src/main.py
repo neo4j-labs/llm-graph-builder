@@ -9,7 +9,6 @@ from src.shared.constants import (QUERY_TO_GET_CHUNKS,
                                   DELETE_ENTITIES_AND_START_FROM_BEGINNING,
                                   QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT)
 from src.shared.schema_extraction import schema_extraction_from_text
-from dotenv import load_dotenv
 from datetime import datetime
 import logging
 from src.create_chunks import CreateChunksofDocument
@@ -34,7 +33,7 @@ import json
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 
 warnings.filterwarnings("ignore")
-load_dotenv()
+
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 
 def create_source_node_graph_url_s3(graph, model, source_url, aws_access_key_id, aws_secret_access_key, source_type):
