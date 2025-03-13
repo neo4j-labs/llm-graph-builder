@@ -61,10 +61,27 @@ class SelectSubjectInput(BaseModel):
 # end of added by ian
 
 class OnGenerateKeywordsInput(BaseModel):
-    # The keywords are a required field, formatted as a comma-separated string.
-    keywords: str = Field(..., 
-                          description="Provide 3 comma-separated keywords to be used for searching media assets. "
-                                      "The keywords should represent relevant terms for the chosen topic.")
+    keywords: str = Field(
+        ...,
+        description=(
+            "ONLY call this tool when ALL of these conditions are met:\n"
+            "1. The MOST RECENT message was from the human/user (not from the assistant)\n"
+            "2. The user EXPLICITLY APPROVES previously suggested keywords\n"
+            "3. The user says something like 'yes, those keywords look good' or "
+            "'I approve these keywords' or 'let's use these keywords'\n\n"
+            "DO NOT call this tool when:\n"
+            "1. You (the assistant) are suggesting initial keywords to the user\n"
+            "2. The user asks for keyword suggestions\n"
+            "3. The user hasn't explicitly approved the keywords\n"
+            "4. The most recent message was from you (the assistant)\n\n"
+            "Example valid triggers (must be the most recent message):\n"
+            "- User: 'Yes, those keywords look good'\n"
+            "- User: 'I approve these keywords'\n"
+            "- User: 'Let's use these keywords'\n\n"
+            "The keywords should be provided as a comma-separated string of 3 terms that were "
+            "previously suggested and approved by the user."
+        )
+    )
     
     class Config:
         schema_extra = {
