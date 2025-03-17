@@ -7,7 +7,7 @@ import { clearChatAPI } from '../../services/QnaAPI';
 import { useCredentials } from '../../context/UserCredentials';
 import { connectionState } from '../../types';
 import { useMessageContext } from '../../context/UserMessages';
-import { useMediaQuery } from '@mui/material';
+import { useMediaQuery, Spotlight, SpotlightTour } from '@neo4j-ndl/react';
 import { useFileContext } from '../../context/UsersFiles';
 import SchemaFromTextDialog from '../Popups/Settings/SchemaFromText';
 import useSpeechSynthesis from '../../hooks/useSpeech';
@@ -23,7 +23,60 @@ const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
 const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
 const GenericModal = lazy(() => import('../WebSources/GenericSourceModal'));
 const ConnectionModal = lazy(() => import('../Popups/ConnectionModal/ConnectionModal'));
-
+const spotlights = [
+  {
+    target: 'connectbutton',
+    children: (
+      <>
+        <Spotlight.Header>Connect To Neo4j Database</Spotlight.Header>
+        <Spotlight.Body>Click On Connect</Spotlight.Body>
+      </>
+    ),
+  },
+  {
+    target: 'dropzone',
+    children: (
+      <>
+        <Spotlight.Header>Upload documents </Spotlight.Header>
+      </>
+    ),
+  },
+  {
+    target: 'llmdropdown',
+    children: (
+      <>
+        <Spotlight.Header>Choose Desired LLM</Spotlight.Header>
+      </>
+    ),
+  },
+  {
+    target: 'generategraphbtn',
+    children: (
+      <>
+        <Spotlight.Header>Start The Extraction Process</Spotlight.Header>
+        <Spotlight.Body>Click On Generate Graph</Spotlight.Body>
+      </>
+    ),
+  },
+  {
+    target: 'visualizegraphbtn',
+    children: (
+      <>
+        <Spotlight.Header>Visualize The Knowledge Graph</Spotlight.Header>
+        <Spotlight.Body>Select At Least One or More Completed Files From The Table For Visualization</Spotlight.Body>
+      </>
+    ),
+  },
+  {
+    target: 'chatbtn',
+    children: (
+      <>
+        <Spotlight.Header>Ask Questions Related To Documents</Spotlight.Header>
+        <Spotlight.Body>Choose Desired Retrieval Mode</Spotlight.Body>
+      </>
+    ),
+  },
+];
 const PageLayout: React.FC = () => {
   const [openConnection, setOpenConnection] = useState<connectionState>({
     openPopUp: false,
@@ -190,6 +243,18 @@ const PageLayout: React.FC = () => {
 
   return (
     <>
+      <SpotlightTour
+        spotlights={spotlights}
+        onAction={(target, action) => {
+          if (target == 'connectbutton' && action == 'next' && !isLeftExpanded) {
+            toggleLeftDrawer();
+          }
+          if (target === 'visualizegraphbtn' && action === 'next' && !isRightExpanded) {
+            toggleRightDrawer();
+          }
+          console.log(`Action ${action} was performed in spotlight ${target}`);
+        }}
+      />
       <Suspense fallback={<FallBackDialog />}>
         <ConnectionModal
           open={openConnection.openPopUp}

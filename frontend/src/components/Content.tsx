@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useRef, Suspense, useReducer, useCallback, useContext } from 'react';
 import FileTable from './FileTable';
-import { Button, Typography, Flex, StatusIndicator, useMediaQuery, Menu } from '@neo4j-ndl/react';
+import { Button, Typography, Flex, StatusIndicator, useMediaQuery, Menu, SpotlightTarget } from '@neo4j-ndl/react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { extractAPI } from '../utils/FileAPI';
@@ -976,18 +976,21 @@ const Content: React.FC<ContentProps> = ({
             />
           </div>
           <Flex flexDirection='row' gap='4' className='self-end mb-2.5' flexWrap='wrap'>
-            <ButtonWithToolTip
-              text={tooltips.generateGraph}
-              placement='top'
-              label='generate graph'
-              onClick={onClickHandler}
-              disabled={disableCheck || isReadOnlyUser}
-              className='mr-0.5'
-              size={isTablet ? 'small' : 'medium'}
-            >
-              {buttonCaptions.generateGraph}{' '}
-              {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
-            </ButtonWithToolTip>
+            <SpotlightTarget id='generategraphbtn'>
+              <ButtonWithToolTip
+                text={tooltips.generateGraph}
+                placement='top'
+                label='generate graph'
+                onClick={onClickHandler}
+                disabled={disableCheck || isReadOnlyUser}
+                className='mr-0.5'
+                size={isTablet ? 'small' : 'medium'}
+              >
+                {buttonCaptions.generateGraph}{' '}
+                {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
+              </ButtonWithToolTip>
+            </SpotlightTarget>
+
             <ButtonWithToolTip
               text={
                 !selectedfileslength ? tooltips.deleteFile : `${selectedfileslength} ${tooltips.deleteSelectedFiles}`
@@ -1002,35 +1005,37 @@ const Content: React.FC<ContentProps> = ({
               {buttonCaptions.deleteFiles}
               {selectedfileslength != undefined && selectedfileslength > 0 && `(${selectedfileslength})`}
             </ButtonWithToolTip>
-            <Flex flexDirection='row' gap='0'>
-              <Button
-                onClick={handleGraphView}
-                isDisabled={showGraphCheck}
-                className='px-0! flex! items-center justify-between gap-4 graphbtn'
-                size={isTablet ? 'small' : 'medium'}
-              >
-                <span className='mx-2'>
-                  {buttonCaptions.showPreviewGraph}{' '}
-                  {selectedfileslength && completedfileNo ? `(${completedfileNo})` : ''}
-                </span>
-              </Button>
-              <div
-                className={`ndl-icon-btn ndl-clean dropdownbtn ${colorMode === 'dark' ? 'darktheme' : ''} ${
-                  isTablet ? 'small' : 'medium'
-                }`}
-                onClick={(e) => {
-                  setIsGraphBtnMenuOpen((old) => !old);
-                  e.stopPropagation();
-                }}
-                ref={graphbtnRef}
-              >
-                {!isGraphBtnMenuOpen ? (
-                  <ChevronUpIconOutline className='n-size-token-5' />
-                ) : (
-                  <ChevronDownIconOutline className='n-size-token-' />
-                )}
-              </div>
-            </Flex>
+            <SpotlightTarget id='visualizegraphbtn'>
+              <Flex flexDirection='row' gap='0'>
+                <Button
+                  onClick={handleGraphView}
+                  isDisabled={showGraphCheck}
+                  className='px-0! flex! items-center justify-between gap-4 graphbtn'
+                  size={isTablet ? 'small' : 'medium'}
+                >
+                  <span className='mx-2'>
+                    {buttonCaptions.showPreviewGraph}{' '}
+                    {selectedfileslength && completedfileNo ? `(${completedfileNo})` : ''}
+                  </span>
+                </Button>
+                <div
+                  className={`ndl-icon-btn ndl-clean dropdownbtn ${colorMode === 'dark' ? 'darktheme' : ''} ${
+                    isTablet ? 'small' : 'medium'
+                  }`}
+                  onClick={(e) => {
+                    setIsGraphBtnMenuOpen((old) => !old);
+                    e.stopPropagation();
+                  }}
+                  ref={graphbtnRef}
+                >
+                  {!isGraphBtnMenuOpen ? (
+                    <ChevronUpIconOutline className='n-size-token-5' />
+                  ) : (
+                    <ChevronDownIconOutline className='n-size-token-' />
+                  )}
+                </div>
+              </Flex>
+            </SpotlightTarget>
 
             <Menu
               placement='top-end-bottom-end'

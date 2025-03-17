@@ -1,4 +1,16 @@
-import { Button, Dialog, TextInput, Select, Banner, Dropzone, Typography, TextLink, Flex } from '@neo4j-ndl/react';
+import {
+  Button,
+  Dialog,
+  TextInput,
+  Select,
+  Banner,
+  Dropzone,
+  Typography,
+  TextLink,
+  Flex,
+  SpotlightTarget,
+  useSpotlightContext,
+} from '@neo4j-ndl/react';
 import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { connectAPI } from '../../../services/ConnectAPI';
 import { useCredentials } from '../../../context/UserCredentials';
@@ -64,7 +76,7 @@ export default function ConnectionModal({
   const databaseRef = useRef<HTMLInputElement>(null);
   const userNameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
-
+  const { setActiveSpotlight } = useSpotlightContext();
   useEffect(() => {
     if (searchParams.has('connectURL')) {
       const url = searchParams.get('connectURL');
@@ -72,6 +84,7 @@ export default function ConnectionModal({
       searchParams.delete('connectURL');
       setSearchParams(searchParams);
     }
+    setActiveSpotlight('connectbutton');
     return () => {
       setUserDbVectorIndex(undefined);
     };
@@ -361,7 +374,7 @@ export default function ConnectionModal({
         <Dialog.Header htmlAttributes={{ id: 'form-dialog-title' }}>Connect to Neo4j</Dialog.Header>
         <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
           <Typography variant='body-medium' className='mb-4'>
-            <TextLink isExternalLink href='https://console.neo4j.io/'>
+            <TextLink type='external' href='https://console.neo4j.io/'>
               Don't have a Neo4j instance? Start for free today
             </TextLink>
           </Typography>
@@ -493,20 +506,28 @@ export default function ConnectionModal({
             </div>
           </form>
           <Flex flexDirection='row' justifyContent='flex-end'>
-            <Button
-              isLoading={isLoading}
-              isDisabled={isDisabled}
-              onClick={() => submitConnection(user?.email ?? '')}
-              ref={connectRef}
-              onKeyDown={(e) => {
-                e.stopPropagation();
-                if (e.key === 'Enter') {
-                  submitConnection(user?.email ?? '');
-                }
-              }}
+            <SpotlightTarget
+              id='connectbutton'
+              hasPulse={true}
+              indicatorVariant='border'
+              hasAnchorPortal={true}
+              borderRadius={11}
             >
-              {buttonCaptions.connect}
-            </Button>
+              <Button
+                isLoading={isLoading}
+                isDisabled={isDisabled}
+                onClick={() => submitConnection(user?.email ?? '')}
+                ref={connectRef}
+                onKeyDown={(e) => {
+                  e.stopPropagation();
+                  if (e.key === 'Enter') {
+                    submitConnection(user?.email ?? '');
+                  }
+                }}
+              >
+                {buttonCaptions.connect}
+              </Button>
+            </SpotlightTarget>
           </Flex>
         </Dialog.Content>
       </Dialog>
