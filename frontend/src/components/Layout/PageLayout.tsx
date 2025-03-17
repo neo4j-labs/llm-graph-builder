@@ -23,6 +23,7 @@ const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
 const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
 const GenericModal = lazy(() => import('../WebSources/GenericSourceModal'));
 const ConnectionModal = lazy(() => import('../Popups/ConnectionModal/ConnectionModal'));
+
 const spotlights = [
   {
     target: 'connectbutton',
@@ -45,7 +46,7 @@ const spotlights = [
     target: 'llmdropdown',
     children: (
       <>
-        <Spotlight.Header>Choose Desired LLM</Spotlight.Header>
+        <Spotlight.Header>Choose The Desired LLM</Spotlight.Header>
       </>
     ),
   },
@@ -72,7 +73,6 @@ const spotlights = [
     children: (
       <>
         <Spotlight.Header>Ask Questions Related To Documents</Spotlight.Header>
-        <Spotlight.Body>Choose Desired Retrieval Mode</Spotlight.Body>
       </>
     ),
   },
@@ -96,7 +96,6 @@ const PageLayout: React.FC = () => {
     setShowDisconnectButton,
     showDisconnectButton,
     setIsGCSActive,
-    // setChunksToBeProces,
   } = useCredentials();
   const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(Boolean(isLargeDesktop));
   const [isRightExpanded, setIsRightExpanded] = useState<boolean>(Boolean(isLargeDesktop));
@@ -246,8 +245,11 @@ const PageLayout: React.FC = () => {
       <SpotlightTour
         spotlights={spotlights}
         onAction={(target, action) => {
-          if (target == 'connectbutton' && action == 'next' && !isLeftExpanded) {
-            toggleLeftDrawer();
+          if (target == 'connectbutton' && action == 'next') {
+            if (!isLeftExpanded) {
+              toggleLeftDrawer();
+            }
+            setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
           }
           if (target === 'visualizegraphbtn' && action === 'next' && !isRightExpanded) {
             toggleRightDrawer();

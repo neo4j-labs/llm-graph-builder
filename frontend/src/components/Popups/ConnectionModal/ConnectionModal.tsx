@@ -511,7 +511,7 @@ export default function ConnectionModal({
               hasPulse={true}
               indicatorVariant='border'
               hasAnchorPortal={true}
-              borderRadius={11}
+              borderRadius={9}
             >
               <Button
                 isLoading={isLoading}
