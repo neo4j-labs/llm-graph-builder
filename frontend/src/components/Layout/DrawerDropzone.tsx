@@ -125,7 +125,15 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
           </Drawer.Body>
         ) : (
           <Drawer.Body className='overflow-hidden! w-[294px]!'>
-            <Typography variant='body-small'>
+            <Typography
+              variant='body-small'
+              className='cursor-pointer'
+              htmlAttributes={{
+                onClick: () => {
+                  loginWithRedirect();
+                },
+              }}
+            >
               <StatusIndicator type={'danger'} />
               <span className='text-center mx-1'>
                 {filesData.length === 0
