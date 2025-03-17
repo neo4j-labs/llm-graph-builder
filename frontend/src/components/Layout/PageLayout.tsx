@@ -30,7 +30,7 @@ const spotlights = [
     children: (
       <>
         <Spotlight.Header>Connect To Neo4j Database</Spotlight.Header>
-        <Spotlight.Body>Click On Connect</Spotlight.Body>
+        <Spotlight.Body>Fill out the neo4j credentials and click on connect</Spotlight.Body>
       </>
     ),
   },
@@ -39,6 +39,7 @@ const spotlights = [
     children: (
       <>
         <Spotlight.Header>Upload documents </Spotlight.Header>
+        <Spotlight.Body>Upload any unstructured files</Spotlight.Body>
       </>
     ),
   },
@@ -249,7 +250,6 @@ const PageLayout: React.FC = () => {
             if (!isLeftExpanded) {
               toggleLeftDrawer();
             }
-            setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
           }
           if (target === 'visualizegraphbtn' && action === 'next' && !isRightExpanded) {
             toggleRightDrawer();

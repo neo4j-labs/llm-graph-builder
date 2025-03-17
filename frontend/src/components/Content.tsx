@@ -920,13 +920,20 @@ const Content: React.FC<ContentProps> = ({
               Graph Enhancement
             </ButtonWithToolTip>
             {!connectionStatus ? (
-              <Button
-                size={isTablet ? 'small' : 'medium'}
-                className='mr-2!'
-                onClick={() => setOpenConnection((prev) => ({ ...prev, openPopUp: true }))}
+              <SpotlightTarget
+                id='connectbutton'
+                hasPulse={true}
+                indicatorVariant='border'
+                className='n-bg-palette-primary-bg-strong hover:n-bg-palette-primary-hover-strong'
               >
-                {buttonCaptions.connectToNeo4j}
-              </Button>
+                <Button
+                  size={isTablet ? 'small' : 'medium'}
+                  className='mr-2!'
+                  onClick={() => setOpenConnection((prev) => ({ ...prev, openPopUp: true }))}
+                >
+                  {buttonCaptions.connectToNeo4j}
+                </Button>
+              </SpotlightTarget>
             ) : (
               showDisconnectButton && (
                 <Button size={isTablet ? 'small' : 'medium'} className='mr-2.5' onClick={disconnect}>

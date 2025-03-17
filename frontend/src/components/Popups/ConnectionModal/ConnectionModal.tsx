@@ -8,7 +8,6 @@ import {
   Typography,
   TextLink,
   Flex,
-  SpotlightTarget,
   useSpotlightContext,
 } from '@neo4j-ndl/react';
 import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
@@ -506,28 +505,20 @@ export default function ConnectionModal({
             </div>
           </form>
           <Flex flexDirection='row' justifyContent='flex-end'>
-            <SpotlightTarget
-              id='connectbutton'
-              hasPulse={true}
-              indicatorVariant='border'
-              hasAnchorPortal={true}
-              borderRadius={9}
+            <Button
+              isLoading={isLoading}
+              isDisabled={isDisabled}
+              onClick={() => submitConnection(user?.email ?? '')}
+              ref={connectRef}
+              onKeyDown={(e) => {
+                e.stopPropagation();
+                if (e.key === 'Enter') {
+                  submitConnection(user?.email ?? '');
+                }
+              }}
             >
-              <Button
-                isLoading={isLoading}
-                isDisabled={isDisabled}
-                onClick={() => submitConnection(user?.email ?? '')}
-                ref={connectRef}
-                onKeyDown={(e) => {
-                  e.stopPropagation();
-                  if (e.key === 'Enter') {
-                    submitConnection(user?.email ?? '');
-                  }
-                }}
-              >
-                {buttonCaptions.connect}
-              </Button>
-            </SpotlightTarget>
+              {buttonCaptions.connect}
+            </Button>
           </Flex>
         </Dialog.Content>
       </Dialog>
