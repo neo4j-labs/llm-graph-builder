@@ -15,7 +15,7 @@ langchain-aws==0.2.15
 langchain-anthropic==0.3.9
 langchain-fireworks==0.2.7
 langchain-community==0.3.19
-langchain-core==0.3.44
+langchain-core==0.3.45
 langchain-experimental==0.3.4
 langchain-google-vertexai==2.0.15
 langchain-groq==0.2.5
@@ -58,6 +58,6 @@ graphdatascience==1.14
 Secweb==1.18.1
 ragas==0.2.14
 rouge_score==0.1.2
-langchain-neo4j==0.3.0
+langchain-neo4j==0.4.0
 pypandoc-binary==1.15
 chardet==5.2.0

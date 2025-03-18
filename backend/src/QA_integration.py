@@ -380,7 +380,7 @@ def create_retriever(neo_db, document_names, chat_mode_settings,search_k, score_
         retriever = neo_db.as_retriever(
             search_type="similarity_score_threshold",
             search_kwargs={
-                'k': search_k,
+                'top_k': search_k,
                 'effective_search_ratio': ef_ratio,
                 'score_threshold': score_threshold,
                 'filter': {'fileName': {'$in': document_names}}
@@ -390,7 +390,7 @@ def create_retriever(neo_db, document_names, chat_mode_settings,search_k, score_
     else:
         retriever = neo_db.as_retriever(
             search_type="similarity_score_threshold",
-            search_kwargs={'k': search_k,'effective_search_ratio': ef_ratio, 'score_threshold': score_threshold}
+            search_kwargs={'top_k': search_k,'effective_search_ratio': ef_ratio, 'score_threshold': score_threshold}
         )
         logging.info(f"Successfully created retriever with search_k={search_k}, score_threshold={score_threshold}")
     return retriever
