@@ -22,7 +22,7 @@ Upload your files from local machine, GCS or S3 bucket or from web sources, choo
 
 ## Getting started
 
-:warning: You will need to have a Neo4j Database V5.15 or later with [APOC installed](https://neo4j.com/docs/apoc/current/installation/) to use this Knowledge Graph Builder.
+:warning: You will need to have a Neo4j Database 5.23 or later with [APOC installed](https://neo4j.com/docs/apoc/current/installation/) to use this Knowledge Graph Builder.
 You can use any [Neo4j Aura database](https://neo4j.com/aura/) (including the free database)
 If you are using Neo4j Desktop, you will not be able to use the docker-compose but will have to follow the [separate deployment of backend and frontend section](#running-backend-and-frontend-separately-dev-environment). :warning:
 
