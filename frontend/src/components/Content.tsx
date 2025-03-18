@@ -290,7 +290,9 @@ const Content: React.FC<ContentProps> = ({
         fileItem.gcsBucket ?? '',
         fileItem.gcsBucketFolder ?? '',
         selectedNodes.map((l) => l.value),
-        selectedRels.map((t) => t.value),
+        selectedRels.every((t) => t.value.split(',').length === 3)
+          ? selectedRels.map((t) => t.value.split(',') as [string, string, string])
+          : selectedRels.map((t) => t.value),
         selectedTokenChunkSize,
         selectedChunk_overlap,
         selectedChunks_to_combine,

@@ -1,7 +1,7 @@
 import { MouseEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
 import { appLabels, buttonCaptions, getDefaultSchemaExamples, tooltips } from '../../../../utils/Constants';
-import { Select, Flex, Typography, useMediaQuery } from '@neo4j-ndl/react';
+import { Select, Flex, Typography, useMediaQuery, Switch } from '@neo4j-ndl/react';
 import { useCredentials } from '../../../../context/UserCredentials';
 import { useFileContext } from '../../../../context/UsersFiles';
 import { OnChangeValue, ActionMeta } from 'react-select';
@@ -39,6 +39,11 @@ export default function EntityExtractionSetting({
   const hasSelections = useHasSelections(selectedNodes, selectedRels);
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [viewPoint, setViewPoint] = useState<string>('tableView');
+  const [relationshipMode, setRelationshipMode] = useState<'list' | 'tuple'>(
+    selectedRels.length > 0 && selectedRels.every((t) => t.value.split(',').length === 3) ? 'tuple' : 'list'
+  );
+  const [listModeRels, setListModeRels] = useState<OptionType[]>([]);
+  const [tupleModeRels, setTupleModeRels] = useState<OptionType[]>([]);
   const removeNodesAndRels = (nodelabels: string[], relationshipTypes: string[]) => {
     const labelsToRemoveSet = new Set(nodelabels);
     const relationshipLabelsToremoveSet = new Set(relationshipTypes);
@@ -120,6 +125,21 @@ export default function EntityExtractionSetting({
       return updatedOptions;
     });
   };
+
+  useEffect(() => {
+    const storedMode = localStorage.getItem('relationshipMode');
+    if (storedMode === 'tuple' || storedMode === 'list') {
+      setRelationshipMode(storedMode);
+      const storedRels = JSON.parse(localStorage.getItem('selectedRelationshipLabels') || '{}').selectedOptions || [];
+      setSelectedRels(storedRels);
+      if (storedMode === 'list') {
+        setListModeRels(storedRels);
+      } else {
+        setTupleModeRels(storedRels);
+      }
+    }
+  }, []);
+
   const onChangenodes = (selectedOptions: OnChangeValue<OptionType, true>, actionMeta: ActionMeta<OptionType>) => {
     if (actionMeta.action === 'clear') {
       localStorage.setItem('selectedNodeLabels', JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] }));
@@ -133,9 +153,42 @@ export default function EntityExtractionSetting({
         'selectedRelationshipLabels',
         JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] })
       );
+      setSelectedRels([]);
+      if (relationshipMode === 'list') {
+        setListModeRels([]);
+      } else {
+        setTupleModeRels([]);
+      }
+      return;
     }
-    setSelectedRels(selectedOptions);
-    localStorage.setItem('selectedRelationshipLabels', JSON.stringify({ db: userCredentials?.uri, selectedOptions }));
+    const processedOptions = selectedOptions
+      .map((option) => {
+        const value = option.value.trim();
+        if (relationshipMode === 'tuple' && value.split(',').length !== 3) {
+          showNormalToast(
+            `Invalid tuple format for relationship "${option.label}". Please enter as "Source, Relationship, Target".`
+          );
+          return null;
+        }
+        if (relationshipMode === 'list' && value.includes(',')) {
+          showNormalToast(
+            `Invalid format for relationship "${option.label}". Commas are not allowed in list mode.`
+          );
+          return null;
+        }
+        return { ...option, value };
+      })
+      .filter((option): option is OptionType => option !== null);
+    setSelectedRels(processedOptions);
+    if (relationshipMode === 'list') {
+      setListModeRels(processedOptions);
+    } else {
+      setTupleModeRels(processedOptions);
+    }
+    localStorage.setItem(
+      'selectedRelationshipLabels',
+      JSON.stringify({ db: userCredentials?.uri, selectedOptions: processedOptions })
+    );
   };
   const [nodeLabelOptions, setnodeLabelOptions] = useState<OptionType[]>([]);
   const [relationshipTypeOptions, setrelationshipTypeOptions] = useState<OptionType[]>([]);
@@ -265,6 +318,7 @@ export default function EntityExtractionSetting({
             onChange: onChangeSchema,
             value: selectedSchemas,
             menuPosition: 'fixed',
+            isDisabled: relationshipMode === 'tuple'
           }}
           type='select'
         />
@@ -272,34 +326,64 @@ export default function EntityExtractionSetting({
           <h5>{appLabels.ownSchema}</h5>
         </div>
         <Select
-          helpText='You can select more than one values'
+          helpText={
+            relationshipMode === 'tuple'
+              ? 'Enter node labels, Examples: (Person,Country,Organization)'
+              : 'You can select more than one values'
+          }
           label='Node Labels'
           size='medium'
           selectProps={{
             isClearable: true,
             isMulti: true,
-            options: nodeLabelOptions,
+            options: relationshipMode === 'list' ? nodeLabelOptions : [],
             onChange: onChangenodes,
             value: selectedNodes,
-            classNamePrefix: `${
-              isTablet ? 'tablet_entity_extraction_Tab_node_label' : 'entity_extraction_Tab_node_label'
-            }`,
+            isDisabled: loading,
+            classNamePrefix: `${isTablet ? 'tablet_entity_extraction_Tab_node_label' : 'entity_extraction_Tab_node_label'
+              }`,
           }}
           type='creatable'
         />
+        <Flex className='mt-2 mb-3' justifyContent='center'>
+          <>
+            <Switch
+              label={
+                relationshipMode === 'tuple'
+                  ? 'Switched to Tuple Mode (Enter Relationships Manually)'
+                  : 'List Mode (Auto-fill from Schema)'
+              }
+              isChecked={relationshipMode === 'tuple'}
+              onChange={() => {
+                setRelationshipMode((prevMode) => {
+                  const newMode = prevMode === 'list' ? 'tuple' : 'list';
+                  const restoredRels = newMode === 'list' ? listModeRels : tupleModeRels;
+                  setSelectedRels(restoredRels);
+                  return newMode;
+                });
+              }}
+              style={{ marginLeft: '5px' }}
+            />
+          </>
+        </Flex>
+        
         <Select
-          helpText='You can select more than one values'
+          helpText={
+            relationshipMode === 'tuple'
+              ? 'Enter relationships in the format: "Source, Relationship, Target". Examples: (Person, SPOUSE, Person)'
+              : 'You can select or add relationship types'
+          }
           label='Relationship Types'
           size='medium'
           selectProps={{
             isClearable: true,
             isMulti: true,
-            options: relationshipTypeOptions,
+            options: relationshipMode === 'list' ? relationshipTypeOptions : [],
             onChange: onChangerels,
             value: selectedRels,
-            classNamePrefix: `${
-              isTablet ? 'tablet_entity_extraction_Tab_relationship_label' : 'entity_extraction_Tab_relationship_label'
-            }`,
+            isDisabled: loading,
+            classNamePrefix: `${isTablet ? 'tablet_entity_extraction_Tab_relationship_label' : 'entity_extraction_Tab_relationship_label'
+              }`,
           }}
           type='creatable'
         />
@@ -312,7 +396,7 @@ export default function EntityExtractionSetting({
                   ? `No Labels Found in the Database`
                   : tooltips.useExistingSchema
               }
-              disabled={!nodeLabelOptions.length && !relationshipTypeOptions.length}
+              disabled={!nodeLabelOptions.length && !relationshipTypeOptions.length || relationshipMode === 'tuple'}
               onClick={clickHandler}
               label='Use Existing Schema'
               placement='top'

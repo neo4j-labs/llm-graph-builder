@@ -82,7 +82,7 @@ export type ExtractParams = Pick<CustomFile, 'wikiQuery' | 'model' | 'sourceUrl'
   source_type?: string;
   file_name?: string;
   allowedNodes?: string[];
-  allowedRelationship?: string[];
+  allowedRelationship?: string;
   gcs_project_id?: string;
   retry_condition: string;
   additional_instructions?: string;
