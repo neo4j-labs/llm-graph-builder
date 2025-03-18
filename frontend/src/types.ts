@@ -952,3 +952,10 @@ export type FileTableHandle = React.ElementRef<typeof FileTable>;
 export interface VisibilityProps {
   isVisible: boolean;
 }
+
+export type TupleCreationProps = {
+  selectedSource: OptionType | null;
+  selectedType: OptionType | null;
+  selectedTarget: OptionType | null;
+  onPatternChange: (source: OptionType | null, type: OptionType | null, target: OptionType | null) => void;
+};

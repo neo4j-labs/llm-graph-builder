@@ -352,6 +352,8 @@ export const appLabels = {
   ownSchema: 'Or Define your own Schema',
   predefinedSchema: 'Select a Pre-defined Schema',
   chunkingConfiguration: 'Select a Chunking Configuration',
+  graphPatternTuple: 'Graph Tuple Pattern',
+  selectedPatterns: 'Selected Patterns'
 };
 
 export const LLMDropdownLabel = {

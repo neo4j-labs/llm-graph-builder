@@ -12,6 +12,7 @@ import { showNormalToast } from '../../../../utils/Toasts';
 import { useHasSelections } from '../../../../hooks/useHasSelections';
 import { Hierarchy1Icon } from '@neo4j-ndl/react/icons';
 import GraphViewModal from '../../../Graph/GraphViewModal';
+import TupleCreation from '../EnitityExtraction/TupleCreation'
 
 export default function EntityExtractionSetting({
   view,
@@ -44,6 +45,9 @@ export default function EntityExtractionSetting({
   );
   const [listModeRels, setListModeRels] = useState<OptionType[]>([]);
   const [tupleModeRels, setTupleModeRels] = useState<OptionType[]>([]);
+  const [selectedSource, setSelectedSource] = useState<OptionType | null>(null);
+  const [selectedType, setSelectedType] = useState<OptionType | null>(null);
+  const [selectedTarget, setSelectedTarget] = useState<OptionType | null>(null);
   const removeNodesAndRels = (nodelabels: string[], relationshipTypes: string[]) => {
     const labelsToRemoveSet = new Set(nodelabels);
     const relationshipLabelsToremoveSet = new Set(relationshipTypes);
@@ -291,6 +295,49 @@ export default function EntityExtractionSetting({
     setViewPoint('showSchemaView');
   };
 
+  const handlePatternChange = (source: OptionType | null, type: OptionType | null, target: OptionType | null) => {
+    setSelectedSource(source);
+    setSelectedType(type);
+    setSelectedTarget(target);
+    console.log('source', source);
+    console.log('type', type);
+    console.log('target', target);
+    if (source && target && type) {
+      const relValue = `${source.value},${type.value},${target.value}`;
+      const relationshipOption: OptionType = { label: relValue, value: relValue };
+      setSelectedRels((prev) => {
+        const updatedRels = [...prev, relationshipOption];
+        localStorage.setItem(
+          'selectedRelationshipLabels',
+          JSON.stringify({ db: userCredentials?.uri, selectedOptions: updatedRels })
+        );
+        return updatedRels;
+      });
+
+      const nodeOptions: OptionType[] = [
+        { label: source.value, value: source.value },
+        { label: target.value, value: target.value },
+      ];
+
+      setSelectedNodes((prev) => {
+        const combinedNodes = [...prev, ...nodeOptions];
+        const uniqueNodes = Array.from(new Set(combinedNodes.map((item) => item.value))).map((value) => ({
+          label: value,
+          value,
+        }));
+        localStorage.setItem(
+          'selectedNodeLabels',
+          JSON.stringify({ db: userCredentials?.uri, selectedOptions: uniqueNodes })
+        );
+        return uniqueNodes;
+      });
+    }
+  };
+
+  console.log('nodes', selectedNodes);
+  console.log('rels', selectedRels);
+
+
   return (
     <div>
       <Typography variant='body-medium'>
@@ -303,90 +350,84 @@ export default function EntityExtractionSetting({
           Achieve a cleaner and more insightful graph representation tailored to your domain.
         </span>
       </Typography>
-      <div className='mt-4'>
-        <div className='flex align-self-center justify-center'>
-          <h5>{appLabels.predefinedSchema}</h5>
-        </div>
-        <Select
-          helpText='Schema Examples'
-          label='Predefined Schema'
-          size='medium'
-          selectProps={{
-            isClearable: true,
-            isMulti: true,
-            options: defaultExamples,
-            onChange: onChangeSchema,
-            value: selectedSchemas,
-            menuPosition: 'fixed',
-            isDisabled: relationshipMode === 'tuple'
-          }}
-          type='select'
-        />
-        <div className='flex align-self-center justify-center'>
-          <h5>{appLabels.ownSchema}</h5>
-        </div>
-        <Select
-          helpText={
+      <Flex className={'mt-1.5'} justifyContent='center'>
+        <Switch
+          label={
             relationshipMode === 'tuple'
-              ? 'Enter node labels, Examples: (Person,Country,Organization)'
-              : 'You can select more than one values'
+              ? 'Switched to Tuple Mode'
+              : 'Switched to Predefined Schema'
           }
-          label='Node Labels'
-          size='medium'
-          selectProps={{
-            isClearable: true,
-            isMulti: true,
-            options: relationshipMode === 'list' ? nodeLabelOptions : [],
-            onChange: onChangenodes,
-            value: selectedNodes,
-            isDisabled: loading,
-            classNamePrefix: `${isTablet ? 'tablet_entity_extraction_Tab_node_label' : 'entity_extraction_Tab_node_label'
-              }`,
+          isChecked={relationshipMode === 'tuple'}
+          onChange={() => {
+            setRelationshipMode((prevMode) => {
+              const newMode = prevMode === 'list' ? 'tuple' : 'list';
+              const restoredRels = newMode === 'list' ? listModeRels : tupleModeRels;
+              setSelectedRels(restoredRels);
+              return newMode;
+            });
           }}
-          type='creatable'
         />
-        <Flex className='mt-2 mb-3' justifyContent='center'>
-          <>
-            <Switch
-              label={
-                relationshipMode === 'tuple'
-                  ? 'Switched to Tuple Mode (Enter Relationships Manually)'
-                  : 'List Mode (Auto-fill from Schema)'
-              }
-              isChecked={relationshipMode === 'tuple'}
-              onChange={() => {
-                setRelationshipMode((prevMode) => {
-                  const newMode = prevMode === 'list' ? 'tuple' : 'list';
-                  const restoredRels = newMode === 'list' ? listModeRels : tupleModeRels;
-                  setSelectedRels(restoredRels);
-                  return newMode;
-                });
+      </Flex>
+      {relationshipMode === 'tuple' ? (<><TupleCreation selectedSource={selectedSource} selectedType={selectedType} selectedTarget={selectedTarget} onPatternChange={handlePatternChange} /></>) : (
+        <>
+          <div className='mt-4'>
+            <div className='flex align-self-center justify-center'>
+              <h5>{appLabels.predefinedSchema}</h5>
+            </div>
+            <Select
+              helpText='Schema Examples'
+              label='Predefined Schema'
+              size='medium'
+              selectProps={{
+                isClearable: true,
+                isMulti: true,
+                options: defaultExamples,
+                onChange: onChangeSchema,
+                value: selectedSchemas,
+                menuPosition: 'fixed',
               }}
-              style={{ marginLeft: '5px' }}
+              type='select'
             />
-          </>
-        </Flex>
-        
-        <Select
-          helpText={
-            relationshipMode === 'tuple'
-              ? 'Enter relationships in the format: "Source, Relationship, Target". Examples: (Person, SPOUSE, Person)'
-              : 'You can select or add relationship types'
-          }
-          label='Relationship Types'
-          size='medium'
-          selectProps={{
-            isClearable: true,
-            isMulti: true,
-            options: relationshipMode === 'list' ? relationshipTypeOptions : [],
-            onChange: onChangerels,
-            value: selectedRels,
-            isDisabled: loading,
-            classNamePrefix: `${isTablet ? 'tablet_entity_extraction_Tab_relationship_label' : 'entity_extraction_Tab_relationship_label'
-              }`,
-          }}
-          type='creatable'
-        />
+            <div className='flex align-self-center justify-center'>
+              <h5>{appLabels.ownSchema}</h5>
+            </div>
+            <Select
+              helpText='You can select more than one values'
+              label='Node Labels'
+              size='medium'
+              selectProps={{
+                isClearable: true,
+                isMulti: true,
+                options: relationshipMode === 'list' ? nodeLabelOptions : [],
+                onChange: onChangenodes,
+                value: selectedNodes,
+                isDisabled: loading,
+                classNamePrefix: `${isTablet ? 'tablet_entity_extraction_Tab_node_label' : 'entity_extraction_Tab_node_label'
+                  }`,
+              }}
+              type='creatable'
+            />
+            <Select
+              helpText='You can select or add relationship types'
+              label='Relationship Types'
+              size='medium'
+              selectProps={{
+                isClearable: true,
+                isMulti: true,
+                options: relationshipMode === 'list' ? relationshipTypeOptions : [],
+                onChange: onChangerels,
+                value: selectedRels,
+                isDisabled: loading,
+                classNamePrefix: `${isTablet ? 'tablet_entity_extraction_Tab_relationship_label' : 'entity_extraction_Tab_relationship_label'
+                  }`,
+              }}
+              type='creatable'
+            />
+          </div>
+        </>
+      )}
+      <>
+
         <Flex className='mt-4! mb-2 flex! items-center' flexDirection='row' justifyContent='flex-end'>
           <Flex flexDirection='row' gap='4'>
             <ButtonWithToolTip
@@ -459,8 +500,9 @@ export default function EntityExtractionSetting({
             </ButtonWithToolTip>
           </Flex>
         </Flex>
-      </div>
+      </>
       <GraphViewModal open={openGraphView} setGraphViewOpen={setOpenGraphView} viewPoint={viewPoint} />
+
     </div>
   );
 }
