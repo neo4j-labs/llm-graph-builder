@@ -1,5 +1,6 @@
 from langchain_text_splitters import TokenTextSplitter
 from langchain.docstore.document import Document
+from src.shared.common_fn import get_value_from_env_or_secret_manager
 from langchain_neo4j import Neo4jGraph
 import logging
 from src.document_sources.youtube import get_chunks_with_timestamps, get_calculated_timestamps
@@ -26,7 +27,7 @@ class CreateChunksofDocument:
         """
         logging.info("Split file into smaller chunks")
         text_splitter = TokenTextSplitter(chunk_size=token_chunk_size, chunk_overlap=chunk_overlap)
-        MAX_TOKEN_CHUNK_SIZE = int(os.getenv('MAX_TOKEN_CHUNK_SIZE', 10000))
+        MAX_TOKEN_CHUNK_SIZE = get_value_from_env_or_secret_manager("MAX_TOKEN_CHUNK_SIZE",10000, "int")
         chunk_to_be_created = int(MAX_TOKEN_CHUNK_SIZE / token_chunk_size)
         
         if 'page' in self.pages[0].metadata:

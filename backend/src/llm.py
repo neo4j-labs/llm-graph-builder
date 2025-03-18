@@ -1,6 +1,7 @@
 import logging
 from langchain.docstore.document import Document
 import os
+from src.shared.common_fn import *
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
 from langchain_google_vertexai import ChatVertexAI
 from langchain_groq import ChatGroq
@@ -20,7 +21,7 @@ def get_llm(model: str):
     """Retrieve the specified language model based on the model name."""
     model = model.lower().strip()
     env_key = f"LLM_MODEL_CONFIG_{model}"
-    env_value = os.environ.get(env_key)
+    env_value = get_value_from_env_or_secret_manager(env_key)
 
     if not env_value:
         err = f"Environment variable '{env_key}' is not defined as per format or missing"

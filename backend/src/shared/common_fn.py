@@ -1,6 +1,7 @@
 import hashlib
 import logging
-from src.document_sources.youtube import create_youtube_url
+from src.shared.constants import PROJECT_ID
+
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_google_vertexai import VertexAIEmbeddings
 from langchain_openai import OpenAIEmbeddings
@@ -9,13 +10,21 @@ from langchain_community.graphs.graph_document import GraphDocument
 from typing import List
 import re
 import os
+import json
+import logging
+from typing import Any
+from google.cloud import secretmanager
+from google.api_core.exceptions import NotFound, PermissionDenied
 from pathlib import Path
 from urllib.parse import urlparse
 import boto3
 from langchain_community.embeddings import BedrockEmbeddings
 
+
+
 def check_url_source(source_type, yt_url:str=None, wiki_query:str=None):
     language=''
+    from src.document_sources.youtube import create_youtube_url
     try:
       logging.info(f"incoming URL: {yt_url}")
       if source_type == 'youtube':
@@ -59,9 +68,9 @@ def get_chunk_and_graphDocument(graph_document_list, chunkId_chunkDoc_list):
   return lst_chunk_chunkId_document  
                  
 def create_graph_database_connection(uri, userName, password, database):
-  enable_user_agent = os.environ.get("ENABLE_USER_AGENT", "False").lower() in ("true", "1", "yes")
+  enable_user_agent = get_value_from_env_or_secret_manager("ENABLE_USER_AGENT", "False" ,"bool")
   if enable_user_agent:
-    graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, refresh_schema=False, sanitize=True,driver_config={'user_agent':os.environ.get('NEO4J_USER_AGENT')})  
+    graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, refresh_schema=False, sanitize=True,driver_config={'user_agent':get_value_from_env_or_secret_manager("USER_AGENT","LLM-Graph-Builder")})  
   else:
     graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, refresh_schema=False, sanitize=True)    
   return graph
@@ -150,7 +159,7 @@ def get_bedrock_embeddings():
        BedrockEmbeddings: An instance of the BedrockEmbeddings class.
    """
    try:
-       env_value = os.getenv("BEDROCK_EMBEDDING_MODEL")
+       env_value = get_value_from_env_or_secret_manager("BEDROCK_EMBEDDING_MODEL")
        if not env_value:
            raise ValueError("Environment variable 'BEDROCK_EMBEDDING_MODEL' is not set.")
        try:
@@ -174,3 +183,51 @@ def get_bedrock_embeddings():
    except Exception as e:
        print(f"An unexpected error occurred: {e}")
        raise
+
+def get_value_from_env_or_secret_manager(secret_name: str, default_value: Any = None, data_type: type = str):
+  """
+  Fetches a secret from Google Cloud Secret Manager.
+  If GET_VALUE_FROM_SECRET_MANAGER env value True, Otherwise get from local .env file
+  Converts the value to the specified data type.
+  Args:
+      secret_name (str): Name of the secret in Secret Manager.
+      default_value (Any) : Any type of default value
+      data_type (type): Expected data type (str, int, float, bool, list, dict).
+  Returns:
+      Converted value of the secret or environment variable.
+  """
+  get_value_from_env_or_secret_manager = os.getenv("GET_VALUE_FROM_SECRET_MANAGER","False").lower() in ["true", "1", "yes"]
+  try:
+    if get_value_from_env_or_secret_manager:
+      client = secretmanager.SecretManagerServiceClient()
+      secret_path = f"projects/{PROJECT_ID}/secrets/{secret_name}/versions/latest"
+    
+      response = client.access_secret_version(request={"name": secret_path})
+      secret_value = response.payload.data.decode("UTF-8")
+    else:
+      secret_value = os.getenv(secret_name, None) 
+  except (NotFound, PermissionDenied):
+    logging.warning(f"key not found in Secret Manager. Checking environment variable.")
+    secret_value = os.getenv(secret_name, None)
+
+  if secret_value is None:
+    return convert_type(default_value, data_type) # Return the default value when key not found in secret manager not in .env file.
+  
+  return convert_type(secret_value, data_type)
+
+
+def convert_type(value: str, data_type: type):
+  """Convert string value to the specified data type."""
+  try:
+    if data_type == "int":
+      return int(value)
+    elif data_type == "float":
+      return float(value)
+    elif data_type == "bool":
+      return value.lower() in ["true", "1", "yes"]
+    elif data_type == "list" or data_type == "dict":
+      return json.loads(value)  # Convert JSON strings to list/dict
+    return value  # Default to string
+  except Exception as e:
+    logging.error(f"Type conversion error: {e}")
+    return None

@@ -1,11 +1,12 @@
 import logging
+from src.shared.constants import EMBEDDING_MODEL
 from graphdatascience import GraphDataScience
 from src.llm import get_llm
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
-from src.shared.common_fn import load_embedding_model
+from src.shared.common_fn import *
 
 
 COMMUNITY_PROJECTION_NAME = "communities"
@@ -351,9 +352,8 @@ def create_community_summaries(gds, model):
 
 def create_community_embeddings(gds):
     try:
-        embedding_model = os.getenv('EMBEDDING_MODEL')
-        embeddings, dimension = load_embedding_model(embedding_model)
-        logging.info(f"Embedding model '{embedding_model}' loaded successfully.")
+        embeddings, dimension = load_embedding_model(EMBEDDING_MODEL)
+        logging.info(f"Embedding model '{embeddings}' loaded successfully.")
         
         logging.info("Fetching community details.")
         rows = gds.run_cypher(GET_COMMUNITY_DETAILS)
