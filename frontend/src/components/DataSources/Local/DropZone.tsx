@@ -1,4 +1,4 @@
-import { Dropzone, Flex, SpotlightTarget, Typography, useSpotlightContext } from '@neo4j-ndl/react';
+import { Dropzone, Flex, SpotlightTarget, Typography } from '@neo4j-ndl/react';
 import { useState, FunctionComponent, useEffect } from 'react';
 import Loader from '../../../utils/Loader';
 import { v4 as uuidv4 } from 'uuid';
@@ -17,7 +17,6 @@ const DropZone: FunctionComponent = () => {
   const [isClicked, setIsClicked] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const { setActiveSpotlight } = useSpotlightContext();
   const onDropHandler = (f: Partial<globalThis.File>[]) => {
     setIsClicked(true);
     setSelectedFiles(f.map((f) => f as File));
@@ -84,7 +83,6 @@ const DropZone: FunctionComponent = () => {
         }
       }
     }
-    setActiveSpotlight('dropzone');
   }, [selectedFiles]);
 
   const uploadFileInChunks = (file: File) => {

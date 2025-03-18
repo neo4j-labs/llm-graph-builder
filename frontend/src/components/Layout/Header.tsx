@@ -10,7 +10,7 @@ import {
   ArrowLeftIconOutline,
   ArrowDownTrayIconOutline,
 } from '@neo4j-ndl/react/icons';
-import { Button, TextLink, Typography } from '@neo4j-ndl/react';
+import { Button, SpotlightTarget, TextLink, Typography } from '@neo4j-ndl/react';
 import { Dispatch, memo, SetStateAction, useCallback, useContext, useRef, useState } from 'react';
 import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
 import { buttonCaptions, SKIP_AUTH, tooltips } from '../../utils/Constants';
@@ -149,9 +149,18 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                   </IconButtonWithToolTip>
                   {!SKIP_AUTH && <Profile />}
                   {pathname === '/readonly' && (
-                    <Button type='button' fill='outlined' onClick={() => loginWithRedirect()}>
-                      Login
-                    </Button>
+                    <SpotlightTarget
+                      className='ndl-spotlight-target n-bg-palette-primary-bg-strong hover:n-bg-palette-primary-hover-strong'
+                      id='loginbutton'
+                      hasPulse={true}
+                      indicatorVariant='border'
+                    >
+                      <div>
+                        <Button type='button' fill='outlined' onClick={() => loginWithRedirect()}>
+                          Login
+                        </Button>
+                      </div>
+                    </SpotlightTarget>
                   )}
                 </div>
               </div>

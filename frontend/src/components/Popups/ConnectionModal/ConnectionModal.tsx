@@ -1,15 +1,4 @@
-import {
-  Button,
-  Dialog,
-  TextInput,
-  Select,
-  Banner,
-  Dropzone,
-  Typography,
-  TextLink,
-  Flex,
-  useSpotlightContext,
-} from '@neo4j-ndl/react';
+import { Button, Dialog, TextInput, Select, Banner, Dropzone, Typography, TextLink, Flex } from '@neo4j-ndl/react';
 import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { connectAPI } from '../../../services/ConnectAPI';
 import { useCredentials } from '../../../context/UserCredentials';
@@ -75,7 +64,6 @@ export default function ConnectionModal({
   const databaseRef = useRef<HTMLInputElement>(null);
   const userNameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
-  const { setActiveSpotlight } = useSpotlightContext();
   useEffect(() => {
     if (searchParams.has('connectURL')) {
       const url = searchParams.get('connectURL');
@@ -83,7 +71,6 @@ export default function ConnectionModal({
       searchParams.delete('connectURL');
       setSearchParams(searchParams);
     }
-    setActiveSpotlight('connectbutton');
     return () => {
       setUserDbVectorIndex(undefined);
     };
@@ -249,7 +236,7 @@ export default function ConnectionModal({
         const isgdsActive = response.data.data.gds_status;
         const isReadOnlyUser = !response.data.data.write_access;
         const isGCSActive = response.data.data.gcs_file_cache === 'True';
-        const chunksTobeProcess = parseInt(response.data.data.chunk_to_be_created);
+        const chunksTobeProcess = Number(response.data.data.chunk_to_be_created);
         setIsGCSActive(isGCSActive);
         setGdsActive(isgdsActive);
         setIsReadOnlyUser(isReadOnlyUser);

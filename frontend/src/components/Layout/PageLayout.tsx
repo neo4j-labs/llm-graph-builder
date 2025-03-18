@@ -7,7 +7,7 @@ import { clearChatAPI } from '../../services/QnaAPI';
 import { useCredentials } from '../../context/UserCredentials';
 import { connectionState } from '../../types';
 import { useMessageContext } from '../../context/UserMessages';
-import { useMediaQuery, Spotlight, SpotlightTour } from '@neo4j-ndl/react';
+import { useMediaQuery, Spotlight, SpotlightTour, useSpotlightContext } from '@neo4j-ndl/react';
 import { useFileContext } from '../../context/UsersFiles';
 import SchemaFromTextDialog from '../Popups/Settings/SchemaFromText';
 import useSpeechSynthesis from '../../hooks/useSpeech';
@@ -24,6 +24,69 @@ const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
 const GenericModal = lazy(() => import('../WebSources/GenericSourceModal'));
 const ConnectionModal = lazy(() => import('../Popups/ConnectionModal/ConnectionModal'));
 
+const spotlightsforunauthenticated = [
+  {
+    target: 'loginbutton',
+    children: (
+      <>
+        <Spotlight.Header>Login with Neo4j</Spotlight.Header>
+        <Spotlight.Body>Using Google Account or Email Address</Spotlight.Body>
+      </>
+    ),
+  },
+  {
+    target: 'connectbutton',
+    children: (
+      <>
+        <Spotlight.Header>Connect To Neo4j Database</Spotlight.Header>
+        <Spotlight.Body>Fill out the neo4j credentials and click on connect</Spotlight.Body>
+      </>
+    ),
+  },
+  {
+    target: 'dropzone',
+    children: (
+      <>
+        <Spotlight.Header>Upload documents </Spotlight.Header>
+        <Spotlight.Body>Upload any unstructured files</Spotlight.Body>
+      </>
+    ),
+  },
+  {
+    target: 'llmdropdown',
+    children: (
+      <>
+        <Spotlight.Header>Choose The Desired LLM</Spotlight.Header>
+      </>
+    ),
+  },
+  {
+    target: 'generategraphbtn',
+    children: (
+      <>
+        <Spotlight.Header>Start The Extraction Process</Spotlight.Header>
+        <Spotlight.Body>Click On Generate Graph</Spotlight.Body>
+      </>
+    ),
+  },
+  {
+    target: 'visualizegraphbtn',
+    children: (
+      <>
+        <Spotlight.Header>Visualize The Knowledge Graph</Spotlight.Header>
+        <Spotlight.Body>Select At Least One or More Completed Files From The Table For Visualization</Spotlight.Body>
+      </>
+    ),
+  },
+  {
+    target: 'chatbtn',
+    children: (
+      <>
+        <Spotlight.Header>Ask Questions Related To Documents</Spotlight.Header>
+      </>
+    ),
+  },
+];
 const spotlights = [
   {
     target: 'connectbutton',
@@ -111,6 +174,7 @@ const PageLayout: React.FC = () => {
   const { user, isAuthenticated } = useAuth0();
 
   const navigate = useNavigate();
+
   const toggleLeftDrawer = () => {
     if (isLargeDesktop) {
       setIsLeftExpanded(!isLeftExpanded);
@@ -140,6 +204,7 @@ const PageLayout: React.FC = () => {
   const { messages, setClearHistoryData, clearHistoryData, setMessages, setIsDeleteChatLoading } = useMessageContext();
   const { setShowTextFromSchemaDialog, showTextFromSchemaDialog } = useFileContext();
   const { cancel } = useSpeechSynthesis();
+  const { setActiveSpotlight } = useSpotlightContext();
 
   useEffect(() => {
     async function initializeConnection() {
@@ -164,7 +229,7 @@ const PageLayout: React.FC = () => {
             isReadonlyUser: !connectionData.data.write_access,
             isgdsActive: connectionData.data.gds_status,
             isGCSActive: connectionData.data.gcs_file_cache === 'True',
-            chunksTobeProcess: parseInt(connectionData.data.chunk_to_be_created),
+            chunksTobeProcess: Number(connectionData.data.chunk_to_be_created),
             email: user?.email ?? '',
             connection: 'backendApi',
           };
@@ -191,12 +256,10 @@ const PageLayout: React.FC = () => {
             }
             handleDisconnectButtonState(true);
           } else {
-            setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
             handleDisconnectButtonState(true);
           }
         } else {
           setErrorMessage(backendApiResponse?.data?.error);
-          setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
           handleDisconnectButtonState(true);
           console.log('from else cndition error is there');
         }
@@ -207,6 +270,11 @@ const PageLayout: React.FC = () => {
       }
     }
     initializeConnection();
+    if (!isAuthenticated) {
+      setActiveSpotlight('loginbutton');
+    } else {
+      setActiveSpotlight('connectbutton');
+    }
   }, [isAuthenticated]);
 
   const deleteOnClick = async () => {
@@ -243,20 +311,38 @@ const PageLayout: React.FC = () => {
 
   return (
     <>
-      <SpotlightTour
-        spotlights={spotlights}
-        onAction={(target, action) => {
-          if (target == 'connectbutton' && action == 'next') {
-            if (!isLeftExpanded) {
-              toggleLeftDrawer();
+      {!isAuthenticated ? (
+        <SpotlightTour
+          spotlights={spotlightsforunauthenticated}
+          onAction={(target, action) => {
+            if (target == 'connectbutton' && action == 'next') {
+              if (!isLeftExpanded) {
+                toggleLeftDrawer();
+              }
             }
-          }
-          if (target === 'visualizegraphbtn' && action === 'next' && !isRightExpanded) {
-            toggleRightDrawer();
-          }
-          console.log(`Action ${action} was performed in spotlight ${target}`);
-        }}
-      />
+            if (target === 'visualizegraphbtn' && action === 'next' && !isRightExpanded) {
+              toggleRightDrawer();
+            }
+            console.log(`Action ${action} was performed in spotlight ${target}`);
+          }}
+        />
+      ) : (
+        <SpotlightTour
+          spotlights={spotlights}
+          onAction={(target, action) => {
+            if (target == 'connectbutton' && action == 'next') {
+              if (!isLeftExpanded) {
+                toggleLeftDrawer();
+              }
+            }
+            if (target === 'visualizegraphbtn' && action === 'next' && !isRightExpanded) {
+              toggleRightDrawer();
+            }
+            console.log(`Action ${action} was performed in spotlight ${target}`);
+          }}
+        />
+      )}
+
       <Suspense fallback={<FallBackDialog />}>
         <ConnectionModal
           open={openConnection.openPopUp}
