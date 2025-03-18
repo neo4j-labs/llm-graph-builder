@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Dialog, SideNavigation, TextLink, Tooltip, useMediaQuery } from '@neo4j-ndl/react';
+import { Dialog, SideNavigation, SpotlightTarget, TextLink, Tooltip, useMediaQuery } from '@neo4j-ndl/react';
 import {
   ArrowRightIconOutline,
   ArrowLeftIconOutline,
@@ -46,7 +46,7 @@ const SideNav: React.FC<SideNavProps> = ({
   const { setMessages, isDeleteChatLoading } = useMessageContext();
   const [showChatMode, setShowChatMode] = useState<boolean>(false);
   const isLargeDesktop = useMediaQuery(`(min-width:1440px )`);
-  const { connectionStatus, isReadOnlyUser } = useCredentials();
+  const { connectionStatus } = useCredentials();
   const downloadLinkRef = useRef<HTMLAnchorElement>(null);
   const anchorMenuRef = useRef<HTMLAnchorElement>(null);
 
@@ -80,9 +80,9 @@ const SideNav: React.FC<SideNavProps> = ({
   const renderDataSourceItems = () => {
     const dataSourceItems = [];
 
-    if (!isLargeDesktop && !isReadOnlyUser && position === 'left') {
-      if (connectionStatus) {
-        dataSourceItems.push(
+    if (!isLargeDesktop && position === 'left') {
+      dataSourceItems.push(
+        <SpotlightTarget id='dropzone' indicatorVariant='point' indicatorPlacement='middle-right'>
           <SideNavigation.Item
             key='local'
             icon={
@@ -91,42 +91,50 @@ const SideNav: React.FC<SideNavProps> = ({
               </TooltipWrapper>
             }
           />
-        );
-      }
+        </SpotlightTarget>
+      );
 
-      if (APP_SOURCES.includes('gcs') && connectionStatus && position === 'left') {
+      if (APP_SOURCES.includes('gcs') && position === 'left') {
         dataSourceItems.push(
           <SideNavigation.Item
             key='gcs'
             icon={
               <TooltipWrapper tooltip='GCS Files' placement='right'>
-                <GCSButton isLargeDesktop={false} openModal={toggleGCSModal}></GCSButton>
+                <GCSButton isLargeDesktop={false} openModal={toggleGCSModal} isDisabled={!connectionStatus}></GCSButton>
               </TooltipWrapper>
             }
           />
         );
       }
 
-      if (APP_SOURCES.includes('s3') && connectionStatus && position === 'left') {
+      if (APP_SOURCES.includes('s3') && position === 'left') {
         dataSourceItems.push(
           <SideNavigation.Item
             key='s3'
             icon={
               <TooltipWrapper tooltip='S3 Files' placement='right'>
-                <S3Component isLargeDesktop={false} openModal={toggles3Modal}></S3Component>
+                <S3Component
+                  isLargeDesktop={false}
+                  openModal={toggles3Modal}
+                  isDisabled={!connectionStatus}
+                ></S3Component>
               </TooltipWrapper>
             }
           />
         );
       }
 
-      if (APP_SOURCES.includes('web') && connectionStatus && position === 'left') {
+      if (APP_SOURCES.includes('web') && position === 'left') {
         dataSourceItems.push(
           <SideNavigation.Item
             key='web'
             icon={
               <TooltipWrapper tooltip='Web Sources' placement='right'>
-                <WebButton isLargeDesktop={false} openModal={toggleGenericModal}></WebButton>
+                <WebButton
+                  isLargeDesktop={false}
+                  openModal={toggleGenericModal}
+                  isDisabled={!connectionStatus}
+                ></WebButton>
               </TooltipWrapper>
             }
           />
@@ -164,14 +172,16 @@ const SideNav: React.FC<SideNavProps> = ({
           )}
 
           {position === 'right' && !isExpanded && (
-            <SideNavigation.Item
-              htmlAttributes={{ onClick: handleClick }}
-              icon={
-                <TooltipWrapper tooltip={tooltips.chat} placement='left'>
-                  <ChatBubbleOvalLeftEllipsisIconOutline className='n-size-token-7' />
-                </TooltipWrapper>
-              }
-            />
+            <SpotlightTarget id='chatbtn' indicatorVariant='point' indicatorPlacement='middle-left'>
+              <SideNavigation.Item
+                htmlAttributes={{ onClick: handleClick }}
+                icon={
+                  <TooltipWrapper tooltip={tooltips.chat} placement='left'>
+                    <ChatBubbleOvalLeftEllipsisIconOutline className='n-size-token-7' />
+                  </TooltipWrapper>
+                }
+              />
+            </SpotlightTarget>
           )}
           {renderDataSourceItems()}
           {position === 'right' && isExpanded && (

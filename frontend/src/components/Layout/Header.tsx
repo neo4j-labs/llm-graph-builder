@@ -148,20 +148,23 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                     <ArrowTopRightOnSquareIconOutline />
                   </IconButtonWithToolTip>
                   {!SKIP_AUTH && <Profile />}
-                  {pathname === '/readonly' && (
-                    <SpotlightTarget
-                      className='ndl-spotlight-target n-bg-palette-primary-bg-strong hover:n-bg-palette-primary-hover-strong'
-                      id='loginbutton'
-                      hasPulse={true}
-                      indicatorVariant='border'
-                    >
-                      <div>
+                  {pathname === '/readonly' &&
+                    (!connectionStatus ? (
+                      <SpotlightTarget
+                        className='ndl-spotlight-target n-bg-palette-primary-bg-strong hover:n-bg-palette-primary-hover-strong'
+                        id='loginbutton'
+                        hasPulse={true}
+                        indicatorVariant='border'
+                      >
                         <Button type='button' fill='outlined' onClick={() => loginWithRedirect()}>
                           Login
                         </Button>
-                      </div>
-                    </SpotlightTarget>
-                  )}
+                      </SpotlightTarget>
+                    ) : (
+                      <Button type='button' fill='outlined' onClick={() => loginWithRedirect()}>
+                        Login
+                      </Button>
+                    ))}
                 </div>
               </div>
             </section>
