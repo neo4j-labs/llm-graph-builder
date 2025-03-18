@@ -288,7 +288,7 @@ export default function EntitySchemaExtractionSetting({
     localStorage.setItem('selectedNodeLabels', JSON.stringify({ db: userCredentials?.uri, selectedOptions:nodesRef.current.map((n: { label: string; }) => { return {label:n.label,value: n.label}}) }));
   
     setSelectedRels(edgesRef.current.map((rel: { label: string; }) => {return {label: rel.label,value:rel.label}}));
-    localStorage.setItem('selectedRelationshipLabels', JSON.stringify({ db: userCredentials?.uri, selectedOption: edgesRef.current.map((rel: { label: string; }) => {return {label: rel.label,value:rel.label}}) }));
+    localStorage.setItem('selectedRelationshipLabels', JSON.stringify({ db: userCredentials?.uri, selectedOptions: edgesRef.current.map((rel: { label: string; }) => {return {label: rel.label,value:rel.label}}) }));
     
     showNormalToast(`Successfully Applied the Schema settings`);
     if (view === 'Tabs' && closeEnhanceGraphSchemaDialog != undefined) {
