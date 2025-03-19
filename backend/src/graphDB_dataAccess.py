@@ -1,5 +1,7 @@
 import logging
 import os
+import time
+from neo4j.exceptions import TransientError
 from langchain_neo4j import Neo4jGraph
 from src.shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file, load_embedding_model
 from src.document_sources.gcs_bucket import delete_file_from_gcs
@@ -254,8 +256,20 @@ class graphDBdataAccess:
                 else:
                     return {'message':"Connection Successful","gds_status": gds_status,"write_access":write_access}
 
-    def execute_query(self, query, param=None):
-        return self.graph.query(query, param)
+    def execute_query(self, query, param=None,max_retries=3, delay=2):
+        retries = 0
+        while retries < max_retries:
+            try:
+                return self.graph.query(query, param)
+            except TransientError as e:
+                if "DeadlockDetected" in str(e):
+                    retries += 1
+                    logging.info(f"Deadlock detected. Retrying {retries}/{max_retries} in {delay} seconds...")
+                    time.sleep(delay)  # Wait before retrying
+                else:
+                    raise 
+        logging.error("Failed to execute query after maximum retries due to persistent deadlocks.")
+        raise RuntimeError("Query execution failed after multiple retries due to deadlock.")
 
     def get_current_status_document_node(self, file_name):
         query = """
