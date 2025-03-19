@@ -13,6 +13,9 @@ from langchain_aws import ChatBedrock
 from langchain_community.chat_models import ChatOllama
 import boto3
 import google.auth
+from langchain_core.messages import AIMessage
+from typing import List, Dict, Optional
+from openai import OpenAI
 
 # Added by ian
 from pydantic import BaseModel, Field
@@ -89,6 +92,184 @@ class OnGenerateKeywordsInput(BaseModel):
                 "keywords": "education, technology, AI"
             }
         }
+
+# OpenAI-compatible tool definitions
+OPENAI_TOOLS = [
+    # learning objective tool
+    {
+        "type": "function",
+        "function": {
+            "name": "onSetLearningObjective",
+            "description": "Call this tool when the user selects a learning objective for the lesson.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "learningObjective": {
+                        "type": "string",
+                        "description": "The learning objective for the lesson"
+                    }
+                },
+                "required": ["keywords"]
+            }
+        }
+    },    
+    # pedagogySelection tool
+    {
+        "type": "function",
+        "function": {
+            "name": "onSelectPedagogy",
+            "description": "Call this tool when the user selects an education level. Provide the pedagogy approach from the enum, for example \"behaviorism\".",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "pedagogyApproach": {
+                        "type": "string",
+                        "enum": ["constructivist", "social-constructivist", "behaviorism", "liberationist"]
+                    }
+                },
+                "required": ["pedagogyApproach"]
+            }
+        }
+    },        
+    {
+        "type": "function",
+        "function": {
+            "name": "onSelectEducationLevel",
+            "description": "Call this tool when the user selects an education level. Only provide the education levels from the enum, for example grade9.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "course": {
+                        "type": "string",
+                        "enum": ["grade9", "grade10", "grade11", "grade12"]
+                    }
+                },
+                "required": ["course"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "onSelectLessonTopic",
+            "description": (
+                "Call this tool ONLY when the user explicitly selects a lesson topic or a lesson summary. "
+                "if the user selects a lesson summary from a list, provide just the lesson title as the lesson topic. "
+                "such as saying 'I want to select lesson topic X', 'I want to select lesson summary X', or 'I choose X'. "
+                "DO NOT call this tool when the user is asking for keywords or selecting keywords or subtopics. "
+                "DO NOT call this tool when the user is asking for topic suggestions, "
+                "such as 'Can you suggest some topics?' or 'I want to teach a lesson related to X, "
+                "please suggest some related lesson topics.' "
+                "Provide the specific lesson topic name the user has selected, e.g., 'History of Astronomy'."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "lessonTopic": {
+                        "type": "string",
+                        "description": "The specific lesson topic selected by the user"
+                    }
+                },
+                "required": ["lessonTopic"]
+            }
+        }
+    },
+    {
+        "type": "function", 
+        "function": {
+            "name": "onSelectLessonSummary",
+            "description": (
+                "Call this tool ONLY when the user explicitly selects a lesson summary. "
+                "extract the lesson title from the lesson summary and provide just the lesson title as the lesson topic. "
+                "Provide the entire lesson summary that was selected by the user as the lessonSummary parameter. e.g., \"2. **Lesson Summary 2: \"Chemical Reactions Lab\"**\n- Key Concepts: Chemical Reactions, Variables, Data Analysis\n- Key Vocabulary: Reactants, Products, Catalyst\n- In this lab-based lesson, students design and conduct experiments to investigate various chemical reactions. Through hands-on activities and data collection, students apply the scientific research process to explore the factors influencing chemical changes, aligning with the objective of conducting investigations using research skills.\""
+                "such as saying 'I want to select lesson topic X', 'I want to select lesson summary X', or 'I choose X'. "
+                "DO NOT call this tool when the user is asking for keywords or selecting keywords or subtopics. "
+                "DO NOT call this tool when the user is asking for lesson summary suggestions, "
+                "such as 'Can you suggest some lesson summaries?' or 'I want to teach a lesson related to X, "
+                "please suggest some related lesson topics.' "
+                "Provide the specific lesson topic name the user has selected, e.g., 'History of Astronomy'."
+                "Provide the entire lesson summary that was selected by the user as the lessonSummary parameter."
+                
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "lessonSummary": {
+                        "type": "string",
+                        "description": "The entire lesson summary selected by the user"
+                    },
+                    "lessonTopic": {
+                        "type": "string",
+                        "description": "The specific lesson topic selected by the user"
+                    }
+                },
+                "required": ["lessonTopic"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "onSelectSubject",
+            "description": "Call this when the user selects a subject in their message. Get a subject from the enum, for example Chemistry.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "subject": {
+                        "type": "string",
+                        "enum": [
+                            "Anatomy",
+                            "Astronomy", 
+                            "Chemistry",
+                            "U.S. History",
+                            "Zoology",
+                            "History of Science",
+                            "Theater",
+                            "Artificial Intelligence",
+                            "Mythology",
+                            "Social and Emotional Learning"
+                        ]
+                    }
+                },
+                "required": ["subject"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "onGenerateKeywords",
+            "description": (
+                "ONLY call this tool when ALL of these conditions are met:\n"
+                "1. The MOST RECENT message was from the human/user (not from the assistant)\n"
+                "2. The user EXPLICITLY APPROVES previously suggested keywords\n"
+                "3. The user says something like 'yes, those keywords look good' or "
+                "'I approve these keywords' or 'let's use these keywords'\n\n"
+                "DO NOT call this tool when:\n"
+                "1. You (the assistant) are suggesting initial keywords to the user\n"
+                "2. The user asks for keyword suggestions\n"
+                "3. The user hasn't explicitly approved the keywords\n"
+                "4. The most recent message was from you (the assistant)\n\n"
+                "Example valid triggers (must be the most recent message):\n"
+                "- User: 'Yes, those keywords look good'\n"
+                "- User: 'I approve these keywords'\n"
+                "- User: 'Let's use these keywords'\n\n"
+                "The keywords should be provided as a comma-separated string of 3 terms that were "
+                "previously suggested and approved by the user."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "keywords": {
+                        "type": "string",
+                        "description": "Comma-separated string of 3 approved keywords"
+                    }
+                },
+                "required": ["keywords"]
+            }
+        }
+    }
+]
 
 def get_llm(model: str, add_tools=False):
     """Retrieve the specified language model based on the model name."""
@@ -294,3 +475,80 @@ async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowed
         err = f"Error during extracting graph with llm: {e}"
         logging.error(err)
         raise 
+
+def create_chat_completion_sync(
+    messages: List[Dict[str, str]], 
+    model: str = "openai_gpt_3.5",
+    add_tools: bool = False,
+    temperature: float = 0
+) -> AIMessage:
+    """
+    Synchronous version of create_chat_completion using OpenAI's synchronous client.
+    Returns an AIMessage object matching Langchain's ChatOpenAI output format.
+    """
+    try:
+        # Get model configuration
+        env_key = f"LLM_MODEL_CONFIG_{model.lower().strip()}"
+        env_value = os.environ.get(env_key)
+        
+        if not env_value:
+            err = f"Environment variable '{env_key}' is not defined"
+            logging.error(err)
+            raise Exception(err)
+
+        # Parse model config
+        if "openai" in model.lower():
+            model_name, api_key = env_value.split(",")
+        else:
+            model_name, api_endpoint, api_key = env_value.split(",")
+
+        # Initialize client
+        client = OpenAI(
+            api_key=api_key,
+            base_url=api_endpoint if "openai" not in model.lower() else None
+        )
+
+        # Prepare request parameters
+        completion_params = {
+            "model": model_name,
+            "messages": messages,
+            "temperature": temperature
+        }
+
+        # Add tools if requested
+        if add_tools:
+            logging.info("Adding tool_choice = auto")
+            completion_params["tools"] = OPENAI_TOOLS
+            completion_params["tool_choice"] = "auto"
+
+        # Make the API call
+        response = client.chat.completions.create(**completion_params)
+
+        # Extract content and tool calls
+        content = response.choices[0].message.content or ""  # Default to empty string if None
+        additional_kwargs = {}
+
+        # Handle tool calls if present
+        if hasattr(response.choices[0].message, 'tool_calls') and response.choices[0].message.tool_calls:
+            additional_kwargs["tool_calls"] = [
+                {
+                    "id": tool_call.id,
+                    "type": "function",
+                    "function": {
+                        "name": tool_call.function.name,
+                        "arguments": tool_call.function.arguments
+                    }
+                }
+                for tool_call in response.choices[0].message.tool_calls
+            ]
+
+        # Return in Langchain's AIMessage format
+        return AIMessage(
+            content=content,  # Will never be None now
+            additional_kwargs=additional_kwargs
+        )
+
+    except Exception as e:
+        err = f"Error in create_chat_completion_sync: {str(e)}"
+        logging.error(err)
+        raise Exception(err)
