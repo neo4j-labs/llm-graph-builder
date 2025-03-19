@@ -179,31 +179,40 @@ OPENAI_TOOLS = [
         "function": {
             "name": "onSelectLessonSummary",
             "description": (
-                "Call this tool ONLY when the user explicitly selects a lesson summary. "
-                "extract the lesson title from the lesson summary and provide just the lesson title as the lesson topic. "
-                "Provide the entire lesson summary that was selected by the user as the lessonSummary parameter. e.g., \"2. **Lesson Summary 2: \"Chemical Reactions Lab\"**\n- Key Concepts: Chemical Reactions, Variables, Data Analysis\n- Key Vocabulary: Reactants, Products, Catalyst\n- In this lab-based lesson, students design and conduct experiments to investigate various chemical reactions. Through hands-on activities and data collection, students apply the scientific research process to explore the factors influencing chemical changes, aligning with the objective of conducting investigations using research skills.\""
-                "such as saying 'I want to select lesson topic X', 'I want to select lesson summary X', or 'I choose X'. "
-                "DO NOT call this tool when the user is asking for keywords or selecting keywords or subtopics. "
-                "DO NOT call this tool when the user is asking for lesson summary suggestions, "
-                "such as 'Can you suggest some lesson summaries?' or 'I want to teach a lesson related to X, "
-                "please suggest some related lesson topics.' "
-                "Provide the specific lesson topic name the user has selected, e.g., 'History of Astronomy'."
-                "Provide the entire lesson summary that was selected by the user as the lessonSummary parameter."
-                
+                "ONLY call this tool when ALL of these conditions are met:\n"
+                "1. The MOST RECENT message was from the human/user (not from the assistant)\n"
+                "2. The user EXPLICITLY SELECTS a specific lesson summary from a presented list\n"
+                "3. The user says something like 'I choose lesson summary X' or 'I want to select lesson summary X'\n\n"
+                "DO NOT call this tool when:\n"
+                "1. You (the assistant) are generating or suggesting lesson summaries\n"
+                "2. The user asks for lesson summary suggestions\n"
+                "3. The user hasn't explicitly selected a specific lesson summary\n"
+                "4. The most recent message was from you (the assistant)\n\n"
+                "Example valid triggers (must be the most recent message):\n"
+                "- User: 'I choose lesson summary 2'\n"
+                "- User: 'Let's go with the Chemical Reactions Lab summary'\n"
+                "- User: 'I want to select the second lesson summary'\n\n"
+                "When called, extract the lesson title from the selected summary for the lessonTopic parameter, "
+                "and include the complete lesson summary text in the lessonSummary parameter.\n\n"
+                "Example lesson summary format:\n"
+                "\"2. **Lesson Summary 2: \"Chemical Reactions Lab\"**\n"
+                "- Key Concepts: Chemical Reactions, Variables, Data Analysis\n"
+                "- Key Vocabulary: Reactants, Products, Catalyst\n"
+                "- In this lab-based lesson, students design and conduct experiments...\""
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
                     "lessonSummary": {
                         "type": "string",
-                        "description": "The entire lesson summary selected by the user"
+                        "description": "The complete lesson summary text that was selected by the user"
                     },
                     "lessonTopic": {
                         "type": "string",
-                        "description": "The specific lesson topic selected by the user"
+                        "description": "The lesson title extracted from the selected summary"
                     }
                 },
-                "required": ["lessonTopic"]
+                "required": ["lessonTopic", "lessonSummary"]
             }
         }
     },
@@ -241,13 +250,13 @@ OPENAI_TOOLS = [
             "name": "onGenerateKeywords",
             "description": (
                 "ONLY call this tool when ALL of these conditions are met:\n"
-                "1. The MOST RECENT message was from the human/user (not from the assistant)\n"
+                "1. The MOST RECENT message was from the human/user (not from the assistant or the system)\n"
                 "2. The user EXPLICITLY APPROVES previously suggested keywords\n"
                 "3. The user says something like 'yes, those keywords look good' or "
                 "'I approve these keywords' or 'let's use these keywords'\n\n"
                 "DO NOT call this tool when:\n"
                 "1. You (the assistant) are suggesting initial keywords to the user\n"
-                "2. The user asks for keyword suggestions\n"
+                "2. The user asks for keyword generations or suggestions\n"
                 "3. The user hasn't explicitly approved the keywords\n"
                 "4. The most recent message was from you (the assistant)\n\n"
                 "Example valid triggers (must be the most recent message):\n"
