@@ -503,21 +503,10 @@ async def processing_chunks(chunkId_chunkDoc_list,graph,uri, userName, password,
   logging.info(f'Time taken to create relationship between chunk and entities: {elapsed_relationship:.2f} seconds')
   latency_processing_chunk["relationship_between_chunk_entity"] = f'{elapsed_relationship:.2f}'
   
-  distinct_nodes = set()
-  relations = []
-  for graph_document in graph_documents:
-    #get distinct nodes
-    for node in graph_document.nodes:
-          node_id = node.id
-          node_type= node.type
-          if (node_id, node_type) not in distinct_nodes:
-            distinct_nodes.add((node_id, node_type))
-    #get all relations
-    for relation in graph_document.relationships:
-          relations.append(relation.type)
-
-    node_count += len(distinct_nodes)
-    rel_count += len(relations)
+  graphDb_data_Access = graphDBdataAccess(graph)
+  count_response = graphDb_data_Access.update_node_relationship_count(file_name)
+  node_count = count_response[file_name].get('nodeCount',"0")
+  rel_count = count_response[file_name].get('relationshipCount',"0")
   return node_count,rel_count,latency_processing_chunk
 
 def get_chunkId_chunkDoc_list(graph, file_name, pages, token_chunk_size, chunk_overlap, retry_condition):
