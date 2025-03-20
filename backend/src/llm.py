@@ -15,6 +15,7 @@ import boto3
 import google.auth
 from src.shared.constants import ADDITIONAL_INSTRUCTIONS
 import re
+import json
 
 def get_llm(model: str):
     """Retrieve the specified language model based on the model name."""
@@ -199,7 +200,6 @@ async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowed
     
     llm, model_name = get_llm(model)
     combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list, chunks_to_combine)
-    
     if  allowedNodes is None or allowedNodes=="":
         allowedNodes =[]
     else:
@@ -207,8 +207,12 @@ async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowed
     if  allowedRelationship is None or allowedRelationship=="":   
         allowedRelationship=[]
     else:
-        allowedRelationship = allowedRelationship.split(',')
-        
+        data = json.loads(allowedRelationship)
+    if isinstance(data, list) and data and isinstance(data[0], list):
+        allowedRelationship = [tuple(item) for item in data]
+    else:
+        allowedRelationship = data 
+    print('rel after', allowedRelationship)  
     graph_document_list = await get_graph_document_list(
         llm, combined_chunk_document_list, allowedNodes, allowedRelationship, additional_instructions
     )

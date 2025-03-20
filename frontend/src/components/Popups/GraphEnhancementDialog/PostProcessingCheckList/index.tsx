@@ -7,7 +7,7 @@ import { useCredentials } from '../../../../context/UserCredentials';
 export default function PostProcessingCheckList() {
   const { breakpoints } = tokens;
   const tablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
-  const { postProcessingTasks, setPostProcessingTasks, selectedNodes, selectedRels } = useFileContext();
+  const { postProcessingTasks, setPostProcessingTasks, selectedNodes, selectedRels, selectedTupleNodes, setSelectedTupleRels } = useFileContext();
   const { isGdsActive } = useCredentials();
   return (
     <Flex gap={tablet ? '6' : '8'}>
@@ -22,20 +22,20 @@ export default function PostProcessingCheckList() {
             {POST_PROCESSING_JOBS.map((job, idx) => {
               const isGraphCleanupDisabled =
                 job.title === 'graph_schema_consolidation'
-                  ? !(selectedNodes.length === 0 && selectedRels.length === 0)
+                  ? !((selectedNodes.length === 0 && selectedRels.length === 0) || (selectedTupleNodes.length === 0 && setSelectedTupleRels.length === 0))
                   : false;
               const isDisabled =
                 job.title === 'enable_communities'
                   ? !isGdsActive
                   : job.title === 'graph_schema_consolidation'
-                  ? isGraphCleanupDisabled
-                  : false;
+                    ? isGraphCleanupDisabled
+                    : false;
               const isChecked =
                 job.title === 'graph_schema_consolidation'
                   ? !isGraphCleanupDisabled && postProcessingTasks.includes(job.title)
                   : job.title === 'enable_communities'
-                  ? isGdsActive && postProcessingTasks.includes(job.title)
-                  : postProcessingTasks.includes(job.title);
+                    ? isGdsActive && postProcessingTasks.includes(job.title)
+                    : postProcessingTasks.includes(job.title);
               return (
                 <Flex key={`${job.title}${idx}`}>
                   <Checkbox
