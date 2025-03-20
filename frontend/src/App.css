@@ -415,4 +415,5 @@
 
 .enhancement-btn__wrapper{
   padding-right: 12px;
+  display: flex;
 }

@@ -1,4 +1,4 @@
-import { Dropzone, Flex, Typography } from '@neo4j-ndl/react';
+import { Dropzone, Flex, SpotlightTarget, Typography } from '@neo4j-ndl/react';
 import { useState, FunctionComponent, useEffect } from 'react';
 import Loader from '../../../utils/Loader';
 import { v4 as uuidv4 } from 'uuid';
@@ -17,7 +17,6 @@ const DropZone: FunctionComponent = () => {
   const [isClicked, setIsClicked] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-
   const onDropHandler = (f: Partial<globalThis.File>[]) => {
     setIsClicked(true);
     setSelectedFiles(f.map((f) => f as File));
@@ -197,57 +196,65 @@ const DropZone: FunctionComponent = () => {
 
   return (
     <>
-      <Dropzone
-        loadingComponent={isLoading && <Loader title='Uploading' />}
-        isTesting={true}
-        className='bg-none! dropzoneContainer'
-        supportedFilesDescription={
-          <Typography variant='body-small'>
-            <Flex>
-              <span>{buttonCaptions.dropzoneSpan}</span>
-              <div className='align-self-center'>
-                <IconButtonWithToolTip
-                  label='Source info'
-                  clean
-                  text={
-                    <Typography variant='body-small'>
-                      <Flex gap='3' alignItems='flex-start'>
-                        <span>Microsoft Office (.docx, .pptx, .xls, .xlsx)</span>
-                        <span>PDF (.pdf)</span>
-                        <span>Images (.jpeg, .jpg, .png, .svg)</span>
-                        <span>Text (.html, .txt , .md)</span>
-                      </Flex>
-                    </Typography>
-                  }
-                >
-                  <InformationCircleIconOutline className='w-[22px] h-[22px]' />
-                </IconButtonWithToolTip>
-              </div>
-            </Flex>
-          </Typography>
-        }
-        dropZoneOptions={{
-          accept: {
-            'application/pdf': ['.pdf'],
-            'image/*': ['.jpeg', '.jpg', '.png', '.svg'],
-            'text/html': ['.html'],
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-            'text/plain': ['.txt'],
-            'application/vnd.ms-powerpoint': ['.pptx'],
-            'application/vnd.ms-excel': ['.xls'],
-            'text/markdown': ['.md'],
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-          },
-          onDrop: (f: Partial<globalThis.File>[]) => {
-            onDropHandler(f);
-          },
-          onDropRejected: (e) => {
-            if (e.length) {
-              showErrorToast('Failed To Upload, Unsupported file extention');
-            }
-          },
-        }}
-      />
+      <SpotlightTarget
+        id='dropzone'
+        hasPulse={true}
+        indicatorVariant='border'
+        hasAnchorPortal={false}
+        borderRadius={11}
+      >
+        <Dropzone
+          loadingComponent={isLoading && <Loader title='Uploading' />}
+          isTesting={true}
+          className='bg-none! dropzoneContainer'
+          supportedFilesDescription={
+            <Typography variant='body-small'>
+              <Flex>
+                <span>{buttonCaptions.dropzoneSpan}</span>
+                <div className='align-self-center'>
+                  <IconButtonWithToolTip
+                    label='Source info'
+                    clean
+                    text={
+                      <Typography variant='body-small'>
+                        <Flex gap='3' alignItems='flex-start'>
+                          <span>Microsoft Office (.docx, .pptx, .xls, .xlsx)</span>
+                          <span>PDF (.pdf)</span>
+                          <span>Images (.jpeg, .jpg, .png, .svg)</span>
+                          <span>Text (.html, .txt , .md)</span>
+                        </Flex>
+                      </Typography>
+                    }
+                  >
+                    <InformationCircleIconOutline className='w-[22px] h-[22px]' />
+                  </IconButtonWithToolTip>
+                </div>
+              </Flex>
+            </Typography>
+          }
+          dropZoneOptions={{
+            accept: {
+              'application/pdf': ['.pdf'],
+              'image/*': ['.jpeg', '.jpg', '.png', '.svg'],
+              'text/html': ['.html'],
+              'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+              'text/plain': ['.txt'],
+              'application/vnd.ms-powerpoint': ['.pptx'],
+              'application/vnd.ms-excel': ['.xls'],
+              'text/markdown': ['.md'],
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+            },
+            onDrop: (f: Partial<globalThis.File>[]) => {
+              onDropHandler(f);
+            },
+            onDropRejected: (e) => {
+              if (e.length) {
+                showErrorToast('Failed To Upload, Unsupported file extention');
+              }
+            },
+          }}
+        />
+      </SpotlightTarget>
     </>
   );
 };

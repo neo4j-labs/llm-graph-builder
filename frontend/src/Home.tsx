@@ -5,7 +5,7 @@ import QuickStarter from './components/QuickStarter';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { APP_SOURCES } from './utils/Constants';
 import ErrorBoundary from './components/UI/ErrroBoundary';
-import { Toaster } from '@neo4j-ndl/react';
+import { Toaster, SpotlightProvider } from '@neo4j-ndl/react';
 const Home: React.FC = () => {
   return (
     <>
@@ -13,7 +13,9 @@ const Home: React.FC = () => {
         <ErrorBoundary>
           <GoogleOAuthProvider clientId={process.env.VITE_GOOGLE_CLIENT_ID as string}>
             <ThemeWrapper>
-              <QuickStarter />
+              <SpotlightProvider>
+                <QuickStarter />
+              </SpotlightProvider>
               <Toaster />
             </ThemeWrapper>
           </GoogleOAuthProvider>
@@ -21,7 +23,9 @@ const Home: React.FC = () => {
       ) : (
         <ErrorBoundary>
           <ThemeWrapper>
-            <QuickStarter />
+            <SpotlightProvider>
+              <QuickStarter />
+            </SpotlightProvider>
             <Toaster />
           </ThemeWrapper>
         </ErrorBoundary>

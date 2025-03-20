@@ -26,7 +26,7 @@ export default function Profile() {
     setShowOpen(false);
   };
   if (isLoading) {
-    return <div>Loading ...</div>;
+    return <Avatar></Avatar>;
   }
   if (isAuthenticated) {
     return (

@@ -5,7 +5,7 @@ import { ThemeWrapperContext } from '../../../context/ThemeWrapper';
 import internet from '../../../assets/images/web-search-svgrepo-com.svg';
 import internetdarkmode from '../../../assets/images/web-search-darkmode-final2.svg';
 
-const WebButton: React.FC<DataComponentProps> = ({ openModal, isLargeDesktop = true }) => {
+const WebButton: React.FC<DataComponentProps> = ({ openModal, isLargeDesktop = true, isDisabled }) => {
   const themeUtils = useContext(ThemeWrapperContext);
 
   return (
@@ -14,6 +14,7 @@ const WebButton: React.FC<DataComponentProps> = ({ openModal, isLargeDesktop = t
       logo={themeUtils.colorMode === 'dark' ? internetdarkmode : internet}
       wrapperclassName='my-2'
       className={isLargeDesktop ? 'webImg' : 'widthunset'}
+      isDisabled={isDisabled}
     />
   );
 };
