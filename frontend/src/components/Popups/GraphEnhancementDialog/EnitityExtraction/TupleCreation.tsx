@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Select, Tag, } from '@neo4j-ndl/react';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
 import { OptionType, TupleCreationProps } from '../../../../types';
@@ -36,19 +36,10 @@ const TupleCreation: React.FC<TupleCreationProps> = ({
     selectedType,
     selectedTarget,
     onPatternChange,
+    selectedPatterns,
+    onAddPattern,
+    onRemovePattern,
 }) => {
-    const [selectedPatterns, setSelectedPatterns] = useState<string[]>([]);
-    const handleAddPattern = () => {
-        if (selectedSource && selectedType && selectedTarget) {
-            const newPattern = `(:${selectedSource.value})-[:${selectedType.value}]->(:${selectedTarget.value})`;
-            if (!selectedPatterns.includes(newPattern)) {
-                setSelectedPatterns((prevPatterns) => [...prevPatterns, newPattern]);
-            }
-        }
-    };
-    const handleRemovePattern = (pattern: string) => {
-        setSelectedPatterns((prevPatterns) => prevPatterns.filter((p) => p !== pattern));
-    };
     return (
         <div className="bg-white rounded-lg shadow-md">
             <div className="flex align-self-center justify-center">
@@ -100,7 +91,7 @@ const TupleCreation: React.FC<TupleCreationProps> = ({
                 <ButtonWithToolTip
                     text="Add"
                     placement="top"
-                    onClick={handleAddPattern}
+                    onClick={onAddPattern}
                     label="Add Values"
                     size="medium"
                     disabled={!selectedSource || !selectedType || !selectedTarget}
@@ -117,7 +108,7 @@ const TupleCreation: React.FC<TupleCreationProps> = ({
                         {selectedPatterns.map((pattern) => (
                             <Tag
                                 key={pattern}
-                                onRemove={() => handleRemovePattern(pattern)}
+                                onRemove={() => onRemovePattern(pattern)}
                                 isRemovable={true}
                                 type="default"
                                 size="medium"

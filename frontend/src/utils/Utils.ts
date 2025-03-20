@@ -544,3 +544,8 @@ export function isFileReadyToProcess(file: CustomFile, withLocalCheck: boolean) 
   }
   return file.status === 'New' || file.status == 'Ready to Reprocess';
 }
+
+
+export const updateLocalStorage = (userCredentials: UserCredentials, key: string, data: any,) => {
+  localStorage.setItem(key, JSON.stringify({ db: userCredentials?.uri, selectedOptions: data }));
+};
