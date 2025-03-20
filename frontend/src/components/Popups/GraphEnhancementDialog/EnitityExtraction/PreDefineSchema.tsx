@@ -68,7 +68,7 @@ const PreDefineSchema = ({
                         classNamePrefix: `${isTablet ? 'tablet_entity_extraction_Tab_node_label' : 'entity_extraction_Tab_node_label'
                             }`,
                     }}
-                    type='creatable'
+                    type='select'
                 />
                 <Select
                     helpText='You can select or add relationship types'
@@ -84,7 +84,7 @@ const PreDefineSchema = ({
                         classNamePrefix: `${isTablet ? 'tablet_entity_extraction_Tab_relationship_label' : 'entity_extraction_Tab_relationship_label'
                             }`,
                     }}
-                    type='creatable'
+                    type='select'
                 />
             </div>
         </>
