@@ -15,7 +15,7 @@ import GraphViewModal from '../../../Graph/GraphViewModal';
 import TupleCreation from '../EnitityExtraction/TupleCreation'
 import PreDefineSchema from './PreDefineSchema';
 import { updateLocalStorage } from '../../../../utils/Utils';
- 
+
 export default function EntityExtractionSetting({
   view,
   open,
@@ -34,45 +34,34 @@ export default function EntityExtractionSetting({
   closeEnhanceGraphSchemaDialog?: () => void;
 }) {
   const { breakpoints } = tokens;
-  const { setSelectedRels, setSelectedNodes, selectedNodes, selectedRels, selectedSchemas, setSelectedSchemas } =
+  const { setSelectedRels, setSelectedNodes, selectedNodes, selectedRels, selectedSchemas, setSelectedSchemas, setSelectedTupleNodes, selectedTupleRels,
+    setSelectedTupleRels, selectedTupleNodes, schemaRelMode, setSchemaRelMode } =
     useFileContext();
   const { userCredentials } = useCredentials();
   const [loading, setLoading] = useState<boolean>(false);
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
-  const hasSelections = useHasSelections(selectedNodes, selectedRels);
+  const hasSelections = useHasSelections(selectedNodes, selectedRels, selectedTupleNodes, selectedTupleRels);
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [viewPoint, setViewPoint] = useState<string>('tableView');
-  const [relationshipMode, setRelationshipMode] = useState<'list' | 'tuple'>(
-    selectedRels.length > 0 && selectedRels.every((t) => t.value.split(',').length === 3) ? 'tuple' : 'list'
-  );
-  const [listModeRels, setListModeRels] = useState<OptionType[]>([]);
-  const [tupleModeRels, setTupleModeRels] = useState<OptionType[]>([]);
+
+  const [nodeLabelOptions, setnodeLabelOptions] = useState<OptionType[]>([]);
+  const [relationshipTypeOptions, setrelationshipTypeOptions] = useState<OptionType[]>([]);
+  const defaultExamples = useMemo(() => getDefaultSchemaExamples(), []);
   const [selectedSource, setSelectedSource] = useState<OptionType | null>(null);
   const [selectedType, setSelectedType] = useState<OptionType | null>(null);
   const [selectedTarget, setSelectedTarget] = useState<OptionType | null>(null);
   const [selectedPatterns, setSelectedPatterns] = useState<string[]>([]);
-  const [lastTupleSelections, setLastTupleSelections] = useState<{
-    source: OptionType | null;
-    type: OptionType | null;
-    target: OptionType | null;
-  } | null>(null);
   const removeNodesAndRels = (nodelabels: string[], relationshipTypes: string[]) => {
     const labelsToRemoveSet = new Set(nodelabels);
     const relationshipLabelsToremoveSet = new Set(relationshipTypes);
     setSelectedNodes((prevState) => {
       const filterednodes = prevState.filter((item) => !labelsToRemoveSet.has(item.label));
-      localStorage.setItem(
-        'selectedNodeLabels',
-        JSON.stringify({ db: userCredentials?.uri, selectedOptions: filterednodes })
-      );
+      updateLocalStorage(userCredentials!!, 'selectedNodeLabels', filterednodes);
       return filterednodes;
     });
     setSelectedRels((prevState) => {
       const filteredrels = prevState.filter((item) => !relationshipLabelsToremoveSet.has(item.label));
-      localStorage.setItem(
-        'selectedRelationshipLabels',
-        JSON.stringify({ db: userCredentials?.uri, selectedOptions: filteredrels })
-      );
+      updateLocalStorage(userCredentials!!, 'selectedRelationshipLabels', filteredrels);
       return filteredrels;
     });
   };
@@ -88,10 +77,7 @@ export default function EntityExtractionSetting({
       removeNodesAndRels(removedNodelabels, removedRelations);
     }
     setSelectedSchemas(selectedOptions);
-    localStorage.setItem(
-      'selectedSchemas',
-      JSON.stringify({ db: userCredentials?.uri, selectedOptions: selectedOptions })
-    );
+    updateLocalStorage(userCredentials!!, 'selectedSchemas', selectedOptions);
     const nodesFromSchema = selectedOptions.map((s) => JSON.parse(s.value).nodelabels).flat();
     const relationsFromSchema = selectedOptions.map((s) => JSON.parse(s.value).relationshipTypes).flat();
     let nodeOptionsFromSchema: OptionType[] = [];
@@ -114,10 +100,7 @@ export default function EntityExtractionSetting({
         }
         return false;
       });
-      localStorage.setItem(
-        'selectedNodeLabels',
-        JSON.stringify({ db: userCredentials?.uri, selectedOptions: updatedOptions })
-      );
+      updateLocalStorage(userCredentials!!, 'selectedNodeLabels', updatedOptions);
       return updatedOptions;
     });
     setSelectedRels((prev) => {
@@ -130,28 +113,10 @@ export default function EntityExtractionSetting({
         }
         return false;
       });
-      localStorage.setItem(
-        'selectedRelationshipLabels',
-        JSON.stringify({ db: userCredentials?.uri, selectedOptions: updatedOptions })
-      );
+      updateLocalStorage(userCredentials!!, 'selectedRelationshipLabels', updatedOptions);
       return updatedOptions;
     });
   };
-
-  useEffect(() => {
-    const storedMode = localStorage.getItem('relationshipMode');
-    if (storedMode === 'tuple' || storedMode === 'list') {
-      setRelationshipMode(storedMode);
-      const storedRels = JSON.parse(localStorage.getItem('selectedRelationshipLabels') || '{}').selectedOptions || [];
-      setSelectedRels(storedRels);
-      if (storedMode === 'list') {
-        setListModeRels(storedRels);
-      } else {
-        setTupleModeRels(storedRels);
-      }
-    }
-  }, []);
-
   const onChangenodes = (selectedOptions: OnChangeValue<OptionType, true>, actionMeta: ActionMeta<OptionType>) => {
     if (actionMeta.action === 'clear') {
       updateLocalStorage(userCredentials!!, 'selectedNodeLabels', []);
@@ -162,43 +127,11 @@ export default function EntityExtractionSetting({
   const onChangerels = (selectedOptions: OnChangeValue<OptionType, true>, actionMeta: ActionMeta<OptionType>) => {
     if (actionMeta.action === 'clear') {
       updateLocalStorage(userCredentials!!, 'selectedRelationshipLabels', []);
-      setSelectedRels([]);
-      if (relationshipMode === 'list') {
-        setListModeRels([]);
-      } else {
-        setTupleModeRels([]);
-      }
-      return;
     }
-    const processedOptions = selectedOptions
-      .map((option) => {
-        const value = option.value.trim();
-        if (relationshipMode === 'tuple' && value.split(',').length !== 3) {
-          showNormalToast(
-            `Invalid tuple format for relationship "${option.label}". Please enter as "Source, Relationship, Target".`
-          );
-          return null;
-        }
-        if (relationshipMode === 'list' && value.includes(',')) {
-          showNormalToast(
-            `Invalid format for relationship "${option.label}". Commas are not allowed in list mode.`
-          );
-          return null;
-        }
-        return { ...option, value };
-      })
-      .filter((option): option is OptionType => option !== null);
-    setSelectedRels(processedOptions);
-    if (relationshipMode === 'list') {
-      setListModeRels(processedOptions);
-    } else {
-      setTupleModeRels(processedOptions);
-    }
-    updateLocalStorage(userCredentials!!, 'selectedRelationshipLabels', processedOptions);
+    setSelectedRels(selectedOptions);
+    updateLocalStorage(userCredentials!!, 'selectedRelationshipLabels', selectedOptions);
   };
-  const [nodeLabelOptions, setnodeLabelOptions] = useState<OptionType[]>([]);
-  const [relationshipTypeOptions, setrelationshipTypeOptions] = useState<OptionType[]>([]);
-  const defaultExamples = useMemo(() => getDefaultSchemaExamples(), []);
+
 
   useEffect(() => {
     if (userCredentials) {
@@ -244,6 +177,7 @@ export default function EntityExtractionSetting({
     }
   }, [userCredentials, open]);
 
+
   const clickHandler: MouseEventHandler<HTMLButtonElement> = useCallback(() => {
     setSelectedSchemas([]);
     setSelectedNodes(nodeLabelOptions);
@@ -253,64 +187,43 @@ export default function EntityExtractionSetting({
   }, [nodeLabelOptions, relationshipTypeOptions]);
 
   const handleClear = () => {
-    setSelectedNodes([]);
-    setSelectedRels([]);
-    setSelectedSchemas([]);
-    localStorage.setItem('selectedNodeLabels', JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] }));
-    localStorage.setItem(
-      'selectedRelationshipLabels',
-      JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] })
-    );
-    localStorage.setItem('selectedSchemas', JSON.stringify({ db: userCredentials?.uri, selectedOptions: [] }));
+    if (schemaRelMode === 'list') {
+      setSelectedNodes([]);
+      setSelectedRels([]);
+      setSelectedSchemas([]);
+      updateLocalStorage(userCredentials!!, 'selectedNodeLabels', []);
+      updateLocalStorage(userCredentials!!, 'selectedRelationshipLabels', []);
+      updateLocalStorage(userCredentials!!, 'selectedSchemas', []);
+    }
+    else {
+      setSelectedTupleNodes([]);
+      setSelectedTupleRels([]);
+      setSelectedPatterns([]);
+      updateLocalStorage(userCredentials!!, 'selectedTupleNodeLabels', []);
+      updateLocalStorage(userCredentials!!, 'selectedTupleRelationshipLabels', []);
+      updateLocalStorage(userCredentials!!, 'selectedTuplePatterns', []);
+    }
+
     showNormalToast(`Successfully Removed the Schema settings`);
     if (view === 'Tabs' && closeEnhanceGraphSchemaDialog != undefined) {
       closeEnhanceGraphSchemaDialog();
     }
   };
+
   const handleApply = () => {
     showNormalToast(`Successfully Applied the Schema settings`);
     if (view === 'Tabs' && closeEnhanceGraphSchemaDialog != undefined) {
       closeEnhanceGraphSchemaDialog();
     }
-    localStorage.setItem(
-      'selectedNodeLabels',
-      JSON.stringify({ db: userCredentials?.uri, selectedOptions: selectedNodes })
-    );
-    localStorage.setItem(
-      'selectedRelationshipLabels',
-      JSON.stringify({ db: userCredentials?.uri, selectedOptions: selectedRels })
-    );
-    localStorage.setItem(
-      'selectedSchemas',
-      JSON.stringify({ db: userCredentials?.uri, selectedOptions: selectedSchemas })
-    );
-  };
-
-  const saveSchemaSettings = () => {
-    if (userCredentials) {
-      if (relationshipMode === 'list') {
-        updateLocalStorage(userCredentials, 'selectedNodeLabels', selectedNodes);
-        updateLocalStorage(userCredentials, 'selectedRelationshipLabels', selectedRels);
-        updateLocalStorage(userCredentials, 'selectedSchemas', selectedSchemas);
-      }
-      else {
-        updateLocalStorage(userCredentials, 'lastTupleSelections', lastTupleSelections);
-      }
+    if (schemaRelMode === 'list') {
+      updateLocalStorage(userCredentials!!, 'selectedNodeLabels', selectedNodes);
+      updateLocalStorage(userCredentials!!, 'selectedRelationshipLabels', selectedRels);
+      updateLocalStorage(userCredentials!!, 'selectedSchemas', selectedSchemas);
     }
-  };
- 
-  const handleSchemaAction = (action: 'apply' | 'clear') => {
-    if (action === 'clear') {
-      setSelectedNodes([]);
-      setSelectedRels([]);
-      setSelectedSchemas([]);
-    }
-    saveSchemaSettings();
-    showNormalToast(
-      action === 'apply' ? 'Successfully Applied the Schema settings' : 'Successfully Removed the Schema settings'
-    );
-    if (view === 'Tabs' && closeEnhanceGraphSchemaDialog) {
-      closeEnhanceGraphSchemaDialog();
+    else {
+      updateLocalStorage(userCredentials!!, 'selectedTupleNodeLabels', selectedTupleNodes);
+      updateLocalStorage(userCredentials!!, 'selectedTupleRelationshipLabels', selectedTupleRels);
+      updateLocalStorage(userCredentials!!, 'selectedTuplePatterns', selectedPatterns);
     }
   };
 
@@ -323,70 +236,66 @@ export default function EntityExtractionSetting({
     setSelectedSource(source);
     setSelectedType(type);
     setSelectedTarget(target);
-    setLastTupleSelections({ source, type, target });
-    if (source && target && type) {
-      const relValue = `${source.value},${type.value},${target.value}`;
-      const relationshipOption: OptionType = { label: relValue, value: relValue };
-      setSelectedRels((prev) => {
+    // Store the updated pattern in localStorage
+    updateLocalStorage(userCredentials!!, 'selectedSource', source);
+    updateLocalStorage(userCredentials!!, 'selectedType', type);
+    updateLocalStorage(userCredentials!!, 'selectedTarget', target);
+  };
+
+  const toggleRelationshipMode = () => {
+    setSchemaRelMode((prevMode) => {
+      const newMode = prevMode === 'list' ? 'tuple' : 'list';
+      localStorage.setItem('schemaMode', newMode);
+      return newMode;
+    });
+
+  };
+
+  const handleAddPattern = () => {
+    if (selectedSource && selectedType && selectedTarget) {
+      const patternValue = `${selectedSource.value}-${selectedType.value}->${selectedTarget.value}`;
+      setSelectedTupleRels((prev) => {
+        const relValue = `${selectedSource.value},${selectedType.value},${selectedTarget.value}`;
+        const relationshipOption: OptionType = { label: relValue, value: relValue };
         const alreadyExists = prev.some((rel) => rel.value === relValue);
         if (!alreadyExists) {
-          const updatedRels = [...prev, relationshipOption];
-          updateLocalStorage(userCredentials!!, 'selectedRelationshipLabels', updatedRels);
+          const updatedRels: OptionType[] = [...prev, relationshipOption];
+          updateLocalStorage(userCredentials!!, 'selectedTupleRelationshipLabels', updatedRels);
           return updatedRels;
         }
         return prev;
       });
       const nodeOptions: OptionType[] = [
-        { label: source.value, value: source.value },
-        { label: target.value, value: target.value },
+        { label: selectedSource.value, value: selectedSource.value },
+        { label: selectedTarget.value, value: selectedTarget.value },
       ];
-      setSelectedNodes((prev) => {
-        const combinedNodes = [...prev, ...nodeOptions];
-        const uniqueNodes = Array.from(new Set(combinedNodes.map((item) => item.value))).map((value) => ({
+      setSelectedTupleNodes((prev) => {
+        const uniqueNodes = Array.from(
+          new Set([...prev, ...nodeOptions].map((item) => item.value))
+        ).map((value) => ({
           label: value,
           value,
         }));
-        updateLocalStorage(userCredentials!!, 'selectedNodeLabels', uniqueNodes);
+        updateLocalStorage(userCredentials!!, 'selectedTupleNodeLabels', uniqueNodes);
         return uniqueNodes;
       });
+      setSelectedPatterns((prev) => {
+        const alreadyExists = prev.includes(patternValue);
+        if (!alreadyExists) {
+          const updatedPattern = [...prev, patternValue];
+          updateLocalStorage(userCredentials!!, 'selectedTuplePatterns', updatedPattern);
+          return updatedPattern;
+        }
+        return prev;
+      });
+      setSelectedSource(null);
+      setSelectedType(null);
+      setSelectedTarget(null);
     }
   };
- 
-  const toggleRelationshipMode = () => {
-    setRelationshipMode((prevMode) => {
-      const newMode = prevMode === 'list' ? 'tuple' : 'list';
-      if (prevMode === 'tuple') {
-        setLastTupleSelections({
-          source: selectedSource,
-          type: selectedType,
-          target: selectedTarget,
-        });
-      }
-      if (newMode === 'tuple' && lastTupleSelections) {
-        setSelectedSource(lastTupleSelections.source);
-        setSelectedType(lastTupleSelections.type);
-        setSelectedTarget(lastTupleSelections.target);
-      }
-      const restoredRels = newMode === 'list' ? listModeRels : tupleModeRels;
-      setSelectedRels(restoredRels);
-      localStorage.setItem('relationshipMode', newMode);
-      return newMode;
-    });
-  };
- 
-  const handleAddPattern = () => {
-    if (selectedSource && selectedType && selectedTarget) {
-      const newPattern = `(:${selectedSource.value})-[:${selectedType.value}]->(:${selectedTarget.value})`;
-      if (!selectedPatterns.includes(newPattern)) {
-        setSelectedPatterns((prevPatterns) => [...prevPatterns, newPattern]);
-      }
-    }
-  };
- 
   const handleRemovePattern = (pattern: string) => {
     setSelectedPatterns((prevPatterns) => prevPatterns.filter((p) => p !== pattern));
   };
- 
   return (
     <div>
       <Typography variant='body-medium'>
@@ -402,83 +311,87 @@ export default function EntityExtractionSetting({
       <Flex className={'mt-1.5'} justifyContent='center'>
         <Switch
           label={
-            relationshipMode === 'tuple'
+            schemaRelMode === 'tuple'
               ? 'Switched to Tuple Mode'
               : 'Switched to Predefined Schema'
           }
-          isChecked={relationshipMode === 'tuple'}
+          isChecked={schemaRelMode === 'tuple'}
           onChange={toggleRelationshipMode}
         />
       </Flex>
-      {relationshipMode === 'tuple' ? (<>
-        <TupleCreation
-          selectedSource={selectedSource}
-          selectedType={selectedType}
-          selectedTarget={selectedTarget}
-          selectedPatterns={selectedPatterns}
-          onPatternChange={handlePatternChange}
-          onAddPattern={handleAddPattern}
-          onRemovePattern={handleRemovePattern}
-          onClearSelection={() => handleSchemaAction('clear')} />
-      </>) : (
-        <PreDefineSchema
-          selectedNodes={selectedNodes}
-          selectedRels={selectedRels}
-          selectedSchemas={selectedSchemas}
-          loading={loading}
-          nodeLabelOptions={nodeLabelOptions}
-          relationshipMode='list'
-          relationshipTypeOptions={relationshipTypeOptions}
-          defaultExamples={defaultExamples}
-          onChangeSchema={onChangeSchema}
-          onChangenodes={onChangenodes}
-          onChangerels={onChangerels}
-          isTablet={isTablet}
-        ></PreDefineSchema>
-      )}
-      <>
- 
+      <div className='mt-4'>
+        {schemaRelMode === 'list' ?
+          (<>
+            <PreDefineSchema
+              isTablet={isTablet}
+              relationshipMode='list'
+              nodeLabelOptions={nodeLabelOptions}
+              relationshipTypeOptions={relationshipTypeOptions}
+              defaultExamples={defaultExamples}
+              loading={loading}
+              selectedNodes={selectedNodes}
+              selectedRels={selectedRels}
+              selectedSchemas={selectedSchemas}
+              onChangeSchema={onChangeSchema}
+              onChangenodes={onChangenodes}
+              onChangerels={onChangerels}>
+            </PreDefineSchema>
+          </>) :
+          (<>
+            <TupleCreation selectedSource={selectedSource}
+              selectedType={selectedType}
+              selectedTarget={selectedTarget}
+              selectedPatterns={selectedPatterns}
+              onPatternChange={handlePatternChange}
+              onAddPattern={handleAddPattern}
+              onRemovePattern={handleRemovePattern}
+              onClearSelection={handleClear}
+            >
+            </TupleCreation>
+          </>)}
         <Flex className='mt-4! mb-2 flex! items-center' flexDirection='row' justifyContent='flex-end'>
           <Flex flexDirection='row' gap='4'>
-            {relationshipMode === 'list' && (<ButtonWithToolTip
-              loading={loading}
-              text={
-                !nodeLabelOptions.length && !relationshipTypeOptions.length
-                  ? `No Labels Found in the Database`
-                  : tooltips.useExistingSchema
-              }
-              disabled={!nodeLabelOptions.length && !relationshipTypeOptions.length}
-              onClick={clickHandler}
-              label='Use Existing Schema'
-              placement='top'
-            >
-              Load Existing Schema
-            </ButtonWithToolTip>)}
-            <ButtonWithToolTip
-              label={'Graph Schema'}
-              text={tooltips.visualizeGraph}
-              placement='top'
-              fill='outlined'
-              onClick={handleSchemaView}
-            >
-              <Hierarchy1Icon />
-            </ButtonWithToolTip>
-            <ButtonWithToolTip
-              text={tooltips.createSchema}
-              placement='top'
-              onClick={() => {
-                if (view === 'Dialog' && onClose != undefined) {
-                  onClose();
-                }
-                if (view === 'Tabs' && closeEnhanceGraphSchemaDialog != undefined) {
-                  closeEnhanceGraphSchemaDialog();
-                }
-                openTextSchema();
-              }}
-              label='Get Existing Schema From Text'
-            >
-              Get Schema From Text
-            </ButtonWithToolTip>
+            {schemaRelMode === 'list' &&
+              <>
+                <ButtonWithToolTip
+                  loading={loading}
+                  text={
+                    !nodeLabelOptions.length && !relationshipTypeOptions.length
+                      ? `No Labels Found in the Database`
+                      : tooltips.useExistingSchema
+                  }
+                  disabled={!nodeLabelOptions.length && !relationshipTypeOptions.length}
+                  onClick={clickHandler}
+                  label='Use Existing Schema'
+                  placement='top'
+                >
+                  Load Existing Schema
+                </ButtonWithToolTip>
+                <ButtonWithToolTip
+                  label={'Graph Schema'}
+                  text={tooltips.visualizeGraph}
+                  placement='top'
+                  fill='outlined'
+                  onClick={handleSchemaView}
+                >
+                  <Hierarchy1Icon />
+                </ButtonWithToolTip>
+                <ButtonWithToolTip
+                  text={tooltips.createSchema}
+                  placement='top'
+                  onClick={() => {
+                    if (view === 'Dialog' && onClose != undefined) {
+                      onClose();
+                    }
+                    if (view === 'Tabs' && closeEnhanceGraphSchemaDialog != undefined) {
+                      closeEnhanceGraphSchemaDialog();
+                    }
+                    openTextSchema();
+                  }}
+                  label='Get Existing Schema From Text'
+                >
+                  Get Schema From Text
+                </ButtonWithToolTip></>}
             {settingView === 'contentView' ? (
               <ButtonWithToolTip
                 text={tooltips.continue}
@@ -492,9 +405,9 @@ export default function EntityExtractionSetting({
               <ButtonWithToolTip
                 text={tooltips.clearGraphSettings}
                 placement='top'
-                onClick={() => { handleSchemaAction('clear') }}
+                onClick={handleClear}
                 label='Clear Graph Settings'
-                disabled={!hasSelections}
+                disabled={schemaRelMode === 'list' ? !hasSelections : selectedPatterns.length === 0}
               >
                 {buttonCaptions.clearSettings}
               </ButtonWithToolTip>
@@ -502,15 +415,15 @@ export default function EntityExtractionSetting({
             <ButtonWithToolTip
               text={tooltips.applySettings}
               placement='top'
-              onClick={() => { handleSchemaAction('apply') }}
+              onClick={handleApply}
               label='Apply Graph Settings'
-              disabled={!hasSelections}
+              disabled={schemaRelMode === 'list' ? !hasSelections : selectedPatterns.length === 0}
             >
               {buttonCaptions.applyGraphSchema}
             </ButtonWithToolTip>
           </Flex>
         </Flex>
-      </>
+      </div>
       <GraphViewModal open={openGraphView} setGraphViewOpen={setOpenGraphView} viewPoint={viewPoint} />
     </div>
   );

@@ -106,6 +106,9 @@ const Content: React.FC<ContentProps> = ({
     model,
     additionalInstructions,
     setAdditionalInstructions,
+    selectedTupleNodes,
+    selectedTupleRels,
+    schemaRelMode
   } = useFileContext();
   const [viewPoint, setViewPoint] = useState<
     'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView' | 'showSchemaView'
@@ -113,7 +116,7 @@ const Content: React.FC<ContentProps> = ({
   const [showDeletePopUp, setShowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setIsDeleteLoading] = useState<boolean>(false);
 
-  const hasSelections = useHasSelections(selectedNodes, selectedRels);
+  const hasSelections = useHasSelections(selectedNodes, selectedRels, selectedTupleNodes, selectedTupleRels);
 
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
@@ -157,10 +160,10 @@ const Content: React.FC<ContentProps> = ({
               ? postProcessingTasks.filter((task) => task !== 'graph_schema_consolidation')
               : postProcessingTasks
             : hasSelections
-            ? postProcessingTasks.filter(
+              ? postProcessingTasks.filter(
                 (task) => task !== 'graph_schema_consolidation' && task !== 'enable_communities'
               )
-            : postProcessingTasks.filter((task) => task !== 'enable_communities');
+              : postProcessingTasks.filter((task) => task !== 'enable_communities');
           if (payload.length) {
             const response = await postProcessing(payload);
             if (response.data.status === 'Success') {
@@ -289,10 +292,10 @@ const Content: React.FC<ContentProps> = ({
         fileItem.name ?? '',
         fileItem.gcsBucket ?? '',
         fileItem.gcsBucketFolder ?? '',
-        selectedNodes.map((l) => l.value),
-        selectedRels.every((t) => t.value.split(',').length === 3)
-          ? selectedRels.map((t) => t.value.split(',') as [string, string, string])
-          : selectedRels.map((t) => t.value),
+        schemaRelMode === 'list' ? selectedNodes.map((l) => l.value) : selectedTupleNodes.map((l) => l.value),
+        schemaRelMode === 'list' ?  selectedRels.map((t) => t.value): selectedTupleRels.every((t) => t.value.split(',').length === 3)
+          ? selectedTupleRels.map((t) => t.value.split(',') as [string, string, string])
+          : selectedTupleRels.map((t) => t.value),
         selectedTokenChunkSize,
         selectedChunk_overlap,
         selectedChunks_to_combine,
@@ -547,9 +550,8 @@ const Content: React.FC<ContentProps> = ({
     let finalUrl = bloomUrl;
     if (userCredentials?.database && userCredentials.uri && userCredentials.userName) {
       const uriCoded = userCredentials.uri.replace(/:\d+$/, '');
-      const connectURL = `${uriCoded.split('//')[0]}//${userCredentials.userName}@${uriCoded.split('//')[1]}:${
-        userCredentials.port ?? '7687'
-      }`;
+      const connectURL = `${uriCoded.split('//')[0]}//${userCredentials.userName}@${uriCoded.split('//')[1]}:${userCredentials.port ?? '7687'
+        }`;
       const encodedURL = encodeURIComponent(connectURL);
       finalUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
     }
@@ -616,12 +618,12 @@ const Content: React.FC<ContentProps> = ({
           return prev.map((f) => {
             return f.name === filename
               ? {
-                  ...f,
-                  status: 'Ready to Reprocess',
-                  processingProgress: isStartFromBegining ? 0 : f.processingProgress,
-                  nodesCount: isStartFromBegining ? 0 : f.nodesCount,
-                  relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
-                }
+                ...f,
+                status: 'Ready to Reprocess',
+                processingProgress: isStartFromBegining ? 0 : f.processingProgress,
+                nodesCount: isStartFromBegining ? 0 : f.nodesCount,
+                relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
+              }
               : f;
           });
         });
@@ -898,12 +900,16 @@ const Content: React.FC<ContentProps> = ({
                 <div>{!hasSelections ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}</div>
                 <div>
                   {hasSelections ? (
-                    <span className='n-body-small'>
+                    <span className="n-body-small">
                       {hasSelections} Graph Schema configured
-                      {hasSelections ? `(${selectedNodes.length} Labels + ${selectedRels.length} Rel Types)` : ''}
+                      {schemaRelMode === 'list' ? (
+                        `(${selectedNodes.length} Labels + ${selectedRels.length} Rel Types)`
+                      ) : (
+                        `(${selectedTupleNodes.length} Labels + ${selectedTupleRels.length} Rel Type)`
+                      )}
                     </span>
                   ) : (
-                    <span className='n-body-small'>No Graph Schema configured</span>
+                    <span className="n-body-small">No Graph Schema configured</span>
                   )}
                 </div>
               </div>
@@ -1017,9 +1023,8 @@ const Content: React.FC<ContentProps> = ({
                 </span>
               </Button>
               <div
-                className={`ndl-icon-btn ndl-clean dropdownbtn ${colorMode === 'dark' ? 'darktheme' : ''} ${
-                  isTablet ? 'small' : 'medium'
-                }`}
+                className={`ndl-icon-btn ndl-clean dropdownbtn ${colorMode === 'dark' ? 'darktheme' : ''} ${isTablet ? 'small' : 'medium'
+                  }`}
                 onClick={(e) => {
                   setIsGraphBtnMenuOpen((old) => !old);
                   e.stopPropagation();

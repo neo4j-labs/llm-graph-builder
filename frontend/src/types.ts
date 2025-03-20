@@ -876,6 +876,12 @@ export interface FileContextType {
   setPostProcessingVal: Dispatch<SetStateAction<boolean>>;
   additionalInstructions: string;
   setAdditionalInstructions: Dispatch<SetStateAction<string>>;
+  selectedTupleNodes: readonly OptionType[];
+  setSelectedTupleNodes: Dispatch<SetStateAction<readonly OptionType[]>>;
+  selectedTupleRels: readonly OptionType[];
+  setSelectedTupleRels: Dispatch<SetStateAction<readonly OptionType[]>>;
+  schemaRelMode: string;
+  setSchemaRelMode: Dispatch<SetStateAction<string>>;
 }
 export declare type Side = 'top' | 'right' | 'bottom' | 'left';
 

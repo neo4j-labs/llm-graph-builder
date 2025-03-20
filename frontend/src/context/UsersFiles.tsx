@@ -61,6 +61,12 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [processedCount, setProcessedCount] = useState<number>(0);
   const [postProcessingVal, setPostProcessingVal] = useState<boolean>(false);
   const [additionalInstructions, setAdditionalInstructions] = useState<string>('');
+  const selectedTupleNodeStr = localStorage.getItem('selectedTupleNodeLabels');
+  const selectedTupleRelsStr = localStorage.getItem('selectedTupleRelationshipLabels');
+  const selectedSchemaModeStr = localStorage.getItem('schemaMode');
+  const [selectedTupleRels, setSelectedTupleRels] = useState<readonly OptionType[]>([]);
+  const [selectedTupleNodes, setSelectedTupleNodes] = useState<readonly OptionType[]>([]);
+  const [schemaRelMode, setSchemaRelMode] = useState<string>('list');
 
   useEffect(() => {
     if (selectedNodeLabelstr != null) {
@@ -90,6 +96,22 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     if (selectedInstructstr != null) {
       const selectedInstructions = selectedInstructstr;
       setAdditionalInstructions(selectedInstructions);
+    }
+    if (selectedTupleNodeStr != null) {
+      const selectedTupleNodeLabel = JSON.parse(selectedTupleNodeStr);
+      if (userCredentials?.uri === selectedTupleNodeLabel.db) {
+        setSelectedTupleNodes(selectedTupleNodeLabel.selectedOptions);
+      }
+    }
+    if (selectedTupleRelsStr != null) {
+      const selectedTupleRelLabel = JSON.parse(selectedTupleRelsStr);
+      if (userCredentials?.uri === selectedTupleRelLabel.db) {
+        setSelectedTupleRels(selectedTupleRelLabel.selectedOptions);
+      }
+    }
+    if (selectedSchemaModeStr != null) {
+      const selectedTupleRelLabel = selectedSchemaModeStr;
+      setSchemaRelMode(selectedTupleRelLabel);
     }
   }, [userCredentials]);
 
@@ -132,6 +154,12 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     setPostProcessingVal,
     additionalInstructions,
     setAdditionalInstructions,
+    selectedTupleNodes,
+    setSelectedTupleNodes,
+    selectedTupleRels,
+    setSelectedTupleRels,
+    schemaRelMode, 
+    setSchemaRelMode
   };
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };
