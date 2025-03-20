@@ -115,7 +115,6 @@ const PageLayout: React.FC = () => {
             email: user?.email ?? '',
             connection: 'backendApi',
           };
-          // setChunksToBeProces(credentials.chunksTobeProcess);
           setIsGCSActive(credentials.isGCSActive);
           setUserCredentials(credentials);
           createDefaultFormData({ uri: credentials.uri, email: credentials.email ?? '' });
@@ -128,8 +127,13 @@ const PageLayout: React.FC = () => {
           if (storedCredentials) {
             const credentials = JSON.parse(storedCredentials);
             setUserCredentials({ ...credentials, password: atob(credentials.password) });
-            createDefaultFormData({ ...credentials, password: atob(credentials.password) });
-            // setChunksToBeProces(credentials.chunksTobeProcess);
+            createDefaultFormData({
+              uri: credentials.uri,
+              database: credentials.database,
+              userName: credentials.userName,
+              password: atob(credentials.password),
+              email: credentials.email ?? '',
+            });
             setIsGCSActive(credentials.isGCSActive);
             setGdsActive(credentials.isgdsActive);
             setConnectionStatus(Boolean(credentials.connection === 'connectAPI'));
