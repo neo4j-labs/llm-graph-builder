@@ -46,7 +46,6 @@ import { ThemeWrapperContext } from '../context/ThemeWrapper';
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
 
 let afterFirstRender = false;
-
 const Content: React.FC<ContentProps> = ({
   showEnhancementDialog,
   toggleEnhancementDialog,
@@ -252,7 +251,7 @@ const Content: React.FC<ContentProps> = ({
   };
 
   const extractHandler = async (fileItem: CustomFile, uid: string) => {
-    queue.remove(fileItem.name as string);
+    queue.remove((item) => item.name === fileItem.name);
     try {
       setFilesData((prevfiles) =>
         prevfiles.map((curfile) => {
@@ -337,7 +336,7 @@ const Content: React.FC<ContentProps> = ({
               return prev + 1;
             });
             const { message, fileName } = error;
-            queue.remove(fileName);
+            queue.remove((item) => item.name === fileName);
             const errorMessage = error.message;
             showErrorToast(message);
             setFilesData((prevfiles) =>
