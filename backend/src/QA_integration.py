@@ -36,8 +36,8 @@ from src.llm import get_llm
 from src.shared.common_fn import *
 from src.shared.constants import *
 load_dotenv() 
-
-EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL) 
+embedding_model = get_value_from_env_or_secret_manager("EMBEDDING_MODEL")
+EMBEDDING_FUNCTION , _ = load_embedding_model(embedding_model) 
 
 class SessionChatHistory:
     history_dict = {}

@@ -1,7 +1,5 @@
 import hashlib
 import logging
-from src.shared.constants import PROJECT_ID
-
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_google_vertexai import VertexAIEmbeddings
 from langchain_openai import OpenAIEmbeddings
@@ -20,8 +18,6 @@ from urllib.parse import urlparse
 import boto3
 from langchain_community.embeddings import BedrockEmbeddings
 
-
-
 def check_url_source(source_type, yt_url:str=None, wiki_query:str=None):
     language=''
     from src.document_sources.youtube import create_youtube_url
@@ -39,15 +35,11 @@ def check_url_source(source_type, yt_url:str=None, wiki_query:str=None):
         wiki_query_id=''
         #pattern = r"https?:\/\/([a-zA-Z0-9\.\,\_\-\/]+)\.wikipedia\.([a-zA-Z]{2,3})\/wiki\/([a-zA-Z0-9\.\,\_\-\/]+)"
         wikipedia_url_regex = r'https?:\/\/(www\.)?([a-zA-Z]{2,3})\.wikipedia\.org\/wiki\/(.*)'
-        wiki_id_pattern = r'^[a-zA-Z0-9 _\-\.\,\:\(\)\[\]\{\}\/]*$'
         
         match = re.search(wikipedia_url_regex, wiki_query.strip())
         if match:
                 language = match.group(2)
                 wiki_query_id = match.group(3)
-          # else : 
-          #       languages.append("en")
-          #       wiki_query_ids.append(wiki_url.strip())
         else:
             raise Exception(f'Not a valid wikipedia url: {wiki_query} ')
 
@@ -199,8 +191,9 @@ def get_value_from_env_or_secret_manager(secret_name: str, default_value: Any = 
   get_value_from_env_or_secret_manager = os.getenv("GET_VALUE_FROM_SECRET_MANAGER","False").lower() in ["true", "1", "yes"]
   try:
     if get_value_from_env_or_secret_manager:
+      project_id = os.getenv("PROJECT_ID")
       client = secretmanager.SecretManagerServiceClient()
-      secret_path = f"projects/{PROJECT_ID}/secrets/{secret_name}/versions/latest"
+      secret_path = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
     
       response = client.access_secret_version(request={"name": secret_path})
       secret_value = response.payload.data.decode("UTF-8")

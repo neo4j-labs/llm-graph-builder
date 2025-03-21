@@ -5,7 +5,6 @@ from langchain_neo4j import Neo4jGraph
 import os
 from src.graph_query import get_graphDB_driver
 from src.shared.common_fn import *
-from src.shared.constants import EMBEDDING_MODEL
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from src.shared.constants import GRAPH_CLEANUP_PROMPT
@@ -132,7 +131,8 @@ def create_fulltext(driver,type):
 
 def create_vector_fulltext_indexes(uri, username, password, database):
     types = ["entities", "hybrid"]
-    embeddings, dimension = load_embedding_model(EMBEDDING_MODEL)
+    embedding_model = get_value_from_env_or_secret_manager("EMBEDDING_MODEL")
+    embeddings, dimension = load_embedding_model(embedding_model)
     if not dimension:
         dimension = CHUNK_VECTOR_EMBEDDING_DIMENSION
     logging.info("Starting the process of creating full-text indexes.")
@@ -184,7 +184,8 @@ def fetch_entities_for_embedding(graph):
     return [{"elementId": record["elementId"], "text": record["text"]} for record in result]
 
 def update_embeddings(rows, graph):
-    embeddings, dimension = load_embedding_model(EMBEDDING_MODEL)
+    embedding_model = get_value_from_env_or_secret_manager("EMBEDDING_MODEL")
+    embeddings, dimension = load_embedding_model(embedding_model)
     logging.info(f"update embedding for entities")
     for row in rows:
         row['embedding'] = embeddings.embed_query(row['text'])                        

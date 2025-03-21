@@ -1,7 +1,6 @@
 from langchain_neo4j import Neo4jGraph
 from langchain.docstore.document import Document
 from src.shared.common_fn import *
-from src.shared.constants import EMBEDDING_MODEL
 import logging
 from typing import List
 import hashlib
@@ -9,8 +8,8 @@ import time
 from langchain_neo4j import Neo4jVector
 
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
-
-EMBEDDING_FUNCTION , EMBEDDING_DIMENSION = load_embedding_model(EMBEDDING_MODEL)
+embedding_model = get_value_from_env_or_secret_manager("EMBEDDING_MODEL")
+EMBEDDING_FUNCTION , EMBEDDING_DIMENSION = load_embedding_model(embedding_model)
 
 def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_documents_chunk_chunk_Id : list):
     batch_data = []

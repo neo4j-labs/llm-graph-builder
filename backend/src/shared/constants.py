@@ -1,17 +1,7 @@
-import os
-# from src.shared.common_fn import get_value_from_env_or_secret_manager
-
-
 OPENAI_MODELS = ["openai-gpt-3.5", "openai-gpt-4o", "openai-gpt-4o-mini"]
 GEMINI_MODELS = ["gemini-1.0-pro", "gemini-1.5-pro", "gemini-1.5-flash"]
 GROQ_MODELS = ["groq-llama3"]
-
-GRAPH_CHUNK_LIMIT = 50 
-PROJECT_ID = os.getenv("PROJECT_ID")
-GCS_FILE_CACHE = os.getenv("GCS_FILE_CACHE","False").lower() in ["true", "1", "yes"]
-BUCKET_UPLOAD = os.getenv("BUCKET_UPLOAD_FILE")
-BUCKET_FAILED_FILE = os.getenv("BUCKET_FAILED_FILE")
-EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL")
+GRAPH_CHUNK_LIMIT = 50
 
 #query 
 GRAPH_QUERY = """

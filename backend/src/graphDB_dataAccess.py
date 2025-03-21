@@ -3,11 +3,10 @@ import os
 from langchain_neo4j import Neo4jGraph
 from src.shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file, get_value_from_env_or_secret_manager, load_embedding_model
 from src.document_sources.gcs_bucket import delete_file_from_gcs
-from src.shared.constants import BUCKET_UPLOAD, GCS_FILE_CACHE, NODEREL_COUNT_QUERY_WITH_COMMUNITY, NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY
+from src.shared.constants import NODEREL_COUNT_QUERY_WITH_COMMUNITY, NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY
 from src.entities.source_node import sourceNode
 from src.communities import MAX_COMMUNITY_LEVELS
 from src.shared.common_fn import *
-from src.shared.constants import EMBEDDING_MODEL
 import json
 from dotenv import load_dotenv
 
@@ -239,8 +238,8 @@ class graphDBdataAccess:
         result_chunks = self.graph.query("""match (c:Chunk) return size(c.embedding) as embeddingSize, count(*) as chunks, 
                                                     count(c.embedding) as hasEmbedding
                                 """)
-        
-        embeddings, application_dimension = load_embedding_model(EMBEDDING_MODEL)
+        embedding_model = get_value_from_env_or_secret_manager("EMBEDDING_MODEL")
+        embeddings, application_dimension = load_embedding_model(embedding_model)
         logging.info(f'embedding model:{embeddings} and dimesion:{application_dimension}')
 
         gds_status = self.check_gds_version()
@@ -282,12 +281,14 @@ class graphDBdataAccess:
         
         filename_list= list(map(str.strip, json.loads(filenames)))
         source_types_list= list(map(str.strip, json.loads(source_types)))
+        gcs_cache = get_value_from_env_or_secret_manager("GCS_FILE_CACHE","False","bool")
+        gcs_bucket_name_upload = get_value_from_env_or_secret_manager("BUCKET_UPLOAD_FILE")
         
         for (file_name,source_type) in zip(filename_list, source_types_list):
             merged_file_path = os.path.join(merged_dir, file_name)
-            if source_type == 'local file' and GCS_FILE_CACHE :
+            if source_type == 'local file' and gcs_cache :
                 folder_name = create_gcs_bucket_folder_name_hashed(uri, file_name)
-                delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
+                delete_file_from_gcs(gcs_bucket_name_upload,folder_name,file_name)
             else:
                 logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
                 delete_uploaded_local_file(merged_file_path,file_name)
@@ -458,7 +459,8 @@ class graphDBdataAccess:
         """
         drop and create the vector index when vector index dimesion are different.
         """
-        embeddings, dimension = load_embedding_model(EMBEDDING_MODEL)
+        embedding_model = get_value_from_env_or_secret_manager("EMBEDDING_MODEL")
+        embeddings, dimension = load_embedding_model(embedding_model)
         
         if isVectorIndexExist == 'true':
             self.graph.query("""drop index vector""")

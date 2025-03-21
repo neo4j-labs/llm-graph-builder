@@ -1,6 +1,6 @@
 from langchain_neo4j import Neo4jGraph
 from src.shared.common_fn import *
-from src.shared.constants import (BUCKET_FAILED_FILE, BUCKET_UPLOAD, GCS_FILE_CACHE, QUERY_TO_GET_CHUNKS, 
+from src.shared.constants import (QUERY_TO_GET_CHUNKS, 
                                   QUERY_TO_DELETE_EXISTING_ENTITIES, 
                                   QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION,
                                   QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY,
@@ -229,10 +229,13 @@ def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
 async def extract_graph_from_file_local_file(uri, userName, password, database, model, merged_file_path, fileName, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions):
 
   logging.info(f'Process file name :{fileName}')
+  gcs_file_cache = get_value_from_env_or_secret_manager("GCS_FILE_CACHE","False","bool")
+  gcs_bucket_name_upload = get_value_from_env_or_secret_manager("BUCKET_UPLOAD_FILE")
   if not retry_condition:
-    if GCS_FILE_CACHE:
+    if gcs_file_cache:
+      project_id = get_value_from_env_or_secret_manager("PROJECT_ID")
       folder_name = create_gcs_bucket_folder_name_hashed(uri, fileName)
-      file_name, pages = get_documents_from_gcs( PROJECT_ID, BUCKET_UPLOAD, folder_name, fileName)
+      file_name, pages = get_documents_from_gcs( project_id, gcs_bucket_name_upload, folder_name, fileName)
     else:
       file_name, pages, file_extension = get_documents_from_file_by_path(merged_file_path,fileName)
     if pages==None or len(pages)==0:
@@ -423,16 +426,16 @@ async def processing_source(uri, userName, password, database, model, file_name,
 
       graphDb_data_Access.update_source_node(obj_source_node)
       graphDb_data_Access.update_node_relationship_count(file_name)
+      gcs_file_cache = get_value_from_env_or_secret_manager("GCS_FILE_CACHE","False","bool")
+      gcs_bucket_name_upload = get_value_from_env_or_secret_manager("BUCKET_UPLOAD_FILE")
       logging.info('Updated the nodeCount and relCount properties in Document node')
       logging.info(f'file:{file_name} extraction has been completed')
-
-
       # merged_file_path have value only when file uploaded from local
       
       if is_uploaded_from_local:
-        if GCS_FILE_CACHE:
+        if gcs_file_cache:
           folder_name = create_gcs_bucket_folder_name_hashed(uri, file_name)
-          delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
+          delete_file_from_gcs(gcs_bucket_name_upload, folder_name, file_name)
         else:
           delete_uploaded_local_file(merged_file_path, file_name)  
       processing_source_func = time.time() - processing_source_start_time
@@ -627,10 +630,11 @@ def merge_chunks_local(file_name, total_chunks, chunk_dir, merged_dir):
 
 
 def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, originalname, uri, chunk_dir, merged_dir):
-  
-  if GCS_FILE_CACHE:
+  gcs_file_cache = get_value_from_env_or_secret_manager("GCS_FILE_CACHE","False","bool")
+  gcs_bucket_name_upload = get_value_from_env_or_secret_manager("BUCKET_UPLOAD_FILE")
+  if gcs_file_cache:
     folder_name = create_gcs_bucket_folder_name_hashed(uri,originalname)
-    upload_file_to_gcs(chunk, chunk_number, originalname, BUCKET_UPLOAD, folder_name)
+    upload_file_to_gcs(chunk, chunk_number, originalname, gcs_bucket_name_upload, folder_name)
   else:
     if not os.path.exists(chunk_dir):
       os.mkdir(chunk_dir)
@@ -643,8 +647,8 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
 
   if int(chunk_number) == int(total_chunks):
       # If this is the last chunk, merge all chunks into a single file
-      if GCS_FILE_CACHE:
-        file_size = merge_file_gcs(BUCKET_UPLOAD, originalname, folder_name, int(total_chunks))
+      if gcs_file_cache:
+        file_size = merge_file_gcs(gcs_bucket_name_upload, originalname, folder_name, int(total_chunks))
       else:
         file_size = merge_chunks_local(originalname, int(total_chunks), chunk_dir, merged_dir)
       
@@ -690,6 +694,8 @@ def manually_cancelled_job(graph, filenames, source_types, merged_dir, uri):
   
   filename_list= list(map(str.strip, json.loads(filenames)))
   source_types_list= list(map(str.strip, json.loads(source_types)))
+  gcs_file_cache = get_value_from_env_or_secret_manager("GCS_FILE_CACHE","False","bool")
+  gcs_bucket_name_upload = get_value_from_env_or_secret_manager("BUCKET_UPLOAD_FILE")
   
   for (file_name,source_type) in zip(filename_list, source_types_list):
       obj_source_node = sourceNode()
@@ -702,9 +708,9 @@ def manually_cancelled_job(graph, filenames, source_types, merged_dir, uri):
       count_response = graphDb_data_Access.update_node_relationship_count(file_name)
       obj_source_node = None
       merged_file_path = os.path.join(merged_dir, file_name)
-      if source_type == 'local file' and GCS_FILE_CACHE:
+      if source_type == 'local file' and gcs_file_cache:
           folder_name = create_gcs_bucket_folder_name_hashed(uri, file_name)
-          delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
+          delete_file_from_gcs(gcs_bucket_name_upload, folder_name, file_name)
       else:
         logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
         delete_uploaded_local_file(merged_file_path,file_name)
@@ -742,11 +748,14 @@ def set_status_retry(graph, file_name, retry_condition):
     graphDb_data_Access.update_source_node(obj_source_node)
 
 def failed_file_process(uri,file_name, merged_file_path):
-  if GCS_FILE_CACHE:
+  gcs_file_cache = get_value_from_env_or_secret_manager("GCS_FILE_CACHE","False","bool")
+  gcs_bucket_name_upload = get_value_from_env_or_secret_manager("BUCKET_UPLOAD_FILE")
+  gcs_bucket_name_failed = get_value_from_env_or_secret_manager("BUCKET_FAILED_FILE") 
+  if gcs_file_cache:
       folder_name = create_gcs_bucket_folder_name_hashed(uri,file_name)
-      copy_failed_file(BUCKET_UPLOAD, BUCKET_FAILED_FILE, folder_name, file_name)
+      copy_failed_file(gcs_bucket_name_upload, gcs_bucket_name_failed, folder_name, file_name)
       time.sleep(5)
-      delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
+      delete_file_from_gcs(gcs_bucket_name_upload,folder_name,file_name)
   else:
       logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
       delete_uploaded_local_file(merged_file_path,file_name)

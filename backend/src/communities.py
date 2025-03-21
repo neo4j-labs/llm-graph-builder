@@ -1,5 +1,4 @@
 import logging
-from src.shared.constants import EMBEDDING_MODEL
 from graphdatascience import GraphDataScience
 from src.llm import get_llm
 from langchain_core.prompts import ChatPromptTemplate
@@ -195,9 +194,9 @@ COMMUNITY_INDEX_FULL_TEXT_QUERY = f"CREATE FULLTEXT INDEX {COMMUNITY_FULLTEXT_IN
 def get_gds_driver(uri, username, password, database):
     try:
         if all(v is None for v in [username, password]):
-            username= os.getenv('NEO4J_USERNAME')
-            database= os.getenv('NEO4J_DATABASE')
-            password= os.getenv('NEO4J_PASSWORD')
+            username= get_value_from_env_or_secret_manager('NEO4J_USERNAME')
+            database= get_value_from_env_or_secret_manager('NEO4J_DATABASE')
+            password= get_value_from_env_or_secret_manager('NEO4J_PASSWORD')
             
         gds = GraphDataScience(
             endpoint=uri,
@@ -352,7 +351,8 @@ def create_community_summaries(gds, model):
 
 def create_community_embeddings(gds):
     try:
-        embeddings, dimension = load_embedding_model(EMBEDDING_MODEL)
+        embedding_model = get_value_from_env_or_secret_manager("EMBEDDING_MODEL")
+        embeddings, dimension = load_embedding_model(embedding_model)
         logging.info(f"Embedding model '{embeddings}' loaded successfully.")
         
         logging.info("Fetching community details.")
