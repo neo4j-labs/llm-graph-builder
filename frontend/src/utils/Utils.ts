@@ -207,10 +207,10 @@ export const processGraphData = (neoNodes: ExtendedNode[], neoRels: ExtendedRela
  * @returns An object containing filtered nodes, relationships, and scheme based on the selected graph types.
  */
 export const filterData = (
+  graphType: GraphType[],
   allNodes: ExtendedNode[],
   allRelationships: Relationship[],
   scheme: Scheme,
-  graphType?: GraphType[],
 ) => {
   let filteredNodes: ExtendedNode[] = [];
   let filteredRelations: Relationship[] = [];

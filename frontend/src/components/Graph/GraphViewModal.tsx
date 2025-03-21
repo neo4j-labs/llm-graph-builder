@@ -203,10 +203,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   ) => {
     if (allNodes.length > 0 && allRelationships.length > 0) {
       const { filteredNodes, filteredRelations, filteredScheme } = filterData(
+        graphType,
         finalNodes ?? [],
         finalRels ?? [],
-        schemeVal,
-        graphType
+        schemeVal
       );
       setNodes(filteredNodes);
       setRelationships(filteredRelations);
