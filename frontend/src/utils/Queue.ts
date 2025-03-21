@@ -1,42 +1,42 @@
-import { CustomFile } from '../types';
-class Queue {
-  items: CustomFile[] = [];
+class Queue<T> {
+  items: T[] = [];
 
-  constructor(items: CustomFile[]) {
+  constructor(items: T[] = []) {
     this.items = items;
   }
 
-  enqueue(item: CustomFile) {
+  enqueue(item: T) {
     this.items.push(item);
   }
 
-  dequeue() {
+  dequeue(): T | undefined {
     if (!this.isEmpty()) {
       return this.items.shift();
     }
   }
 
-  peek() {
+  peek(): T | undefined {
     if (this.isEmpty()) {
-      return -1;
+      return undefined;
     }
     return this.items[0];
   }
 
-  size() {
+  size(): number {
     return this.items.length;
   }
 
-  isEmpty() {
+  isEmpty(): boolean {
     return this.items.length === 0;
   }
 
-  remove(name: string) {
-    this.items = [...this.items.filter((f) => f.name != name)];
+  remove(predicate: (item: T) => boolean) {
+    this.items = this.items.filter((item) => !predicate(item));
   }
 
   clear() {
     this.items = [];
   }
 }
+
 export default Queue;

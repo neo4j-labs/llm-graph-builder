@@ -5,10 +5,12 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_google_vertexai import VertexAIEmbeddings
 from langchain_openai import OpenAIEmbeddings
 from langchain_neo4j import Neo4jGraph
+from neo4j.exceptions import TransientError
 from langchain_community.graphs.graph_document import GraphDocument
 from typing import List
 import re
 import os
+import time
 from pathlib import Path
 from urllib.parse import urlparse
 import boto3
@@ -90,10 +92,22 @@ def load_embedding_model(embedding_model_name: str):
         logging.info(f"Embedding: Using Langchain HuggingFaceEmbeddings , Dimension:{dimension}")
     return embeddings, dimension
 
-def save_graphDocuments_in_neo4j(graph:Neo4jGraph, graph_document_list:List[GraphDocument]):
-  graph.add_graph_documents(graph_document_list, baseEntityLabel=True)
-  # graph.add_graph_documents(graph_document_list)
-  
+def save_graphDocuments_in_neo4j(graph: Neo4jGraph, graph_document_list: List[GraphDocument], max_retries=3, delay=1):
+   retries = 0
+   while retries < max_retries:
+       try:
+           graph.add_graph_documents(graph_document_list, baseEntityLabel=True)
+           return
+       except TransientError as e:
+           if "DeadlockDetected" in str(e):
+               retries += 1
+               logging.info(f"Deadlock detected. Retrying {retries}/{max_retries} in {delay} seconds...")
+               time.sleep(delay)  # Wait before retrying
+           else:
+               raise
+   logging.error("Failed to execute query after maximum retries due to persistent deadlocks.")
+   raise RuntimeError("Query execution failed after multiple retries due to deadlock.")
+           
 def handle_backticks_nodes_relationship_id_type(graph_document_list:List[GraphDocument]):
   for graph_document in graph_document_list:
     # Clean node id and types
@@ -113,6 +127,21 @@ def handle_backticks_nodes_relationship_id_type(graph_document_list:List[GraphDo
     graph_document.relationships = cleaned_relationships
     graph_document.nodes = cleaned_nodes
   return graph_document_list
+
+def execute_graph_query(graph: Neo4jGraph, query, params=None, max_retries=3, delay=2):
+   retries = 0
+   while retries < max_retries:
+       try:
+           return graph.query(query, params) 
+       except TransientError as e:
+           if "DeadlockDetected" in str(e):
+               retries += 1
+               logging.info(f"Deadlock detected. Retrying {retries}/{max_retries} in {delay} seconds...")
+               time.sleep(delay)  # Wait before retrying
+           else:
+               raise 
+   logging.error("Failed to execute query after maximum retries due to persistent deadlocks.")
+   raise RuntimeError("Query execution failed after multiple retries due to deadlock.")
 
 def delete_uploaded_local_file(merged_file_path, file_name):
   file_path = Path(merged_file_path)

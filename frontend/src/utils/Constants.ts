@@ -13,7 +13,7 @@ export const llms =
   process.env?.VITE_LLM_MODELS?.trim() != ''
     ? (process.env.VITE_LLM_MODELS?.split(',') as string[])
     : [
-        'openai_gpt_3.5',
+        'openai_gpt_4.5',
         'openai-gpt-o3-mini',
         'openai_gpt_4o',
         'openai_gpt_4o_mini',
@@ -25,7 +25,7 @@ export const llms =
         'azure_ai_gpt_4o',
         'ollama_llama3',
         'groq_llama3_70b',
-        'anthropic_claude_3_5_sonnet',
+        'anthropic_claude_3_7_sonnet',
         'fireworks_llama_v3p2_90b',
         'fireworks_qwen72b_instruct',
         'bedrock_claude_3_5_sonnet',
@@ -37,7 +37,7 @@ export const llms =
       ];
 
 export const supportedLLmsForRagas = [
-  'openai_gpt_3.5',
+  'openai_gpt_4.5',
   'openai_gpt_4',
   'openai_gpt_4o',
   'openai_gpt_4o_mini',
@@ -47,20 +47,20 @@ export const supportedLLmsForRagas = [
   'azure_ai_gpt_35',
   'azure_ai_gpt_4o',
   'groq_llama3_70b',
-  'anthropic_claude_3_5_sonnet',
+  'anthropic_claude_3_7_sonnet',
   'fireworks_llama_v3_70b',
   'bedrock_claude_3_5_sonnet',
   'openai-gpt-o3-mini',
 ];
 export const supportedLLmsForGroundTruthMetrics = [
-  'openai_gpt_3.5',
+  'openai_gpt_4.5',
   'openai_gpt_4',
   'openai_gpt_4o',
   'openai_gpt_4o_mini',
   'azure_ai_gpt_35',
   'azure_ai_gpt_4o',
   'groq_llama3_70b',
-  'anthropic_claude_3_5_sonnet',
+  'anthropic_claude_3_7_sonnet',
   'fireworks_llama_v3_70b',
   'bedrock_claude_3_5_sonnet',
   'openai-gpt-o3-mini',

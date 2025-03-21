@@ -894,7 +894,7 @@ async def retry_processing(uri=Form(None), userName=Form(None), password=Form(No
     try:
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
-        chunks =  graph.query(QUERY_TO_GET_CHUNKS, params={"filename":file_name})
+        chunks = execute_graph_query(graph,QUERY_TO_GET_CHUNKS,params={"filename":file_name})
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name':'retry_processing', 'db_url':uri, 'userName':userName, 'database':database, 'file_name':file_name,'retry_condition':retry_condition,

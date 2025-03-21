@@ -400,7 +400,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
           obj_source_node.processing_time = processed_time
           obj_source_node.processed_chunk = select_chunks_upto+select_chunks_with_retry
           if retry_condition == START_FROM_BEGINNING:
-            result = graph.query(QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT, params={"filename":file_name})
+            result = execute_graph_query(graph,QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT, params={"filename":file_name})
             obj_source_node.node_count = result[0]['nodes']
             obj_source_node.relationship_count = result[0]['rels']
           else:  
@@ -503,21 +503,10 @@ async def processing_chunks(chunkId_chunkDoc_list,graph,uri, userName, password,
   logging.info(f'Time taken to create relationship between chunk and entities: {elapsed_relationship:.2f} seconds')
   latency_processing_chunk["relationship_between_chunk_entity"] = f'{elapsed_relationship:.2f}'
   
-  distinct_nodes = set()
-  relations = []
-  for graph_document in graph_documents:
-    #get distinct nodes
-    for node in graph_document.nodes:
-          node_id = node.id
-          node_type= node.type
-          if (node_id, node_type) not in distinct_nodes:
-            distinct_nodes.add((node_id, node_type))
-    #get all relations
-    for relation in graph_document.relationships:
-          relations.append(relation.type)
-
-    node_count += len(distinct_nodes)
-    rel_count += len(relations)
+  graphDb_data_Access = graphDBdataAccess(graph)
+  count_response = graphDb_data_Access.update_node_relationship_count(file_name)
+  node_count = count_response[file_name].get('nodeCount',"0")
+  rel_count = count_response[file_name].get('relationshipCount',"0")
   return node_count,rel_count,latency_processing_chunk
 
 def get_chunkId_chunkDoc_list(graph, file_name, pages, token_chunk_size, chunk_overlap, retry_condition):
@@ -539,7 +528,7 @@ def get_chunkId_chunkDoc_list(graph, file_name, pages, token_chunk_size, chunk_o
   
   else:  
     chunkId_chunkDoc_list=[]
-    chunks =  graph.query(QUERY_TO_GET_CHUNKS, params={"filename":file_name})
+    chunks =  execute_graph_query(graph,QUERY_TO_GET_CHUNKS, params={"filename":file_name})
     
     if chunks[0]['text'] is None or chunks[0]['text']=="" or not chunks :
       raise LLMGraphBuilderException(f"Chunks are not created for {file_name}. Please re-upload file and try again.")    
@@ -550,13 +539,13 @@ def get_chunkId_chunkDoc_list(graph, file_name, pages, token_chunk_size, chunk_o
       
       if retry_condition ==  START_FROM_LAST_PROCESSED_POSITION:
         logging.info(f"Retry : start_from_last_processed_position")
-        starting_chunk = graph.query(QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION, params={"filename":file_name})
+        starting_chunk = execute_graph_query(graph,QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION, params={"filename":file_name})
         
         if starting_chunk and starting_chunk[0]["position"] < len(chunkId_chunkDoc_list):
           return len(chunks), chunkId_chunkDoc_list[starting_chunk[0]["position"] - 1:]
         
         elif starting_chunk and starting_chunk[0]["position"] == len(chunkId_chunkDoc_list):
-          starting_chunk = graph.query(QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY, params={"filename":file_name})
+          starting_chunk =  execute_graph_query(graph,QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY, params={"filename":file_name})
           return len(chunks), chunkId_chunkDoc_list[starting_chunk[0]["position"] - 1:]
         
         else:
@@ -741,7 +730,7 @@ def set_status_retry(graph, file_name, retry_condition):
     if retry_condition == DELETE_ENTITIES_AND_START_FROM_BEGINNING or retry_condition == START_FROM_BEGINNING:
         obj_source_node.processed_chunk=0
     if retry_condition == DELETE_ENTITIES_AND_START_FROM_BEGINNING:
-        graph.query(QUERY_TO_DELETE_EXISTING_ENTITIES, params={"filename":file_name})
+        execute_graph_query(graph,QUERY_TO_DELETE_EXISTING_ENTITIES, params={"filename":file_name})
         obj_source_node.node_count=0
         obj_source_node.relationship_count=0
     logging.info(obj_source_node)
