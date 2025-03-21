@@ -267,6 +267,15 @@ export interface GraphViewModalProps {
   selectedRows?: CustomFile[] | undefined;
 }
 
+export interface SchemaViewModalProps {
+  open: boolean;
+  inspectedName?: string;
+  setGraphViewOpen: Dispatch<SetStateAction<boolean>>;
+  viewPoint: string;
+  nodeValues?: ExtendedNode[] | OptionType[];
+  relationshipValues?: ExtendedRelationship[] | OptionType[];
+  selectedRows?: CustomFile[] | undefined;
+}
 export type GraphType = 'Entities' | 'DocumentChunk' | 'Communities';
 
 export type PartialLabelNode = Partial<Node> & {
@@ -968,4 +977,10 @@ export type TupleCreationProps = {
   onAddPattern: () => void;
   onRemovePattern: (pattern: string) => void;
   onClearSelection: () => void;
+};
+
+export type UserDefinedGraphSchema = {
+  nodes: ExtendedNode[];
+  relationships: ExtendedRelationship[];
+  scheme: Scheme;
 };

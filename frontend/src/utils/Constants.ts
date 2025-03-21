@@ -313,6 +313,8 @@ export const intitalGraphType = (isGDSActive: boolean): GraphType[] => {
 export const graphLabels = {
   showGraphView: 'showGraphView',
   chatInfoView: 'chatInfoView',
+  tupleView: 'tupleView',
+  tableView: 'tableView',
   generateGraph: 'Generated Graph',
   inspectGeneratedGraphFrom: 'Inspect Generated Graph from',
   document: 'Document',
@@ -332,6 +334,7 @@ export const graphLabels = {
   chunksInfo: 'We are visualizing 50 chunks at a time',
   showSchemaView: 'showSchemaView',
   renderSchemaGraph: 'Graph from Database Schema',
+  generatedGraphFromUserSchema:'Generated Graph from User Defined Schema'
 };
 
 export const RESULT_STEP_SIZE = 25;

@@ -11,6 +11,8 @@ import {
   Scheme,
   SourceNode,
   UserCredentials,
+  OptionType,
+  UserDefinedGraphSchema
 } from '../types';
 import Wikipediadarkmode from '../assets/images/wikipedia-darkmode.svg';
 import Wikipediadlogo from '../assets/images/wikipedia.svg';
@@ -205,10 +207,10 @@ export const processGraphData = (neoNodes: ExtendedNode[], neoRels: ExtendedRela
  * @returns An object containing filtered nodes, relationships, and scheme based on the selected graph types.
  */
 export const filterData = (
-  graphType: GraphType[],
   allNodes: ExtendedNode[],
   allRelationships: Relationship[],
-  scheme: Scheme
+  scheme: Scheme,
+  graphType?: GraphType[],
 ) => {
   let filteredNodes: ExtendedNode[] = [];
   let filteredRelations: Relationship[] = [];
@@ -218,7 +220,7 @@ export const filterData = (
   );
   // Only Document + Chunk
   // const processedEntities = entityTypes.flatMap(item => item.includes(',') ? item.split(',') : item);
-  if (graphType.includes('DocumentChunk') && !graphType.includes('Entities') && !graphType.includes('Communities')) {
+  if (graphType?.includes('DocumentChunk') && !graphType?.includes('Entities') && !graphType?.includes('Communities')) {
     filteredNodes = allNodes.filter(
       (node) => (node.labels.includes('Document') && node.properties.fileName) || node.labels.includes('Chunk')
     );
@@ -232,9 +234,9 @@ export const filterData = (
     filteredScheme = { Document: scheme.Document, Chunk: scheme.Chunk };
     // Only Entity
   } else if (
-    graphType.includes('Entities') &&
-    !graphType.includes('DocumentChunk') &&
-    !graphType.includes('Communities')
+    graphType?.includes('Entities') &&
+    !graphType?.includes('DocumentChunk') &&
+    !graphType?.includes('Communities')
   ) {
     const entityNodes = allNodes.filter(
       (node) =>
@@ -251,9 +253,9 @@ export const filterData = (
     filteredScheme = Object.fromEntries(entityTypes.map((key) => [key, scheme[key]])) as Scheme;
     // Only Communities
   } else if (
-    graphType.includes('Communities') &&
-    !graphType.includes('DocumentChunk') &&
-    !graphType.includes('Entities')
+    graphType?.includes('Communities') &&
+    !graphType?.includes('DocumentChunk') &&
+    !graphType?.includes('Entities')
   ) {
     filteredNodes = allNodes.filter((node) => node.labels.includes('__Community__'));
     const nodeIds = new Set(filteredNodes.map((node) => node.id));
@@ -264,9 +266,9 @@ export const filterData = (
     filteredScheme = { __Community__: scheme.__Community__ };
     // Document + Chunk + Entity
   } else if (
-    graphType.includes('DocumentChunk') &&
-    graphType.includes('Entities') &&
-    !graphType.includes('Communities')
+    graphType?.includes('DocumentChunk') &&
+    graphType?.includes('Entities') &&
+    !graphType?.includes('Communities')
   ) {
     filteredNodes = allNodes.filter(
       (node) =>
@@ -288,9 +290,9 @@ export const filterData = (
     };
     // Entities + Communities
   } else if (
-    graphType.includes('Entities') &&
-    graphType.includes('Communities') &&
-    !graphType.includes('DocumentChunk')
+    graphType?.includes('Entities') &&
+    graphType?.includes('Communities') &&
+    !graphType?.includes('DocumentChunk')
   ) {
     const entityNodes = allNodes.filter((node) => !node.labels.includes('Document') && !node.labels.includes('Chunk'));
     const communityNodes = allNodes.filter((node) => node.labels.includes('__Community__'));
@@ -308,9 +310,9 @@ export const filterData = (
     };
     // Document + Chunk + Communities
   } else if (
-    graphType.includes('DocumentChunk') &&
-    graphType.includes('Communities') &&
-    !graphType.includes('Entities')
+    graphType?.includes('DocumentChunk') &&
+    graphType?.includes('Communities') &&
+    !graphType?.includes('Entities')
   ) {
     const documentChunkNodes = allNodes.filter(
       (node) => (node.labels.includes('Document') && node.properties.fileName) || node.labels.includes('Chunk')
@@ -329,9 +331,9 @@ export const filterData = (
     filteredScheme = { Document: scheme.Document, Chunk: scheme.Chunk, __Community__: scheme.__Community__ };
     // Document + Chunk + Entity + Communities (All types)
   } else if (
-    graphType.includes('DocumentChunk') &&
-    graphType.includes('Entities') &&
-    graphType.includes('Communities')
+    graphType?.includes('DocumentChunk') &&
+    graphType?.includes('Entities') &&
+    graphType?.includes('Communities')
   ) {
     filteredNodes = allNodes;
     filteredRelations = allRelationships;
@@ -548,4 +550,58 @@ export function isFileReadyToProcess(file: CustomFile, withLocalCheck: boolean) 
 
 export const updateLocalStorage = (userCredentials: UserCredentials, key: string, data: any,) => {
   localStorage.setItem(key, JSON.stringify({ db: userCredentials?.uri, selectedOptions: data }));
+};
+
+
+export const userDefinedGraphSchema = (
+  nodes: OptionType[],
+  relationships: OptionType[]
+): UserDefinedGraphSchema => {
+  const schemeVal: Scheme = {};
+  let iterator = 0;
+  const transformedNodes: ExtendedNode[] = nodes.map((node, index) => {
+    const label = node.label;
+    if (schemeVal[label] === undefined) {
+      schemeVal[label] = calcWordColor(label); 
+      iterator += 1;
+    }
+    return {
+      id: `node-${index + 0}`, 
+      element_id: `node-${index + 0}`, 
+      color: schemeVal[label],
+      caption:label,
+      labels: [label],
+      properties: {
+        name: label,
+        indexes: label === "Chunk" ? ["text", "embedding"] : [],
+        constraints: [],
+      },
+    };
+  });
+
+  const nodeMap: Record<string, string> = transformedNodes.reduce(
+    (acc, node) => {
+      acc[node.labels[0]] = node.id;
+      return acc;
+    },
+    {} as Record<string, string>
+  );
+
+  const transformedRelationships: ExtendedRelationship[] = relationships.map(
+    (rel, index) => {
+      const [start, type, end] = rel.label.split(",");
+      return {
+        id: `rel-${index + 100}`,
+        element_id: `rel-${index + 100}`,
+        from: nodeMap[start] || "", 
+        to: nodeMap[end] || "", 
+        caption: type,
+        type,
+        properties: {
+          name: type,
+        },
+      };
+    }
+  );
+  return { nodes: transformedNodes, relationships: transformedRelationships, scheme: schemeVal };
 };

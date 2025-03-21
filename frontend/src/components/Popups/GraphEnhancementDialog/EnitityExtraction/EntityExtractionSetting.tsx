@@ -11,7 +11,7 @@ import { tokens } from '@neo4j-ndl/base';
 import { showNormalToast } from '../../../../utils/Toasts';
 import { useHasSelections } from '../../../../hooks/useHasSelections';
 import { Hierarchy1Icon } from '@neo4j-ndl/react/icons';
-import GraphViewModal from '../../../Graph/GraphViewModal';
+import SchemaGraphViewModal from '../../../Graph/SchemaGraphViz';
 import TupleCreation from '../EnitityExtraction/TupleCreation'
 import PreDefineSchema from './PreDefineSchema';
 import { updateLocalStorage } from '../../../../utils/Utils';
@@ -51,6 +51,7 @@ export default function EntityExtractionSetting({
   const [selectedType, setSelectedType] = useState<OptionType | null>(null);
   const [selectedTarget, setSelectedTarget] = useState<OptionType | null>(null);
   const [selectedPatterns, setSelectedPatterns] = useState<string[]>([]);
+  // const [viewMode, setViewMode] = useState<boolean>(false);
   const removeNodesAndRels = (nodelabels: string[], relationshipTypes: string[]) => {
     const labelsToRemoveSet = new Set(nodelabels);
     const relationshipLabelsToremoveSet = new Set(relationshipTypes);
@@ -232,6 +233,12 @@ export default function EntityExtractionSetting({
     setViewPoint('showSchemaView');
   };
 
+
+  const handleTupleView = () => {
+    setOpenGraphView(true);
+    setViewPoint('showTupleView');
+  };
+
   const handlePatternChange = (source: OptionType | null, type: OptionType | null, target: OptionType | null) => {
     setSelectedSource(source);
     setSelectedType(type);
@@ -296,6 +303,22 @@ export default function EntityExtractionSetting({
   const handleRemovePattern = (pattern: string) => {
     setSelectedPatterns((prevPatterns) => prevPatterns.filter((p) => p !== pattern));
   };
+
+  // useEffect(() => {
+  //   toggleViewMode();
+  // }, [viewMode])
+
+  // const toggleViewMode = () => {
+  //   if (viewMode) {
+  //     setOpenGraphView(true);
+  //     setViewPoint('tupleViewPoint');
+  //   }
+  //   else {
+  //     setViewMode(false);
+  //     setOpenGraphView(false);
+  //   }
+  // };
+
   return (
     <div>
       <Typography variant='body-medium'>
@@ -308,7 +331,7 @@ export default function EntityExtractionSetting({
           Achieve a cleaner and more insightful graph representation tailored to your domain.
         </span>
       </Typography>
-      <Flex className={'mt-1.5'} justifyContent='center'>
+      <Flex className="mt-1.5 flex!" flexDirection='row' justifyContent="space-between">
         <Switch
           label={
             schemaRelMode === 'tuple'
@@ -318,6 +341,15 @@ export default function EntityExtractionSetting({
           isChecked={schemaRelMode === 'tuple'}
           onChange={toggleRelationshipMode}
         />
+        {/* {schemaRelMode === 'tuple' && <Switch
+          label={
+            viewMode
+              ? 'Preview'
+              : 'Code'
+          }
+          isChecked={viewMode}
+          onChange={() => setViewMode((prevMode) => !prevMode)}
+        />} */}
       </Flex>
       <div className='mt-4'>
         {schemaRelMode === 'list' ?
@@ -371,10 +403,10 @@ export default function EntityExtractionSetting({
                   label={'Graph Schema'}
                   text={tooltips.visualizeGraph}
                   placement='top'
-                  fill='outlined'
+                  fill='filled'
                   onClick={handleSchemaView}
                 >
-                  <Hierarchy1Icon />
+                  {'Graph Schema from DB '} <Hierarchy1Icon />
                 </ButtonWithToolTip>
                 <ButtonWithToolTip
                   text={tooltips.createSchema}
@@ -392,6 +424,15 @@ export default function EntityExtractionSetting({
                 >
                   Get Schema From Text
                 </ButtonWithToolTip></>}
+            {schemaRelMode === 'tuple' && <ButtonWithToolTip
+              label={'Tuple Schema'}
+              text={tooltips.visualizeGraph}
+              placement='top'
+              fill='filled'
+              onClick={handleTupleView}
+              disabled={selectedPatterns.length === 0}
+            >{'User Defined Schema '} <Hierarchy1Icon />
+            </ButtonWithToolTip>}
             {settingView === 'contentView' ? (
               <ButtonWithToolTip
                 text={tooltips.continue}
@@ -407,7 +448,6 @@ export default function EntityExtractionSetting({
                 placement='top'
                 onClick={handleClear}
                 label='Clear Graph Settings'
-                disabled={schemaRelMode === 'list' ? !hasSelections : selectedPatterns.length === 0}
               >
                 {buttonCaptions.clearSettings}
               </ButtonWithToolTip>
@@ -417,14 +457,21 @@ export default function EntityExtractionSetting({
               placement='top'
               onClick={handleApply}
               label='Apply Graph Settings'
-              disabled={schemaRelMode === 'list' ? !hasSelections : selectedPatterns.length === 0}
             >
               {buttonCaptions.applyGraphSchema}
             </ButtonWithToolTip>
           </Flex>
         </Flex>
       </div>
-      <GraphViewModal open={openGraphView} setGraphViewOpen={setOpenGraphView} viewPoint={viewPoint} />
+      {openGraphView && (
+        <SchemaGraphViewModal
+          open={openGraphView}
+          setGraphViewOpen={setOpenGraphView}
+          viewPoint={viewPoint}
+          nodeValues={selectedTupleNodes as OptionType[] ?? []}
+          relationshipValues={selectedTupleRels as OptionType[] ?? []}
+        />
+      )}
     </div>
   );
 }
