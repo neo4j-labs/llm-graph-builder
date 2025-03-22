@@ -82,7 +82,7 @@ export type ExtractParams = Pick<CustomFile, 'wikiQuery' | 'model' | 'sourceUrl'
   source_type?: string;
   file_name?: string;
   allowedNodes?: string[];
-  allowedRelationship?: string[];
+  allowedRelationship?: string;
   gcs_project_id?: string;
   retry_condition: string;
   additional_instructions?: string;
@@ -267,6 +267,15 @@ export interface GraphViewModalProps {
   selectedRows?: CustomFile[] | undefined;
 }
 
+export interface SchemaViewModalProps {
+  open: boolean;
+  inspectedName?: string;
+  setGraphViewOpen: Dispatch<SetStateAction<boolean>>;
+  viewPoint: string;
+  nodeValues?: ExtendedNode[] | OptionType[];
+  relationshipValues?: ExtendedRelationship[] | OptionType[];
+  selectedRows?: CustomFile[] | undefined;
+}
 export type GraphType = 'Entities' | 'DocumentChunk' | 'Communities';
 
 export type PartialLabelNode = Partial<Node> & {
@@ -876,6 +885,12 @@ export interface FileContextType {
   setPostProcessingVal: Dispatch<SetStateAction<boolean>>;
   additionalInstructions: string;
   setAdditionalInstructions: Dispatch<SetStateAction<string>>;
+  selectedTupleNodes: readonly OptionType[];
+  setSelectedTupleNodes: Dispatch<SetStateAction<readonly OptionType[]>>;
+  selectedTupleRels: readonly OptionType[];
+  setSelectedTupleRels: Dispatch<SetStateAction<readonly OptionType[]>>;
+  schemaRelMode: string;
+  setSchemaRelMode: Dispatch<SetStateAction<string>>;
 }
 export declare type Side = 'top' | 'right' | 'bottom' | 'left';
 
@@ -952,3 +967,20 @@ export type FileTableHandle = React.ElementRef<typeof FileTable>;
 export interface VisibilityProps {
   isVisible: boolean;
 }
+
+export type TupleCreationProps = {
+  selectedSource: OptionType | null;
+  selectedType: OptionType | null;
+  selectedTarget: OptionType | null;
+  selectedPatterns: string[] | [];
+  onPatternChange: (source: OptionType | null, type: OptionType | null, target: OptionType | null) => void;
+  onAddPattern: () => void;
+  onRemovePattern: (pattern: string) => void;
+  onClearSelection: () => void;
+};
+
+export type UserDefinedGraphSchema = {
+  nodes: ExtendedNode[];
+  relationships: ExtendedRelationship[];
+  scheme: Scheme;
+};

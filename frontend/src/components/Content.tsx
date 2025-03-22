@@ -105,6 +105,9 @@ const Content: React.FC<ContentProps> = ({
     model,
     additionalInstructions,
     setAdditionalInstructions,
+    selectedTupleNodes,
+    selectedTupleRels,
+    schemaRelMode,
   } = useFileContext();
   const [viewPoint, setViewPoint] = useState<
     'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView' | 'showSchemaView'
@@ -112,7 +115,7 @@ const Content: React.FC<ContentProps> = ({
   const [showDeletePopUp, setShowDeletePopUp] = useState<boolean>(false);
   const [deleteLoading, setIsDeleteLoading] = useState<boolean>(false);
 
-  const hasSelections = useHasSelections(selectedNodes, selectedRels);
+  const hasSelections = useHasSelections(selectedNodes, selectedRels, selectedTupleNodes, selectedTupleRels);
 
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
@@ -288,8 +291,12 @@ const Content: React.FC<ContentProps> = ({
         fileItem.name ?? '',
         fileItem.gcsBucket ?? '',
         fileItem.gcsBucketFolder ?? '',
-        selectedNodes.map((l) => l.value),
-        selectedRels.map((t) => t.value),
+        schemaRelMode === 'list' ? selectedNodes.map((l) => l.value) : selectedTupleNodes.map((l) => l.value),
+        schemaRelMode === 'list'
+          ? selectedRels.map((t) => t.value)
+          : selectedTupleRels.every((t) => t.value.split(',').length === 3)
+          ? selectedTupleRels.map((t) => t.value.split(',') as [string, string, string])
+          : selectedTupleRels.map((t) => t.value),
         selectedTokenChunkSize,
         selectedChunk_overlap,
         selectedChunks_to_combine,
@@ -897,7 +904,9 @@ const Content: React.FC<ContentProps> = ({
                   {hasSelections ? (
                     <span className='n-body-small'>
                       {hasSelections} Graph Schema configured
-                      {hasSelections ? `(${selectedNodes.length} Labels + ${selectedRels.length} Rel Types)` : ''}
+                      {schemaRelMode === 'list'
+                        ? `(${selectedNodes.length} Labels + ${selectedRels.length} Rel Types)`
+                        : `(${selectedTupleNodes.length} Labels + ${selectedTupleRels.length} Rel Type)`}
                     </span>
                   ) : (
                     <span className='n-body-small'>No Graph Schema configured</span>
