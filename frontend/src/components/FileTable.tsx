@@ -714,7 +714,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                   waitingQueue.length && waitingQueue.find((f: CustomFile) => f.name === item.fileName);
                 if (isFileCompleted(waitingFile as CustomFile, item)) {
                   setProcessedCount((prev) => calculateProcessedCount(prev, batchSize));
-                  queue.remove(item.fileName);
+                  queue.remove((i) => i.name === item.fileName);
                 }
                 if (waitingFile && item.status === 'Completed') {
                   setProcessedCount((prev) => {
@@ -723,7 +723,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                     }
                     return prev + 1;
                   });
-                  queue.remove(item.fileName);
+                  queue.remove((i) => i.name === item.fileName);
                 }
                 prefiles.push({
                   name: item?.fileName,
@@ -851,7 +851,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
           }
           return prev + 1;
         });
-        queue.remove(fileName);
+        queue.remove((i) => i.name === fileName);
       } else {
         let errorobj = { error: res.data.error, message: res.data.message, fileName };
         throw new Error(JSON.stringify(errorobj));
@@ -925,7 +925,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
         }
         return prev + 1;
       });
-      queue.remove(fileName);
+      queue.remove((i) => i.name === fileName);
     }
   };
 
