@@ -576,9 +576,10 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
         result = await asyncio.to_thread(upload_file, graph, model, file, chunkNumber, totalChunks, originalname, uri, CHUNK_DIR, MERGED_DIR)
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'upload','db_url':uri,'userName':userName, 'database':database, 'chunkNumber':chunkNumber,'totalChunks':totalChunks,
-                            'original_file_name':originalname,'model':model, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
-        logger.log_struct(json_obj, "INFO")
+        if int(chunkNumber) == int(totalChunks):
+            json_obj = {'api_name':'upload','db_url':uri,'userName':userName, 'database':database, 'chunkNumber':chunkNumber,'totalChunks':totalChunks,
+                                'original_file_name':originalname,'model':model, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
+            logger.log_struct(json_obj, "INFO")
         if int(chunkNumber) == int(totalChunks):
             return create_api_response('Success',data=result, message='Source Node Created Successfully')
         else:
@@ -894,7 +895,7 @@ async def retry_processing(uri=Form(None), userName=Form(None), password=Form(No
     try:
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
-        chunks =  graph.query(QUERY_TO_GET_CHUNKS, params={"filename":file_name})
+        chunks = execute_graph_query(graph,QUERY_TO_GET_CHUNKS,params={"filename":file_name})
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name':'retry_processing', 'db_url':uri, 'userName':userName, 'database':database, 'file_name':file_name,'retry_condition':retry_condition,

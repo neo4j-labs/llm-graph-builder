@@ -870,8 +870,8 @@ export interface FileContextType {
   setShowTextFromSchemaDialog: React.Dispatch<React.SetStateAction<showTextFromSchemaDialogType>>;
   postProcessingTasks: string[];
   setPostProcessingTasks: React.Dispatch<React.SetStateAction<string[]>>;
-  queue: Queue;
-  setQueue: Dispatch<SetStateAction<Queue>>;
+  queue: Queue<CustomFile>;
+  setQueue: Dispatch<SetStateAction<Queue<CustomFile>>>;
   processedCount: number;
   setProcessedCount: Dispatch<SetStateAction<number>>;
   postProcessingVal: boolean;

@@ -1,6 +1,6 @@
 from langchain_neo4j import Neo4jGraph
 from langchain.docstore.document import Document
-from src.shared.common_fn import load_embedding_model
+from src.shared.common_fn import load_embedding_model,execute_graph_query
 import logging
 from typing import List
 import os
@@ -33,7 +33,7 @@ def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_docume
                     CALL apoc.merge.node([data.node_type], {id: data.node_id}) YIELD node AS n
                     MERGE (c)-[:HAS_ENTITY]->(n)
                 """
-        graph.query(unwind_query, params={"batch_data": batch_data})
+        execute_graph_query(graph,unwind_query, params={"batch_data": batch_data})
 
     
 def create_chunk_embeddings(graph, chunkId_chunkDoc_list, file_name):
@@ -59,7 +59,7 @@ def create_chunk_embeddings(graph, chunkId_chunkDoc_list, file_name):
         SET c.embedding = row.embeddings
         MERGE (c)-[:PART_OF]->(d)
     """       
-    graph.query(query_to_create_embedding, params={"fileName":file_name, "data":data_for_query})
+    execute_graph_query(graph,query_to_create_embedding, params={"fileName":file_name, "data":data_for_query})
     
 def create_relation_between_chunks(graph, file_name, chunks: List[Document])->list:
     logging.info("creating FIRST_CHUNK and NEXT_CHUNK relationships between chunks")
@@ -127,7 +127,7 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
         MATCH (d:Document {fileName: data.f_name})
         MERGE (c)-[:PART_OF]->(d)
     """
-    graph.query(query_to_create_chunk_and_PART_OF_relation, params={"batch_data": batch_data})
+    execute_graph_query(graph,query_to_create_chunk_and_PART_OF_relation, params={"batch_data": batch_data})
     
     query_to_create_FIRST_relation = """ 
         UNWIND $relationships AS relationship
@@ -136,7 +136,7 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
         FOREACH(r IN CASE WHEN relationship.type = 'FIRST_CHUNK' THEN [1] ELSE [] END |
                 MERGE (d)-[:FIRST_CHUNK]->(c))
         """
-    graph.query(query_to_create_FIRST_relation, params={"f_name": file_name, "relationships": relationships})   
+    execute_graph_query(graph,query_to_create_FIRST_relation, params={"f_name": file_name, "relationships": relationships})
     
     query_to_create_NEXT_CHUNK_relation = """ 
         UNWIND $relationships AS relationship
@@ -145,17 +145,16 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
         MATCH (pc:Chunk {id: relationship.previous_chunk_id})
         FOREACH(r IN CASE WHEN relationship.type = 'NEXT_CHUNK' THEN [1] ELSE [] END |
                 MERGE (c)<-[:NEXT_CHUNK]-(pc))
-        """
-    graph.query(query_to_create_NEXT_CHUNK_relation, params={"relationships": relationships})   
-    
+        """  
+    execute_graph_query(graph,query_to_create_NEXT_CHUNK_relation, params={"relationships": relationships})
     return lst_chunks_including_hash
 
 
 def create_chunk_vector_index(graph):
     start_time = time.time()
     try:
-        vector_index = graph.query("SHOW INDEXES YIELD * WHERE labelsOrTypes = ['Chunk'] and type = 'VECTOR' AND name = 'vector' return options")
-
+        vector_index_query = "SHOW INDEXES YIELD * WHERE labelsOrTypes = ['Chunk'] and type = 'VECTOR' AND name = 'vector' return options"
+        vector_index = execute_graph_query(graph,vector_index_query)
         if not vector_index:
             vector_store = Neo4jVector(embedding=EMBEDDING_FUNCTION,
                                     graph=graph,

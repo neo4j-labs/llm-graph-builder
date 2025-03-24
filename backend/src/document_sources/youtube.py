@@ -1,6 +1,7 @@
 from langchain.docstore.document import Document
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from youtube_transcript_api import YouTubeTranscriptApi 
+from youtube_transcript_api.proxies import GenericProxyConfig
 import logging
 from urllib.parse import urlparse,parse_qs
 from difflib import SequenceMatcher
@@ -12,8 +13,10 @@ import re
 def get_youtube_transcript(youtube_id):
   try:
     proxy = os.environ.get("YOUTUBE_TRANSCRIPT_PROXY") 
-    proxies = { 'https': proxy }
-    transcript_pieces = YouTubeTranscriptApi.get_transcript(youtube_id, proxies = proxies)
+    proxy_config = GenericProxyConfig(http_url=proxy, https_url=proxy) if proxy else None
+    youtube_api = YouTubeTranscriptApi(proxy_config=proxy_config)
+    transcript_pieces = youtube_api.fetch(youtube_id, preserve_formatting=True)
+    transcript_pieces = transcript_pieces.to_raw_data()
     return transcript_pieces
   except Exception as e:
     message = f"Youtube transcript is not available for youtube Id: {youtube_id}"
