@@ -576,9 +576,10 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
         result = await asyncio.to_thread(upload_file, graph, model, file, chunkNumber, totalChunks, originalname, uri, CHUNK_DIR, MERGED_DIR)
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'upload','db_url':uri,'userName':userName, 'database':database, 'chunkNumber':chunkNumber,'totalChunks':totalChunks,
-                            'original_file_name':originalname,'model':model, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
-        logger.log_struct(json_obj, "INFO")
+        if int(chunkNumber) == int(totalChunks):
+            json_obj = {'api_name':'upload','db_url':uri,'userName':userName, 'database':database, 'chunkNumber':chunkNumber,'totalChunks':totalChunks,
+                                'original_file_name':originalname,'model':model, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
+            logger.log_struct(json_obj, "INFO")
         if int(chunkNumber) == int(totalChunks):
             return create_api_response('Success',data=result, message='Source Node Created Successfully')
         else:
