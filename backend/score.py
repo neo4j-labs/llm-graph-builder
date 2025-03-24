@@ -404,8 +404,9 @@ async def magic_trek_chat_bot(
     userName = "neo4j"
     password = "lessons-trial-canals"
     database = "neo4j"
-    model = "openai_gpt_3.5"
-    # model = "openai_gpt_4o_mini"
+    model = "openai_gpt_3.5" # changed from this model by ian friday mar 21, 2025
+    # model = "openai_gpt_4o_mini" 
+    # model = "gpt-4-turbo-preview"
     document_names=Form(None)
     session_id = "7f7fb2ac-d849-4569-9647-17d5f3a1615e"
     ## end of added by ian

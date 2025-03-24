@@ -71,6 +71,7 @@ class OnGenerateKeywordsInput(BaseModel):
             "1. The MOST RECENT message was from the human/user (not from the assistant)\n"
             "2. The user EXPLICITLY APPROVES previously suggested keywords\n"
             "3. The user says something like 'yes, those keywords look good' or "
+            "4. The user is not making any changes to the keywords"
             "'I approve these keywords' or 'let's use these keywords'\n\n"
             "DO NOT call this tool when:\n"
             "1. You (the assistant) are suggesting initial keywords to the user\n"
@@ -99,55 +100,89 @@ OPENAI_TOOLS = [
     {
         "type": "function",
         "function": {
-            "name": "onSetLearningObjective",
-            "description": "Call this tool when the user selects a learning objective for the lesson.",
+            "name": "onSelectTeacherIntent",
+            "description": (
+                "Call this tool when the user sets an intention for the content of the lesson. "
+                "Extract ONLY the content/subject matter intention, excluding any pedagogy style or lesson format preferences.\n\n"
+                "Examples:\n"
+                "- If user says: 'I want to teach a lesson on the scientific process. I want to use behaviourism pedagogy style'\n"
+                "  → Return: 'I want to teach a lesson on the scientific process'\n"
+                "- If user says: 'I want to teach a lesson on safety precautions in the science lab using a constructivist pedagogy style'\n"
+                "  → Return: 'I want to teach a lesson on safety precautions in the science lab'\n\n"
+                "Note: Only include the teaching content intention - omit any mentions of pedagogy style, teaching methods, or lesson format."
+            ),
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "learningObjective": {
+                    "teacherIntent": {
                         "type": "string",
-                        "description": "The learning objective for the lesson"
+                        "description": "The teacher's content intention for what the lesson should cover, excluding pedagogy style or format"
                     }
                 },
-                "required": ["keywords"]
+                "required": ["teacherIntent"]
             }
         }
     },    
+    # {
+    #     "type": "function",
+    #     "function": {
+    #         "name": "onSelectLearningObjective",
+    #         "description": "Call this tool when the user selects a learning objective for the lesson.",
+    #         "parameters": {
+    #             "type": "object",
+    #             "properties": {
+    #                 "learningObjective": {
+    #                     "type": "string",
+    #                     "description": "The learning objective for the lesson"
+    #                 }
+    #             },
+    #             "required": ["learningObjective"]
+    #         }
+    #     }
+    # },    
     # pedagogySelection tool
     {
         "type": "function",
         "function": {
             "name": "onSelectPedagogy",
-            "description": "Call this tool when the user selects an education level. Provide the pedagogy approach from the enum, for example \"behaviorism\".",
+            "description": (
+                "Call this tool when the user specifies HOW they want to teach the lesson - their preferred teaching style, "
+                "format, or approach. This should capture the METHOD of teaching, not the lesson content itself.\n\n"
+                "Examples:\n"
+                "- If user says: 'I want to teach this through hands-on experiments' → Return: 'hands-on experiments'\n"
+                "- If user says: 'I want to use group discussions and peer learning' → Return: 'group discussions and peer learning'\n"
+                "- If user says: 'I want to teach about chemical reactions using demonstrations' → Return: 'demonstrations'\n\n"
+                "Note: Only include the teaching style/format - omit the actual lesson content or subject matter."
+            ),
             "parameters": {
                 "type": "object",
                 "properties": {
                     "pedagogyApproach": {
                         "type": "string",
-                        "enum": ["constructivist", "social-constructivist", "behaviorism", "liberationist"]
+                        "description": "The teaching style, format, or themed approach the teacher wants to use for delivering the lesson"
                     }
                 },
                 "required": ["pedagogyApproach"]
             }
         }
     },        
-    {
-        "type": "function",
-        "function": {
-            "name": "onSelectEducationLevel",
-            "description": "Call this tool when the user selects an education level. Only provide the education levels from the enum, for example grade9.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "course": {
-                        "type": "string",
-                        "enum": ["grade9", "grade10", "grade11", "grade12"]
-                    }
-                },
-                "required": ["course"]
-            }
-        }
-    },
+    # {
+    #     "type": "function",
+    #     "function": {
+    #         "name": "onSelectEducationLevel",
+    #         "description": "Call this tool when the user selects an education level. Only provide the education levels from the enum, for example grade9.",
+    #         "parameters": {
+    #             "type": "object",
+    #             "properties": {
+    #                 "course": {
+    #                     "type": "string",
+    #                     "enum": ["grade9", "grade10", "grade11", "grade12"]
+    #                 }
+    #             },
+    #             "required": ["course"]
+    #         }
+    #     }
+    # },
     {
         "type": "function",
         "function": {
@@ -216,62 +251,59 @@ OPENAI_TOOLS = [
             }
         }
     },
-    {
-        "type": "function",
-        "function": {
-            "name": "onSelectSubject",
-            "description": "Call this when the user selects a subject in their message. Get a subject from the enum, for example Chemistry.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "subject": {
-                        "type": "string",
-                        "enum": [
-                            "Anatomy",
-                            "Astronomy", 
-                            "Chemistry",
-                            "U.S. History",
-                            "Zoology",
-                            "History of Science",
-                            "Theater",
-                            "Artificial Intelligence",
-                            "Mythology",
-                            "Social and Emotional Learning"
-                        ]
-                    }
-                },
-                "required": ["subject"]
-            }
-        }
-    },
+    # {
+    #     "type": "function",
+    #     "function": {
+    #         "name": "onSelectSubject",
+    #         "description": "Call this when the user selects a subject in their message. Get a subject from the enum, for example Chemistry.",
+    #         "parameters": {
+    #             "type": "object",
+    #             "properties": {
+    #                 "subject": {
+    #                     "type": "string",
+    #                     "enum": [
+    #                         "Anatomy",
+    #                         "Astronomy", 
+    #                         "Chemistry",
+    #                         "U.S. History",
+    #                         "Zoology",
+    #                         "History of Science",
+    #                         "Theater",
+    #                         "Artificial Intelligence",
+    #                         "Mythology",
+    #                         "Social and Emotional Learning"
+    #                     ]
+    #                 }
+    #             },
+    #             "required": ["subject"]
+    #         }
+    #     }
+    # },
     {
         "type": "function",
         "function": {
             "name": "onGenerateKeywords",
             "description": (
-                "ONLY call this tool when ALL of these conditions are met:\n"
-                "1. The MOST RECENT message was from the human/user (not from the assistant or the system)\n"
-                "2. The user EXPLICITLY APPROVES previously suggested keywords\n"
-                "3. The user says something like 'yes, those keywords look good' or "
-                "'I approve these keywords' or 'let's use these keywords'\n\n"
-                "DO NOT call this tool when:\n"
-                "1. You (the assistant) are suggesting initial keywords to the user\n"
-                "2. The user asks for keyword generations or suggestions\n"
-                "3. The user hasn't explicitly approved the keywords\n"
-                "4. The most recent message was from you (the assistant)\n\n"
-                "Example valid triggers (must be the most recent message):\n"
-                "- User: 'Yes, those keywords look good'\n"
-                "- User: 'I approve these keywords'\n"
-                "- User: 'Let's use these keywords'\n\n"
-                "The keywords should be provided as a comma-separated string of 3 terms that were "
-                "previously suggested and approved by the user."
+                "STRICT REQUIREMENTS:\n"
+                "1. LAST MESSAGE MUST BE role='user'\n"
+                "2. NEVER call if last message is role='system' or role='assistant'\n"
+                "3. ONLY call when user FULLY ACCEPTS previous keywords WITHOUT ANY CHANGES\n\n"
+                "Valid last messages (role='user' only):\n"
+                "✓ 'Yes, those keywords look good'\n"
+                "✓ 'I approve these keywords'\n"
+                "✓ 'Let's use these keywords'\n\n"
+                "DO NOT CALL if last message contains:\n"
+                "✗ Any requests to modify keywords\n"
+                "✗ Any suggestions for new keywords\n"
+                "✗ Any requests to add/remove keywords\n"
+                "✗ Any questions about the keywords"
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
                     "keywords": {
                         "type": "string",
-                        "description": "Comma-separated string of 3 approved keywords"
+                        "description": "Comma-separated string of exactly 3 approved keywords, exactly as they were previously suggested"
                     }
                 },
                 "required": ["keywords"]
