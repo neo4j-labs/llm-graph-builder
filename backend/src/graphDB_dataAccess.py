@@ -18,7 +18,7 @@ class graphDBdataAccess:
     def __init__(self, graph: Neo4jGraph):
         self.graph = graph
 
-    def update_exception_db(self, file_name, exp_msg, retry_condition):
+    def update_exception_db(self, file_name, exp_msg, retry_condition=None):
         try:
             job_status = "Failed"
             result = self.get_current_status_document_node(file_name)
