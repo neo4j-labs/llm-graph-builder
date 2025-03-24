@@ -891,6 +891,14 @@ export interface FileContextType {
   setSelectedTupleRels: Dispatch<SetStateAction<readonly OptionType[]>>;
   schemaRelMode: string;
   setSchemaRelMode: Dispatch<SetStateAction<string>>;
+  selectedSource: OptionType | null;
+  setSelectedSource: Dispatch<SetStateAction<OptionType | null>>;
+  selectedType: OptionType | null;
+  setSelectedType: Dispatch<SetStateAction<OptionType | null>>;
+  selectedTarget: OptionType | null
+  setSelectedTarget: Dispatch<SetStateAction<OptionType | null>>;
+  selectedPatterns: string[]
+  setSelectedPatterns: Dispatch<SetStateAction<string[]>>;
 }
 export declare type Side = 'top' | 'right' | 'bottom' | 'left';
 

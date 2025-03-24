@@ -64,9 +64,17 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const selectedTupleNodeStr = localStorage.getItem('selectedTupleNodeLabels');
   const selectedTupleRelsStr = localStorage.getItem('selectedTupleRelationshipLabels');
   const selectedSchemaModeStr = localStorage.getItem('schemaMode');
+  const selectedSourceStr = localStorage.getItem('selectedSource');
+  const selectedTypeStr = localStorage.getItem('selectedType');
+  const selectedTargetStr = localStorage.getItem('selectedTarget');
+  const selectedPatternStr = localStorage.getItem('selectedTuplePatterns');
   const [selectedTupleRels, setSelectedTupleRels] = useState<readonly OptionType[]>([]);
   const [selectedTupleNodes, setSelectedTupleNodes] = useState<readonly OptionType[]>([]);
-  const [schemaRelMode, setSchemaRelMode] = useState<string>('list');
+  const [schemaRelMode, setSchemaRelMode] = useState<string>('code');
+  const [selectedSource, setSelectedSource] = useState<OptionType | null>(null);
+  const [selectedType, setSelectedType] = useState<OptionType | null>(null);
+  const [selectedTarget, setSelectedTarget] = useState<OptionType | null>(null);
+  const [selectedPatterns, setSelectedPatterns] = useState<string[]>([]);
 
   useEffect(() => {
     if (selectedNodeLabelstr != null) {
@@ -113,6 +121,23 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
       const selectedTupleRelLabel = selectedSchemaModeStr;
       setSchemaRelMode(selectedTupleRelLabel);
     }
+    if (selectedSourceStr != null) {
+      const selectedSourceLabel = selectedSourceStr;
+      setSchemaRelMode(selectedSourceLabel);
+    }
+    if (selectedTypeStr != null) {
+      const selectedTypeLabel = selectedTypeStr;
+      setSchemaRelMode(selectedTypeLabel);
+    }
+    if (selectedTargetStr != null) {
+      const selectedTargetLabel = selectedTargetStr;
+      setSchemaRelMode(selectedTargetLabel);
+    }
+    if (selectedPatternStr != null) {
+      const selectedPatternLabel = selectedPatternStr;
+      setSchemaRelMode(selectedPatternLabel);
+    }
+    selectedPatternStr
   }, [userCredentials]);
 
   const value: FileContextType = {
@@ -158,8 +183,16 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     setSelectedTupleNodes,
     selectedTupleRels,
     setSelectedTupleRels,
-    schemaRelMode,
+    schemaRelMode, 
     setSchemaRelMode,
+    selectedSource, 
+    setSelectedSource,
+    selectedType, 
+    setSelectedType,
+    selectedTarget, 
+    setSelectedTarget,
+    selectedPatterns, 
+    setSelectedPatterns
   };
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };

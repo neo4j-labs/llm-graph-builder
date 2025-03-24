@@ -15,23 +15,17 @@ type PatternOption = {
 // ];
 const sourceOptions: PatternOption[] = [
   { label: 'Person', value: 'Person' },
-  { label: 'Company', value: 'Company' },
-  { label: 'Product', value: 'Product' },
-  { label: 'Project', value: 'Project' },
 ];
 const typeOptions: PatternOption[] = [
-  { label: 'KNOWS', value: 'KNOWS' },
   { label: 'WORKS_FOR', value: 'WORKS_FOR' },
-  { label: 'OWNS', value: 'OWNS' },
-  { label: 'MANAGES', value: 'MANAGES' },
 ];
 const targetOptions: PatternOption[] = [
-  { label: 'Person', value: 'Person' },
   { label: 'Company', value: 'Company' },
-  { label: 'Product', value: 'Product' },
-  { label: 'Project', value: 'Project' },
 ];
 const TupleCreation: React.FC<TupleCreationProps> = ({
+  defaultExamples,
+  onChangeSchema,
+  selectedSchemas,
   selectedSource,
   selectedType,
   selectedTarget,
@@ -42,6 +36,23 @@ const TupleCreation: React.FC<TupleCreationProps> = ({
 }) => {
   return (
     <div className='bg-white rounded-lg shadow-md'>
+      <div className='flex align-self-center justify-center'>
+        <h5>{appLabels.predefinedSchema}</h5>
+      </div>
+      <Select
+        helpText='Schema Examples'
+        label='Predefined Schema'
+        size='medium'
+        selectProps={{
+          isClearable: true,
+          isMulti: true,
+          options: defaultExamples,
+          onChange: onChangeSchema,
+          value: selectedSchemas,
+          menuPosition: 'fixed',
+        }}
+        type='select'
+      />
       <div className='flex align-self-center justify-center'>
         <h5>{appLabels.graphPatternTuple}</h5>
       </div>
