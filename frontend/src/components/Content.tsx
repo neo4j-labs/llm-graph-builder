@@ -1,6 +1,15 @@
 import { useEffect, useState, useMemo, useRef, Suspense, useReducer, useCallback, useContext } from 'react';
 import FileTable from './FileTable';
-import { Button, Typography, Flex, StatusIndicator, useMediaQuery, Menu, SpotlightTarget } from '@neo4j-ndl/react';
+import {
+  Button,
+  Typography,
+  Flex,
+  StatusIndicator,
+  useMediaQuery,
+  Menu,
+  SpotlightTarget,
+  useSpotlightContext,
+} from '@neo4j-ndl/react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { extractAPI } from '../utils/FileAPI';
@@ -42,6 +51,7 @@ import { isExpired, isFileReadyToProcess } from '../utils/Utils';
 import { useHasSelections } from '../hooks/useHasSelections';
 import { ChevronUpIconOutline, ChevronDownIconOutline } from '@neo4j-ndl/react/icons';
 import { ThemeWrapperContext } from '../context/ThemeWrapper';
+import { useAuth0 } from '@auth0/auth0-react';
 
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
 
@@ -75,7 +85,8 @@ const Content: React.FC<ContentProps> = ({
   const graphbtnRef = useRef<HTMLDivElement>(null);
   const chunksTextAbortController = useRef<AbortController>();
   const { colorMode } = useContext(ThemeWrapperContext);
-
+  const { isAuthenticated } = useAuth0();
+  const { setIsOpen } = useSpotlightContext();
   const [alertStateForRetry, setAlertStateForRetry] = useState<BannerAlertProps>({
     showAlert: false,
     alertType: 'neutral',
@@ -206,7 +217,14 @@ const Content: React.FC<ContentProps> = ({
     }
     afterFirstRender = true;
   }, [queue.items.length, userCredentials]);
-
+  const isFirstTimeUser = useMemo(() => {
+    return localStorage.getItem('neo4j.connection') === null;
+  }, []);
+  useEffect(() => {
+    if (!isAuthenticated && !connectionStatus && isFirstTimeUser) {
+      setIsOpen(true);
+    }
+  }, [connectionStatus, isAuthenticated, isFirstTimeUser]);
   const handleDropdownChange = (selectedOption: OptionType | null | void) => {
     if (selectedOption?.value) {
       setModel(selectedOption?.value);

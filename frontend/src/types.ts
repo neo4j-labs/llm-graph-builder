@@ -954,3 +954,9 @@ export type FileTableHandle = React.ElementRef<typeof FileTable>;
 export interface VisibilityProps {
   isVisible: boolean;
 }
+export interface HeaderProp {
+  chatOnly?: boolean;
+  deleteOnClick?: () => void;
+  setOpenConnection?: Dispatch<SetStateAction<connectionState>>;
+  showBackButton?: boolean;
+}

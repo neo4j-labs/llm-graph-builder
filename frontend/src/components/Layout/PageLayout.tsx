@@ -205,7 +205,9 @@ const PageLayout: React.FC = () => {
   const { setShowTextFromSchemaDialog, showTextFromSchemaDialog } = useFileContext();
   const { cancel } = useSpeechSynthesis();
   const { setActiveSpotlight } = useSpotlightContext();
-
+  const isFirstTimeUser = useMemo(() => {
+    return localStorage.getItem('neo4j.connection') === null;
+  }, []);
   useEffect(() => {
     async function initializeConnection() {
       // Fetch backend health status
@@ -274,9 +276,11 @@ const PageLayout: React.FC = () => {
       }
     }
     initializeConnection();
-    if (!isAuthenticated) {
+    if (!isAuthenticated && isFirstTimeUser) {
       setActiveSpotlight('loginbutton');
-    } else {
+    }
+
+    if (isAuthenticated && isFirstTimeUser) {
       setActiveSpotlight('connectbutton');
     }
   }, [isAuthenticated]);
@@ -315,7 +319,7 @@ const PageLayout: React.FC = () => {
 
   return (
     <>
-      {!isAuthenticated ? (
+      {!isAuthenticated && isFirstTimeUser && (
         <SpotlightTour
           spotlights={spotlightsforunauthenticated}
           onAction={(target, action) => {
@@ -330,7 +334,8 @@ const PageLayout: React.FC = () => {
             console.log(`Action ${action} was performed in spotlight ${target}`);
           }}
         />
-      ) : (
+      )}
+      {isAuthenticated && isFirstTimeUser && (
         <SpotlightTour
           spotlights={spotlights}
           onAction={(target, action) => {
