@@ -32,7 +32,7 @@ from langchain_aws import ChatBedrock
 from langchain_community.chat_models import ChatOllama
 
 # Local imports
-from src.llm import get_llm
+from src.llm import get_llm, create_chat_completion_sync
 from src.shared.common_fn import load_embedding_model
 from src.shared.constants import *
 load_dotenv() 
@@ -407,6 +407,46 @@ def get_neo4j_retriever(graph, document_names,chat_mode_settings, score_threshol
         logging.error(f"Error retrieving Neo4jVector index  {index_name} or creating retriever: {e}")
         raise Exception(f"An error occurred while retrieving the Neo4jVector index or creating the retriever. Please drop and create a new vector index '{index_name}': {e}") from e 
 
+def extract_tool_calls_direct(model, messages):
+    """
+    Synchronous version of extract_tool_calls that uses OpenAI chat completion API directly.
+    Leaves original extract_tool_calls function unchanged.
+    """
+    if not isinstance(messages, list):
+        return []
+    logging.info("extract_tool_calls_direct called with messages below")
+    logging.info(messages)
+    
+    # extract tool calling
+    messages_copy = list(messages)
+
+    # remove the system message and insert our tool extraction prompt
+    messages.pop(0)
+    messages.insert(0, SystemMessage(TOOL_EXTRACTION_PROMPT))
+    
+    # Convert messages to the format expected by create_chat_completion
+    formatted_messages = [
+        {
+            "role": "system" if isinstance(msg, SystemMessage) else 
+                    "assistant" if isinstance(msg, AIMessage) else 
+                    "user",
+            "content": msg.content
+        }
+        for msg in messages
+    ]
+
+    logging.info("calling tool extracting with direct OpenAI API")
+    response = create_chat_completion_sync(
+        messages=formatted_messages,
+        model=model,
+        add_tools=True
+    )
+    
+    logging.info(response)
+    # Extract tool calls from additional_kwargs, handle missing key gracefully
+    tools = response.additional_kwargs.get("tool_calls", [])
+    tools = list(map(remap_tool_names, tools))
+    return tools
 
 def setup_chat(model, graph, document_names, chat_mode_settings):
     start_time = time.time()
@@ -470,7 +510,7 @@ def process_chat_response(messages, history, question, model, graph, document_na
 
         tool_calls = None
         if(extract_tools):
-            tool_calls = extract_tool_calls(model, messages)
+            tool_calls = extract_tool_calls_direct(model, messages)
             logging.info("returned tool calls")
             logging.info(tool_calls)
 
