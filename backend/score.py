@@ -218,7 +218,8 @@ async def extract_knowledge_graph_from_file(
     access_token=Form(None),
     retry_condition=Form(None),
     additional_instructions=Form(None),
-    email=Form(None)
+    email=Form(None),
+    is_neo4j_user=Form(False)
 ):
     """
     Calls 'extract_graph_from_file' in a new thread to create Neo4jGraph from a
@@ -241,22 +242,22 @@ async def extract_knowledge_graph_from_file(
         if source_type == 'local file':
             file_name = sanitize_filename(file_name)
             merged_file_path = validate_file_path(MERGED_DIR, file_name)
-            uri_latency, result = await extract_graph_from_file_local_file(uri, userName, password, database, model, merged_file_path, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions)
+            uri_latency, result = await extract_graph_from_file_local_file(uri, userName, password, database, model, merged_file_path, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, is_neo4j_user)
 
         elif source_type == 's3 bucket' and source_url:
-            uri_latency, result = await extract_graph_from_file_s3(uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions)
+            uri_latency, result = await extract_graph_from_file_s3(uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, is_neo4j_user)
         
         elif source_type == 'web-url':
-            uri_latency, result = await extract_graph_from_web_page(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions)
+            uri_latency, result = await extract_graph_from_web_page(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, is_neo4j_user)
 
         elif source_type == 'youtube' and source_url:
-            uri_latency, result = await extract_graph_from_file_youtube(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions)
+            uri_latency, result = await extract_graph_from_file_youtube(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, is_neo4j_user)
 
         elif source_type == 'Wikipedia' and wiki_query:
-            uri_latency, result = await extract_graph_from_file_Wikipedia(uri, userName, password, database, model, wiki_query, language, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions)
+            uri_latency, result = await extract_graph_from_file_Wikipedia(uri, userName, password, database, model, wiki_query, language, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, is_neo4j_user)
 
         elif source_type == 'gcs bucket' and gcs_bucket_name:
-            uri_latency, result = await extract_graph_from_file_gcs(uri, userName, password, database, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions)
+            uri_latency, result = await extract_graph_from_file_gcs(uri, userName, password, database, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, is_neo4j_user)
         else:
             return create_api_response('Failed',message='source_type is other than accepted source')
         extract_api_time = time.time() - start_time
@@ -1086,6 +1087,29 @@ async def get_schema_visualization(uri=Form(None), userName=Form(None), password
         logging.info(f'Schema result from DB: {result}')
         json_obj = {'api_name':'schema_visualization','db_url':uri, 'userName':userName, 'database':database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
+        return create_api_response('Success', data=result,message=f"Total elapsed API time {elapsed_time:.2f}")
+    except Exception as e:
+        message="Unable to get schema visualization from neo4j database"
+        error_message = str(e)
+        logging.info(message)
+        logging.exception(f'Exception:{error_message}')
+        return create_api_response("Failed", message=message, error=error_message)
+    finally:
+        gc.collect()
+
+@app.post("/user_details")
+async def user_details(uri=Form(None), 
+                    userName=Form(None), 
+                    password=Form(None), 
+                    database=Form(None), 
+                    email=Form(None)):
+    try:
+        start = time.time()
+        graph = create_graph_database_connection(uri, userName, password, database)
+        graphDb_data_Access = graphDBdataAccess(graph)
+        result = graphDb_data_Access.save_user_details(email)
+        end = time.time()
+        elapsed_time = end - start
         return create_api_response('Success', data=result,message=f"Total elapsed API time {elapsed_time:.2f}")
     except Exception as e:
         message="Unable to get schema visualization from neo4j database"
