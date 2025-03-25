@@ -7,6 +7,7 @@ import { NonOAuthError } from '@react-oauth/google';
 import { BannerType } from '@neo4j-ndl/react';
 import Queue from './utils/Queue';
 import FileTable from './components/FileTable';
+import { OnChangeValue, ActionMeta } from 'react-select';
 
 export interface CustomFileBase extends Partial<globalThis.File> {
   processingTotalTime: number | string;
@@ -255,7 +256,7 @@ export type ChatbotProps = {
   isChatOnly?: boolean;
   isDeleteChatLoading: boolean;
 };
-export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> {}
+export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> { }
 
 export interface GraphViewModalProps {
   open: boolean;
@@ -273,7 +274,7 @@ export interface SchemaViewModalProps {
   setGraphViewOpen: Dispatch<SetStateAction<boolean>>;
   viewPoint: string;
   nodeValues?: ExtendedNode[] | OptionType[];
-  relationshipValues?: ExtendedRelationship[] | OptionType[];
+  relationshipValues?: ExtendedRelationship[] | string[] | OptionType[];
   selectedRows?: CustomFile[] | undefined;
 }
 export type GraphType = 'Entities' | 'DocumentChunk' | 'Communities';
@@ -405,12 +406,12 @@ export interface commonserverresponse {
   message?: string | orphanTotalNodes;
   file_name?: string;
   data?:
-    | labelsAndTypes
-    | labelsAndTypes[]
-    | uploadData
-    | orphanNodeProps[]
-    | dupNodes[]
-    | { pageitems: chunkdata[]; total_pages: number };
+  | string
+  | string[]
+  | uploadData
+  | orphanNodeProps[]
+  | dupNodes[]
+  | { pageitems: chunkdata[]; total_pages: number };
 }
 export interface dupNodeProps {
   id: string;
@@ -434,11 +435,11 @@ export interface chunkdata {
   pagenumber: null | number;
 }
 export interface ScehmaFromText extends Partial<commonserverresponse> {
-  data: labelsAndTypes;
+  data: string | string[];
 }
 
 export interface ServerData extends Partial<commonserverresponse> {
-  data: labelsAndTypes[];
+  data: string[];
 }
 export interface duplicateNodesData extends Partial<commonserverresponse> {
   data: dupNodes[];
@@ -495,20 +496,20 @@ export interface chatInfoMessage extends Partial<Messages> {
   relationships: ExtendedRelationship[];
   chunks: Chunk[];
   metricDetails:
-    | {
-        [key: string]: number | string;
-      }
-    | undefined;
+  | {
+    [key: string]: number | string;
+  }
+  | undefined;
   metricError: string;
   infoEntities: Entity[];
   communities: Community[];
   infoLoading: boolean;
   metricsLoading: boolean;
   activeChatmodes:
-    | {
-        [key: string]: ResponseMode;
-      }
-    | undefined;
+  | {
+    [key: string]: ResponseMode;
+  }
+  | undefined;
   multiModelMetrics: multimodelmetric[];
   saveInfoEntitites: (entities: Entity[]) => void;
   saveNodes: (chatNodes: ExtendedNode[]) => void;
@@ -869,8 +870,8 @@ export interface FileContextType {
   setRowSelection: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   selectedRows: string[];
   setSelectedRows: React.Dispatch<React.SetStateAction<string[]>>;
-  selectedSchemas: readonly OptionType[];
-  setSelectedSchemas: Dispatch<SetStateAction<readonly OptionType[]>>;
+  selectedSchemas: string[];
+  setSelectedSchemas: Dispatch<SetStateAction<string[]>>;
   chatModes: string[];
   setchatModes: Dispatch<SetStateAction<string[]>>;
   showTextFromSchemaDialog: showTextFromSchemaDialogType;
@@ -887,18 +888,22 @@ export interface FileContextType {
   setAdditionalInstructions: Dispatch<SetStateAction<string>>;
   selectedTupleNodes: readonly OptionType[];
   setSelectedTupleNodes: Dispatch<SetStateAction<readonly OptionType[]>>;
-  selectedTupleRels: readonly OptionType[];
-  setSelectedTupleRels: Dispatch<SetStateAction<readonly OptionType[]>>;
+  selectedTupleRels: string[];
+  setSelectedTupleRels: Dispatch<SetStateAction<string[]>>;
   schemaRelMode: string;
   setSchemaRelMode: Dispatch<SetStateAction<string>>;
-  selectedSource: OptionType | null;
-  setSelectedSource: Dispatch<SetStateAction<OptionType | null>>;
-  selectedType: OptionType | null;
-  setSelectedType: Dispatch<SetStateAction<OptionType | null>>;
-  selectedTarget: OptionType | null
-  setSelectedTarget: Dispatch<SetStateAction<OptionType | null>>;
+  selectedSource: OptionType[];
+  setSelectedSource: Dispatch<SetStateAction<OptionType[]>>;
+  selectedType: OptionType[];
+  setSelectedType: Dispatch<SetStateAction<OptionType[]>>;
+  selectedTarget: OptionType[]
+  setSelectedTarget: Dispatch<SetStateAction<OptionType[]>>;
   selectedPatterns: string[]
   setSelectedPatterns: Dispatch<SetStateAction<string[]>>;
+  nodesLabels: OptionType[];
+  setNodeLabels: Dispatch<SetStateAction<OptionType[]>>;
+  relationshipLabels: string[];
+  setRelationshipLabels: Dispatch<SetStateAction<string[]>>;
 }
 export declare type Side = 'top' | 'right' | 'bottom' | 'left';
 
@@ -977,14 +982,16 @@ export interface VisibilityProps {
 }
 
 export type TupleCreationProps = {
-  selectedSource: OptionType | null;
-  selectedType: OptionType | null;
-  selectedTarget: OptionType | null;
-  selectedPatterns: string[] | [];
-  onPatternChange: (source: OptionType | null, type: OptionType | null, target: OptionType | null) => void;
+  defaultExamples: OptionType[];
+  onChangeSchema: (selectedOptions: OnChangeValue<OptionType, true>, actionMeta: ActionMeta<OptionType>) => void;
+  selectedSchemas: readonly OptionType[];
+  selectedSource: OptionType[];
+  selectedType: OptionType[];
+  selectedTarget: OptionType[];
+  onPatternChange: (source: OptionType | OptionType[], type: OptionType | OptionType[], target: OptionType | OptionType[]) => void;
   onAddPattern: () => void;
-  onRemovePattern: (pattern: string) => void;
   onClearSelection: () => void;
+  selectedTupleOptions: readonly OptionType[];
 };
 
 export type UserDefinedGraphSchema = {
@@ -992,3 +999,11 @@ export type UserDefinedGraphSchema = {
   relationships: ExtendedRelationship[];
   scheme: Scheme;
 };
+
+export interface TupleType {
+  value: string,
+  label: string,
+  source: string,
+  target: string,
+  type: string,
+}

@@ -44,7 +44,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [selectedTokenChunkSize, setSelectedTokenChunkSize] = useState<number>(tokenchunkSize);
   const [selectedChunk_overlap, setSelectedChunk_overlap] = useState<number>(chunkOverlap);
   const [selectedChunks_to_combine, setSelectedChunks_to_combine] = useState<number>(chunksToCombine);
-  const [selectedSchemas, setSelectedSchemas] = useState<readonly OptionType[]>(getStoredSchema);
+  const [selectedSchemas, setSelectedSchemas] = useState<string[]>(getStoredSchema);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [chatModes, setchatModes] = useState<string[]>([chatModeLables['graph+vector+fulltext']]);
@@ -68,13 +68,15 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const selectedTypeStr = localStorage.getItem('selectedType');
   const selectedTargetStr = localStorage.getItem('selectedTarget');
   const selectedPatternStr = localStorage.getItem('selectedTuplePatterns');
-  const [selectedTupleRels, setSelectedTupleRels] = useState<readonly OptionType[]>([]);
+  const [selectedTupleRels, setSelectedTupleRels] = useState<string[]>([]);
   const [selectedTupleNodes, setSelectedTupleNodes] = useState<readonly OptionType[]>([]);
   const [schemaRelMode, setSchemaRelMode] = useState<string>('code');
-  const [selectedSource, setSelectedSource] = useState<OptionType | null>(null);
-  const [selectedType, setSelectedType] = useState<OptionType | null>(null);
-  const [selectedTarget, setSelectedTarget] = useState<OptionType | null>(null);
+  const [selectedSource, setSelectedSource] = useState<OptionType []>([]);
+  const [selectedType, setSelectedType] = useState<OptionType []>([]);
+  const [selectedTarget, setSelectedTarget] = useState<OptionType []>([]);
   const [selectedPatterns, setSelectedPatterns] = useState<string[]>([]);
+  const [nodesLabels, setNodeLabels]= useState<OptionType[]>([]);
+  const [relationshipLabels, setRelationshipLabels]= useState<string[]>([]);
 
   useEffect(() => {
     if (selectedNodeLabelstr != null) {
@@ -118,26 +120,34 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
       }
     }
     if (selectedSchemaModeStr != null) {
-      const selectedTupleRelLabel = selectedSchemaModeStr;
-      setSchemaRelMode(selectedTupleRelLabel);
+      const selectedModeLabel = selectedSchemaModeStr;
+      setSchemaRelMode(selectedModeLabel);
     }
     if (selectedSourceStr != null) {
-      const selectedSourceLabel = selectedSourceStr;
-      setSchemaRelMode(selectedSourceLabel);
+      const selectedSourceLabel = JSON.parse(selectedSourceStr);
+      if (userCredentials?.uri === selectedSourceLabel.db) {
+        setSelectedSource(selectedSourceLabel.selectedOptions);
+      }
     }
     if (selectedTypeStr != null) {
-      const selectedTypeLabel = selectedTypeStr;
-      setSchemaRelMode(selectedTypeLabel);
+      const selectedTypeLabel = JSON.parse(selectedTypeStr);
+      if (userCredentials?.uri === selectedTypeLabel.db) {
+        setSelectedType(selectedTypeLabel.selectedOptions);
+      }
     }
     if (selectedTargetStr != null) {
-      const selectedTargetLabel = selectedTargetStr;
-      setSchemaRelMode(selectedTargetLabel);
+      const selectedTargetLabel = JSON.parse(selectedTargetStr);
+      if (userCredentials?.uri === selectedTargetLabel.db) {
+        setSelectedTarget(selectedTargetLabel.selectedOptions);
+      }
     }
     if (selectedPatternStr != null) {
-      const selectedPatternLabel = selectedPatternStr;
-      setSchemaRelMode(selectedPatternLabel);
+      const selectedPatternLabel = JSON.parse(selectedPatternStr);
+      if (userCredentials?.uri === selectedPatternLabel.db) {
+        setSelectedPatterns(selectedPatternLabel.selectedOptions);
+      }
     }
-    selectedPatternStr
+
   }, [userCredentials]);
 
   const value: FileContextType = {
@@ -192,7 +202,11 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     selectedTarget, 
     setSelectedTarget,
     selectedPatterns, 
-    setSelectedPatterns
+    setSelectedPatterns,
+    nodesLabels,
+    setNodeLabels,
+    relationshipLabels,
+    setRelationshipLabels
   };
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };

@@ -70,10 +70,10 @@ const GraphViewModal: React.FunctionComponent<SchemaViewModalProps> = ({
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
       ? queryMap.DocChunkEntities
       : graphType.includes('DocumentChunk')
-      ? queryMap.DocChunks
-      : graphType.includes('Entities')
-      ? queryMap.Entities
-      : '';
+        ? queryMap.DocChunks
+        : graphType.includes('Entities')
+          ? queryMap.Entities
+          : '';
 
   // fit graph to original position
   const handleZoomToFit = () => {
@@ -179,20 +179,16 @@ const GraphViewModal: React.FunctionComponent<SchemaViewModalProps> = ({
   useEffect(() => {
     if (open) {
       setLoading(true);
-      if (viewPoint === graphLabels.showSchemaView) {
-        graphApi();
-      } else {
-        const { nodes, relationships, scheme } = userDefinedGraphSchema(
-          (nodeValues as OptionType[]) ?? [],
-          (relationshipValues as OptionType[]) ?? []
-        );
-        setAllNodes(nodes);
-        setAllRelationships(relationships);
-        setNodes(nodes);
-        setRelationships(relationships);
-        setNewScheme(scheme);
-        setLoading(false);
-      }
+      const { nodes, relationships, scheme } = userDefinedGraphSchema(
+        (nodeValues as OptionType[]) ?? [],
+        (relationshipValues as string[]) ?? []
+      );
+      setAllNodes(nodes);
+      setAllRelationships(relationships);
+      setNodes(nodes);
+      setRelationships(relationships);
+      setNewScheme(scheme);
+      setLoading(false);
     }
   }, [open]);
 

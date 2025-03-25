@@ -30,9 +30,7 @@ const TupleCreation: React.FC<TupleCreationProps> = ({
   selectedType,
   selectedTarget,
   onPatternChange,
-  selectedPatterns,
   onAddPattern,
-  onRemovePattern,
 }) => {
   return (
     <div className='bg-white rounded-lg shadow-md'>
@@ -52,6 +50,7 @@ const TupleCreation: React.FC<TupleCreationProps> = ({
           menuPosition: 'fixed',
         }}
         type='select'
+        isDisabled={true}
       />
       <div className='flex align-self-center justify-center'>
         <h5>{appLabels.graphPatternTuple}</h5>
@@ -102,32 +101,11 @@ const TupleCreation: React.FC<TupleCreationProps> = ({
           onClick={onAddPattern}
           label='Add Values'
           size='medium'
-          disabled={!selectedSource || !selectedType || !selectedTarget}
+          disabled={selectedSource.length === 0 || selectedType.length === 0 || selectedTarget.length === 0}
         >
           + Add
         </ButtonWithToolTip>
       </div>
-      {selectedPatterns.length > 0 && (
-        <div className='h-full'>
-          <div className='flex align-self-center justify-center border'>
-            <h5>{appLabels.selectedPatterns}</h5>
-          </div>
-          <div className='flex flex-wrap gap-2 mt-4'>
-            {selectedPatterns.map((pattern) => (
-              <Tag
-                key={pattern}
-                onRemove={() => onRemovePattern(pattern)}
-                isRemovable={true}
-                type='default'
-                size='medium'
-                className='rounded-full px-4 py-1 shadow-sm'
-              >
-                {pattern}
-              </Tag>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

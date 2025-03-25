@@ -551,11 +551,12 @@ export const updateLocalStorage = (userCredentials: UserCredentials, key: string
   localStorage.setItem(key, JSON.stringify({ db: userCredentials?.uri, selectedOptions: data }));
 };
 
-export const userDefinedGraphSchema = (nodes: OptionType[], relationships: OptionType[]): UserDefinedGraphSchema => {
+export const userDefinedGraphSchema = (nodes: OptionType[], relationships: string[]): UserDefinedGraphSchema => {
   const schemeVal: Scheme = {};
   let iterator = 0;
+  // Transform nodes and assign colors
   const transformedNodes: ExtendedNode[] = nodes.map((node, index) => {
-    const {label} = node;
+    const { label } = node;
     if (schemeVal[label] === undefined) {
       schemeVal[label] = calcWordColor(label);
       iterator += 1;
@@ -573,25 +574,42 @@ export const userDefinedGraphSchema = (nodes: OptionType[], relationships: Optio
       },
     };
   });
-
+  // Create a map of nodes for quick lookup
   const nodeMap: Record<string, string> = transformedNodes.reduce((acc, node) => {
     acc[node.labels[0]] = node.id;
     return acc;
   }, {} as Record<string, string>);
-
-  const transformedRelationships: ExtendedRelationship[] = relationships.map((rel, index) => {
-    const [start, type, end] = rel.label.split(',');
-    return {
-      id: `rel-${index + 100}`,
-      element_id: `rel-${index + 100}`,
-      from: nodeMap[start] || '',
-      to: nodeMap[end] || '',
-      caption: type,
-      type,
-      properties: {
-        name: type,
-      },
-    };
-  });
-  return { nodes: transformedNodes, relationships: transformedRelationships, scheme: schemeVal };
+  // Transform relationships with validation
+  const transformedRelationships: ExtendedRelationship[] = relationships
+    .map((rel, index) => {
+      const parts = rel.split(',');
+      if (parts.length !== 3) {
+        console.warn(`Invalid relationship format: ${rel}`);
+        return null; // Skip invalid relationships
+      }
+      const [start, type, end] = parts.map((part) => part.trim());
+      if (!nodeMap[start] || !nodeMap[end]) {
+        console.warn(
+          `Missing node(s) for relationship: ${start} -[:${type}]-> ${end}`
+        );
+        return null; // Skip relationships with missing nodes
+      }
+      return {
+        id: `rel-${index + 100}`,
+        element_id: `rel-${index + 100}`,
+        from: nodeMap[start],
+        to: nodeMap[end],
+        caption: type,
+        type,
+        properties: {
+          name: type,
+        },
+      };
+    })
+    .filter((rel) => rel !== null) as ExtendedRelationship[];
+  return {
+    nodes: transformedNodes,
+    relationships: transformedRelationships,
+    scheme: schemeVal,
+  };
 };

@@ -416,3 +416,11 @@
 .enhancement-btn__wrapper{
   padding-right: 12px;
 }
+
+.patternContainer{
+  border: 1px solid rgb(var(--theme-palette-neutral-border-strong));
+  overflow-y: scroll;
+  max-height: fit-content;
+  height:150px;
+  padding: 10px;
+}
