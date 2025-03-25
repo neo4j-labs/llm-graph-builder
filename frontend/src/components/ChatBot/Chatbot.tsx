@@ -10,6 +10,7 @@ import {
   Flex,
   Box,
   TextLink,
+  SpotlightTarget,
 } from '@neo4j-ndl/react';
 import { ArrowDownTrayIconOutline, XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import ChatBotAvatar from '../../assets/images/chatbot-ai.png';
@@ -560,17 +561,19 @@ const Chatbot: FC<ChatbotProps> = (props) => {
               name: 'chatbot-input',
             }}
           />
-          <ButtonWithToolTip
-            label='Q&A Button'
-            placement='top'
-            text={`Ask a question.`}
-            type='submit'
-            disabled={loading || !connectionStatus}
-            size='medium'
-          >
-            {buttonCaptions.ask}{' '}
-            {selectedFileNames != undefined && selectedFileNames.length > 0 && `(${selectedFileNames.length})`}
-          </ButtonWithToolTip>
+          <SpotlightTarget id='chatbtn' hasPulse={true} indicatorVariant='border'>
+            <ButtonWithToolTip
+              label='Q&A Button'
+              placement='top'
+              text={`Ask a question.`}
+              type='submit'
+              disabled={loading || !connectionStatus}
+              size='medium'
+            >
+              {buttonCaptions.ask}{' '}
+              {selectedFileNames != undefined && selectedFileNames.length > 0 && `(${selectedFileNames.length})`}
+            </ButtonWithToolTip>
+          </SpotlightTarget>
         </form>
       </div>
       <Suspense fallback={<FallBackDialog />}>

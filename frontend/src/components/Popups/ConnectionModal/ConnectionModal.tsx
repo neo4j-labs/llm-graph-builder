@@ -64,7 +64,6 @@ export default function ConnectionModal({
   const databaseRef = useRef<HTMLInputElement>(null);
   const userNameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
-
   useEffect(() => {
     if (searchParams.has('connectURL')) {
       const url = searchParams.get('connectURL');
@@ -237,7 +236,7 @@ export default function ConnectionModal({
         const isgdsActive = response.data.data.gds_status;
         const isReadOnlyUser = !response.data.data.write_access;
         const isGCSActive = response.data.data.gcs_file_cache === 'True';
-        const chunksTobeProcess = parseInt(response.data.data.chunk_to_be_created);
+        const chunksTobeProcess = Number(response.data.data.chunk_to_be_created);
         setIsGCSActive(isGCSActive);
         setGdsActive(isgdsActive);
         setIsReadOnlyUser(isReadOnlyUser);
@@ -361,7 +360,7 @@ export default function ConnectionModal({
         <Dialog.Header htmlAttributes={{ id: 'form-dialog-title' }}>Connect to Neo4j</Dialog.Header>
         <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
           <Typography variant='body-medium' className='mb-4'>
-            <TextLink isExternalLink href='https://console.neo4j.io/'>
+            <TextLink type='external' href='https://console.neo4j.io/'>
               Don't have a Neo4j instance? Start for free today
             </TextLink>
           </Typography>

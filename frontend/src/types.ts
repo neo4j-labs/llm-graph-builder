@@ -111,6 +111,7 @@ export interface CustomAlertProps {
 export interface DataComponentProps {
   openModal: () => void;
   isLargeDesktop?: boolean;
+  isDisabled?: boolean;
 }
 
 export interface S3ModalProps {
@@ -204,6 +205,7 @@ export interface CommonButtonProps {
   className?: string;
   imgWidth?: number;
   imgeHeight?: number;
+  isDisabled?: boolean;
 }
 
 export interface Source {
@@ -951,4 +953,10 @@ export type FileTableHandle = React.ElementRef<typeof FileTable>;
 
 export interface VisibilityProps {
   isVisible: boolean;
+}
+export interface HeaderProp {
+  chatOnly?: boolean;
+  deleteOnClick?: () => void;
+  setOpenConnection?: Dispatch<SetStateAction<connectionState>>;
+  showBackButton?: boolean;
 }
