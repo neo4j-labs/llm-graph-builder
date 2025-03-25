@@ -4,7 +4,7 @@ import { useFileContext } from '../../../context/UsersFiles';
 import { urlScanAPI } from '../../../services/URLScan';
 import { CustomFileBase, GCSModalProps, fileName, nonoautherror } from '../../../types';
 import { v4 as uuidv4 } from 'uuid';
-import CustomModal from '../../../HOC/CustomModal';
+import CustomModal from '../../UI/CustomModal';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useAlertContext } from '../../../context/Alert';
 import { buttonCaptions } from '../../../utils/Constants';

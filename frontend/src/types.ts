@@ -331,11 +331,19 @@ export interface fileStatus {
   communityNodeCount: number;
   communityRelCount: number;
 }
+interface IUserDetails {
+  is_neo4j_user: boolean;
+  write_access: boolean;
+}
 export interface PollingAPI_Response extends Partial<AxiosResponse> {
   data: statusupdate;
 }
 export interface ServerResponse extends Partial<AxiosResponse> {
   data: URLSCAN_RESPONSE;
+}
+
+export interface UserDetailsResponse extends Partial<commonserverresponse> {
+  data: IUserDetails;
 }
 export interface ScanProps {
   urlParam?: string;
@@ -393,7 +401,7 @@ interface orphanTotalNodes {
   total: number;
 }
 export interface commonserverresponse {
-  status: string;
+  status: 'Success' | 'Failed';
   error?: string;
   message?: string | orphanTotalNodes;
   file_name?: string;
@@ -403,6 +411,7 @@ export interface commonserverresponse {
     | uploadData
     | orphanNodeProps[]
     | dupNodes[]
+    | IUserDetails
     | { pageitems: chunkdata[]; total_pages: number };
 }
 export interface dupNodeProps {
@@ -762,8 +771,8 @@ export interface ContextProps {
   setShowDisconnectButton: Dispatch<SetStateAction<boolean>>;
   isGCSActive: boolean;
   setIsGCSActive: Dispatch<SetStateAction<boolean>>;
-  // chunksToBeProces: number;
-  // setChunksToBeProces: Dispatch<SetStateAction<number>>;
+  isNeo4jUser: boolean;
+  setNeo4jUser: Dispatch<SetStateAction<boolean>>;
 }
 export interface MessageContextType {
   messages: Messages[] | [];
