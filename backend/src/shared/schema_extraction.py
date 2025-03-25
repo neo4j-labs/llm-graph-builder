@@ -27,10 +27,43 @@ For example, if the text says “John works at Microsoft”, the output should b
 """
 )
 
-def schema_extraction_from_text(input_text:str, model:str, is_schema_description_cheked:bool):
+PROMPT_TEMPLATE_FOR_LOCAL_STORAGE = ("""
+You are an expert in knowledge graph modeling.
+The user will provide a JSON input with two keys:
+- "nodes": a list of objects with "label" and "value" representing node types in the schema.
+- "rels": a list of objects with "label" and "value" representing relationship types in the schema.
+Your task:
+1. Understand the meaning of each node and relationship label.
+2. Use them to generate logical triplets in the format:
+<NodeType1>-<RELATIONSHIP_TYPE>-><NodeType2>
+3. Only return a JSON list of strings like:
+["User-ANSWERED->Question", "Question-ACCEPTED->Answer"]
+Make sure each triplet is semantically meaningful.
+"""
+)
+
+def get_schema_local_storage(input_text,llm):
+    prompt = ChatPromptTemplate.from_messages(
+    [("system", PROMPT_TEMPLATE_FOR_LOCAL_STORAGE), ("user", "{text}")]
+    )
+    
+    runnable = prompt | llm.with_structured_output(
+        schema=Schema,
+        method="function_calling",
+        include_raw=False,
+    )
+    
+    raw_schema = runnable.invoke({"text": input_text})
+    return raw_schema
+
+
+def schema_extraction_from_text(input_text:str, model:str, is_schema_description_checked:bool,is_local_storage:bool):
     
     llm, model_name = get_llm(model)
-    if is_schema_description_cheked:
+    if is_local_storage:
+        raw_schema = get_schema_local_storage(input_text,llm)
+        return raw_schema
+    if is_schema_description_checked:
         schema_prompt = PROMPT_TEMPLATE_WITH_SCHEMA
     else:
         schema_prompt = PROMPT_TEMPLATE_WITHOUT_SCHEMA
