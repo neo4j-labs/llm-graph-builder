@@ -48,7 +48,7 @@ TOOL_EXTRACTION_PROMPT = """
 You are an intelligent assistant responsible for analyzing user inputs and invoking functions when the user makes a selection. 
 The conversation you are analyzing is between an ai assistant helping a user to make choices about a lesson they are creating.
 - Call a function only when the user makes an active selection that matches one of the tools. 
-- Avoid invoking functions for inputs that have already been addressed. 
+- Avoid invoking functions for tools that have already been called. 
 - If multiple functions need to be called based on the user's input, invoke all relevant functions simultaneously. 
 - Only the user's most recent input should trigger a function, but reference past context when needed to understand their intent.
 """
