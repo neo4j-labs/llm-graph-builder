@@ -1112,7 +1112,7 @@ async def user_details(uri=Form(None),
         elapsed_time = end - start
         return create_api_response('Success', data=result,message=f"Total elapsed API time {elapsed_time:.2f}")
     except Exception as e:
-        message="Unable to get schema visualization from neo4j database"
+        message="Unable to save the detail of user in DB"
         error_message = str(e)
         logging.info(message)
         logging.exception(f'Exception:{error_message}')
