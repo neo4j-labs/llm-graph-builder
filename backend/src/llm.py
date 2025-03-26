@@ -24,16 +24,20 @@ from enum import Enum
 
 # Step 1: Define the Pydantic model for the function parameters
 class EducationLevelInput(BaseModel):
-    course: str = Field(..., description="Call this tool when the user selects an education level. Provide the education level from the enum, for example grade9.",
-                        enum=["grade9", "grade10", "grade11", "grade12"])
+    course: str = Field(
+        ...,
+        description="Call this tool when the user selects an education level. Provide the education level from the enum, for example grade9.",
+        enum=["grade9", "grade10", "grade11", "grade12"],
+    )
 
 
 # class LessonTopicInput(BaseModel):
 #     lessonTopic: str = Field(..., description="Call this tool when the user selects an lesson topic. Provide a topic name for a lesson, e.g. History of Astronomy.")
 
+
 class LessonTopicInput(BaseModel):
     lessonTopic: str = Field(
-        ..., 
+        ...,
         description=(
             "Call this tool ONLY when the user explicitly selects a lesson topic, "
             "such as saying 'I want to select lesson topic X' or 'I choose X'. "
@@ -42,8 +46,9 @@ class LessonTopicInput(BaseModel):
             "such as 'Can you suggest some topics?' or 'I want to teach a lesson related to X, "
             "please suggest some related lesson topics.' "
             "Provide the specific topic name the user has selected, e.g., 'History of Astronomy'."
-        )
+        ),
     )
+
 
 # Define the enum of subjects
 class SubjectEnum(str, Enum):
@@ -58,10 +63,17 @@ class SubjectEnum(str, Enum):
     Mythology = "Mythology"
     SEL = "Social and Emotional Learning"
 
+
 # Define the input model using Pydantic
 class SelectSubjectInput(BaseModel):
-    subject: SubjectEnum = Field(..., description="Call this when the user selects a subject in their message. Get a subject from the enum, for example Chemistry.")
+    subject: SubjectEnum = Field(
+        ...,
+        description="Call this when the user selects a subject in their message. Get a subject from the enum, for example Chemistry.",
+    )
+
+
 # end of added by ian
+
 
 class OnGenerateKeywordsInput(BaseModel):
     keywords: str = Field(
@@ -84,15 +96,12 @@ class OnGenerateKeywordsInput(BaseModel):
             "- User: 'Let's use these keywords'\n\n"
             "The keywords should be provided as a comma-separated string of 3 terms that were "
             "previously suggested and approved by the user."
-        )
+        ),
     )
-    
+
     class Config:
-        schema_extra = {
-            "example": {
-                "keywords": "education, technology, AI"
-            }
-        }
+        schema_extra = {"example": {"keywords": "education, technology, AI"}}
+
 
 # OpenAI-compatible tool definitions
 OPENAI_TOOLS = [
@@ -116,13 +125,13 @@ OPENAI_TOOLS = [
                 "properties": {
                     "teacherIntent": {
                         "type": "string",
-                        "description": "The teacher's content intention for what the lesson should cover, excluding pedagogy style or format"
+                        "description": "The teacher's content intention for what the lesson should cover, excluding pedagogy style or format",
                     }
                 },
-                "required": ["teacherIntent"]
-            }
-        }
-    },    
+                "required": ["teacherIntent"],
+            },
+        },
+    },
     # {
     #     "type": "function",
     #     "function": {
@@ -139,7 +148,7 @@ OPENAI_TOOLS = [
     #             "required": ["learningObjective"]
     #         }
     #     }
-    # },    
+    # },
     # pedagogySelection tool
     {
         "type": "function",
@@ -159,13 +168,13 @@ OPENAI_TOOLS = [
                 "properties": {
                     "pedagogyApproach": {
                         "type": "string",
-                        "description": "The teaching style, format, or themed approach the teacher wants to use for delivering the lesson"
+                        "description": "The teaching style, format, or themed approach the teacher wants to use for delivering the lesson",
                     }
                 },
-                "required": ["pedagogyApproach"]
-            }
-        }
-    },        
+                "required": ["pedagogyApproach"],
+            },
+        },
+    },
     # {
     #     "type": "function",
     #     "function": {
@@ -202,15 +211,15 @@ OPENAI_TOOLS = [
                 "properties": {
                     "lessonTopic": {
                         "type": "string",
-                        "description": "The specific lesson topic selected by the user"
+                        "description": "The specific lesson topic selected by the user",
                     }
                 },
-                "required": ["lessonTopic"]
-            }
-        }
+                "required": ["lessonTopic"],
+            },
+        },
     },
     {
-        "type": "function", 
+        "type": "function",
         "function": {
             "name": "onSelectLessonSummary",
             "description": (
@@ -230,26 +239,26 @@ OPENAI_TOOLS = [
                 "When called, extract the lesson title from the selected summary for the lessonTopic parameter, "
                 "and include the complete lesson summary text in the lessonSummary parameter.\n\n"
                 "Example lesson summary format:\n"
-                "\"2. **Lesson Summary 2: \"Chemical Reactions Lab\"**\n"
+                '"2. **Lesson Summary 2: "Chemical Reactions Lab"**\n'
                 "- Key Concepts: Chemical Reactions, Variables, Data Analysis\n"
                 "- Key Vocabulary: Reactants, Products, Catalyst\n"
-                "- In this lab-based lesson, students design and conduct experiments...\""
+                '- In this lab-based lesson, students design and conduct experiments..."'
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
                     "lessonSummary": {
                         "type": "string",
-                        "description": "The complete lesson summary text that was selected by the user"
+                        "description": "The complete lesson summary text that was selected by the user",
                     },
                     "lessonTopic": {
                         "type": "string",
-                        "description": "The lesson title extracted from the selected summary"
-                    }
+                        "description": "The lesson title extracted from the selected summary",
+                    },
                 },
-                "required": ["lessonTopic", "lessonSummary"]
-            }
-        }
+                "required": ["lessonTopic", "lessonSummary"],
+            },
+        },
     },
     # {
     #     "type": "function",
@@ -263,7 +272,7 @@ OPENAI_TOOLS = [
     #                     "type": "string",
     #                     "enum": [
     #                         "Anatomy",
-    #                         "Astronomy", 
+    #                         "Astronomy",
     #                         "Chemistry",
     #                         "U.S. History",
     #                         "Zoology",
@@ -279,38 +288,78 @@ OPENAI_TOOLS = [
     #         }
     #     }
     # },
+    # this onConfirmKeywords below was working well at NOT calling on generation, commented out for more experimentation
+    # {
+    #     "type": "function",
+    #     "function": {
+    #         "name": "onConfirmKeywords",
+    #         "description": (
+    #             "STRICT REQUIREMENTS:\n"
+    #             "1. LAST MESSAGE MUST BE role='user'\n"
+    #             "2. NEVER call if last message is role='system' or role='assistant'\n"
+    #             "3. ONLY call when user FULLY ACCEPTS ALL previous keywords WITHOUT ANY CHANGES\n\n"
+    #             "Valid last messages (role='user' only):\n"
+    #             "✓ 'Yes, those keywords look good'\n"
+    #             "✓ 'I approve these keywords'\n"
+    #             "✓ 'Let's use these keywords'\n\n"
+    #             "DO NOT CALL if last message contains:\n"
+    #             "✗ Any requests to modify keywords\n"
+    #             "✗ Any suggestions for new keywords\n"
+    #             "✗ Any requests to add/remove keywords\n"
+    #             "✗ Any questions about the keywords"
+    #         ),
+    #         "parameters": {
+    #             "type": "object",
+    #             "properties": {
+    #                 "keywords": {
+    #                     "type": "string",
+    #                     "description": "Comma-separated string of the user-approved keywords"
+    #                 }
+    #             },
+    #             "required": ["keywords"]
+    #         }
+    #     }
+    # },
     {
         "type": "function",
         "function": {
-            "name": "onGenerateKeywords",
+            "name": "onUserAcceptsKeywords",
             "description": (
                 "STRICT REQUIREMENTS:\n"
                 "1. LAST MESSAGE MUST BE role='user'\n"
                 "2. NEVER call if last message is role='system' or role='assistant'\n"
-                "3. ONLY call when user FULLY ACCEPTS previous keywords WITHOUT ANY CHANGES\n\n"
-                "Valid last messages (role='user' only):\n"
+                "3. ONLY call when the user has CLEARLY and UNAMBIGUOUSLY accepted ALL keywords WITHOUT ANY CHANGES\n\n"
+                "Valid last messages to trigger this tool (role='user' only):\n"
                 "✓ 'Yes, those keywords look good'\n"
                 "✓ 'I approve these keywords'\n"
                 "✓ 'Let's use these keywords'\n\n"
-                "DO NOT CALL if last message contains:\n"
-                "✗ Any requests to modify keywords\n"
-                "✗ Any suggestions for new keywords\n"
-                "✗ Any requests to add/remove keywords\n"
-                "✗ Any questions about the keywords"
+                "DO NOT CALL if last message contains ANY of the following:\n"
+                "- ✗ Requests to modify, remove, or add keywords\n"
+                "- ✗ Suggestions for new keywords\n"
+                "- ✗ Questions, uncertainty, or dissatisfaction with the keywords\n"
+                "- ✗ Words like 'replace,' 'remove,' 'change,' 'adjust,' 'modify,' or 'not satisfied'\n"
+                "- ✗ Phrases such as:\n"
+                "    - 'These keywords are not ready yet'\n"
+                "    - 'Please remove the last one'\n"
+                "    - 'Can you adjust this list?'\n"
+                "    - 'I'm not sure about these keywords'\n"
+                "    - 'I'm not satisfied with these keywords'\n"
+                "4. WHEN IN DOUBT, DO NOT CALL.\n"
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
                     "keywords": {
                         "type": "string",
-                        "description": "Comma-separated string of exactly 3 approved keywords, exactly as they were previously suggested"
+                        "description": "Comma-separated string of the user-approved keywords",
                     }
                 },
-                "required": ["keywords"]
-            }
-        }
-    }
+                "required": ["keywords"],
+            },
+        },
+    },
 ]
+
 
 def get_llm(model: str, add_tools=False):
     """Retrieve the specified language model based on the model name."""
@@ -321,10 +370,12 @@ def get_llm(model: str, add_tools=False):
     env_value = os.environ.get(env_key)
 
     if not env_value:
-        err = f"Environment variable '{env_key}' is not defined as per format or missing"
+        err = (
+            f"Environment variable '{env_key}' is not defined as per format or missing"
+        )
         logging.error(err)
         raise Exception(err)
-    
+
     logging.info("Model: {}".format(env_key))
     try:
         if "gemini" in model:
@@ -332,7 +383,7 @@ def get_llm(model: str, add_tools=False):
             credentials, project_id = google.auth.default()
             llm = ChatVertexAI(
                 model_name=model_name,
-                #convert_system_message_to_human=True,
+                # convert_system_message_to_human=True,
                 credentials=credentials,
                 project=project_id,
                 temperature=0,
@@ -351,11 +402,17 @@ def get_llm(model: str, add_tools=False):
                 model=model_name,
                 temperature=0,
             )
-            if(add_tools==True): 
-                logging.info("binding tool");
-                llm = llm.bind_tools([EducationLevelInput, LessonTopicInput, SelectSubjectInput, OnGenerateKeywordsInput])
+            if add_tools == True:
+                logging.info("binding tool")
+                llm = llm.bind_tools(
+                    [
+                        EducationLevelInput,
+                        LessonTopicInput,
+                        SelectSubjectInput,
+                        OnGenerateKeywordsInput,
+                    ]
+                )
                 logging.info("bound the tool")
-
 
         elif "azure" in model:
             model_name, api_endpoint, api_key, api_version = env_value.split(",")
@@ -384,7 +441,9 @@ def get_llm(model: str, add_tools=False):
             llm = ChatGroq(api_key=api_key, model_name=model_name, temperature=0)
 
         elif "bedrock" in model:
-            model_name, aws_access_key, aws_secret_key, region_name = env_value.split(",")
+            model_name, aws_access_key, aws_secret_key, region_name = env_value.split(
+                ","
+            )
             bedrock_client = boto3.client(
                 service_name="bedrock-runtime",
                 region_name=region_name,
@@ -393,7 +452,9 @@ def get_llm(model: str, add_tools=False):
             )
 
             llm = ChatBedrock(
-                client=bedrock_client, model_id=model_name, model_kwargs=dict(temperature=0)
+                client=bedrock_client,
+                model_id=model_name,
+                model_kwargs=dict(temperature=0),
             )
 
         elif "ollama" in model:
@@ -401,14 +462,14 @@ def get_llm(model: str, add_tools=False):
             llm = ChatOllama(base_url=base_url, model=model_name)
 
         elif "diffbot" in model:
-            #model_name = "diffbot"
+            # model_name = "diffbot"
             model_name, api_key = env_value.split(",")
             llm = DiffbotGraphTransformer(
                 diffbot_api_key=api_key,
                 extract_types=["entities", "facts"],
             )
-        
-        else: 
+
+        else:
             model_name, api_endpoint, api_key = env_value.split(",")
             llm = ChatOpenAI(
                 api_key=api_key,
@@ -420,7 +481,7 @@ def get_llm(model: str, add_tools=False):
         err = f"Error while creating LLM '{model}': {str(e)}"
         logging.error(err)
         raise Exception(err)
- 
+
     logging.info(f"Model created - Model Version: {model}")
     return llm, model_name
 
@@ -453,16 +514,17 @@ def get_combined_chunks(chunkId_chunkDoc_list):
         )
     return combined_chunk_document_list
 
+
 def get_chunk_id_as_doc_metadata(chunkId_chunkDoc_list):
     combined_chunk_document_list = [
-       Document(
-           page_content=document["chunk_doc"].page_content,
-           metadata={"chunk_id": [document["chunk_id"]]},
-       )
-       for document in chunkId_chunkDoc_list
-   ]
+        Document(
+            page_content=document["chunk_doc"].page_content,
+            metadata={"chunk_id": [document["chunk_id"]]},
+        )
+        for document in chunkId_chunkDoc_list
+    ]
     return combined_chunk_document_list
-      
+
 
 async def get_graph_document_list(
     llm, combined_chunk_document_list, allowedNodes, allowedRelationship
@@ -472,7 +534,12 @@ async def get_graph_document_list(
     if "diffbot_api_key" in dir(llm):
         llm_transformer = llm
     else:
-        if "get_name" in dir(llm) and llm.get_name() != "ChatOenAI" or llm.get_name() != "ChatVertexAI" or llm.get_name() != "AzureChatOpenAI":
+        if (
+            "get_name" in dir(llm)
+            and llm.get_name() != "ChatOenAI"
+            or llm.get_name() != "ChatVertexAI"
+            or llm.get_name() != "AzureChatOpenAI"
+        ):
             node_properties = False
             relationship_properties = False
         else:
@@ -486,28 +553,34 @@ async def get_graph_document_list(
             allowed_relationships=allowedRelationship,
             ignore_tool_usage=True,
         )
-    
-    if isinstance(llm,DiffbotGraphTransformer):
-        graph_document_list = llm_transformer.convert_to_graph_documents(combined_chunk_document_list)
+
+    if isinstance(llm, DiffbotGraphTransformer):
+        graph_document_list = llm_transformer.convert_to_graph_documents(
+            combined_chunk_document_list
+        )
     else:
-        graph_document_list = await llm_transformer.aconvert_to_graph_documents(combined_chunk_document_list)
+        graph_document_list = await llm_transformer.aconvert_to_graph_documents(
+            combined_chunk_document_list
+        )
     return graph_document_list
 
 
-async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship):
+async def get_graph_from_llm(
+    model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship
+):
     try:
         llm, model_name = get_llm(model)
         combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list)
-        
-        if  allowedNodes is None or allowedNodes=="":
-            allowedNodes =[]
+
+        if allowedNodes is None or allowedNodes == "":
+            allowedNodes = []
         else:
-            allowedNodes = allowedNodes.split(',')    
-        if  allowedRelationship is None or allowedRelationship=="":   
-            allowedRelationship=[]
+            allowedNodes = allowedNodes.split(",")
+        if allowedRelationship is None or allowedRelationship == "":
+            allowedRelationship = []
         else:
-            allowedRelationship = allowedRelationship.split(',')
-            
+            allowedRelationship = allowedRelationship.split(",")
+
         graph_document_list = await get_graph_document_list(
             llm, combined_chunk_document_list, allowedNodes, allowedRelationship
         )
@@ -515,13 +588,14 @@ async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowed
     except Exception as e:
         err = f"Error during extracting graph with llm: {e}"
         logging.error(err)
-        raise 
+        raise
+
 
 def create_chat_completion_sync(
-    messages: List[Dict[str, str]], 
-    model: str = "openai_gpt_3.5",
+    messages: List[Dict[str, str]],
+    model: str = "openai_gpt_4o_mini",
     add_tools: bool = False,
-    temperature: float = 0
+    temperature: float = 0,
 ) -> AIMessage:
     """
     Synchronous version of create_chat_completion using OpenAI's synchronous client.
@@ -531,7 +605,7 @@ def create_chat_completion_sync(
         # Get model configuration
         env_key = f"LLM_MODEL_CONFIG_{model.lower().strip()}"
         env_value = os.environ.get(env_key)
-        
+
         if not env_value:
             err = f"Environment variable '{env_key}' is not defined"
             logging.error(err)
@@ -546,14 +620,14 @@ def create_chat_completion_sync(
         # Initialize client
         client = OpenAI(
             api_key=api_key,
-            base_url=api_endpoint if "openai" not in model.lower() else None
+            base_url=api_endpoint if "openai" not in model.lower() else None,
         )
 
         # Prepare request parameters
         completion_params = {
             "model": model_name,
             "messages": messages,
-            "temperature": temperature
+            "temperature": temperature,
         }
 
         # Add tools if requested
@@ -566,19 +640,24 @@ def create_chat_completion_sync(
         response = client.chat.completions.create(**completion_params)
 
         # Extract content and tool calls
-        content = response.choices[0].message.content or ""  # Default to empty string if None
+        content = (
+            response.choices[0].message.content or ""
+        )  # Default to empty string if None
         additional_kwargs = {}
 
         # Handle tool calls if present
-        if hasattr(response.choices[0].message, 'tool_calls') and response.choices[0].message.tool_calls:
+        if (
+            hasattr(response.choices[0].message, "tool_calls")
+            and response.choices[0].message.tool_calls
+        ):
             additional_kwargs["tool_calls"] = [
                 {
                     "id": tool_call.id,
                     "type": "function",
                     "function": {
                         "name": tool_call.function.name,
-                        "arguments": tool_call.function.arguments
-                    }
+                        "arguments": tool_call.function.arguments,
+                    },
                 }
                 for tool_call in response.choices[0].message.tool_calls
             ]
@@ -586,7 +665,7 @@ def create_chat_completion_sync(
         # Return in Langchain's AIMessage format
         return AIMessage(
             content=content,  # Will never be None now
-            additional_kwargs=additional_kwargs
+            additional_kwargs=additional_kwargs,
         )
 
     except Exception as e:
