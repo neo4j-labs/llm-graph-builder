@@ -7,12 +7,6 @@ type PatternOption = {
     label: string;
     value: string;
 };
-// const availablePatterns: string[] = [
-//     '(:Person)-[:KNOWS]->(:Person)',
-//     '(:Person)-[:WORKS_FOR]->(:Company)',
-//     '(:Company)-[:OWNS]->(:Product)',
-//     '(:Person)-[:MANAGES]->(:Project)',
-// ];
 const sourceOptions: PatternOption[] = [
     { label: 'Person', value: 'Person' },
 ];
@@ -63,7 +57,7 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
                         isClearable: true,
                         isMulti: false,
                         options: sourceOptions,
-                        onChange: (selected) => onPatternChange(selected as OptionType, selectedType as OptionType[], selectedTarget as OptionType[]),
+                        onChange: (selected) => onPatternChange(selected as OptionType, selectedType as OptionType, selectedTarget as OptionType),
                         value: selectedSource,
                     }}
                     type='creatable'
@@ -76,7 +70,7 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
                         isClearable: true,
                         isMulti: false,
                         options: typeOptions,
-                        onChange: (selected) => onPatternChange(selectedSource as OptionType[], selected as OptionType, selectedTarget as OptionType[]),
+                        onChange: (selected) => onPatternChange(selectedSource as OptionType, selected as OptionType, selectedTarget as OptionType),
                         value: selectedType,
                     }}
                     type='creatable'
@@ -89,7 +83,7 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
                         isClearable: true,
                         isMulti: false,
                         options: targetOptions,
-                        onChange: (selected) => onPatternChange(selectedSource as OptionType[], selectedType as OptionType[], selected as OptionType),
+                        onChange: (selected) => onPatternChange(selectedSource as OptionType, selectedType as OptionType, selected as OptionType),
                         value: selectedTarget,
                     }}
                     type='creatable'
@@ -101,7 +95,7 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
                     onClick={onAddPattern}
                     label='Add Values'
                     size='medium'
-                    disabled={selectedSource?.length === 0 || selectedType?.length === 0 || selectedTarget?.length === 0}
+                    disabled={selectedSource?.value.length === 0 || selectedType?.value.length === 0 || selectedTarget?.value.length === 0}
                 >
                     + Add
                 </ButtonWithToolTip>

@@ -13,6 +13,7 @@ import {
   UserCredentials,
   OptionType,
   UserDefinedGraphSchema,
+  TupleType
 } from '../types';
 import Wikipediadarkmode from '../assets/images/wikipedia-darkmode.svg';
 import Wikipediadlogo from '../assets/images/wikipedia.svg';
@@ -612,4 +613,33 @@ export const userDefinedGraphSchema = (nodes: OptionType[], relationships: Optio
     relationships: transformedRelationships,
     scheme: schemeVal,
   };
+};
+
+export const extractOptions = (schemaTuples: TupleType[]) => {
+  const nodeLabelSet = new Set<string>();
+  const relationshipSet = new Set<string>();
+  schemaTuples.forEach((tuple) => {
+    // Add source and target to node labels
+    if (tuple.source) {
+      nodeLabelSet.add(tuple.source);
+    }
+    if (tuple.target) {
+      nodeLabelSet.add(tuple.target);
+    }
+    // Add relationship value to relationship options
+    if (tuple.value) {
+      relationshipSet.add(tuple.value);
+    }
+  });
+  // Create options for node labels
+  const nodeLabelOptions: OptionType[] = Array.from(nodeLabelSet).map((label) => ({
+    label,
+    value: label,
+  }));
+  // Create options for relationships
+  const relationshipTypeOptions: OptionType[] = Array.from(relationshipSet).map((relValue) => ({
+    label: relValue,
+    value: relValue,
+  }));
+  return { nodeLabelOptions, relationshipTypeOptions };
 };
