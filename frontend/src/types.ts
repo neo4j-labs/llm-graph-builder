@@ -7,6 +7,7 @@ import { NonOAuthError } from '@react-oauth/google';
 import { BannerType } from '@neo4j-ndl/react';
 import Queue from './utils/Queue';
 import FileTable from './components/FileTable';
+import { OnChangeValue, ActionMeta } from 'react-select';
 
 export interface CustomFileBase extends Partial<globalThis.File> {
   processingTotalTime: number | string;
@@ -257,7 +258,7 @@ export type ChatbotProps = {
   isChatOnly?: boolean;
   isDeleteChatLoading: boolean;
 };
-export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> {}
+export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> { }
 
 export interface GraphViewModalProps {
   open: boolean;
@@ -398,12 +399,12 @@ export interface commonserverresponse {
   message?: string | orphanTotalNodes;
   file_name?: string;
   data?:
-    | labelsAndTypes
-    | labelsAndTypes[]
-    | uploadData
-    | orphanNodeProps[]
-    | dupNodes[]
-    | { pageitems: chunkdata[]; total_pages: number };
+  | OptionType
+  | OptionType[]
+  | uploadData
+  | orphanNodeProps[]
+  | dupNodes[]
+  | { pageitems: chunkdata[]; total_pages: number };
 }
 export interface dupNodeProps {
   id: string;
@@ -427,11 +428,11 @@ export interface chunkdata {
   pagenumber: null | number;
 }
 export interface ScehmaFromText extends Partial<commonserverresponse> {
-  data: labelsAndTypes;
+  data: OptionType;
 }
 
 export interface ServerData extends Partial<commonserverresponse> {
-  data: labelsAndTypes[];
+  data: OptionType[];
 }
 export interface duplicateNodesData extends Partial<commonserverresponse> {
   data: dupNodes[];
@@ -488,20 +489,20 @@ export interface chatInfoMessage extends Partial<Messages> {
   relationships: ExtendedRelationship[];
   chunks: Chunk[];
   metricDetails:
-    | {
-        [key: string]: number | string;
-      }
-    | undefined;
+  | {
+    [key: string]: number | string;
+  }
+  | undefined;
   metricError: string;
   infoEntities: Entity[];
   communities: Community[];
   infoLoading: boolean;
   metricsLoading: boolean;
   activeChatmodes:
-    | {
-        [key: string]: ResponseMode;
-      }
-    | undefined;
+  | {
+    [key: string]: ResponseMode;
+  }
+  | undefined;
   multiModelMetrics: multimodelmetric[];
   saveInfoEntitites: (entities: Entity[]) => void;
   saveNodes: (chatNodes: ExtendedNode[]) => void;
@@ -960,3 +961,41 @@ export interface HeaderProp {
   setOpenConnection?: Dispatch<SetStateAction<connectionState>>;
   showBackButton?: boolean;
 }
+
+
+export type TupleCreationProps = {
+  defaultExamples: OptionType[];
+  onChangeSchema: (selectedOptions: OnChangeValue<OptionType, true>, actionMeta: ActionMeta<OptionType>) => void;
+  selectedSchemas: readonly OptionType[];
+  selectedSource: OptionType[] | null;
+  selectedType: OptionType[] | null;
+  selectedTarget: OptionType[] | null;
+  onPatternChange: (source: OptionType | OptionType[], type: OptionType | OptionType[], target: OptionType | OptionType[]) => void;
+  onAddPattern: () => void;
+  onClearSelection: () => void;
+  selectedTupleOptions: readonly OptionType[];
+};
+
+export interface TupleType {
+  value: string,
+  label: string,
+  source: string,
+  target: string,
+  type: string,
+}
+
+export interface SchemaViewModalProps {
+  open: boolean;
+  inspectedName?: string;
+  setGraphViewOpen: Dispatch<SetStateAction<boolean>>;
+  viewPoint: string;
+  nodeValues?: ExtendedNode[] | OptionType[];
+  relationshipValues?: ExtendedRelationship[] | string[] | OptionType[];
+  selectedRows?: CustomFile[] | undefined;
+}
+
+export type UserDefinedGraphSchema = {
+  nodes: ExtendedNode[];
+  relationships: ExtendedRelationship[];
+  scheme: Scheme;
+};

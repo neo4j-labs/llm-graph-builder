@@ -597,8 +597,7 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
 async def get_structured_schema(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None),email=Form(None)):
     try:
         start = time.time()
-        graph = create_graph_database_connection(uri, userName, password, database)
-        result = await asyncio.to_thread(get_labels_and_relationtypes, graph)
+        result = await asyncio.to_thread(get_labels_and_relationtypes, uri, userName, password, database)
         end = time.time()
         elapsed_time = end - start
         logging.info(f'Schema result from DB: {result}')

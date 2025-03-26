@@ -31,6 +31,7 @@ import shutil
 import urllib.parse
 import json
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
+from neo4j import GraphDatabase
 
 warnings.filterwarnings("ignore")
 load_dotenv()
@@ -663,22 +664,40 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
       return {'file_size': file_size, 'file_name': originalname, 'file_extension':file_extension, 'message':f"Chunk {chunk_number}/{total_chunks} saved"}
   return f"Chunk {chunk_number}/{total_chunks} saved"
 
-def get_labels_and_relationtypes(graph):
-  query = """
-          RETURN collect { 
-          CALL db.labels() yield label 
-          WHERE NOT label  IN ['Document','Chunk','_Bloom_Perspective_', '__Community__', '__Entity__', 'Session', 'Message'] 
-          return label order by label limit 100 } as labels, 
-          collect { 
-          CALL db.relationshipTypes() yield relationshipType  as type 
-          WHERE NOT type  IN ['PART_OF', 'NEXT_CHUNK', 'HAS_ENTITY', '_Bloom_Perspective_','FIRST_CHUNK','SIMILAR','IN_COMMUNITY','PARENT_COMMUNITY', 'NEXT', 'LAST_MESSAGE'] 
-          return type order by type LIMIT 100 } as relationshipTypes
-          """
-  graphDb_data_Access = graphDBdataAccess(graph)
-  result = graphDb_data_Access.execute_query(query)
-  if result is None:
-     result=[]
-  return result
+def get_labels_and_relationtypes(uri, userName, password, database):
+   excluded_labels = {'Document', 'Chunk', '_Bloom_Perspective_', '__Community__', '__Entity__', 'Session', 'Message'}
+   excluded_relationships = {
+   'PART_OF', 'NEXT_CHUNK', 'HAS_ENTITY', '_Bloom_Perspective_', 'FIRST_CHUNK',
+   'SIMILAR', 'IN_COMMUNITY', 'PARENT_COMMUNITY', 'NEXT', 'LAST_MESSAGE'}
+   driver = GraphDatabase.driver(uri=uri,database=database,auth=(userName, password))
+   with driver.session() as session:
+       result = session.run("CALL db.schema.visualization() YIELD nodes, relationships RETURN nodes, relationships")
+       if not result:
+         return []
+       record = result.single()
+       nodes = record["nodes"]
+       relationships = record["relationships"]
+       node_map = {}
+       for node in nodes:
+           node_id = node.element_id
+           labels = list(node.labels)
+           if labels:
+               node_map[node_id] = ":".join(labels)
+       triples = []
+       for rel in relationships:
+           start_id = rel.start_node.element_id
+           end_id = rel.end_node.element_id
+           rel_type = rel.type
+           start_label = node_map.get(start_id)
+           end_label = node_map.get(end_id)
+           if start_label and end_label:
+             if (
+                   start_label not in excluded_labels and
+                   end_label not in excluded_labels and
+                   rel_type not in excluded_relationships
+               ):
+                 triples.append(f"{start_label} -[:{rel_type}]-> {end_label}")
+       return list(set(triples))
 
 def manually_cancelled_job(graph, filenames, source_types, merged_dir, uri):
   
