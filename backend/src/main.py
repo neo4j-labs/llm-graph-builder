@@ -696,8 +696,8 @@ def get_labels_and_relationtypes(uri, userName, password, database):
                    end_label not in excluded_labels and
                    rel_type not in excluded_relationships
                ):
-                 triples.append(f"{start_label} -[:{rel_type}]-> {end_label}")
-       return list(set(triples))
+                 triples.append(f"{start_label}-{rel_type}->{end_label}")
+       return {"triplets" : list(set(triples))}
 
 def manually_cancelled_job(graph, filenames, source_types, merged_dir, uri):
   
@@ -736,7 +736,7 @@ def populate_graph_schema_from_text(text, model, is_schema_description_checked, 
       data (list): list of lebels and relationTypes
   """
   result = schema_extraction_from_text(text, model, is_schema_description_checked, is_local_storage)
-  return {"labels": result.labels, "relationshipTypes": result.relationshipTypes}
+  return result
 
 def set_status_retry(graph, file_name, retry_condition):
     graphDb_data_Access = graphDBdataAccess(graph)
