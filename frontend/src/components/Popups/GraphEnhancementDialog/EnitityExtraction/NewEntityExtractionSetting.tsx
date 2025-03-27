@@ -1,17 +1,18 @@
 import { MouseEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
 import { appLabels, buttonCaptions, getDefaultSchemaExamples, tooltips } from '../../../../utils/Constants';
-import { Flex, Typography, useMediaQuery, Tag } from '@neo4j-ndl/react';
+import { Flex, Typography, useMediaQuery } from '@neo4j-ndl/react';
 import { useCredentials } from '../../../../context/UserCredentials';
 import { useFileContext } from '../../../../context/UsersFiles';
 import { OptionType, TupleType } from '../../../../types';
 import { getNodeLabelsAndRelTypes } from '../../../../services/GetNodeLabelsRelTypes';
 import { showNormalToast } from '../../../../utils/Toasts';
 import { useHasSelections } from '../../../../hooks/useHasSelections';
-import { Hierarchy1Icon } from '@neo4j-ndl/react/icons';
+import PatternContainer from './PatternContainer';
 import SchemaViz from '../../../Graph/SchemaViz';
 import GraphPattern from './GraphPattern';
 import { updateLocalStorage, extractOptions } from '../../../../utils/Utils';
+import SchemaSelectionDialog from '../../../UI/SchemaSelectionPopup';
 
 export default function NewEntityExtractionSetting({
   view,
@@ -45,6 +46,9 @@ export default function NewEntityExtractionSetting({
   const [selectedType, setType] = useState<OptionType | null>(null);
   const [selectedTarget, setTarget] = useState<OptionType | null>(null);
   const [pattern, setPattern] = useState<string[]>([]);
+  const [highlightPattern, setHighlightedPattern] = useState<string | null>(null);
+  const [openSchemaPopup, setOpenSchemaPopup] = useState<boolean>(false);
+  const [schemaPopupView, setSchemaPopupView] = useState<string>('');
 
   useEffect(() => {
     if (relationshipTypeOptions.length > 0) {
@@ -60,9 +64,9 @@ export default function NewEntityExtractionSetting({
     try {
       const response = await getNodeLabelsAndRelTypes();
       setLoading(false);
-      const schemaData: string[] = response.data.data;
+      const schemaData: string[] = response.data.data.triplets;
       const schemaTuples: TupleType[] = schemaData.map((item: string) => {
-        const matchResult = item.match(/(.*?)-\[:(.*?)\]->(.*)/);
+        const matchResult = item.match(/^(.+?)-([A-Z_]+)->(.+)$/);
         if (matchResult) {
           const [source, rel, target] = matchResult.slice(1).map((s) => s.trim());
           return {
@@ -87,7 +91,13 @@ export default function NewEntityExtractionSetting({
 
   const clickHandler: MouseEventHandler<HTMLButtonElement> = useCallback(async () => {
     await getOptions();
+    setSchemaPopupView('loadExistingSchema')
+    setOpenSchemaPopup(true);
   }, [nodeLabelOptions, relationshipTypeOptions]);
+
+  const onclosePopup = () => {
+    setOpenSchemaPopup(false);
+  }
 
   const handleClear = () => {
     setSelectedNodes([]);
@@ -121,16 +131,13 @@ export default function NewEntityExtractionSetting({
   };
 
   const handleApply = () => {
-    // Show success toast
     showNormalToast(`Successfully applied the schema settings`);
-    // Close the dialog if the view is 'Tabs'
     if (view === 'Tabs' && closeEnhanceGraphSchemaDialog != undefined) {
       closeEnhanceGraphSchemaDialog();
     }
-    // Prepare the payload to save in localStorage
     const selectedNodePayload = {
-      db: userCredentials?.uri || '', // Add fallback to avoid undefined
-      selectedOptions: nodeLabelOptions || [], // Ensure selectedNodes is never undefined
+      db: userCredentials?.uri || '',
+      selectedOptions: nodeLabelOptions || [],
     };
     const selectedRelPayload = {
       db: userCredentials?.uri || '',
@@ -141,11 +148,6 @@ export default function NewEntityExtractionSetting({
     updateLocalStorage(userCredentials!!, 'selectedNodeLabels', selectedRelPayload);
     setSelectedNodes(nodeLabelOptions);
     setSelectedRels(relationshipTypeOptions);
-
-    console.log('Schema settings saved successfully:', {
-      nodes: selectedNodePayload,
-      rels: selectedRelPayload,
-    });
   };
 
   const handleSchemaView = () => {
@@ -159,10 +161,19 @@ export default function NewEntityExtractionSetting({
     setTarget(target as OptionType);
   };
 
+  useEffect(() => {
+    if (pattern.length > 0) {
+      const lastPattern = pattern[0];
+      setHighlightedPattern(null);
+      setTimeout(() => {
+        setHighlightedPattern(lastPattern);
+      }, 100);
+    }
+  }, [pattern]);
+
   const handleAddPattern = () => {
     if (selectedSource && selectedType && selectedTarget) {
       console.log('source', selectedSource, selectedTarget, selectedType);
-      let updatedTupples: TupleType[] = [];
       const patternValue = `${selectedSource.value} -[:${selectedType.value}]-> ${selectedTarget.value}`;
       const relValue = `${selectedSource.value},${selectedType.value},${selectedTarget.value}`;
       const relationshipOption: TupleType = {
@@ -175,7 +186,7 @@ export default function NewEntityExtractionSetting({
       setPattern((prev: string[]) => {
         const alreadyExists = prev.includes(patternValue);
         if (!alreadyExists) {
-          const updatedPattern = [...prev, patternValue];
+          const updatedPattern = [patternValue, ...prev];
           updateLocalStorage(userCredentials!, 'selectedTuplePatterns', updatedPattern);
           return updatedPattern;
         }
@@ -184,7 +195,7 @@ export default function NewEntityExtractionSetting({
       setTupleOptions((prev: TupleType[]) => {
         const alreadyExists = prev.some((tuple) => tuple.value === relValue);
         if (!alreadyExists) {
-          updatedTupples = [...prev, relationshipOption];
+          const updatedTupples = [relationshipOption, ...prev,];
           updateLocalStorage(userCredentials!, 'selectTupleOptions', updatedTupples);
           const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(updatedTupples);
           setnodeLabelOptions(nodeLabelOptions);
@@ -198,6 +209,7 @@ export default function NewEntityExtractionSetting({
       setTarget(null);
     }
   };
+
   const handleRemovePattern = (pattern: string) => {
     setPattern((prevPatterns) => prevPatterns.filter((p) => p !== pattern));
   };
@@ -229,25 +241,12 @@ export default function NewEntityExtractionSetting({
         >
         </GraphPattern>
         {pattern.length > 0 && (
-          <div className='h-full'>
-            <div className='flex align-self-center justify-center border'>
-              <h5>{appLabels.selectedPatterns}</h5>
-            </div>
-            <div className='flex flex-wrap gap-2 mt-4 patternContainer'>
-              {pattern.map((pattern) => (
-                <Tag
-                  key={pattern}
-                  onRemove={() => handleRemovePattern(pattern)}
-                  isRemovable={true}
-                  type='default'
-                  size='medium'
-                  className='rounded-full px-4 py-1 shadow-sm'
-                >
-                  {pattern}
-                </Tag>
-              ))}
-            </div>
-          </div>
+          <PatternContainer
+            pattern={pattern}
+            handleRemove={handleRemovePattern}
+            handleSchemaView={handleSchemaView}
+            highlightPattern={highlightPattern ?? ''}
+          ></PatternContainer>
         )}
         <Flex className='mt-4! mb-2 flex! items-center' flexDirection='row' justifyContent='flex-end'>
           <Flex flexDirection='row' gap='4'>
@@ -265,7 +264,7 @@ export default function NewEntityExtractionSetting({
             >
               Load Existing Schema
             </ButtonWithToolTip>
-            <ButtonWithToolTip
+            {/* <ButtonWithToolTip
               label={'Graph Schema'}
               text={tooltips.visualizeGraph}
               placement='top'
@@ -273,7 +272,7 @@ export default function NewEntityExtractionSetting({
               onClick={handleSchemaView}
             >
               <Hierarchy1Icon />
-            </ButtonWithToolTip>
+            </ButtonWithToolTip> */}
             <ButtonWithToolTip
               text={tooltips.createSchema}
               placement='top'
@@ -331,6 +330,15 @@ export default function NewEntityExtractionSetting({
           relationshipValues={(relationshipTypeOptions) ?? []}
         />
       )}
+      {
+        openSchemaPopup && (<SchemaSelectionDialog
+          open={openSchemaPopup}
+          onClose={onclosePopup}
+          pattern={pattern}
+          handleRemove={handleRemovePattern}
+          handleSchemaView={handleSchemaView}
+        ></SchemaSelectionDialog>)
+      }
     </div>
   );
 }

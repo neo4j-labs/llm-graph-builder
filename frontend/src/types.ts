@@ -399,12 +399,15 @@ export interface commonserverresponse {
   message?: string | orphanTotalNodes;
   file_name?: string;
   data?:
+  | OptionType
+  | OptionType[]
   | string
   | string[]
   | uploadData
   | orphanNodeProps[]
   | dupNodes[]
-  | { pageitems: chunkdata[]; total_pages: number };
+  | { pageitems: chunkdata[]; total_pages: number }
+  | { triplets: string[] };
 }
 export interface dupNodeProps {
   id: string;
@@ -428,11 +431,15 @@ export interface chunkdata {
   pagenumber: null | number;
 }
 export interface ScehmaFromText extends Partial<commonserverresponse> {
-  data: string;
+  data: {
+    triplets: string[];
+  };
 }
 
 export interface ServerData extends Partial<commonserverresponse> {
-  data: string[];
+  data: {
+    triplets: string[];
+  };
 }
 export interface duplicateNodesData extends Partial<commonserverresponse> {
   data: dupNodes[];
@@ -968,7 +975,7 @@ export type TupleCreationProps = {
   onChangeSchema: (selectedOptions: OnChangeValue<OptionType, true>, actionMeta: ActionMeta<OptionType>) => void;
   selectedSchemas: readonly OptionType[];
   selectedSource: OptionType | null;
-  selectedType: OptionType| null;
+  selectedType: OptionType | null;
   selectedTarget: OptionType | null;
   onPatternChange: (source: OptionType | OptionType[], type: OptionType | OptionType[], target: OptionType | OptionType[]) => void;
   onAddPattern: () => void;
