@@ -1107,7 +1107,7 @@ async def user_details(uri=Form(None),
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
-        result = graphDb_data_Access.save_user_details(email)
+        result = graphDb_data_Access.save_user_details(email, database)
         end = time.time()
         elapsed_time = end - start
         return create_api_response('Success', data=result,message=f"Total elapsed API time {elapsed_time:.2f}")
