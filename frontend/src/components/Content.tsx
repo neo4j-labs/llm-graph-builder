@@ -616,7 +616,7 @@ const Content: React.FC<ContentProps> = ({
       setRetryLoading(true);
       const response = await retry(filename, retryoption);
       setRetryLoading(false);
-      if (response.data.status === 'Failure') {
+      if (response.data.status === 'Failed') {
         throw new Error(response.data.error);
       } else if (
         response.data.status === 'Success' &&
