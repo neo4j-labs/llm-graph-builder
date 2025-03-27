@@ -45,6 +45,7 @@ export default function NewEntityExtractionSetting({
   const [selectedType, setType] = useState<OptionType | null>(null);
   const [selectedTarget, setTarget] = useState<OptionType | null>(null);
   const [pattern, setPattern] = useState<string[]>([]);
+  const [highlightPattern, setHighlightedPattern] = useState<string | null>(null);
 
   useEffect(() => {
     if (relationshipTypeOptions.length > 0) {
@@ -121,16 +122,13 @@ export default function NewEntityExtractionSetting({
   };
 
   const handleApply = () => {
-    // Show success toast
     showNormalToast(`Successfully applied the schema settings`);
-    // Close the dialog if the view is 'Tabs'
     if (view === 'Tabs' && closeEnhanceGraphSchemaDialog != undefined) {
       closeEnhanceGraphSchemaDialog();
     }
-    // Prepare the payload to save in localStorage
     const selectedNodePayload = {
-      db: userCredentials?.uri || '', // Add fallback to avoid undefined
-      selectedOptions: nodeLabelOptions || [], // Ensure selectedNodes is never undefined
+      db: userCredentials?.uri || '', 
+      selectedOptions: nodeLabelOptions || [], 
     };
     const selectedRelPayload = {
       db: userCredentials?.uri || '',
@@ -159,10 +157,19 @@ export default function NewEntityExtractionSetting({
     setTarget(target as OptionType);
   };
 
+  useEffect(() => {
+    if (pattern.length > 0) {
+      const lastPattern = pattern[0];
+      setHighlightedPattern(null);
+      setTimeout(() => {
+        setHighlightedPattern(lastPattern);
+      }, 100);
+    }
+  }, [pattern]);
+
   const handleAddPattern = () => {
     if (selectedSource && selectedType && selectedTarget) {
       console.log('source', selectedSource, selectedTarget, selectedType);
-      let updatedTupples: TupleType[] = [];
       const patternValue = `${selectedSource.value} -[:${selectedType.value}]-> ${selectedTarget.value}`;
       const relValue = `${selectedSource.value},${selectedType.value},${selectedTarget.value}`;
       const relationshipOption: TupleType = {
@@ -175,7 +182,7 @@ export default function NewEntityExtractionSetting({
       setPattern((prev: string[]) => {
         const alreadyExists = prev.includes(patternValue);
         if (!alreadyExists) {
-          const updatedPattern = [...prev, patternValue];
+          const updatedPattern = [patternValue, ...prev];
           updateLocalStorage(userCredentials!, 'selectedTuplePatterns', updatedPattern);
           return updatedPattern;
         }
@@ -184,7 +191,7 @@ export default function NewEntityExtractionSetting({
       setTupleOptions((prev: TupleType[]) => {
         const alreadyExists = prev.some((tuple) => tuple.value === relValue);
         if (!alreadyExists) {
-          updatedTupples = [...prev, relationshipOption];
+          const updatedTupples = [relationshipOption, ...prev,];
           updateLocalStorage(userCredentials!, 'selectTupleOptions', updatedTupples);
           const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(updatedTupples);
           setnodeLabelOptions(nodeLabelOptions);
@@ -198,6 +205,7 @@ export default function NewEntityExtractionSetting({
       setTarget(null);
     }
   };
+
   const handleRemovePattern = (pattern: string) => {
     setPattern((prevPatterns) => prevPatterns.filter((p) => p !== pattern));
   };
@@ -233,19 +241,34 @@ export default function NewEntityExtractionSetting({
             <div className='flex align-self-center justify-center border'>
               <h5>{appLabels.selectedPatterns}</h5>
             </div>
-            <div className='flex flex-wrap gap-2 mt-4 patternContainer'>
-              {pattern.map((pattern) => (
-                <Tag
-                  key={pattern}
-                  onRemove={() => handleRemovePattern(pattern)}
-                  isRemovable={true}
-                  type='default'
-                  size='medium'
-                  className='rounded-full px-4 py-1 shadow-sm'
+            <div className='flex items-start gap-4 mt-4'>
+              <div className='flex flex-wrap gap-2 patternContainer'>
+                {pattern.map((pattern) => (
+                  <Tag
+                    key={pattern}
+                    onRemove={() => handleRemovePattern(pattern)}
+                    isRemovable={true}
+                    type='default'
+                    size='medium'
+                    className={`rounded-full px-4 py-1 shadow-sm transition-all duration-300 ${pattern === highlightPattern ? 'animate-highlight' : ''
+                      }`}
+                  >
+                    {pattern}
+                  </Tag>
+                ))}
+              </div>
+              <div className='flex-shrink-0 items-end m-auto'>
+                <ButtonWithToolTip
+                  label={'Graph Schema'}
+                  text={tooltips.visualizeGraph}
+                  placement='top'
+                  fill='outlined'
+                  onClick={handleSchemaView}
+                  className='ml-4'
                 >
-                  {pattern}
-                </Tag>
-              ))}
+                  <Hierarchy1Icon />
+                </ButtonWithToolTip>
+              </div>
             </div>
           </div>
         )}
@@ -265,7 +288,7 @@ export default function NewEntityExtractionSetting({
             >
               Load Existing Schema
             </ButtonWithToolTip>
-            <ButtonWithToolTip
+            {/* <ButtonWithToolTip
               label={'Graph Schema'}
               text={tooltips.visualizeGraph}
               placement='top'
@@ -273,7 +296,7 @@ export default function NewEntityExtractionSetting({
               onClick={handleSchemaView}
             >
               <Hierarchy1Icon />
-            </ButtonWithToolTip>
+            </ButtonWithToolTip> */}
             <ButtonWithToolTip
               text={tooltips.createSchema}
               placement='top'
