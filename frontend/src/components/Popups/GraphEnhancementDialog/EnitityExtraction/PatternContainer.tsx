@@ -2,16 +2,19 @@ import {Tag } from '@neo4j-ndl/react';
 import { appLabels, tooltips } from '../../../../utils/Constants';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
 import { ExploreIcon } from '@neo4j-ndl/react/icons';
+import { OptionType } from '../../../../types';
 
 interface PatternContainerProps {
     pattern: string[],
     handleRemove: (pattern: string) => void,
     handleSchemaView: (view?: string) => void,
     highlightPattern?:string
+    nodes?:OptionType[];
+    rels?:OptionType[];
 }
 
 
-const PatternContainer = ({pattern, handleRemove, handleSchemaView, highlightPattern}: PatternContainerProps) => {
+const PatternContainer = ({pattern, handleRemove, handleSchemaView, highlightPattern, nodes, rels}: PatternContainerProps) => {
     return (
         // <div className='h-full'>
         //     <div className='flex align-self-center justify-center border'>
@@ -53,7 +56,7 @@ const PatternContainer = ({pattern, handleRemove, handleSchemaView, highlightPat
             </div>
             <div className="flex flex-col gap-4 mt-4">
                 <div className="relative patternContainer border p-4 rounded-md shadow-sm">
-                    <div className="sticky top-0 right-0 flex justify-end z-10 ">
+                    <div className="sticky top-0 right-0 flex justify-end z-10 pb-2 ">
                         <ButtonWithToolTip
                             label={'Graph Schema'}
                             text={tooltips.visualizeGraph}

@@ -5,7 +5,7 @@ import DrawerChatbot from './DrawerChatbot';
 import Content from '../Content';
 import { clearChatAPI } from '../../services/QnaAPI';
 import { useCredentials } from '../../context/UserCredentials';
-import { connectionState } from '../../types';
+import { connectionState, OptionType } from '../../types';
 import { useMessageContext } from '../../context/UserMessages';
 import { useMediaQuery, Spotlight, SpotlightTour, useSpotlightContext } from '@neo4j-ndl/react';
 import { useFileContext } from '../../context/UsersFiles';
@@ -19,6 +19,9 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { showErrorToast } from '../../utils/Toasts';
 import { APP_SOURCES } from '../../utils/Constants';
 import { createDefaultFormData } from '../../API/Index';
+import { updateLocalStorage } from '../../utils/Utils';
+import LoadExistingSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/LoadExistingSchema'
+
 const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
 const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
 const GenericModal = lazy(() => import('../WebSources/GenericSourceModal'));
@@ -202,7 +205,10 @@ const PageLayout: React.FC = () => {
     []
   );
   const { messages, setClearHistoryData, clearHistoryData, setMessages, setIsDeleteChatLoading } = useMessageContext();
-  const { setShowTextFromSchemaDialog, showTextFromSchemaDialog } = useFileContext();
+  const { setShowTextFromSchemaDialog, showTextFromSchemaDialog, setSchemaTextPattern,
+     schemaLoadDialog, setSchemaLoadDialog , setDbPattern, setSchemaValNodes,
+     setSchemaValRels, setDbNodes,setDbRels, setSchemaView} = useFileContext();
+  const { userCredentials } = useCredentials();
   const { cancel } = useSpeechSynthesis();
   const { setActiveSpotlight } = useSpotlightContext();
   const isFirstTimeUser = useMemo(() => {
@@ -317,6 +323,36 @@ const PageLayout: React.FC = () => {
     }
   };
 
+  const handleApplyPatternsFromText = (newPatterns: string[], nodes:OptionType[], rels:OptionType[], view:string) => {
+    setSchemaTextPattern((prevPatterns: string[]) => {
+      const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
+      updateLocalStorage(userCredentials!!, 'selectedTuplePatterns', uniquePatterns);
+      return uniquePatterns;
+    });
+    setShowTextFromSchemaDialog({
+      triggeredFrom: 'schematextApply',
+      show: true,
+    })
+    setSchemaValNodes(nodes);
+    setSchemaValRels(rels);
+    setSchemaView(view);
+  };
+
+  const handleDbApply = (newPatterns: string[],nodes:OptionType[], rels:OptionType[], view:string) => {
+    setDbPattern((prevPatterns: string[]) => {
+      const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
+      updateLocalStorage(userCredentials!!, 'selectedTuplePatterns', uniquePatterns);
+      return uniquePatterns;
+    });
+    setSchemaLoadDialog({
+      triggeredFrom: 'loadExistingSchemaApply',
+      show: true,
+    })
+    setSchemaView(view);
+    setDbNodes(nodes);
+    setDbRels(rels);
+  };
+
   return (
     <>
       {!isAuthenticated && isFirstTimeUser && (
@@ -374,12 +410,26 @@ const PageLayout: React.FC = () => {
               break;
           }
         }}
+        onApply={handleApplyPatternsFromText}
       ></SchemaFromTextDialog>
+      <LoadExistingSchemaDialog
+        open={schemaLoadDialog.show}
+        onClose={() => {
+          setSchemaLoadDialog({ triggeredFrom: '', show: false });
+          switch (schemaLoadDialog.triggeredFrom) {
+            case 'enhancementtab':
+              toggleEnhancementDialog();
+              break;
+            default:
+              break;
+          }
+        }}
+        onApply={handleDbApply}
+      />
       {isLargeDesktop ? (
         <div
-          className={`layout-wrapper ${!isLeftExpanded ? 'drawerdropzoneclosed' : ''} ${
-            !isRightExpanded ? 'drawerchatbotclosed' : ''
-          } ${!isRightExpanded && !isLeftExpanded ? 'drawerclosed' : ''}`}
+          className={`layout-wrapper ${!isLeftExpanded ? 'drawerdropzoneclosed' : ''} ${!isRightExpanded ? 'drawerchatbotclosed' : ''
+            } ${!isRightExpanded && !isLeftExpanded ? 'drawerclosed' : ''}`}
         >
           <SideNav
             toggles3Modal={toggleS3Modal}
@@ -405,6 +455,9 @@ const PageLayout: React.FC = () => {
             showChatBot={showChatBot}
             openTextSchema={() => {
               setShowTextFromSchemaDialog({ triggeredFrom: 'schemadialog', show: true });
+            }}
+            openLoadSchema={() => {
+              setSchemaLoadDialog({ triggeredFrom: 'loadDialog', show: true });
             }}
             showEnhancementDialog={showEnhancementDialog}
             toggleEnhancementDialog={toggleEnhancementDialog}
@@ -468,6 +521,9 @@ const PageLayout: React.FC = () => {
               showChatBot={showChatBot}
               openTextSchema={() => {
                 setShowTextFromSchemaDialog({ triggeredFrom: 'schemadialog', show: true });
+              }}
+              openLoadSchema={() => {
+                setShowTextFromSchemaDialog({ triggeredFrom: 'loadDialog', show: true });
               }}
               showEnhancementDialog={showEnhancementDialog}
               toggleEnhancementDialog={toggleEnhancementDialog}

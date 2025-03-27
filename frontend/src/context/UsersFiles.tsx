@@ -5,6 +5,7 @@ import {
   FileContextType,
   OptionType,
   showTextFromSchemaDialogType,
+  schemaLoadDialogType
 } from '../types';
 import {
   chatModeLables,
@@ -48,7 +49,11 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [chatModes, setchatModes] = useState<string[]>([chatModeLables['graph+vector+fulltext']]);
-  const [showTextFromSchemaDialog, setShowTextFromSchemaDialog] = useState<showTextFromSchemaDialogType>({
+  const [showTextFromSchemaDialog, setShowTextFromSchemaDialog] = useState<schemaLoadDialogType>({
+    triggeredFrom: '',
+    show: false,
+  });
+  const [schemaLoadDialog, setSchemaLoadDialog] = useState<showTextFromSchemaDialogType>({
     triggeredFrom: '',
     show: false,
   });
@@ -61,6 +66,15 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [processedCount, setProcessedCount] = useState<number>(0);
   const [postProcessingVal, setPostProcessingVal] = useState<boolean>(false);
   const [additionalInstructions, setAdditionalInstructions] = useState<string>('');
+  const [schemaTextPattern, setSchemaTextPattern] = useState<string[]>([]);
+  const [allPatterns, setAllPatterns] = useState<string[]>([]);
+  const [userDefinedPattern, setUserDefinedPattern] = useState<string[]>([]);
+  const [dbPattern, setDbPattern] = useState<string[]>([]);
+  const [schemaValNodes, setSchemaValNodes] = useState<OptionType[]>([]);
+  const [schemaValRels, setSchemaValRels] = useState<OptionType[]>([]);
+  const [dbNodes, setDbNodes] = useState<OptionType[]>([]);
+  const [dbRels, setDbRels] = useState<OptionType[]>([]);
+  const [schemaView, setSchemaView]= useState<string | string[]>('');
 
   useEffect(() => {
     if (selectedNodeLabelstr != null) {
@@ -132,6 +146,24 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     setPostProcessingVal,
     additionalInstructions,
     setAdditionalInstructions,
+    schemaTextPattern,
+    setSchemaTextPattern,
+    userDefinedPattern,
+    setUserDefinedPattern,
+    dbPattern, 
+    setDbPattern,
+    allPatterns,
+    setAllPatterns,
+    schemaLoadDialog, 
+    setSchemaLoadDialog,
+    schemaValRels,
+    setSchemaValRels,
+    schemaValNodes,
+    setSchemaValNodes,
+    dbNodes, setDbNodes,
+    dbRels, setDbRels,
+    schemaView, setSchemaView
+    
   };
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };

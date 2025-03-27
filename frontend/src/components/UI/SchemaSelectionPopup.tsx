@@ -1,6 +1,4 @@
-import { Dialog } from '@neo4j-ndl/react';
-import { buttonCaptions } from '../../utils/Constants';
-import ButtonWithToolTip from '../UI/ButtonWithToolTip';
+import { Dialog, Button, LoadingSpinner } from '@neo4j-ndl/react';
 import PatternContainer from '../Popups/GraphEnhancementDialog/EnitityExtraction/PatternContainer';
 
 interface SchemaSelectionProps {
@@ -9,38 +7,40 @@ interface SchemaSelectionProps {
     pattern: string[],
     handleRemove: (pattern: string) => void,
     handleSchemaView: (view?: string) => void,
-    highlightPattern?: string
+    loading: boolean,
+    highlightPattern?: string;
+    onApply: ()=>void;
+    onCancel:()=>void;
 }
 
-const SchemaSelectionDialog = ({ open, onClose, pattern, handleRemove, handleSchemaView, highlightPattern }: SchemaSelectionProps) => {
+const SchemaSelectionDialog = ({ open, onClose, pattern, handleRemove, handleSchemaView, loading, highlightPattern, onApply, onCancel }: SchemaSelectionProps) => {
     return (
         <Dialog
             size='medium'
             isOpen={open}
-            onClose={() => {
-                onClose();
-            }}
-            htmlAttributes={{
-                'aria-labelledby': 'form-dialog-title',
-            }}
+            onClose={onClose}
+            htmlAttributes={{ 'aria-labelledby': 'form-dialog-title' }}
         >
             <Dialog.Header>{'Schema From Database'}</Dialog.Header>
             <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
-                <PatternContainer
+                {loading ? (
+                    <div className='my-40 flex! items-center justify-center'>
+                        <LoadingSpinner size='large' />
+                    </div>
+
+                ) : (<PatternContainer
                     pattern={pattern}
                     handleRemove={handleRemove}
                     handleSchemaView={handleSchemaView}
                     highlightPattern={highlightPattern ?? ''}
-                ></PatternContainer>
-                <Dialog.Actions className='mt-4!'>
-                    <ButtonWithToolTip
-                        placement='top'
-                        label='Apply'
-                        text={'Apply'}
-                        onClick={() => console.log('Helo')}
-                    >
-                        {buttonCaptions.applyGraphSchema}
-                    </ButtonWithToolTip>
+                ></PatternContainer>)}
+                <Dialog.Actions className='mt-3'>
+                    <Button onClick={onCancel} isDisabled={pattern.length === 0 || loading}>
+                        Cancel
+                    </Button>
+                    <Button onClick={onApply} isDisabled={pattern.length === 0 || loading}>
+                        Apply
+                    </Button>
                 </Dialog.Actions>
             </Dialog.Content>
         </Dialog>

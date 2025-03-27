@@ -153,6 +153,7 @@ export interface ContentProps {
   showChatBot: boolean;
   openChatBot: () => void;
   openTextSchema: () => void;
+  openLoadSchema: () => void;
   showEnhancementDialog: boolean;
   toggleEnhancementDialog: () => void;
   setOpenConnection: Dispatch<SetStateAction<connectionState>>;
@@ -634,6 +635,7 @@ export interface SettingsModalProps {
   open: boolean;
   onClose: () => void;
   openTextSchema: () => void;
+  openLoadSchema: () => void;
   onContinue?: () => void;
   settingView: 'contentView' | 'headerView';
   isSchema?: boolean;
@@ -846,6 +848,13 @@ export type entityProps = {
 export interface showTextFromSchemaDialogType {
   triggeredFrom: string;
   show: boolean;
+  onApply?: (selectedPattern: string[], nodes: OptionType[], rels: OptionType[]) => void;
+}
+
+export interface schemaLoadDialogType {
+  triggeredFrom: string;
+  show: boolean;
+  onApply?: (selectedPattern: string[], nodes: OptionType[], rels: OptionType[]) => void;
 }
 export interface FileContextType {
   files: (File | null)[] | [];
@@ -856,10 +865,10 @@ export interface FileContextType {
   setModel: Dispatch<SetStateAction<string>>;
   graphType: string;
   setGraphType: Dispatch<SetStateAction<string>>;
-  selectedNodes: readonly OptionType[];
-  setSelectedNodes: Dispatch<SetStateAction<readonly OptionType[]>>;
-  selectedRels: readonly OptionType[];
-  setSelectedRels: Dispatch<SetStateAction<readonly OptionType[]>>;
+  selectedNodes: readonly OptionType[] | OptionType[];
+  setSelectedNodes: Dispatch<SetStateAction<readonly OptionType[] | OptionType[]>>;
+  selectedRels: readonly OptionType[] | OptionType[];
+  setSelectedRels: Dispatch<SetStateAction<readonly OptionType[] | OptionType[]>>;
   selectedTokenChunkSize: number;
   setSelectedTokenChunkSize: Dispatch<SetStateAction<number>>;
   selectedChunk_overlap: number;
@@ -876,6 +885,8 @@ export interface FileContextType {
   setchatModes: Dispatch<SetStateAction<string[]>>;
   showTextFromSchemaDialog: showTextFromSchemaDialogType;
   setShowTextFromSchemaDialog: React.Dispatch<React.SetStateAction<showTextFromSchemaDialogType>>;
+  schemaLoadDialog: schemaLoadDialogType;
+  setSchemaLoadDialog: React.Dispatch<React.SetStateAction<schemaLoadDialogType>>;
   postProcessingTasks: string[];
   setPostProcessingTasks: React.Dispatch<React.SetStateAction<string[]>>;
   queue: Queue<CustomFile>;
@@ -886,6 +897,24 @@ export interface FileContextType {
   setPostProcessingVal: Dispatch<SetStateAction<boolean>>;
   additionalInstructions: string;
   setAdditionalInstructions: Dispatch<SetStateAction<string>>;
+  allPatterns: string[];
+  setAllPatterns: Dispatch<SetStateAction<string[]>>;
+  schemaTextPattern: string[];
+  setSchemaTextPattern: Dispatch<SetStateAction<string[]>>;
+  userDefinedPattern: string[];
+  setUserDefinedPattern: Dispatch<SetStateAction<string[]>>;
+  dbPattern: string[];
+  setDbPattern: Dispatch<SetStateAction<string[]>>;
+  schemaValNodes: OptionType[] | OptionType[];
+  setSchemaValNodes: Dispatch<SetStateAction<OptionType[] | OptionType[]>>;
+  schemaValRels: OptionType[] | OptionType[];
+  setSchemaValRels: Dispatch<SetStateAction<OptionType[] | OptionType[]>>;
+  dbNodes: OptionType[] | OptionType[];
+  setDbNodes: Dispatch<SetStateAction<OptionType[] | OptionType[]>>;
+  dbRels: OptionType[] | OptionType[];
+  setDbRels: Dispatch<SetStateAction<OptionType[] | OptionType[]>>;
+  schemaView: string | string[];
+  setSchemaView: Dispatch<SetStateAction<string | string[]>>;
 }
 export declare type Side = 'top' | 'right' | 'bottom' | 'left';
 

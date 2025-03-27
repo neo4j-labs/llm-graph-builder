@@ -11,7 +11,13 @@ import { OptionType, TupleType } from '../../../types';
 import { updateLocalStorage, extractOptions } from '../../../utils/Utils';
 import SchemaViz from '../../../components/Graph/SchemaViz';
 
-const SchemaFromTextDialog = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
+interface SchemaFromTextProps {
+  open: boolean,
+  onClose: () => void,
+  onApply: (patterns: string[], nodes:OptionType[], rels:OptionType[], view:string) => void
+}
+
+const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) => {
   const [userText, setUserText] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
@@ -19,10 +25,9 @@ const SchemaFromTextDialog = ({ open, onClose }: { open: boolean; onClose: () =>
   const { model } = useFileContext();
   const [textNodeSchema, setTextNodeSchema] = useState<OptionType[]>([]);
   const [textRelationshipSchema, setTextRelationshipSchema] = useState<OptionType[]>([]);
-  const [tupleOptions, setTupleOptions] = useState<TupleType[]>([]);
   const [schemaPattern, setSchemaPattern] = useState<string[]>([]);
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
-  const [viewPoint, setViewPoint] = useState<string>('tableView');
+  const [viewPoint, setViewPoint] = useState<string>('');
 
   // const clickHandler = useCallback(async () => {
   //   try {
@@ -126,19 +131,6 @@ const SchemaFromTextDialog = ({ open, onClose }: { open: boolean; onClose: () =>
         const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(schemaTuples);
         setTextNodeSchema(nodeLabelOptions);
         setTextRelationshipSchema(relationshipTypeOptions);
-        setTupleOptions(schemaTuples);
-        localStorage.setItem(
-          'selectedNodeLabels',
-          JSON.stringify({ db: userCredentials?.uri, selectedOptions: nodeLabelOptions })
-        );
-        localStorage.setItem(
-          'selectedRelationshipLabels',
-          JSON.stringify({ db: userCredentials?.uri, selectedOptions: relationshipTypeOptions })
-        );
-        localStorage.setItem(
-          'tupleOptions',
-          JSON.stringify({ db: userCredentials?.uri, selectedOptions: schemaTuples })
-        );
         if (nodeLabelOptions.length && relationshipTypeOptions.length) {
           showSuccessToast(
             `Successfully Created ${nodeLabelOptions.length} Node labels and ${relationshipTypeOptions.length} Relationship labels`
@@ -163,11 +155,19 @@ const SchemaFromTextDialog = ({ open, onClose }: { open: boolean; onClose: () =>
     setViewPoint('showSchemaView');
   };
 
-  const handleApply = () => {
+  const handleSchemaTextApply = () => {
+    if (onApply) {
+      onApply(schemaPattern, textNodeSchema, textRelationshipSchema, 'text');
+    }
     onClose();
   };
 
   const handleCancel = () => {
+    setTextNodeSchema([]);
+    setTextRelationshipSchema([]);
+    setSchemaPattern([]);
+    setUserText('');
+    setIsSchemaText(false);
     onClose();
   };
 
@@ -227,15 +227,15 @@ const SchemaFromTextDialog = ({ open, onClose }: { open: boolean; onClose: () =>
                   pattern={schemaPattern}
                   handleRemove={handleRemovePattern}
                   handleSchemaView={handleSchemaView}
+                  nodes={textNodeSchema}
+                  rels={textRelationshipSchema}
                 />
               </div>
-
-
               <Dialog.Actions className='mt-3'>
                 <Button onClick={handleCancel} isDisabled={schemaPattern.length === 0}>
                   Cancel
                 </Button>
-                <Button onClick={handleApply} isDisabled={schemaPattern.length === 0}>
+                <Button onClick={handleSchemaTextApply} isDisabled={schemaPattern.length === 0}>
                   Apply
                 </Button>
               </Dialog.Actions>

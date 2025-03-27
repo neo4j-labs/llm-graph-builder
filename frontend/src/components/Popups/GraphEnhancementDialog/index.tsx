@@ -13,7 +13,7 @@ import AdditionalInstructionsText from './AdditionalInstructions';
 export default function GraphEnhancementDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { breakpoints } = tokens;
   const [orphanDeleteAPIloading, setorphanDeleteAPIloading] = useState<boolean>(false);
-  const { setShowTextFromSchemaDialog } = useFileContext();
+  const { setShowTextFromSchemaDialog, setSchemaLoadDialog } = useFileContext();
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
 
   const orphanNodesDeleteHandler = async (selectedEntities: string[]) => {
@@ -117,6 +117,7 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
               openTextSchema={() => {
                 setShowTextFromSchemaDialog({ triggeredFrom: 'enhancementtab', show: true });
               }}
+              openLoadSchema={() => setSchemaLoadDialog({ triggeredFrom: 'enhancementtab', show: true })}
               closeEnhanceGraphSchemaDialog={onClose}
               settingView='headerView'
             />

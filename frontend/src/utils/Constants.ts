@@ -2,7 +2,7 @@ import { NvlOptions } from '@neo4j-nvl/base';
 import { GraphType, OptionType } from '../types';
 import { getDateTime, getDescriptionForChatMode } from './Utils';
 import chatbotmessages from '../assets/ChatbotMessages.json';
-import schemaExamples from '../assets/schemas.json';
+import schemaExamples from '../assets/newSchema.json';
 
 export const APP_SOURCES =
   process.env.VITE_REACT_APP_SOURCES !== ''
@@ -363,14 +363,22 @@ export const LLMDropdownLabel = {
 };
 export const getDefaultSchemaExamples = () =>
   schemaExamples.reduce((accu: OptionType[], example) => {
-    const examplevalues: OptionType = {
+    const parsedTriplets = example.triplet.map((triplet) => {
+      const [source, type, target] = triplet.split(/-([A-Z_]+)->/);
+      return { source, type, target };
+    });
+    const exampleValues: OptionType = {
       label: example.schema,
       value: JSON.stringify({
-        nodelabels: example.labels,
-        relationshipTypes: example.relationshipTypes,
+        nodelabels: Array.from(
+          new Set(parsedTriplets.flatMap(({ source, target }) => [source, target]))
+        ),
+        relationshipTypes: Array.from(
+          new Set(parsedTriplets.map(({ type }) => type))
+        ),
       }),
     };
-    accu.push(examplevalues);
+    accu.push(exampleValues);
     return accu;
   }, []);
 export function mergeNestedObjects(objects: Record<string, Record<string, number>>[]) {

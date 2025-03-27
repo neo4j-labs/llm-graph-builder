@@ -1,24 +1,24 @@
 import { MouseEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
-import { appLabels, buttonCaptions, getDefaultSchemaExamples, tooltips } from '../../../../utils/Constants';
+import { buttonCaptions, getDefaultSchemaExamples, tooltips } from '../../../../utils/Constants';
 import { Flex, Typography, useMediaQuery } from '@neo4j-ndl/react';
 import { useCredentials } from '../../../../context/UserCredentials';
 import { useFileContext } from '../../../../context/UsersFiles';
 import { OptionType, TupleType } from '../../../../types';
-import { getNodeLabelsAndRelTypes } from '../../../../services/GetNodeLabelsRelTypes';
 import { showNormalToast } from '../../../../utils/Toasts';
 import { useHasSelections } from '../../../../hooks/useHasSelections';
 import PatternContainer from './PatternContainer';
 import SchemaViz from '../../../Graph/SchemaViz';
 import GraphPattern from './GraphPattern';
 import { updateLocalStorage, extractOptions } from '../../../../utils/Utils';
-import SchemaSelectionDialog from '../../../UI/SchemaSelectionPopup';
+import LoadExistingSchemaDialog from './LoadExistingSchema';
 
 export default function NewEntityExtractionSetting({
   view,
   open,
   onClose,
   openTextSchema,
+  openLoadSchema,
   settingView,
   onContinue,
   closeEnhanceGraphSchemaDialog,
@@ -27,84 +27,52 @@ export default function NewEntityExtractionSetting({
   open?: boolean;
   onClose?: () => void;
   openTextSchema: () => void;
+  openLoadSchema: () => void;
   settingView: 'contentView' | 'headerView';
   onContinue?: () => void;
   closeEnhanceGraphSchemaDialog?: () => void;
 }) {
-  const { setSelectedRels, setSelectedNodes, selectedNodes, selectedRels, selectedSchemas, setSelectedSchemas } =
+  const { setSelectedRels, setSelectedNodes, userDefinedPattern,
+    setUserDefinedPattern, dbPattern, setDbPattern, setSchemaTextPattern, schemaTextPattern,
+    selectedNodes, selectedRels, allPatterns, setAllPatterns,
+    schemaView, setSchemaView, dbNodes, dbRels, schemaValNodes, schemaValRels
+  } =
     useFileContext();
   const { userCredentials } = useCredentials();
-  const [loading, setLoading] = useState<boolean>(false);
-  const hasSelections = useHasSelections(selectedNodes, selectedRels);
+  // const hasSelections = useHasSelections(selectedNodes, selectedRels);
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [viewPoint, setViewPoint] = useState<string>('tableView');
-  const [nodeLabelOptions, setnodeLabelOptions] = useState<OptionType[]>([]);
-  const [relationshipTypeOptions, setrelationshipTypeOptions] = useState<OptionType[]>([]);
+  const [userNodes, setUserNodes] = useState<OptionType[]>([]);
+  const [userRels, setUserRels] = useState<OptionType[]>([]);
   const defaultExamples = useMemo(() => getDefaultSchemaExamples(), []);
   const [tupleOptions, setTupleOptions] = useState<TupleType[]>([])
   const [selectedSource, setSource] = useState<OptionType | null>(null);
   const [selectedType, setType] = useState<OptionType | null>(null);
   const [selectedTarget, setTarget] = useState<OptionType | null>(null);
-  const [pattern, setPattern] = useState<string[]>([]);
   const [highlightPattern, setHighlightedPattern] = useState<string | null>(null);
-  const [openSchemaPopup, setOpenSchemaPopup] = useState<boolean>(false);
-  const [schemaPopupView, setSchemaPopupView] = useState<string>('');
+  const [nodes, setNodes] = useState<OptionType[]>([]);
+  const [rels, setRels] = useState<OptionType[]>([]);
 
-  useEffect(() => {
-    if (relationshipTypeOptions.length > 0) {
-      setPattern(relationshipTypeOptions.map((rel) => rel.value));
-      updateLocalStorage(userCredentials!!, 'selectedNodeLabels', nodeLabelOptions);
-      updateLocalStorage(userCredentials!!, 'selectedRelationshipLabels', relationshipTypeOptions);
-    }
 
-  }, [relationshipTypeOptions, nodeLabelOptions]);
+  // useEffect(() => {
+  //   if (relationshipTypeOptions.length > 0) {
+  //     setUserDefinedPattern(relationshipTypeOptions.map((rel) => rel.value));
+  //     updateLocalStorage(userCredentials!!, 'selectedNodeLabels', nodeLabelOptions);
+  //     updateLocalStorage(userCredentials!!, 'selectedRelationshipLabels', relationshipTypeOptions);
+  //   }
 
-  const getOptions = async () => {
-    setLoading(true);
-    try {
-      const response = await getNodeLabelsAndRelTypes();
-      setLoading(false);
-      const schemaData: string[] = response.data.data.triplets;
-      const schemaTuples: TupleType[] = schemaData.map((item: string) => {
-        const matchResult = item.match(/^(.+?)-([A-Z_]+)->(.+)$/);
-        if (matchResult) {
-          const [source, rel, target] = matchResult.slice(1).map((s) => s.trim());
-          return {
-            value: `${source},${rel},${target}`,
-            label: `${source} -[:${rel}]-> ${target}`,
-            source,
-            target,
-            type: rel,
-          };
-        }
-        return null;
-      })
-        .filter(Boolean) as TupleType[];
-      const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(schemaTuples);
-      setnodeLabelOptions(nodeLabelOptions);
-      setrelationshipTypeOptions(relationshipTypeOptions);
-    } catch (error) {
-      setLoading(false);
-      console.error('Error fetching schema options:', error);
-    }
-  };
+  // }, [relationshipTypeOptions, nodeLabelOptions]);
 
-  const clickHandler: MouseEventHandler<HTMLButtonElement> = useCallback(async () => {
-    await getOptions();
-    setSchemaPopupView('loadExistingSchema')
-    setOpenSchemaPopup(true);
-  }, [nodeLabelOptions, relationshipTypeOptions]);
 
-  const onclosePopup = () => {
-    setOpenSchemaPopup(false);
-  }
 
   const handleClear = () => {
-    setSelectedNodes([]);
-    setSelectedRels([]);
-    setPattern([]);
-    setnodeLabelOptions([]);
-    setrelationshipTypeOptions([]);
+    setSelectedNodes([]);  // overall nodes 
+    setSelectedRels([]);   // over all Rels
+    setUserDefinedPattern([]);
+    setUserNodes([]);   //user defined Nodes
+    setUserRels([]);    // user defined rels 
+    setDbPattern([]);
+    setSchemaTextPattern([]); 
     updateLocalStorage(userCredentials!!, 'selectedNodeLabels', []);
     updateLocalStorage(userCredentials!!, 'selectedRelationshipLabels', []);
     updateLocalStorage(userCredentials!!, 'selectedPattern', []);
@@ -113,46 +81,49 @@ export default function NewEntityExtractionSetting({
       closeEnhanceGraphSchemaDialog();
     }
   };
-  useEffect(() => {
-    const { nodeLabels, relLabels } = getStoredSchemaSettings();
-    setSelectedNodes(nodeLabels);
-    setSelectedRels(relLabels);
-    //setPattern(patternVal);
-  }, []);
+  // useEffect(() => {
+  //   const { nodeLabels, relLabels } = getStoredSchemaSettings();
+  //   setSelectedNodes(nodeLabels);
+  //   setSelectedRels(relLabels);
+  //   //setPattern(patternVal);
+  // }, []);
 
-  const getStoredSchemaSettings = () => {
-    const storedNodeLabels = localStorage.getItem('selectedNodeLabels');
-    const storedRelLabels = localStorage.getItem('selectedRelationshipLabels');
-    //const storedPattern = localStorage.getItem('selectedRelationshipLabels');
-    const nodeLabels = storedNodeLabels ? JSON.parse(storedNodeLabels).selectedOptions : [];
-    const relLabels = storedRelLabels ? JSON.parse(storedRelLabels).selectedOptions : [];
-    // const patternVal = storedPattern ? JSON.parse(storedPattern).selectedOptions : [];
-    return { nodeLabels, relLabels };
-  };
+  // const getStoredSchemaSettings = () => {
+  //   const storedNodeLabels = localStorage.getItem('selectedNodeLabels');
+  //   const storedRelLabels = localStorage.getItem('selectedRelationshipLabels');
+  //   //const storedPattern = localStorage.getItem('selectedRelationshipLabels');
+  //   const nodeLabels = storedNodeLabels ? JSON.parse(storedNodeLabels).selectedOptions : [];
+  //   const relLabels = storedRelLabels ? JSON.parse(storedRelLabels).selectedOptions : [];
+  //   // const patternVal = storedPattern ? JSON.parse(storedPattern).selectedOptions : [];
+  //   return { nodeLabels, relLabels };
+  // };
 
-  const handleApply = () => {
+  const handleApply = (pattern: string[], nodeLables: OptionType[], relationshipLabels: OptionType[]) => {
     showNormalToast(`Successfully applied the schema settings`);
     if (view === 'Tabs' && closeEnhanceGraphSchemaDialog != undefined) {
       closeEnhanceGraphSchemaDialog();
     }
     const selectedNodePayload = {
       db: userCredentials?.uri || '',
-      selectedOptions: nodeLabelOptions || [],
+      selectedOptions: userNodes || [],
     };
     const selectedRelPayload = {
       db: userCredentials?.uri || '',
-      selectedOptions: relationshipTypeOptions || [],
+      selectedOptions: userRels || [],
     };
 
     updateLocalStorage(userCredentials!!, 'selectedNodeLabels', selectedNodePayload);
     updateLocalStorage(userCredentials!!, 'selectedNodeLabels', selectedRelPayload);
-    setSelectedNodes(nodeLabelOptions);
-    setSelectedRels(relationshipTypeOptions);
+    setAllPatterns(pattern);
+    setSelectedNodes(nodeLables);
+    setSelectedRels(relationshipLabels);
   };
 
   const handleSchemaView = () => {
     setOpenGraphView(true);
     setViewPoint('showSchemaView');
+    nodeVal();
+    relVal();
   };
 
   const handlePatternChange = (source: OptionType[] | OptionType, type: OptionType[] | OptionType, target: OptionType[] | OptionType) => {
@@ -162,14 +133,14 @@ export default function NewEntityExtractionSetting({
   };
 
   useEffect(() => {
-    if (pattern.length > 0) {
-      const lastPattern = pattern[0];
+    if (userDefinedPattern.length > 0) {
+      const lastPattern = userDefinedPattern[0];
       setHighlightedPattern(null);
       setTimeout(() => {
         setHighlightedPattern(lastPattern);
       }, 100);
     }
-  }, [pattern]);
+  }, [userDefinedPattern]);
 
   const handleAddPattern = () => {
     if (selectedSource && selectedType && selectedTarget) {
@@ -183,7 +154,7 @@ export default function NewEntityExtractionSetting({
         target: selectedTarget.value || '',
         type: selectedType.value || '',
       };
-      setPattern((prev: string[]) => {
+      setUserDefinedPattern((prev: string[]) => {
         const alreadyExists = prev.includes(patternValue);
         if (!alreadyExists) {
           const updatedPattern = [patternValue, ...prev];
@@ -198,8 +169,8 @@ export default function NewEntityExtractionSetting({
           const updatedTupples = [relationshipOption, ...prev,];
           updateLocalStorage(userCredentials!, 'selectTupleOptions', updatedTupples);
           const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(updatedTupples);
-          setnodeLabelOptions(nodeLabelOptions);
-          setrelationshipTypeOptions(relationshipTypeOptions);
+          setUserNodes(nodeLabelOptions);
+          setUserRels(relationshipTypeOptions);
           return updatedTupples;
         }
         return prev;
@@ -211,8 +182,52 @@ export default function NewEntityExtractionSetting({
   };
 
   const handleRemovePattern = (pattern: string) => {
-    setPattern((prevPatterns) => prevPatterns.filter((p) => p !== pattern));
+    setUserDefinedPattern((prevPatterns) => prevPatterns.filter((p) => p !== pattern));
   };
+
+  const onSchemaFromTextCLick = () => {
+    if (view === 'Dialog' && onClose != undefined) {
+      onClose();
+    }
+    if (view === 'Tabs' && closeEnhanceGraphSchemaDialog != undefined) {
+      closeEnhanceGraphSchemaDialog();
+    }
+    openTextSchema();
+  }
+
+  const onLoadExistingSchemaCLick: MouseEventHandler<HTMLButtonElement> = useCallback(async () => {
+    if (view === 'Dialog' && onClose != undefined) {
+      onClose();
+    }
+    if (view === 'Tabs' && closeEnhanceGraphSchemaDialog != undefined) {
+      closeEnhanceGraphSchemaDialog();
+    }
+    openLoadSchema();
+  }, []);
+
+  const nodeVal = ()=>{
+      if(schemaView === 'db'){
+        return setNodes(dbNodes);
+      }
+      else if(schemaView === 'text'){
+        return setNodes(schemaValNodes);
+      }
+      else{
+        return setNodes(userNodes);
+      }
+  }
+
+  const relVal = ()=>{
+    if(schemaView === 'db'){
+      return setRels(dbRels);
+    }
+    else if(schemaView === 'text'){
+      return setRels(schemaValRels);
+    }
+    else{
+      return setRels(userRels);
+    }
+}
 
   return (
     <div>
@@ -240,51 +255,50 @@ export default function NewEntityExtractionSetting({
           selectedTupleOptions={tupleOptions}
         >
         </GraphPattern>
-        {pattern.length > 0 && (
+        {dbPattern.length > 0 && (
           <PatternContainer
-            pattern={pattern}
+            pattern={dbPattern}
             handleRemove={handleRemovePattern}
             handleSchemaView={handleSchemaView}
             highlightPattern={highlightPattern ?? ''}
+            nodes={dbNodes}
+            rels={dbRels}
+          ></PatternContainer>
+        )}
+        {schemaTextPattern.length > 0 && (
+          <PatternContainer
+            pattern={schemaTextPattern}
+            handleRemove={handleRemovePattern}
+            handleSchemaView={handleSchemaView}
+            highlightPattern={highlightPattern ?? ''}
+            nodes={schemaValNodes}
+            rels={schemaValRels}
+          ></PatternContainer>
+        )}
+        {userDefinedPattern.length > 0 && (
+          <PatternContainer
+            pattern={userDefinedPattern}
+            handleRemove={handleRemovePattern}
+            handleSchemaView={handleSchemaView}
+            highlightPattern={highlightPattern ?? ''}
+            nodes={userNodes}
+            rels={userRels}
           ></PatternContainer>
         )}
         <Flex className='mt-4! mb-2 flex! items-center' flexDirection='row' justifyContent='flex-end'>
           <Flex flexDirection='row' gap='4'>
             <ButtonWithToolTip
-              loading={loading}
-              text={
-                !nodeLabelOptions.length && !relationshipTypeOptions.length
-                  ? `No Labels Found in the Database`
-                  : tooltips.useExistingSchema
-              }
-              //disabled={!nodeLabelOptions.length && !relationshipTypeOptions.length}
-              onClick={clickHandler}
+              text={tooltips.useExistingSchema}
+              onClick={onLoadExistingSchemaCLick}
               label='Use Existing Schema'
               placement='top'
             >
               Load Existing Schema
             </ButtonWithToolTip>
-            {/* <ButtonWithToolTip
-              label={'Graph Schema'}
-              text={tooltips.visualizeGraph}
-              placement='top'
-              fill='outlined'
-              onClick={handleSchemaView}
-            >
-              <Hierarchy1Icon />
-            </ButtonWithToolTip> */}
             <ButtonWithToolTip
               text={tooltips.createSchema}
               placement='top'
-              onClick={() => {
-                if (view === 'Dialog' && onClose != undefined) {
-                  onClose();
-                }
-                if (view === 'Tabs' && closeEnhanceGraphSchemaDialog != undefined) {
-                  closeEnhanceGraphSchemaDialog();
-                }
-                openTextSchema();
-              }}
+              onClick={onSchemaFromTextCLick}
               label='Get Existing Schema From Text'
             >
               Get Schema From Text
@@ -304,7 +318,7 @@ export default function NewEntityExtractionSetting({
                 placement='top'
                 onClick={handleClear}
                 label='Clear Graph Settings'
-              //disabled={!hasSelections}
+              // disabled={!hasSelections}
               >
                 {buttonCaptions.clearSettings}
               </ButtonWithToolTip>
@@ -312,7 +326,7 @@ export default function NewEntityExtractionSetting({
             <ButtonWithToolTip
               text={tooltips.applySettings}
               placement='top'
-              onClick={handleApply}
+              onClick={() => handleApply(allPatterns, selectedNodes as OptionType[], selectedRels as OptionType[])}
               label='Apply Graph Settings'
             //disabled={!hasSelections}
             >
@@ -326,19 +340,10 @@ export default function NewEntityExtractionSetting({
           open={openGraphView}
           setGraphViewOpen={setOpenGraphView}
           viewPoint={viewPoint}
-          nodeValues={(nodeLabelOptions as OptionType[]) ?? []}
-          relationshipValues={(relationshipTypeOptions) ?? []}
+          nodeValues={(nodes) ?? []}
+          relationshipValues={(rels) ?? []}
         />
       )}
-      {
-        openSchemaPopup && (<SchemaSelectionDialog
-          open={openSchemaPopup}
-          onClose={onclosePopup}
-          pattern={pattern}
-          handleRemove={handleRemovePattern}
-          handleSchemaView={handleSchemaView}
-        ></SchemaSelectionDialog>)
-      }
     </div>
   );
 }
