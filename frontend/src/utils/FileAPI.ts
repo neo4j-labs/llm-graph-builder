@@ -30,7 +30,7 @@ export const extractAPI = async (
   gcs_bucket_name?: string,
   gcs_bucket_folder?: string,
   allowedNodes?: string[],
-  allowedRelationship?: string[],
+  allowedRelationship?: string[] | [string, string, string][],
   token_chunk_size?: number,
   chunk_overlap?: number,
   chunks_to_combine?: number,
@@ -41,6 +41,7 @@ export const extractAPI = async (
 ): Promise<any> => {
   const urlExtract = `${url()}/extract`;
   const method: Method = 'post';
+  const allowedRelationshipString = JSON.stringify(allowedRelationship)
   let additionalParams: ExtractParams;
   if (source_type === 's3 bucket') {
     additionalParams = {
@@ -51,7 +52,7 @@ export const extractAPI = async (
       source_type,
       file_name,
       allowedNodes,
-      allowedRelationship,
+      allowedRelationship: allowedRelationshipString,
       token_chunk_size,
       chunk_overlap,
       chunks_to_combine,
@@ -65,7 +66,7 @@ export const extractAPI = async (
       source_type,
       file_name,
       allowedNodes,
-      allowedRelationship,
+      allowedRelationship: allowedRelationshipString,
       token_chunk_size,
       chunk_overlap,
       chunks_to_combine,
@@ -82,7 +83,7 @@ export const extractAPI = async (
       source_type,
       file_name,
       allowedNodes,
-      allowedRelationship,
+      allowedRelationship: allowedRelationshipString,
       token_chunk_size,
       chunk_overlap,
       chunks_to_combine,
@@ -98,7 +99,7 @@ export const extractAPI = async (
       source_type,
       file_name,
       allowedNodes,
-      allowedRelationship,
+      allowedRelationship: allowedRelationshipString,
       token_chunk_size,
       chunk_overlap,
       chunks_to_combine,
@@ -112,7 +113,7 @@ export const extractAPI = async (
       source_type,
       file_name,
       allowedNodes,
-      allowedRelationship,
+      allowedRelationship: allowedRelationshipString,
       token_chunk_size,
       chunk_overlap,
       chunks_to_combine,
@@ -125,7 +126,7 @@ export const extractAPI = async (
       source_type,
       file_name,
       allowedNodes,
-      allowedRelationship,
+      allowedRelationship: allowedRelationshipString,
       token_chunk_size,
       chunk_overlap,
       chunks_to_combine,
