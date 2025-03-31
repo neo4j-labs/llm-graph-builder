@@ -400,9 +400,9 @@ async def magic_trek_chat_bot(
 
     ## added by ian
     mode = "graph_vector_fulltext" ## added by ian
-    uri = "bolt://44.200.57.123:7687"
+    uri = "neo4j+s://1eeea795.databases.neo4j.io"
     userName = "neo4j"
-    password = "lessons-trial-canals"
+    password = "BhuaeBNSCPh_aouTyIyiyMhMeRC55DZHBr1_0vfM2Pg"
     database = "neo4j"
     # model = "openai_gpt_3.5" # changed from this model by ian friday mar 21, 2025
     model = "openai_gpt_4o_mini" 
