@@ -436,11 +436,14 @@ def extract_tool_calls_direct(model, messages):
     ]
 
     logging.info("calling tool extracting with direct OpenAI API")
+    start_time = time.time()
     response = create_chat_completion_sync(
         messages=formatted_messages,
         model=model,
         add_tools=True
     )
+    tool_extraction_time = time.time() - start_time
+    logging.info(f"Tool extraction took {tool_extraction_time:.2f} seconds")
     
     logging.info(response)
     # Extract tool calls from additional_kwargs, handle missing key gracefully
@@ -508,17 +511,31 @@ def process_chat_response(messages, history, question, model, graph, document_na
     try:
         llm, doc_retriever, model_version = setup_chat(model, graph, document_names, chat_mode_settings)
 
-        tool_calls = None
-        if(extract_tools):
-            tool_calls = extract_tool_calls_direct(model, messages)
-            logging.info("returned tool calls")
-            logging.info(tool_calls)
+        # Shared variable to store tool calls, initialized as empty list
+        tool_calls = []
+        tool_calls_lock = threading.Lock()
 
-        docs,transformed_question = retrieve_documents(doc_retriever, messages)  
+        def extract_tools_thread():
+            nonlocal tool_calls
+            if extract_tools:
+                extracted_tools = extract_tool_calls_direct(model, messages)
+                with tool_calls_lock:
+                    tool_calls = extracted_tools
+                logging.info("returned tool calls")
+                logging.info(tool_calls)
+
+        # Start tool extraction thread if needed
+        tool_thread = None
+        if extract_tools:
+            tool_thread = threading.Thread(target=extract_tools_thread)
+            tool_thread.start()
+
+        # Run document retrieval and processing in parallel with tool extraction
+        docs, transformed_question = retrieve_documents(doc_retriever, messages)  
 
         if docs:
             logging.info("documents found, process_documents about to be called")
-            content, result, total_tokens,formatted_docs = process_documents(docs, question, messages, llm, model, chat_mode_settings)
+            content, result, total_tokens, formatted_docs = process_documents(docs, question, messages, llm, model, chat_mode_settings)
         else:
             logging.info("No document clause running")
             content = "I couldn't find any relevant documents to answer your question."
@@ -529,17 +546,20 @@ def process_chat_response(messages, history, question, model, graph, document_na
         ai_response = AIMessage(content=content)
         messages.append(ai_response)
 
-        if(history):
+        if history:
             summarization_thread = threading.Thread(target=summarize_and_log, args=(history, messages, llm))
             summarization_thread.start()
             logging.info("Summarization thread started.")
-        # summarize_and_log(history, messages, llm)
-        metric_details = {"question":question,"contexts":formatted_docs,"answer":content}
+
+        # Wait for tool extraction to complete if it was started
+        if tool_thread:
+            tool_thread.join()
+
+        metric_details = {"question": question, "contexts": formatted_docs, "answer": content}
         return {
             "session_id": "",  
             "message": content,
             "info": {
-                # "metrics" : metrics,
                 "sources": result["sources"],
                 "model": model_version,
                 "nodedetails": result["nodedetails"],
