@@ -382,8 +382,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
             )}
           </Flex>
         </Dialog.Header>
-        <Dialog.Content className='flex flex-col n-gap-token-4 w-full grow overflow-auto border border-palette-neutral-border-weak'>
-          <div className='bg-white relative w-full h-full max-h-full'>
+        <Dialog.Content className='flex flex-col n-gap-token-4 w-full grow overflow-auto border! border-palette-neutral-border-weak!'>
+          <div className='bg-white relative w-full h-full max-h-full border! border-palette-neutral-border-weak!'>
             {loading ? (
               <div className='my-40 flex! items-center justify-center'>
                 <LoadingSpinner size='large' />

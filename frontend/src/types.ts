@@ -111,6 +111,7 @@ export interface CustomAlertProps {
 export interface DataComponentProps {
   openModal: () => void;
   isLargeDesktop?: boolean;
+  isDisabled?: boolean;
 }
 
 export interface S3ModalProps {
@@ -204,6 +205,7 @@ export interface CommonButtonProps {
   className?: string;
   imgWidth?: number;
   imgeHeight?: number;
+  isDisabled?: boolean;
 }
 
 export interface Source {
@@ -868,8 +870,8 @@ export interface FileContextType {
   setShowTextFromSchemaDialog: React.Dispatch<React.SetStateAction<showTextFromSchemaDialogType>>;
   postProcessingTasks: string[];
   setPostProcessingTasks: React.Dispatch<React.SetStateAction<string[]>>;
-  queue: Queue;
-  setQueue: Dispatch<SetStateAction<Queue>>;
+  queue: Queue<CustomFile>;
+  setQueue: Dispatch<SetStateAction<Queue<CustomFile>>>;
   processedCount: number;
   setProcessedCount: Dispatch<SetStateAction<number>>;
   postProcessingVal: boolean;
@@ -951,4 +953,10 @@ export type FileTableHandle = React.ElementRef<typeof FileTable>;
 
 export interface VisibilityProps {
   isVisible: boolean;
+}
+export interface HeaderProp {
+  chatOnly?: boolean;
+  deleteOnClick?: () => void;
+  setOpenConnection?: Dispatch<SetStateAction<connectionState>>;
+  showBackButton?: boolean;
 }

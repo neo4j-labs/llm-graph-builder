@@ -13,7 +13,7 @@ export const llms =
   process.env?.VITE_LLM_MODELS?.trim() != ''
     ? (process.env.VITE_LLM_MODELS?.split(',') as string[])
     : [
-        'openai_gpt_3.5',
+        'openai_gpt_4.5',
         'openai-gpt-o3-mini',
         'openai_gpt_4o',
         'openai_gpt_4o_mini',
@@ -25,7 +25,7 @@ export const llms =
         'azure_ai_gpt_4o',
         'ollama_llama3',
         'groq_llama3_70b',
-        'anthropic_claude_3_5_sonnet',
+        'anthropic_claude_3_7_sonnet',
         'fireworks_llama_v3p2_90b',
         'fireworks_qwen72b_instruct',
         'bedrock_claude_3_5_sonnet',
@@ -37,7 +37,7 @@ export const llms =
       ];
 
 export const supportedLLmsForRagas = [
-  'openai_gpt_3.5',
+  'openai_gpt_4.5',
   'openai_gpt_4',
   'openai_gpt_4o',
   'openai_gpt_4o_mini',
@@ -47,20 +47,20 @@ export const supportedLLmsForRagas = [
   'azure_ai_gpt_35',
   'azure_ai_gpt_4o',
   'groq_llama3_70b',
-  'anthropic_claude_3_5_sonnet',
+  'anthropic_claude_3_7_sonnet',
   'fireworks_llama_v3_70b',
   'bedrock_claude_3_5_sonnet',
   'openai-gpt-o3-mini',
 ];
 export const supportedLLmsForGroundTruthMetrics = [
-  'openai_gpt_3.5',
+  'openai_gpt_4.5',
   'openai_gpt_4',
   'openai_gpt_4o',
   'openai_gpt_4o_mini',
   'azure_ai_gpt_35',
   'azure_ai_gpt_4o',
   'groq_llama3_70b',
-  'anthropic_claude_3_5_sonnet',
+  'anthropic_claude_3_7_sonnet',
   'fireworks_llama_v3_70b',
   'bedrock_claude_3_5_sonnet',
   'openai-gpt-o3-mini',
@@ -130,17 +130,17 @@ export const chatModes =
         },
       ];
 
-export const chunkSize = process.env.VITE_CHUNK_SIZE ? parseInt(process.env.VITE_CHUNK_SIZE) : 1 * 1024 * 1024;
-export const tokenchunkSize = process.env.VITE_TOKENS_PER_CHUNK ? parseInt(process.env.VITE_TOKENS_PER_CHUNK) : 100;
-export const chunkOverlap = process.env.VITE_CHUNK_OVERLAP ? parseInt(process.env.VITE_CHUNK_OVERLAP) : 20;
-export const chunksToCombine = process.env.VITE_CHUNK_TO_COMBINE ? parseInt(process.env.VITE_CHUNK_TO_COMBINE) : 1;
+export const chunkSize = process.env.VITE_CHUNK_SIZE ? Number(process.env.VITE_CHUNK_SIZE) : 1 * 1024 * 1024;
+export const tokenchunkSize = process.env.VITE_TOKENS_PER_CHUNK ? Number(process.env.VITE_TOKENS_PER_CHUNK) : 100;
+export const chunkOverlap = process.env.VITE_CHUNK_OVERLAP ? Number(process.env.VITE_CHUNK_OVERLAP) : 20;
+export const chunksToCombine = process.env.VITE_CHUNK_TO_COMBINE ? Number(process.env.VITE_CHUNK_TO_COMBINE) : 1;
 export const defaultTokenChunkSizeOptions = [50, 100, 200, 400, 1000];
 export const defaultChunkOverlapOptions = [10, 20, 30, 40, 50];
 export const defaultChunksToCombineOptions = [1, 2, 3, 4, 5, 6];
-export const timeperpage = process.env.VITE_TIME_PER_PAGE ? parseInt(process.env.VITE_TIME_PER_PAGE) : 50;
+export const timeperpage = process.env.VITE_TIME_PER_PAGE ? Number(process.env.VITE_TIME_PER_PAGE) : 50;
 export const timePerByte = 0.2;
 export const largeFileSize = process.env.VITE_LARGE_FILE_SIZE
-  ? parseInt(process.env.VITE_LARGE_FILE_SIZE)
+  ? Number(process.env.VITE_LARGE_FILE_SIZE)
   : 5 * 1024 * 1024;
 
 export const tooltips = {
@@ -237,7 +237,7 @@ export const RETRY_OPIONS = [
   'delete_entities_and_start_from_beginning',
   'start_from_last_processed_position',
 ];
-export const batchSize: number = parseInt(process.env.VITE_BATCH_SIZE ?? '2');
+export const batchSize: number = Number(process.env.VITE_BATCH_SIZE ?? '2');
 
 // Graph Constants
 export const document = `+ [docs]`;
