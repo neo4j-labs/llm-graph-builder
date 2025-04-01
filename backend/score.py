@@ -399,10 +399,11 @@ async def magic_trek_chat_bot(
     #   test switching the model
 
     ## added by ian
-    mode = "graph_vector_fulltext" ## added by ian
-    uri = "neo4j+s://1eeea795.databases.neo4j.io"
+    # mode = "graph_vector_fulltext" ## added by ian
+    mode = "graph_vector" ## changed by ian from graph_vector_fulltext to graph_vector april 1, 2025
+    uri = "neo4j+s://939cd2a2.databases.neo4j.io"
     userName = "neo4j"
-    password = "BhuaeBNSCPh_aouTyIyiyMhMeRC55DZHBr1_0vfM2Pg"
+    password = "4SG1SUwI22yLo6DMNkRZe1ItvGp778LIEFpCE_aOEL0"
     database = "neo4j"
     # model = "openai_gpt_3.5" # changed from this model by ian friday mar 21, 2025
     model = "openai_gpt_4o_mini" 
@@ -442,8 +443,11 @@ async def magic_trek_chat_bot(
         logging.info("printing tool calls in magic_trek_chat_bot")
         logging.info(result["tool_calls"])
         response = create_api_response('Success',data=result)
+        log_start = time.time()
         logging.info("response")
         logging.info(response)
+        log_time = time.time() - log_start
+        logging.info(f"Logging response took {log_time:.2f} seconds")
         return response
     except Exception as e:
         job_status = "Failed"
