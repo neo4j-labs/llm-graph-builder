@@ -207,6 +207,7 @@ async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowed
         allowedNodes = allowedNodes.split(',')    
     if  allowedRelationship is None or allowedRelationship=="":   
         allowedRelationship=[]
+        data = None
     else:
         data = json.loads(allowedRelationship)
     if isinstance(data, list) and data and isinstance(data[0], list):

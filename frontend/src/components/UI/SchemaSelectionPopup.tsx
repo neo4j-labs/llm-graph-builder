@@ -1,19 +1,9 @@
 import { Dialog, Button, LoadingSpinner } from '@neo4j-ndl/react';
 import PatternContainer from '../Popups/GraphEnhancementDialog/EnitityExtraction/PatternContainer';
-
-interface SchemaSelectionProps {
-    open: boolean,
-    onClose: () => void;
-    pattern: string[],
-    handleRemove: (pattern: string) => void,
-    handleSchemaView: (view?: string) => void,
-    loading: boolean,
-    highlightPattern?: string;
-    onApply: ()=>void;
-    onCancel:()=>void;
-}
+import { SchemaSelectionProps } from '../../types';
 
 const SchemaSelectionDialog = ({ open, onClose, pattern, handleRemove, handleSchemaView, loading, highlightPattern, onApply, onCancel }: SchemaSelectionProps) => {
+
     return (
         <Dialog
             size='medium'
@@ -28,12 +18,15 @@ const SchemaSelectionDialog = ({ open, onClose, pattern, handleRemove, handleSch
                         <LoadingSpinner size='large' />
                     </div>
 
-                ) : (<PatternContainer
-                    pattern={pattern}
-                    handleRemove={handleRemove}
-                    handleSchemaView={handleSchemaView}
-                    highlightPattern={highlightPattern ?? ''}
-                ></PatternContainer>)}
+                ) : (
+                    pattern.length !== 0 && (
+                        <PatternContainer
+                            pattern={pattern}
+                            handleRemove={handleRemove}
+                            handleSchemaView={handleSchemaView}
+                            highlightPattern={highlightPattern ?? ''}
+                        >
+                        </PatternContainer>))}
                 <Dialog.Actions className='mt-3'>
                     <Button onClick={onCancel} isDisabled={pattern.length === 0 || loading}>
                         Cancel

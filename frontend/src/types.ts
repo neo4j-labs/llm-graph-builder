@@ -154,6 +154,7 @@ export interface ContentProps {
   openChatBot: () => void;
   openTextSchema: () => void;
   openLoadSchema: () => void;
+  openPredefinedSchema: () => void;
   showEnhancementDialog: boolean;
   toggleEnhancementDialog: () => void;
   setOpenConnection: Dispatch<SetStateAction<connectionState>>;
@@ -631,17 +632,17 @@ export interface SpeechArgs {
   volume?: number;
 }
 
-export interface SettingsModalProps {
-  open: boolean;
-  onClose: () => void;
-  openTextSchema: () => void;
-  openLoadSchema: () => void;
-  onContinue?: () => void;
-  settingView: 'contentView' | 'headerView';
-  isSchema?: boolean;
-  setIsSchema: Dispatch<SetStateAction<boolean>>;
-  onClear?: () => void;
-}
+// export interface SettingsModalProps {
+//   open: boolean;
+//   onClose: () => void;
+//   openTextSchema: () => void;
+//   openLoadSchema: () => void;
+//   onContinue?: () => void;
+//   settingView: 'contentView' | 'headerView';
+//   isSchema?: boolean;
+//   setIsSchema: Dispatch<SetStateAction<boolean>>;
+//   onClear?: () => void;
+// }
 export interface Menuitems {
   id: string;
   title: string | JSX.Element;
@@ -856,6 +857,14 @@ export interface schemaLoadDialogType {
   show: boolean;
   onApply?: (selectedPattern: string[], nodes: OptionType[], rels: OptionType[]) => void;
 }
+
+export interface predefinedSchemaDialogType {
+  triggeredFrom: string;
+  show: boolean;
+  onApply?: (selectedPattern: string[], nodes: OptionType[], rels: OptionType[]) => void;
+}
+
+
 export interface FileContextType {
   files: (File | null)[] | [];
   filesData: CustomFile[] | [];
@@ -865,10 +874,6 @@ export interface FileContextType {
   setModel: Dispatch<SetStateAction<string>>;
   graphType: string;
   setGraphType: Dispatch<SetStateAction<string>>;
-  selectedNodes: readonly OptionType[] | OptionType[];
-  setSelectedNodes: Dispatch<SetStateAction<readonly OptionType[] | OptionType[]>>;
-  selectedRels: readonly OptionType[] | OptionType[];
-  setSelectedRels: Dispatch<SetStateAction<readonly OptionType[] | OptionType[]>>;
   selectedTokenChunkSize: number;
   setSelectedTokenChunkSize: Dispatch<SetStateAction<number>>;
   selectedChunk_overlap: number;
@@ -879,14 +884,10 @@ export interface FileContextType {
   setRowSelection: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   selectedRows: string[];
   setSelectedRows: React.Dispatch<React.SetStateAction<string[]>>;
-  selectedSchemas: readonly OptionType[];
-  setSelectedSchemas: Dispatch<SetStateAction<readonly OptionType[]>>;
   chatModes: string[];
   setchatModes: Dispatch<SetStateAction<string[]>>;
-  showTextFromSchemaDialog: showTextFromSchemaDialogType;
-  setShowTextFromSchemaDialog: React.Dispatch<React.SetStateAction<showTextFromSchemaDialogType>>;
-  schemaLoadDialog: schemaLoadDialogType;
-  setSchemaLoadDialog: React.Dispatch<React.SetStateAction<schemaLoadDialogType>>;
+  schemaView: string | string[];
+  setSchemaView: Dispatch<SetStateAction<string | string[]>>;
   postProcessingTasks: string[];
   setPostProcessingTasks: React.Dispatch<React.SetStateAction<string[]>>;
   queue: Queue<CustomFile>;
@@ -897,24 +898,49 @@ export interface FileContextType {
   setPostProcessingVal: Dispatch<SetStateAction<boolean>>;
   additionalInstructions: string;
   setAdditionalInstructions: Dispatch<SetStateAction<string>>;
+  //all nodes and all patterns
   allPatterns: string[];
   setAllPatterns: Dispatch<SetStateAction<string[]>>;
-  schemaTextPattern: string[];
-  setSchemaTextPattern: Dispatch<SetStateAction<string[]>>;
+  selectedNodes: readonly OptionType[] | OptionType[];
+  setSelectedNodes: Dispatch<SetStateAction<readonly OptionType[] | OptionType[]>>;
+  selectedRels: readonly OptionType[] | OptionType[];
+  setSelectedRels: Dispatch<SetStateAction<readonly OptionType[] | OptionType[]>>;
+  selectedSchemas: readonly OptionType[];
+  setSelectedSchemas: Dispatch<SetStateAction<readonly OptionType[]>>;
+  // user defined schema
+  userDefinedNodes: OptionType[] | OptionType[];
+  setUserDefinedNodes: Dispatch<SetStateAction<OptionType[] | OptionType[]>>;
+  userDefinedRels: OptionType[] | OptionType[];
+  setUserDefinedRels: Dispatch<SetStateAction<OptionType[] | OptionType[]>>;
   userDefinedPattern: string[];
   setUserDefinedPattern: Dispatch<SetStateAction<string[]>>;
-  dbPattern: string[];
-  setDbPattern: Dispatch<SetStateAction<string[]>>;
-  schemaValNodes: OptionType[] | OptionType[];
-  setSchemaValNodes: Dispatch<SetStateAction<OptionType[] | OptionType[]>>;
-  schemaValRels: OptionType[] | OptionType[];
-  setSchemaValRels: Dispatch<SetStateAction<OptionType[] | OptionType[]>>;
+  //Load Existing schema from db
+  schemaLoadDialog: schemaLoadDialogType;
+  setSchemaLoadDialog: React.Dispatch<React.SetStateAction<schemaLoadDialogType>>;
   dbNodes: OptionType[] | OptionType[];
   setDbNodes: Dispatch<SetStateAction<OptionType[] | OptionType[]>>;
   dbRels: OptionType[] | OptionType[];
   setDbRels: Dispatch<SetStateAction<OptionType[] | OptionType[]>>;
-  schemaView: string | string[];
-  setSchemaView: Dispatch<SetStateAction<string | string[]>>;
+  dbPattern: string[];
+  setDbPattern: Dispatch<SetStateAction<string[]>>;
+  //Predefined schema 
+  predefinedSchemaDialog: predefinedSchemaDialogType;
+  setPredefinedSchemaDialog: React.Dispatch<React.SetStateAction<predefinedSchemaDialogType>>;
+  preDefinedNodes: OptionType[] | OptionType[];
+  setPreDefinedNodes: Dispatch<SetStateAction<OptionType[] | OptionType[]>>;
+  preDefinedRels: OptionType[] | OptionType[];
+  setPreDefinedRels: Dispatch<SetStateAction<OptionType[] | OptionType[]>>;
+  preDefinedPattern: string[];
+  setPreDefinedPattern: Dispatch<SetStateAction<string[]>>;
+  // schema from text
+  showTextFromSchemaDialog: showTextFromSchemaDialogType;
+  setShowTextFromSchemaDialog: React.Dispatch<React.SetStateAction<showTextFromSchemaDialogType>>;
+  schemaValNodes: OptionType[] | OptionType[];
+  setSchemaValNodes: Dispatch<SetStateAction<OptionType[] | OptionType[]>>;
+  schemaValRels: OptionType[] | OptionType[];
+  setSchemaValRels: Dispatch<SetStateAction<OptionType[] | OptionType[]>>;
+  schemaTextPattern: string[];
+  setSchemaTextPattern: Dispatch<SetStateAction<string[]>>;
 }
 export declare type Side = 'top' | 'right' | 'bottom' | 'left';
 
@@ -1000,15 +1026,11 @@ export interface HeaderProp {
 
 
 export type TupleCreationProps = {
-  defaultExamples: OptionType[];
-  onChangeSchema: (selectedOptions: OnChangeValue<OptionType, true>, actionMeta: ActionMeta<OptionType>) => void;
-  selectedSchemas: readonly OptionType[];
   selectedSource: OptionType | null;
   selectedType: OptionType | null;
   selectedTarget: OptionType | null;
   onPatternChange: (source: OptionType | OptionType[], type: OptionType | OptionType[], target: OptionType | OptionType[]) => void;
   onAddPattern: () => void;
-  onClearSelection: () => void;
   selectedTupleOptions: readonly OptionType[];
 };
 
@@ -1018,6 +1040,7 @@ export interface TupleType {
   source: string,
   target: string,
   type: string,
+  sourceType?: string
 }
 
 export interface SchemaViewModalProps {
@@ -1035,3 +1058,16 @@ export type UserDefinedGraphSchema = {
   relationships: ExtendedRelationship[];
   scheme: Scheme;
 };
+
+export interface SchemaSelectionProps {
+  open: boolean,
+  onClose: () => void;
+  pattern: string[],
+  handleRemove: (pattern: string) => void,
+  handleSchemaView: (view?: string) => void,
+  loading: boolean,
+  highlightPattern?: string;
+  onApply: () => void;
+  onCancel: () => void;
+  view?: string;
+}

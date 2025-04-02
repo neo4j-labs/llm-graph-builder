@@ -1,5 +1,5 @@
 import { Checkbox, Dialog, TextArea, Button } from '@neo4j-ndl/react';
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState } from 'react';
 import { getNodeLabelsAndRelTypesFromText } from '../../../services/SchemaFromTextAPI';
 import { useCredentials } from '../../../context/UserCredentials';
 import { useFileContext } from '../../../context/UsersFiles';
@@ -97,15 +97,6 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
   //   }
   // }, [userCredentials, userText, isSchemaText]);
 
-  useEffect(() => {
-    if (textRelationshipSchema.length > 0) {
-      setSchemaPattern(textRelationshipSchema.map((rel) => rel.value));
-      updateLocalStorage(userCredentials!!, 'textNodeSchema', textNodeSchema);
-      updateLocalStorage(userCredentials!!, 'selectedRelationshipLabels', textRelationshipSchema);
-    }
-
-  }, [textRelationshipSchema, textNodeSchema]);
-
   const clickHandler = useCallback(async () => {
     setLoading(true);
     try {
@@ -131,6 +122,7 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
         const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(schemaTuples);
         setTextNodeSchema(nodeLabelOptions);
         setTextRelationshipSchema(relationshipTypeOptions);
+        setSchemaPattern(schemaTuples.map(t => t.label));
         if (nodeLabelOptions.length && relationshipTypeOptions.length) {
           showSuccessToast(
             `Successfully Created ${nodeLabelOptions.length} Node labels and ${relationshipTypeOptions.length} Relationship labels`

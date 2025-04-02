@@ -3,7 +3,6 @@ import { GraphType, OptionType } from '../types';
 import { getDateTime, getDescriptionForChatMode } from './Utils';
 import chatbotmessages from '../assets/ChatbotMessages.json';
 import schemaExamples from '../assets/newSchema.json';
-
 export const APP_SOURCES =
   process.env.VITE_REACT_APP_SOURCES !== ''
     ? (process.env.VITE_REACT_APP_SOURCES?.split(',') as string[])
@@ -171,6 +170,7 @@ export const tooltips = {
   downloadChat: 'Download Conversation',
   visualizeGraph: 'Visualize Graph Schema',
   additionalInstructions: 'Analyze instructions for schema',
+  predinedSchema: 'Predefined Schema.',
 };
 export const PRODMODLES = ['openai_gpt_4o', 'openai_gpt_4o_mini', 'diffbot', 'gemini_1.5_flash'];
 export const buttonCaptions = {
@@ -361,26 +361,14 @@ export const LLMDropdownLabel = {
   disabledModels: 'Disabled models are available in the development version. Access more models in our ',
   devEnv: 'development environment',
 };
-export const getDefaultSchemaExamples = () =>
-  schemaExamples.reduce((accu: OptionType[], example) => {
-    const parsedTriplets = example.triplet.map((triplet) => {
-      const [source, type, target] = triplet.split(/-([A-Z_]+)->/);
-      return { source, type, target };
-    });
-    const exampleValues: OptionType = {
-      label: example.schema,
-      value: JSON.stringify({
-        nodelabels: Array.from(
-          new Set(parsedTriplets.flatMap(({ source, target }) => [source, target]))
-        ),
-        relationshipTypes: Array.from(
-          new Set(parsedTriplets.map(({ type }) => type))
-        ),
-      }),
-    };
-    accu.push(exampleValues);
-    return accu;
-  }, []);
+export const getDefaultSchemaExamples = () => {
+  return schemaExamples.map((example) => ({
+    label: example.schema,
+    value: JSON.stringify(example.triplet)
+  })
+  )
+};
+
 export function mergeNestedObjects(objects: Record<string, Record<string, number>>[]) {
   return objects.reduce((merged, obj) => {
     for (const key in obj) {

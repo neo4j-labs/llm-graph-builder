@@ -12,11 +12,11 @@ interface LoadExistingSchemaDialogProps {
     onClose: () => void;
     onApply: (patterns: string[], nodeLabels: OptionType[], relationshipLabels: OptionType[], view: string) => void;
 }
-export default function LoadExistingSchemaDialog({
+const LoadExistingSchemaDialog = ({
     open,
     onClose,
     onApply
-}: LoadExistingSchemaDialogProps) {
+}: LoadExistingSchemaDialogProps) => {
     const [loading, setLoading] = useState<boolean>(false);
     const { userCredentials } = useCredentials();
     const { setDbPattern, dbPattern } = useFileContext();
@@ -52,10 +52,10 @@ export default function LoadExistingSchemaDialog({
                 .filter(Boolean) as TupleType[];
             const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(schemaTuples);
             setDbNodeSchema(nodeLabelOptions);
-            setDbRelationshipSchema(relationshipTypeOptions);;
-            setDbPattern(relationshipTypeOptions.map((rel) => rel.value));
-            updateLocalStorage(userCredentials!!, 'selectedNodeLabels', nodeLabelOptions);
-            updateLocalStorage(userCredentials!!, 'selectedRelationshipLabels', relationshipTypeOptions);
+            setDbRelationshipSchema(relationshipTypeOptions);
+            setDbPattern(schemaTuples.map(t => t.label));
+            // updateLocalStorage(userCredentials!!, 'selectedNodeLabels', nodeLabelOptions);
+            // updateLocalStorage(userCredentials!!, 'selectedRelationshipLabels', relationshipTypeOptions);
         } catch (error) {
             console.error('Error fetching schema options:', error);
         } finally {
@@ -106,3 +106,5 @@ export default function LoadExistingSchemaDialog({
 
     );
 }
+
+export default LoadExistingSchemaDialog;

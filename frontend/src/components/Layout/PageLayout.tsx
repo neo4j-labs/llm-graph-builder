@@ -20,7 +20,8 @@ import { showErrorToast } from '../../utils/Toasts';
 import { APP_SOURCES } from '../../utils/Constants';
 import { createDefaultFormData } from '../../API/Index';
 import { updateLocalStorage } from '../../utils/Utils';
-import LoadExistingSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/LoadExistingSchema'
+import LoadExistingSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/LoadExistingSchema';
+import PredefinedSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/PredefinedSchemaDialog';
 
 const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
 const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
@@ -206,8 +207,8 @@ const PageLayout: React.FC = () => {
   );
   const { messages, setClearHistoryData, clearHistoryData, setMessages, setIsDeleteChatLoading } = useMessageContext();
   const { setShowTextFromSchemaDialog, showTextFromSchemaDialog, setSchemaTextPattern,
-     schemaLoadDialog, setSchemaLoadDialog , setDbPattern, setSchemaValNodes,
-     setSchemaValRels, setDbNodes,setDbRels, setSchemaView} = useFileContext();
+    schemaLoadDialog, setSchemaLoadDialog, setPredefinedSchemaDialog, setDbPattern, setSchemaValNodes, predefinedSchemaDialog,
+    setSchemaValRels, setDbNodes, setDbRels, setSchemaView, setPreDefinedNodes, setPreDefinedRels, } = useFileContext();
   const { userCredentials } = useCredentials();
   const { cancel } = useSpeechSynthesis();
   const { setActiveSpotlight } = useSpotlightContext();
@@ -323,10 +324,10 @@ const PageLayout: React.FC = () => {
     }
   };
 
-  const handleApplyPatternsFromText = (newPatterns: string[], nodes:OptionType[], rels:OptionType[], view:string) => {
+  const handleApplyPatternsFromText = (newPatterns: string[], nodes: OptionType[], rels: OptionType[], view: string) => {
     setSchemaTextPattern((prevPatterns: string[]) => {
       const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
-      updateLocalStorage(userCredentials!!, 'selectedTuplePatterns', uniquePatterns);
+      // updateLocalStorage(userCredentials!!, 'selectedTuplePatterns', uniquePatterns);
       return uniquePatterns;
     });
     setShowTextFromSchemaDialog({
@@ -335,22 +336,37 @@ const PageLayout: React.FC = () => {
     })
     setSchemaValNodes(nodes);
     setSchemaValRels(rels);
-    setSchemaView(view);
+    setSchemaView('text');
   };
 
-  const handleDbApply = (newPatterns: string[],nodes:OptionType[], rels:OptionType[], view:string) => {
+  const handleDbApply = (newPatterns: string[], nodes: OptionType[], rels: OptionType[], view: string) => {
     setDbPattern((prevPatterns: string[]) => {
       const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
-      updateLocalStorage(userCredentials!!, 'selectedTuplePatterns', uniquePatterns);
+      // updateLocalStorage(userCredentials!!, 'selectedTuplePatterns', uniquePatterns);
       return uniquePatterns;
     });
     setSchemaLoadDialog({
       triggeredFrom: 'loadExistingSchemaApply',
       show: true,
     })
-    setSchemaView(view);
+    setSchemaView('db');
     setDbNodes(nodes);
     setDbRels(rels);
+  };
+
+  const handlePredinedApply = (newPatterns: string[], nodes: OptionType[], rels: OptionType[]) => {
+    setDbPattern((prevPatterns: string[]) => {
+      const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
+      // updateLocalStorage(userCredentials!!, 'selectedTuplePatterns', uniquePatterns);
+      return uniquePatterns;
+    });
+    setPredefinedSchemaDialog({
+      triggeredFrom: 'predefinedSchemaApply',
+      show: true,
+    })
+    setSchemaView('preDefined');
+    setPreDefinedNodes(nodes);
+    setPreDefinedRels(rels);
   };
 
   return (
@@ -426,6 +442,20 @@ const PageLayout: React.FC = () => {
         }}
         onApply={handleDbApply}
       />
+      <PredefinedSchemaDialog
+        open={predefinedSchemaDialog.show}
+        onClose={() => {
+          setPredefinedSchemaDialog({ triggeredFrom: '', show: false });
+          switch (predefinedSchemaDialog.triggeredFrom) {
+            case 'enhancementtab':
+              toggleEnhancementDialog();
+              break;
+            default:
+              break;
+          }
+        }}
+        onApply={handlePredinedApply}
+      ></PredefinedSchemaDialog>
       {isLargeDesktop ? (
         <div
           className={`layout-wrapper ${!isLeftExpanded ? 'drawerdropzoneclosed' : ''} ${!isRightExpanded ? 'drawerchatbotclosed' : ''
@@ -458,6 +488,9 @@ const PageLayout: React.FC = () => {
             }}
             openLoadSchema={() => {
               setSchemaLoadDialog({ triggeredFrom: 'loadDialog', show: true });
+            }}
+            openPredefinedSchema={() => {
+              setPredefinedSchemaDialog({ triggeredFrom: 'predefinedDialog', show: true });
             }}
             showEnhancementDialog={showEnhancementDialog}
             toggleEnhancementDialog={toggleEnhancementDialog}
@@ -520,10 +553,13 @@ const PageLayout: React.FC = () => {
               openChatBot={() => setShowChatBot(true)}
               showChatBot={showChatBot}
               openTextSchema={() => {
-                setShowTextFromSchemaDialog({ triggeredFrom: 'schemadialog', show: true });
+                setShowTextFromSchemaDialog({ triggeredFrom: 'schemaDialog', show: true });
               }}
               openLoadSchema={() => {
                 setShowTextFromSchemaDialog({ triggeredFrom: 'loadDialog', show: true });
+              }}
+              openPredefinedSchema={() => {
+                setPredefinedSchemaDialog({ triggeredFrom: 'prdefinedDialog', show: true })
               }}
               showEnhancementDialog={showEnhancementDialog}
               toggleEnhancementDialog={toggleEnhancementDialog}

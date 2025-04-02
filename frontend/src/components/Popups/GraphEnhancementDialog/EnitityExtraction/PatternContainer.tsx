@@ -56,15 +56,16 @@ const PatternContainer = ({pattern, handleRemove, handleSchemaView, highlightPat
             </div>
             <div className="flex flex-col gap-4 mt-4">
                 <div className="relative patternContainer border p-4 rounded-md shadow-sm">
-                    <div className="sticky top-0 right-0 flex justify-end z-10 pb-2 ">
+                    <div className="top-0 right-0 flex justify-end z-10 pb-2 ">
                         <ButtonWithToolTip
                             label={'Graph Schema'}
                             text={tooltips.visualizeGraph}
                             placement="top"
                             fill="outlined"
                             onClick={handleSchemaView}
+                            size='small'
                         >
-                            <ExploreIcon className='n-size-token-7'/>
+                            <ExploreIcon className='n-size-token-6'/>
                         </ButtonWithToolTip>
                     </div>
                     <div className="flex flex-wrap gap-2">

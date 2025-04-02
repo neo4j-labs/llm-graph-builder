@@ -5,7 +5,8 @@ import {
   FileContextType,
   OptionType,
   showTextFromSchemaDialogType,
-  schemaLoadDialogType
+  schemaLoadDialogType,
+  predefinedSchemaDialogType
 } from '../types';
 import {
   chatModeLables,
@@ -35,7 +36,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const { userCredentials } = useCredentials();
   const [files, setFiles] = useState<(File | null)[] | []>([]);
   const [filesData, setFilesData] = useState<CustomFile[] | []>([]);
-  const [queue, setQueue] = useState<Queue>(
+  const [queue, setQueue] = useState<Queue<any>>(
     new Queue(JSON.parse(persistedQueue ?? JSON.stringify({ queue: [] })).queue)
   );
   const [model, setModel] = useState<string>(isProdDefaultModel ? selectedModel : isProdEnv ? PRODMODLES[0] : llms[0]);
@@ -49,14 +50,21 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [chatModes, setchatModes] = useState<string[]>([chatModeLables['graph+vector+fulltext']]);
-  const [showTextFromSchemaDialog, setShowTextFromSchemaDialog] = useState<schemaLoadDialogType>({
+
+  const [showTextFromSchemaDialog, setShowTextFromSchemaDialog] = useState<showTextFromSchemaDialogType>({
     triggeredFrom: '',
     show: false,
   });
-  const [schemaLoadDialog, setSchemaLoadDialog] = useState<showTextFromSchemaDialogType>({
+  const [schemaLoadDialog, setSchemaLoadDialog] = useState<schemaLoadDialogType>({
     triggeredFrom: '',
     show: false,
   });
+
+  const [predefinedSchemaDialog, setPredefinedSchemaDialog,] = useState<predefinedSchemaDialogType>({
+    triggeredFrom: '',
+    show: false,
+  });
+
   const [postProcessingTasks, setPostProcessingTasks] = useState<string[]>([
     'materialize_text_chunk_similarities',
     'enable_hybrid_search_and_fulltext_search_in_bloom',
@@ -74,7 +82,12 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [schemaValRels, setSchemaValRels] = useState<OptionType[]>([]);
   const [dbNodes, setDbNodes] = useState<OptionType[]>([]);
   const [dbRels, setDbRels] = useState<OptionType[]>([]);
-  const [schemaView, setSchemaView]= useState<string | string[]>('');
+  const [schemaView, setSchemaView] = useState<string | string[]>('');
+  const [preDefinedNodes, setPreDefinedNodes] = useState<OptionType[]>([]);
+  const [preDefinedRels, setPreDefinedRels] = useState<OptionType[]>([]);
+  const [userDefinedNodes, setUserDefinedNodes,] = useState<OptionType[]>([]);
+  const [userDefinedRels, setUserDefinedRels,] = useState<OptionType[]>([]);
+  const [preDefinedPattern, setPreDefinedPattern] = useState<string[]>([]);
 
   useEffect(() => {
     if (selectedNodeLabelstr != null) {
@@ -148,22 +161,22 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     setAdditionalInstructions,
     schemaTextPattern,
     setSchemaTextPattern,
-    userDefinedPattern,
-    setUserDefinedPattern,
-    dbPattern, 
-    setDbPattern,
     allPatterns,
     setAllPatterns,
-    schemaLoadDialog, 
-    setSchemaLoadDialog,
-    schemaValRels,
-    setSchemaValRels,
-    schemaValNodes,
-    setSchemaValNodes,
+    schemaValRels, setSchemaValRels,
+    schemaValNodes, setSchemaValNodes,
+    schemaLoadDialog, setSchemaLoadDialog,
     dbNodes, setDbNodes,
     dbRels, setDbRels,
-    schemaView, setSchemaView
-    
+    dbPattern, setDbPattern,
+    predefinedSchemaDialog, setPredefinedSchemaDialog,
+    preDefinedNodes, setPreDefinedNodes,
+    preDefinedRels, setPreDefinedRels,
+    preDefinedPattern, setPreDefinedPattern,
+    schemaView, setSchemaView,
+    userDefinedNodes, setUserDefinedNodes,
+    userDefinedRels, setUserDefinedRels,
+    userDefinedPattern, setUserDefinedPattern,
   };
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };

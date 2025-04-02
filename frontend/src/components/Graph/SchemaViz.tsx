@@ -181,7 +181,7 @@ const SchemaViz: React.FunctionComponent<SchemaViewModalProps> = ({
       setLoading(true);
       const { nodes, relationships, scheme } = userDefinedGraphSchema(
         (nodeValues as OptionType[]) ?? [],
-        (relationshipValues as string[]) ?? []
+        (relationshipValues as OptionType[]) ?? []
       );
       setAllNodes(nodes);
       setAllRelationships(relationships);

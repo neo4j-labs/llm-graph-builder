@@ -1,5 +1,5 @@
 import React from 'react';
-import { Select, Tag } from '@neo4j-ndl/react';
+import { Select } from '@neo4j-ndl/react';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
 import { OptionType, TupleCreationProps } from '../../../../types';
 import { appLabels } from '../../../../utils/Constants';
@@ -17,9 +17,6 @@ const targetOptions: PatternOption[] = [
     { label: 'Company', value: 'Company' },
 ];
 const GraphPattern: React.FC<TupleCreationProps> = ({
-    defaultExamples,
-    onChangeSchema,
-    selectedSchemas,
     selectedSource,
     selectedType,
     selectedTarget,
@@ -28,24 +25,6 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
 }) => {
     return (
         <div className='bg-white rounded-lg shadow-md'>
-            <div className='flex align-self-center justify-center'>
-                <h5>{appLabels.predefinedSchema}</h5>
-            </div>
-            <Select
-                helpText='Schema Examples'
-                label='Predefined Schema'
-                size='medium'
-                selectProps={{
-                    isClearable: true,
-                    isMulti: true,
-                    options: defaultExamples,
-                    onChange: onChangeSchema,
-                    value: selectedSchemas,
-                    menuPosition: 'fixed',
-                }}
-                type='select'
-                isDisabled={true}
-            />
             <div className='flex align-self-center justify-center'>
                 <h5>{appLabels.graphPatternTuple}</h5>
             </div>
