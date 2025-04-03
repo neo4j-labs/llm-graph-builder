@@ -74,7 +74,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
   const { connectionStatus, setConnectionStatus, onInspect, onRetry, onChunkView } = props;
   const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } =
     useFileContext();
-  const { userCredentials, isReadOnlyUser } = useCredentials();
+  const { userCredentials, isReadOnlyUser, isNeo4jUser } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -1020,7 +1020,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                       </Flex>
                     </DataGridComponents.TableResults>
                   );
-                } else if (connectionStatus) {
+                } else if (connectionStatus && !isNeo4jUser) {
                   return (
                     <DataGridComponents.TableResults>
                       <Flex flexDirection='row' gap='0' alignItems='center'>

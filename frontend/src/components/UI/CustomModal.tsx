@@ -1,6 +1,6 @@
 import { Banner, Button, Dialog } from '@neo4j-ndl/react';
-import { CustomModalProps } from '../types';
-import { buttonCaptions } from '../utils/Constants';
+import { CustomModalProps } from '../../types';
+import { buttonCaptions } from '../../utils/Constants';
 
 const CustomModal: React.FC<CustomModalProps> = ({
   open,
