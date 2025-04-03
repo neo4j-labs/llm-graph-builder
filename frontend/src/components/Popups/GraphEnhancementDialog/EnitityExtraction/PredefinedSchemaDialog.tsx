@@ -17,7 +17,8 @@ interface SchemaFromTextProps {
 
 const PredefinedSchemaDialog = ({ open, onClose, onApply }: SchemaFromTextProps) => {
     const defaultExamples = useMemo(() => getDefaultSchemaExamples(), []);
-    const { setPreDefinedPattern, preDefinedPattern, preDefinedNodes, setPreDefinedNodes,preDefinedRels, setPreDefinedRels } = useFileContext();
+    const { userCredentials } = useCredentials();
+    const { setPreDefinedPattern, preDefinedPattern, preDefinedNodes, setPreDefinedNodes, preDefinedRels, setPreDefinedRels } = useFileContext();
     const [selectedPreDefOption, setSelectedPreDefOption] = useState<readonly OptionType[]>([]);
     const [openGraphView, setOpenGraphView] = useState<boolean>(false);
     const [viewPoint, setViewPoint] = useState<string>('');
@@ -43,7 +44,6 @@ const PredefinedSchemaDialog = ({ open, onClose, onApply }: SchemaFromTextProps)
             setPreDefinedRels(relationshipTypeOptions);
         }
         setSelectedPreDefOption(selectedOptions);
-        //updateLocalStorage(userCredentials!!, 'selectedSchemas', selectedOptions);
     };
 
     const handleSchemaView = () => {
@@ -54,13 +54,16 @@ const PredefinedSchemaDialog = ({ open, onClose, onApply }: SchemaFromTextProps)
     };
 
     const handlePreDefinedSchemaApply = () => {
-        onApply(preDefinedPattern, preDefinedNodes, preDefinedRels, 'preDefined')
+        onApply(preDefinedPattern, preDefinedNodes, preDefinedRels, 'preDefined');
+        updateLocalStorage(userCredentials!!, 'preDefinedNodeLabels', preDefinedNodes);
+        updateLocalStorage(userCredentials!!, 'preDefinedRelationshipLabels', preDefinedRels);
+        updateLocalStorage(userCredentials!!, 'preDefinedPatterns', preDefinedPattern);
         onClose();
     }
 
     const handleCancel = () => {
-        setPreDefinedPattern([]);
         setSelectedPreDefOption([]);
+        setPreDefinedPattern([]);
         setPreDefinedNodes([]);
         setPreDefinedRels([]);
         onClose();

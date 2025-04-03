@@ -1,62 +1,33 @@
-import {Tag } from '@neo4j-ndl/react';
+import { Tag } from '@neo4j-ndl/react';
 import { appLabels, tooltips } from '../../../../utils/Constants';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
 import { ExploreIcon } from '@neo4j-ndl/react/icons';
 import { OptionType } from '../../../../types';
+import { useHasSelections } from '../../../../hooks/useHasSelections';
 
 interface PatternContainerProps {
     pattern: string[],
     handleRemove: (pattern: string) => void,
     handleSchemaView: (view?: string) => void,
-    highlightPattern?:string
-    nodes?:OptionType[];
-    rels?:OptionType[];
+    highlightPattern?: string
+    nodes?: OptionType[];
+    rels?: OptionType[];
 }
 
 
-const PatternContainer = ({pattern, handleRemove, handleSchemaView, highlightPattern, nodes, rels}: PatternContainerProps) => {
+const PatternContainer = ({ pattern, handleRemove, handleSchemaView, highlightPattern, nodes, rels }: PatternContainerProps) => {
+    const hasSelections = useHasSelections(nodes ?? [], rels ?? []);
     return (
-        // <div className='h-full'>
-        //     <div className='flex align-self-center justify-center border'>
-        //         <h5>{appLabels.selectedPatterns}</h5>
-        //     </div>
-        //     <div className='flex items-start gap-4 mt-4'>
-        //         <div className='flex flex-wrap gap-2 patternContainer'>
-        //             {pattern.map((pattern) => (
-        //                 <Tag
-        //                     key={pattern}
-        //                     onRemove={() => handleRemove(pattern)}
-        //                     isRemovable={true}
-        //                     type='default'
-        //                     size='medium'
-        //                     className={`rounded-full px-4 py-1 shadow-sm transition-all duration-300 ${pattern === highlightPattern ? 'animate-highlight' : ''
-        //                         }`}
-        //                 >
-        //                     {pattern}
-        //                 </Tag>
-        //             ))}
-        //         </div>
-        //         <div className='flex-shrink-0 items-end m-auto'>
-        //             <ButtonWithToolTip
-        //                 label={'Graph Schema'}
-        //                 text={tooltips.visualizeGraph}
-        //                 placement='top'
-        //                 fill='outlined'
-        //                 onClick={handleSchemaView}
-        //                 className='ml-4'
-        //             >
-        //                 <Hierarchy1Icon />
-        //             </ButtonWithToolTip>
-        //         </div>
-        //     </div>
-        // </div>
-     <div className="h-full">
+        <div className="h-full">
             <div className="flex align-self-center justify-center border">
                 <h5>{appLabels.selectedPatterns}</h5>
             </div>
             <div className="flex flex-col gap-4 mt-4">
                 <div className="relative patternContainer border p-4 rounded-md shadow-sm">
                     <div className="top-0 right-0 flex justify-end z-10 pb-2 ">
+                        <span className='n-body-small p-1'>
+                            {hasSelections ? `${nodes?.length} Node & ${rels?.length} Relationship` : ''}
+                        </span>
                         <ButtonWithToolTip
                             label={'Graph Schema'}
                             text={tooltips.visualizeGraph}
@@ -65,7 +36,7 @@ const PatternContainer = ({pattern, handleRemove, handleSchemaView, highlightPat
                             onClick={handleSchemaView}
                             size='small'
                         >
-                            <ExploreIcon className='n-size-token-6'/>
+                            <ExploreIcon className='n-size-token-6' />
                         </ButtonWithToolTip>
                     </div>
                     <div className="flex flex-wrap gap-2">

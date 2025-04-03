@@ -1024,6 +1024,10 @@ export interface HeaderProp {
   showBackButton?: boolean;
 }
 
+export type PatternOption = {
+  label: string;
+  value: string;
+};
 
 export type TupleCreationProps = {
   selectedSource: OptionType | null;

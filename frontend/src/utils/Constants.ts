@@ -1,5 +1,5 @@
 import { NvlOptions } from '@neo4j-nvl/base';
-import { GraphType, OptionType } from '../types';
+import { GraphType, OptionType,PatternOption } from '../types';
 import { getDateTime, getDescriptionForChatMode } from './Utils';
 import chatbotmessages from '../assets/ChatbotMessages.json';
 import schemaExamples from '../assets/newSchema.json';
@@ -399,3 +399,14 @@ export const metricsinfo: Record<string, string> = {
 };
 export const EXPIRATION_DAYS = 3;
 export const SKIP_AUTH = (process.env.VITE_SKIP_AUTH ?? 'true') == 'true';
+
+
+export const sourceOptions: PatternOption[] = [
+    { label: 'Person', value: 'Person' },
+];
+export const typeOptions: PatternOption[] = [
+    { label: 'WORKS_FOR', value: 'WORKS_FOR' },
+];
+export const targetOptions: PatternOption[] = [
+    { label: 'Company', value: 'Company' },
+];

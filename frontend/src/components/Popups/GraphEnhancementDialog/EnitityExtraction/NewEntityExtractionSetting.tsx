@@ -130,12 +130,12 @@ export default function NewEntityExtractionSetting({
     if (view === 'Tabs' && closeEnhanceGraphSchemaDialog != undefined) {
       closeEnhanceGraphSchemaDialog();
     }
-    // updateLocalStorage(userCredentials!!, 'selectedNodeLabels', nodeLables);
-    // updateLocalStorage(userCredentials!!, 'selectedRelationshipLabels', relationshipLabels);
-    // updateLocalStorage(userCredentials!!, 'selectedPatterns', pattern);
     setAllPatterns(pattern);
     setSelectedNodes(nodeLables);
     setSelectedRels(relationshipLabels);
+    updateLocalStorage(userCredentials!!, 'selectedNodeLabels', nodeLables);
+    updateLocalStorage(userCredentials!!, 'selectedRelationshipLabels', relationshipLabels);
+    updateLocalStorage(userCredentials!!, 'selectedPatterns', pattern);
   };
 
   const handleSchemaView = () => {
@@ -167,7 +167,6 @@ export default function NewEntityExtractionSetting({
         const alreadyExists = prev.includes(patternValue);
         if (!alreadyExists) {
           const updatedPattern = [patternValue, ...prev];
-          // updateLocalStorage(userCredentials!, 'selectedTuplePatterns', updatedPattern);
           return updatedPattern;
         }
         return prev;
@@ -176,7 +175,6 @@ export default function NewEntityExtractionSetting({
         const alreadyExists = prev.some((tuple) => tuple.value === relValue);
         if (!alreadyExists) {
           const updatedTupples = [relationshipOption, ...prev,];
-          // updateLocalStorage(userCredentials!, 'selectTupleOptions', updatedTupples);
           const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(updatedTupples);
           setUserDefinedNodes(nodeLabelOptions);
           setUserDefinedRels(relationshipTypeOptions);

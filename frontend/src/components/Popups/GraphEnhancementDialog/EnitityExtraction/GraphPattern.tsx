@@ -2,20 +2,8 @@ import React from 'react';
 import { Select } from '@neo4j-ndl/react';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
 import { OptionType, TupleCreationProps } from '../../../../types';
-import { appLabels } from '../../../../utils/Constants';
-type PatternOption = {
-    label: string;
-    value: string;
-};
-const sourceOptions: PatternOption[] = [
-    { label: 'Person', value: 'Person' },
-];
-const typeOptions: PatternOption[] = [
-    { label: 'WORKS_FOR', value: 'WORKS_FOR' },
-];
-const targetOptions: PatternOption[] = [
-    { label: 'Company', value: 'Company' },
-];
+import { appLabels, sourceOptions, targetOptions, typeOptions } from '../../../../utils/Constants';
+
 const GraphPattern: React.FC<TupleCreationProps> = ({
     selectedSource,
     selectedType,
@@ -23,7 +11,8 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
     onPatternChange,
     onAddPattern,
 }) => {
-    return (
+    const isDisabled = !selectedSource?.value.length || !selectedTarget?.value.length || !selectedType?.value.length;
+     return (
         <div className='bg-white rounded-lg shadow-md'>
             <div className='flex align-self-center justify-center'>
                 <h5>{appLabels.graphPatternTuple}</h5>
@@ -74,7 +63,7 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
                     onClick={onAddPattern}
                     label='Add Values'
                     size='medium'
-                    disabled={selectedSource?.value.length === 0 || selectedType?.value.length === 0 || selectedTarget?.value.length === 0}
+                    disabled={isDisabled}
                 >
                     + Add
                 </ButtonWithToolTip>
