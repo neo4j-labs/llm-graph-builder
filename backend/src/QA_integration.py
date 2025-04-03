@@ -8,6 +8,10 @@ from datetime import datetime
 from typing import Any
 from dotenv import load_dotenv
 
+# Set tokenizer parallelism to false to avoid warnings and deadlock
+# added by ian because of hugging face threading tokenizer deadlock warning
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 from langchain_neo4j import Neo4jVector
 from langchain_neo4j import Neo4jChatMessageHistory
 from langchain_neo4j import GraphCypherQAChain
