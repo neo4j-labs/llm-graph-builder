@@ -201,20 +201,13 @@ async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowed
     llm, model_name = get_llm(model)
     combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list, chunks_to_combine)
     
-    if  allowedNodes is None or allowedNodes=="":
-        allowedNodes =[]
+    allowedNodes = allowedNodes.split(',') if allowedNodes else []
+
+    if not allowedRelationship:
+        allowedRelationship = []
     else:
-        allowedNodes = allowedNodes.split(',')    
-    if  allowedRelationship is None or allowedRelationship=="":   
-        allowedRelationship=[]
-        data = None
-    else:
-        data = json.loads(allowedRelationship)
-    if isinstance(data, list) and data and isinstance(data[0], list):
-        allowedRelationship = [tuple(item) for item in data]
-    else:
-        allowedRelationship = data 
-        
+        items = allowedRelationship.split(',')
+        allowedRelationship = [tuple(items[i:i+3]) for i in range(0, len(items), 3)]
     graph_document_list = await get_graph_document_list(
         llm, combined_chunk_document_list, allowedNodes, allowedRelationship, additional_instructions
     )
