@@ -585,7 +585,7 @@ class graphDBdataAccess:
         param = {"file_name" : file_name}
         return self.execute_query(query, param)
     
-    def save_user_details(self,email, database):
+    def save_user_info(self,email, database):
         domain = "@neo4j.com"
         is_neo4j_user = domain in email
         write_access = self.check_account_access(database=database)

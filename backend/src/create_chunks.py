@@ -1,5 +1,6 @@
 from langchain_text_splitters import TokenTextSplitter
 from langchain.docstore.document import Document
+from src.entities.user import user_info
 from langchain_neo4j import Neo4jGraph
 import logging
 from src.document_sources.youtube import get_chunks_with_timestamps, get_calculated_timestamps
@@ -14,7 +15,7 @@ class CreateChunksofDocument:
         self.pages = pages
         self.graph = graph
 
-    def split_file_into_chunks(self,token_chunk_size, chunk_overlap, is_neo4j_user):
+    def split_file_into_chunks(self,token_chunk_size, chunk_overlap, user_obj: user_info):
         """
         Split a list of documents(file pages) into chunks of fixed size.
 
@@ -33,7 +34,7 @@ class CreateChunksofDocument:
             chunks = []
             for i, document in enumerate(self.pages):
                 page_number = i + 1
-                if not is_neo4j_user and len(chunks) >= chunk_to_be_created:
+                if user_obj.is_chunk_limit_applicable and (len(chunks) >= user_obj.chunk_limits or user_info.remaining_limit <= 0) or len(chunks) >= chunk_to_be_created:
                     break
                 else:
                     for chunk in text_splitter.split_documents([document]):
