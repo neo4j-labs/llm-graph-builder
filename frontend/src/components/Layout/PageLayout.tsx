@@ -319,12 +319,6 @@ const PageLayout: React.FC = () => {
 
   return (
     <>
-      {/* {!isAuthenticated && isFirstTimeUser && (
-        
-      )}
-      {isAuthenticated && isFirstTimeUser && (
-        
-      )} */}
       {!isAuthenticated && !SKIP_AUTH && isFirstTimeUser ? (
         <SpotlightTour
           spotlights={spotlightsforunauthenticated}
