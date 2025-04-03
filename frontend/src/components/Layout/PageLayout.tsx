@@ -334,7 +334,7 @@ const PageLayout: React.FC = () => {
             console.log(`Action ${action} was performed in spotlight ${target}`);
           }}
         />
-      ) : isAuthenticated || (SKIP_AUTH && isFirstTimeUser) ? (
+      ) : (isAuthenticated || SKIP_AUTH) && isFirstTimeUser ? (
         <SpotlightTour
           spotlights={spotlights}
           onAction={(target, action) => {
