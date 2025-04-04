@@ -23,7 +23,7 @@ const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
 const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
 const GenericModal = lazy(() => import('../WebSources/GenericSourceModal'));
 const ConnectionModal = lazy(() => import('../Popups/ConnectionModal/ConnectionModal'));
-
+import { SKIP_AUTH } from '../../utils/Constants';
 const spotlightsforunauthenticated = [
   {
     target: 'loginbutton',
@@ -280,7 +280,7 @@ const PageLayout: React.FC = () => {
       setActiveSpotlight('loginbutton');
     }
 
-    if (isAuthenticated && isFirstTimeUser) {
+    if ((isAuthenticated || SKIP_AUTH) && isFirstTimeUser) {
       setActiveSpotlight('connectbutton');
     }
   }, [isAuthenticated]);
@@ -319,7 +319,13 @@ const PageLayout: React.FC = () => {
 
   return (
     <>
-      {!isAuthenticated && isFirstTimeUser && (
+      {/* {!isAuthenticated && isFirstTimeUser && (
+        
+      )}
+      {isAuthenticated && isFirstTimeUser && (
+        
+      )} */}
+      {!isAuthenticated && !SKIP_AUTH && isFirstTimeUser ? (
         <SpotlightTour
           spotlights={spotlightsforunauthenticated}
           onAction={(target, action) => {
@@ -334,8 +340,7 @@ const PageLayout: React.FC = () => {
             console.log(`Action ${action} was performed in spotlight ${target}`);
           }}
         />
-      )}
-      {isAuthenticated && isFirstTimeUser && (
+      ) : isAuthenticated || (SKIP_AUTH && isFirstTimeUser) ? (
         <SpotlightTour
           spotlights={spotlights}
           onAction={(target, action) => {
@@ -350,7 +355,7 @@ const PageLayout: React.FC = () => {
             console.log(`Action ${action} was performed in spotlight ${target}`);
           }}
         />
-      )}
+      ) : null}
 
       <Suspense fallback={<FallBackDialog />}>
         <ConnectionModal
