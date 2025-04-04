@@ -11,6 +11,9 @@ import {
   Scheme,
   SourceNode,
   UserCredentials,
+  OptionType,
+  UserDefinedGraphSchema,
+  TupleType
 } from '../types';
 import Wikipediadarkmode from '../assets/images/wikipedia-darkmode.svg';
 import Wikipediadlogo from '../assets/images/wikipedia.svg';
@@ -544,3 +547,133 @@ export function isFileReadyToProcess(file: CustomFile, withLocalCheck: boolean) 
   }
   return file.status === 'New' || file.status == 'Ready to Reprocess';
 }
+
+export const updateLocalStorage = (userCredentials: UserCredentials, key: string, data: any) => {
+  localStorage.setItem(key, JSON.stringify({ db: userCredentials?.uri, selectedOptions: data }));
+};
+
+export const userDefinedGraphSchema = (nodes: OptionType[], relationships: OptionType[]): UserDefinedGraphSchema => {
+  const schemeVal: Scheme = {};
+  let iterator = 0;
+  // Transform nodes and assign colors
+  const transformedNodes: ExtendedNode[] = nodes.map((node, index) => {
+    const { label } = node;
+    if (schemeVal[label] === undefined) {
+      schemeVal[label] = calcWordColor(label);
+      iterator += 1;
+    }
+    return {
+      id: `node-${index + 0}`,
+      element_id: `node-${index + 0}`,
+      color: schemeVal[label],
+      caption: label,
+      labels: [label],
+      properties: {
+        name: label,
+        indexes: label === 'Chunk' ? ['text', 'embedding'] : [],
+        constraints: [],
+      },
+    };
+  });
+  // Create a map of nodes for quick lookup
+  const nodeMap: Record<string, string> = transformedNodes.reduce((acc, node) => {
+    acc[node.labels[0]] = node.id;
+    return acc;
+  }, {} as Record<string, string>);
+  // Transform relationships with validation
+  const transformedRelationships: ExtendedRelationship[] = relationships
+    .map((rel, index) => {
+      const parts = rel.value.split(',');
+      if (parts.length !== 3) {
+        console.warn(`Invalid relationship format: ${rel}`);
+        return null; // Skip invalid relationships
+      }
+      const [start, type, end] = parts.map((part) => part.trim());
+      if (!nodeMap[start] || !nodeMap[end]) {
+        console.warn(
+          `Missing node(s) for relationship: ${start} -[:${type}]-> ${end}`
+        );
+        return null; // Skip relationships with missing nodes
+      }
+      return {
+        id: `rel-${index + 100}`,
+        element_id: `rel-${index + 100}`,
+        from: nodeMap[start],
+        to: nodeMap[end],
+        caption: type,
+        type,
+        properties: {
+          name: type,
+        },
+      };
+    })
+    .filter((rel) => rel !== null) as ExtendedRelationship[];
+  return {
+    nodes: transformedNodes,
+    relationships: transformedRelationships,
+    scheme: schemeVal,
+  };
+};
+
+export const getSelectedTriplets = (selectedOptions: readonly OptionType[]): {
+  value: string; label: string; source: string; target: string; type: string;
+}[] => {
+  let triplets: {
+    value: string;
+    label: string;
+    source: string;
+    target: string;
+    type: string;
+  }[] = [];
+  selectedOptions.forEach((option) => {
+    try {
+      const tripletArray = JSON.parse(option.value);
+      if (Array.isArray(tripletArray)) {
+        tripletArray.forEach((tripletString) => {
+          const matchResult = tripletString.match(/(.*?)-([A-Z_]+)->(.*)/);
+          if (matchResult) {
+            const [source, rel, target] = matchResult.slice(1).map((s: any) => s.trim());
+            triplets.push({
+              value: `${source},${rel},${target}`,
+              label: `${source} -[:${rel}]-> ${target}`,
+              source,
+              target,
+              type: rel,
+            });
+          } else {
+            console.warn("Invalid triplet format:", tripletString);
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Error parsing selected option value:", option.value, error);
+    }
+  });
+  return triplets;
+};
+
+export const extractOptions = (schemaTuples: TupleType[]) => {
+  const nodeLabelSet = new Set<string>();
+  const relationshipSet = new Set<string>();
+  schemaTuples.forEach((tuple) => {
+    if (tuple.source) {
+      nodeLabelSet.add(tuple.source);
+    }
+    if (tuple.target) {
+      nodeLabelSet.add(tuple.target);
+    }
+    if (tuple.value) {
+      relationshipSet.add(tuple.value);
+    }
+  });
+  const nodeLabelOptions: OptionType[] = Array.from(nodeLabelSet).map((label) => ({
+    label,
+    value: label,
+  }));
+
+  const relationshipTypeOptions: OptionType[] = Array.from(relationshipSet).map((relValue) => ({
+    label: relValue,
+    value: relValue,
+  }));
+  return { nodeLabelOptions, relationshipTypeOptions };
+};

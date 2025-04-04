@@ -3,7 +3,7 @@ import graphenhancement from '../../../assets/images/graph-enhancements.svg';
 import { useState } from 'react';
 import DeletePopUpForOrphanNodes from './DeleteTabForOrphanNodes';
 import deleteOrphanAPI from '../../../services/DeleteOrphanNodes';
-import EntityExtractionSettings from './EnitityExtraction/EntityExtractionSetting';
+import NewEntityExtractionSetting from './EnitityExtraction/NewEntityExtractionSetting';
 import { useFileContext } from '../../../context/UsersFiles';
 import DeduplicationTab from './Deduplication';
 import { tokens } from '@neo4j-ndl/base';
@@ -13,7 +13,7 @@ import AdditionalInstructionsText from './AdditionalInstructions';
 export default function GraphEnhancementDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { breakpoints } = tokens;
   const [orphanDeleteAPIloading, setorphanDeleteAPIloading] = useState<boolean>(false);
-  const { setShowTextFromSchemaDialog } = useFileContext();
+  const { setShowTextFromSchemaDialog, setSchemaLoadDialog , setPredefinedSchemaDialog} = useFileContext();
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
 
   const orphanNodesDeleteHandler = async (selectedEntities: string[]) => {
@@ -112,10 +112,14 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
       <Dialog.Content className='flex flex-col n-gap-token- grow w-[90%] mx-auto'>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4' value={activeTab} tabId={0}>
           <div className='w-[80%] mx-auto'>
-            <EntityExtractionSettings
+            <NewEntityExtractionSetting
               view='Tabs'
               openTextSchema={() => {
                 setShowTextFromSchemaDialog({ triggeredFrom: 'enhancementtab', show: true });
+              }}
+              openLoadSchema={() => setSchemaLoadDialog({ triggeredFrom: 'enhancementtab', show: true })}
+              openPredefinedSchema={() => {
+                setPredefinedSchemaDialog({ triggeredFrom: 'enhancementtab', show: true })
               }}
               closeEnhanceGraphSchemaDialog={onClose}
               settingView='headerView'
