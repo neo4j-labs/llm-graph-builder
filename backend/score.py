@@ -764,10 +764,10 @@ async def cancelled_job(uri=Form(None), userName=Form(None), password=Form(None)
         gc.collect()
 
 @app.post("/populate_graph_schema")
-async def populate_graph_schema(input_text=Form(None), model=Form(None), is_schema_description_checked=Form(None),email=Form(None)):
+async def populate_graph_schema(input_text=Form(None), model=Form(None), is_schema_description_checked=Form(None),is_local_storage=Form(None),email=Form(None)):
     try:
         start = time.time()
-        result = populate_graph_schema_from_text(input_text, model, is_schema_description_checked)
+        result = populate_graph_schema_from_text(input_text, model, is_schema_description_checked, is_local_storage)
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name':'populate_graph_schema', 'model':model, 'is_schema_description_checked':is_schema_description_checked, 'input_text':input_text, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}

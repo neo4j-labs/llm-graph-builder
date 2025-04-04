@@ -724,7 +724,7 @@ def manually_cancelled_job(graph, filenames, source_types, merged_dir, uri):
         delete_uploaded_local_file(merged_file_path,file_name)
   return "Cancelled the processing job successfully"
 
-def populate_graph_schema_from_text(text, model, is_schema_description_cheked):
+def populate_graph_schema_from_text(text, model, is_schema_description_checked, is_local_storage):
   """_summary_
 
   Args:
@@ -735,8 +735,8 @@ def populate_graph_schema_from_text(text, model, is_schema_description_cheked):
   Returns:
       data (list): list of lebels and relationTypes
   """
-  result = schema_extraction_from_text(text, model, is_schema_description_cheked)
-  return {"labels": result.labels, "relationshipTypes": result.relationshipTypes}
+  result = schema_extraction_from_text(text, model, is_schema_description_checked, is_local_storage)
+  return result
 
 def set_status_retry(graph, file_name, retry_condition):
     graphDb_data_Access = graphDBdataAccess(graph)
