@@ -9,6 +9,8 @@ import { ConnectionModalProps, Message, UserCredentials } from '../../../types';
 import VectorIndexMisMatchAlert from './VectorIndexMisMatchAlert';
 import { useAuth0 } from '@auth0/auth0-react';
 import { createDefaultFormData } from '../../../API/Index';
+import { getNodeLabelsAndRelTypesFromText } from '../../../services/SchemaFromTextAPI';
+import { useFileContext } from '../../../context/UsersFiles';
 
 export default function ConnectionModal({
   open,
@@ -58,7 +60,7 @@ export default function ConnectionModal({
   const [searchParams, setSearchParams] = useSearchParams();
   const [userDbVectorIndex, setUserDbVectorIndex] = useState<number | undefined>(initialuserdbvectorindex ?? undefined);
   const [vectorIndexLoading, setVectorIndexLoading] = useState<boolean>(false);
-
+  const { model } = useFileContext();
   const connectRef = useRef<HTMLButtonElement>(null);
   const uriRef = useRef<HTMLInputElement>(null);
   const databaseRef = useRef<HTMLInputElement>(null);
@@ -237,10 +239,24 @@ export default function ConnectionModal({
         const isReadOnlyUser = !response.data.data.write_access;
         const isGCSActive = response.data.data.gcs_file_cache === 'True';
         const chunksTobeProcess = Number(response.data.data.chunk_to_be_created);
+        const existingRels = JSON.parse(localStorage.getItem('selectedRelationshipLabels') ?? 'null');
+        const existingNodes = JSON.parse(localStorage.getItem('selectedNodeLabels') ?? 'null');
+        const pattern = /^[^,]+,[^,]+,[^,]+$/;
+        if (existingRels && existingRels.selectedOptions.length) {
+          if (!pattern.test(existingRels.selectedOptions[0].value)) {
+            const response = await getNodeLabelsAndRelTypesFromText(
+              model,
+              JSON.stringify({ nodes: existingNodes.selectedOptions, rels: existingRels.selectedOptions }),
+              false,
+              true
+            );
+            console.log(response);
+          }
+        }
         setIsGCSActive(isGCSActive);
         setGdsActive(isgdsActive);
         setIsReadOnlyUser(isReadOnlyUser);
-        // setChunksToBeProces(chunksTobeProcess);
+
         localStorage.setItem(
           'neo4j.connection',
           JSON.stringify({
