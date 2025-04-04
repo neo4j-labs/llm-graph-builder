@@ -8,104 +8,104 @@ import { useFileContext } from '../../../../context/UsersFiles';
 import SchemaViz from '../../../../components/Graph/SchemaViz';
 
 interface LoadExistingSchemaDialogProps {
-    open: boolean;
-    onClose: () => void;
-    onApply: (patterns: string[], nodeLabels: OptionType[], relationshipLabels: OptionType[], view: string) => void;
+  open: boolean;
+  onClose: () => void;
+  onApply: (patterns: string[], nodeLabels: OptionType[], relationshipLabels: OptionType[], view: string) => void;
 }
-const LoadExistingSchemaDialog = ({
-    open,
-    onClose,
-    onApply
-}: LoadExistingSchemaDialogProps) => {
-    const [loading, setLoading] = useState<boolean>(false);
-    const { userCredentials } = useCredentials();
-    const { setDbPattern, dbPattern , dbNodes, setDbNodes, dbRels, setDbRels} = useFileContext();
-    const [openGraphView, setOpenGraphView] = useState<boolean>(false);
-    const [viewPoint, setViewPoint] = useState<string>('');
+const LoadExistingSchemaDialog = ({ open, onClose, onApply }: LoadExistingSchemaDialogProps) => {
+  const [loading, setLoading] = useState<boolean>(false);
+  const { userCredentials } = useCredentials();
+  const { setDbPattern, dbPattern, dbNodes, setDbNodes, dbRels, setDbRels } = useFileContext();
+  const [openGraphView, setOpenGraphView] = useState<boolean>(false);
+  const [viewPoint, setViewPoint] = useState<string>('');
 
-    useEffect(() => {
-        if (open) {
-            getOptions();
-        }
-    }, [open]);
-
-    const getOptions = async () => {
-        setLoading(true);
-        try {
-            const response = await getNodeLabelsAndRelTypes();
-            const schemaData: string[] = response.data.data.triplets;
-            const schemaTuples: TupleType[] = schemaData
-                .map((item: string) => {
-                    const matchResult = item.match(/^(.+?)-([A-Z_]+)->(.+)$/);
-                    if (matchResult) {
-                        const [source, rel, target] = matchResult.slice(1).map((s) => s.trim());
-                        return {
-                            value: `${source},${rel},${target}`,
-                            label: `${source} -[:${rel}]-> ${target}`,
-                            source,
-                            target,
-                            type: rel,
-                        };
-                    }
-                    return null;
-                })
-                .filter(Boolean) as TupleType[];
-            const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(schemaTuples);
-            setDbNodes(nodeLabelOptions);
-            setDbRels(relationshipTypeOptions);
-            setDbPattern(schemaTuples.map(t => t.label));
-        } catch (error) {
-            console.error('Error fetching schema options:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-    const handleRemovePattern = (patternToRemove: string) => {
-        setDbPattern((prevPatterns) => prevPatterns.filter((p) => p !== patternToRemove));
-    };
-    const handleSchemaView = () => {
-        setOpenGraphView(true);
-        setViewPoint('showSchemaView');
-    };
-
-    const handleDBApply = () => {
-        onApply(dbPattern, dbNodes, dbRels, 'db');
-        updateLocalStorage(userCredentials!!, 'dbNodeLabels', dbNodes);
-        updateLocalStorage(userCredentials!!, 'dbRelationLabels', dbRels);
-        updateLocalStorage(userCredentials!!, 'dbPatterns', dbPattern);
-        onClose();
+  useEffect(() => {
+    if (open) {
+      getOptions();
     }
+  }, [open]);
 
-    const handleCancel = () => {
-        setDbPattern([]);
-        setDbNodes([]);
-        setDbRels([]);
-        onClose();
+  const getOptions = async () => {
+    setLoading(true);
+    try {
+      const response = await getNodeLabelsAndRelTypes();
+      const schemaData: string[] = response.data.data.triplets;
+      const schemaTuples: TupleType[] = schemaData
+        .map((item: string) => {
+          const matchResult = item.match(/^(.+?)-([A-Z_]+)->(.+)$/);
+          if (matchResult) {
+            const [source, rel, target] = matchResult.slice(1).map((s) => s.trim());
+            return {
+              value: `${source},${rel},${target}`,
+              label: `${source} -[:${rel}]-> ${target}`,
+              source,
+              target,
+              type: rel,
+            };
+          }
+          return null;
+        })
+        .filter(Boolean) as TupleType[];
+      const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(schemaTuples);
+      setDbNodes(nodeLabelOptions);
+      setDbRels(relationshipTypeOptions);
+      setDbPattern(schemaTuples.map((t) => t.label));
+    } catch (error) {
+      console.error('Error fetching schema options:', error);
+    } finally {
+      setLoading(false);
     }
-    return (
-        <>
-            <SchemaSelectionDialog
-                open={open}
-                onClose={onClose}
-                pattern={dbPattern}
-                handleRemove={handleRemovePattern}
-                handleSchemaView={handleSchemaView}
-                loading={loading}
-                onApply={handleDBApply}
-                onCancel={handleCancel}
-            />
-            {openGraphView && (
-                <SchemaViz
-                    open={openGraphView}
-                    setGraphViewOpen={setOpenGraphView}
-                    viewPoint={viewPoint}
-                    nodeValues={(dbNodes as OptionType[]) ?? []}
-                    relationshipValues={(dbRels) ?? []}
-                />
-            )}
-        </>
+  };
+  const handleRemovePattern = (patternToRemove: string) => {
+    setDbPattern((prevPatterns) => prevPatterns.filter((p) => p !== patternToRemove));
+  };
+  const handleSchemaView = () => {
+    setOpenGraphView(true);
+    setViewPoint('showSchemaView');
+  };
 
-    );
-}
+  const handleDBApply = () => {
+    onApply(dbPattern, dbNodes, dbRels, 'db');
+    updateLocalStorage(userCredentials!, 'dbNodeLabels', dbNodes);
+    updateLocalStorage(userCredentials!, 'dbRelationLabels', dbRels);
+    updateLocalStorage(userCredentials!, 'dbPatterns', dbPattern);
+    onClose();
+  };
+
+  const handleCancel = () => {
+    setDbPattern([]);
+    setDbNodes([]);
+    setDbRels([]);
+    onClose();
+  };
+  return (
+    <>
+      <SchemaSelectionDialog
+        open={open}
+        onClose={() => {
+          onClose();
+          setDbPattern([]);
+          setDbNodes([]);
+          setDbRels([]);
+        }}
+        pattern={dbPattern}
+        handleRemove={handleRemovePattern}
+        handleSchemaView={handleSchemaView}
+        loading={loading}
+        onApply={handleDBApply}
+        onCancel={handleCancel}
+      />
+      {openGraphView && (
+        <SchemaViz
+          open={openGraphView}
+          setGraphViewOpen={setOpenGraphView}
+          viewPoint={viewPoint}
+          nodeValues={(dbNodes as OptionType[]) ?? []}
+          relationshipValues={dbRels ?? []}
+        />
+      )}
+    </>
+  );
+};
 
 export default LoadExistingSchemaDialog;
