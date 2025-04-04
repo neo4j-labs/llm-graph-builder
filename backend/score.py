@@ -1126,20 +1126,22 @@ async def get_user_info(uri=Form(None),
                     userName=Form(None), 
                     password=Form(None), 
                     database=Form(None), 
-                    email=Form(None)):
+                    email=Form(None),
+                    token_chunk_size:int=Form(None)):
     try:
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
         # result = graphDb_data_Access.get_user_detail(email)
         userInfo = user_info()
-        userInfo.chunk_limits= 100
+        userInfo.chunk_limits= 200
         userInfo.readonly= False
         userInfo.rate_limit= 60000
         userInfo.remaining_limit = 40000
         userInfo.is_chunk_limit_applicable = True
         end = time.time()
         elapsed_time = end - start
+        logger.log_struct(userInfo, "INFO")
         return create_api_response('Success', data=userInfo,message=f"Total elapsed API time {elapsed_time:.2f}")
     except Exception as e:
         message="Unable to get the details of user in DB"
