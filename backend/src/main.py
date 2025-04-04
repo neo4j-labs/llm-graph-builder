@@ -23,6 +23,7 @@ from src.document_sources.youtube import *
 from src.shared.common_fn import *
 from src.make_relationships import *
 from src.document_sources.web_pages import *
+from src.graph_query import get_graphDB_driver
 import re
 from langchain_community.document_loaders import WikipediaLoader, WebBaseLoader
 import warnings
@@ -31,7 +32,6 @@ import shutil
 import urllib.parse
 import json
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
-from neo4j import GraphDatabase
 
 warnings.filterwarnings("ignore")
 load_dotenv()
@@ -669,8 +669,8 @@ def get_labels_and_relationtypes(uri, userName, password, database):
    excluded_relationships = {
    'PART_OF', 'NEXT_CHUNK', 'HAS_ENTITY', '_Bloom_Perspective_', 'FIRST_CHUNK',
    'SIMILAR', 'IN_COMMUNITY', 'PARENT_COMMUNITY', 'NEXT', 'LAST_MESSAGE'}
-   driver = GraphDatabase.driver(uri=uri,database=database,auth=(userName, password))
-   with driver.session() as session:
+   driver = get_graphDB_driver(uri, userName, password,database) 
+   with driver.session(database=database) as session:
        result = session.run("CALL db.schema.visualization() YIELD nodes, relationships RETURN nodes, relationships")
        if not result:
          return []

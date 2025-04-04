@@ -140,8 +140,7 @@ const SchemaViz: React.FunctionComponent<SchemaViewModalProps> = ({
     return <></>;
   }
 
-  const headerTitle =
-    viewPoint === graphLabels.showSchemaView ? graphLabels.renderSchemaGraph : graphLabels.generatedGraphFromUserSchema;
+  const headerTitle = graphLabels.generateGraph;
 
 
   // Callback
@@ -207,14 +206,6 @@ const SchemaViz: React.FunctionComponent<SchemaViewModalProps> = ({
       >
         <Dialog.Header htmlAttributes={{ id: 'graph-title' }}>
           {headerTitle}
-          {viewPoint !== graphLabels.chatInfoView && (
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <span>
-                <InformationCircleIconOutline className='n-size-token-6' />
-              </span>
-              <span className='n-body-small ml-1'>{graphLabels.chunksInfo}</span>
-            </div>
-          )}
         </Dialog.Header>
         <Dialog.Content className='flex flex-col n-gap-token-4 w-full grow overflow-auto border! border-palette-neutral-border-weak!'>
           <div className='bg-white relative w-full h-full max-h-full border! border-palette-neutral-border-weak!'>
