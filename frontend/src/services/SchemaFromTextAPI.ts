@@ -12,7 +12,6 @@ export const getNodeLabelsAndRelTypesFromText = async (
   formData.append('input_text', inputText);
   formData.append('is_schema_description_checked', JSON.stringify(isSchemaText));
   formData.append('is_local_storage', String(isLocalStorage));
-
   try {
     const response = await api.post<ScehmaFromText>(`/populate_graph_schema`, formData);
     return response;

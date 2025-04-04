@@ -1,17 +1,18 @@
 import { MouseEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
 import { appLabels, buttonCaptions, getDefaultSchemaExamples, tooltips } from '../../../../utils/Constants';
-import { Flex, Typography, useMediaQuery, Tag } from '@neo4j-ndl/react';
+import { Flex, Typography, useMediaQuery } from '@neo4j-ndl/react';
 import { useCredentials } from '../../../../context/UserCredentials';
 import { useFileContext } from '../../../../context/UsersFiles';
 import { OptionType, TupleType } from '../../../../types';
 import { getNodeLabelsAndRelTypes } from '../../../../services/GetNodeLabelsRelTypes';
 import { showNormalToast } from '../../../../utils/Toasts';
 import { useHasSelections } from '../../../../hooks/useHasSelections';
-import { Hierarchy1Icon } from '@neo4j-ndl/react/icons';
+import PatternContainer from './PatternContainer';
 import SchemaViz from '../../../Graph/SchemaViz';
 import GraphPattern from './GraphPattern';
 import { updateLocalStorage, extractOptions } from '../../../../utils/Utils';
+import SchemaSelectionDialog from '../../../UI/SchemaSelectionPopup';
 
 export default function NewEntityExtractionSetting({
   view,
@@ -61,9 +62,9 @@ export default function NewEntityExtractionSetting({
     try {
       const response = await getNodeLabelsAndRelTypes();
       setLoading(false);
-      const schemaData: string[] = response.data.data;
+      const schemaData: string[] = response.data.data.triplets;
       const schemaTuples: TupleType[] = schemaData.map((item: string) => {
-        const matchResult = item.match(/(.*?)-\[:(.*?)\]->(.*)/);
+        const matchResult = item.match(/^(.+?)-([A-Z_]+)->(.+)$/);
         if (matchResult) {
           const [source, rel, target] = matchResult.slice(1).map((s) => s.trim());
           return {
@@ -88,7 +89,13 @@ export default function NewEntityExtractionSetting({
 
   const clickHandler: MouseEventHandler<HTMLButtonElement> = useCallback(async () => {
     await getOptions();
+    setSchemaPopupView('loadExistingSchema')
+    setOpenSchemaPopup(true);
   }, [nodeLabelOptions, relationshipTypeOptions]);
+
+  const onclosePopup = () => {
+    setOpenSchemaPopup(false);
+  }
 
   const handleClear = () => {
     setSelectedNodes([]);
@@ -139,11 +146,6 @@ export default function NewEntityExtractionSetting({
     updateLocalStorage(userCredentials!!, 'selectedNodeLabels', selectedRelPayload);
     setSelectedNodes(nodeLabelOptions);
     setSelectedRels(relationshipTypeOptions);
-
-    console.log('Schema settings saved successfully:', {
-      nodes: selectedNodePayload,
-      rels: selectedRelPayload,
-    });
   };
 
   const handleSchemaView = () => {
@@ -237,40 +239,12 @@ export default function NewEntityExtractionSetting({
         >
         </GraphPattern>
         {pattern.length > 0 && (
-          <div className='h-full'>
-            <div className='flex align-self-center justify-center border'>
-              <h5>{appLabels.selectedPatterns}</h5>
-            </div>
-            <div className='flex items-start gap-4 mt-4'>
-              <div className='flex flex-wrap gap-2 patternContainer'>
-                {pattern.map((pattern) => (
-                  <Tag
-                    key={pattern}
-                    onRemove={() => handleRemovePattern(pattern)}
-                    isRemovable={true}
-                    type='default'
-                    size='medium'
-                    className={`rounded-full px-4 py-1 shadow-sm transition-all duration-300 ${pattern === highlightPattern ? 'animate-highlight' : ''
-                      }`}
-                  >
-                    {pattern}
-                  </Tag>
-                ))}
-              </div>
-              <div className='flex-shrink-0 items-end m-auto'>
-                <ButtonWithToolTip
-                  label={'Graph Schema'}
-                  text={tooltips.visualizeGraph}
-                  placement='top'
-                  fill='outlined'
-                  onClick={handleSchemaView}
-                  className='ml-4'
-                >
-                  <Hierarchy1Icon />
-                </ButtonWithToolTip>
-              </div>
-            </div>
-          </div>
+          <PatternContainer
+            pattern={pattern}
+            handleRemove={handleRemovePattern}
+            handleSchemaView={handleSchemaView}
+            highlightPattern={highlightPattern ?? ''}
+          ></PatternContainer>
         )}
         <Flex className='mt-4! mb-2 flex! items-center' flexDirection='row' justifyContent='flex-end'>
           <Flex flexDirection='row' gap='4'>
@@ -354,6 +328,15 @@ export default function NewEntityExtractionSetting({
           relationshipValues={(relationshipTypeOptions) ?? []}
         />
       )}
+      {
+        openSchemaPopup && (<SchemaSelectionDialog
+          open={openSchemaPopup}
+          onClose={onclosePopup}
+          pattern={pattern}
+          handleRemove={handleRemovePattern}
+          handleSchemaView={handleSchemaView}
+        ></SchemaSelectionDialog>)
+      }
     </div>
   );
 }

@@ -696,8 +696,8 @@ def get_labels_and_relationtypes(uri, userName, password, database):
                    end_label not in excluded_labels and
                    rel_type not in excluded_relationships
                ):
-                 triples.append(f"{start_label} -[:{rel_type}]-> {end_label}")
-       return list(set(triples))
+                 triples.append(f"{start_label}-{rel_type}->{end_label}")
+       return {"triplets" : list(set(triples))}
 
 def manually_cancelled_job(graph, filenames, source_types, merged_dir, uri):
   
