@@ -15,7 +15,6 @@ import NVL from '@neo4j-nvl/base';
 import type { Node, Relationship } from '@neo4j-nvl/base';
 import {
   FitToScreenIcon,
-  InformationCircleIconOutline,
   MagnifyingGlassMinusIconOutline,
   MagnifyingGlassPlusIconOutline,
 } from '@neo4j-ndl/react/icons';
@@ -31,7 +30,6 @@ import GraphPropertiesPanel from './GraphPropertiesPanel';
 const SchemaViz: React.FunctionComponent<SchemaViewModalProps> = ({
   open,
   setGraphViewOpen,
-  viewPoint,
   nodeValues,
   relationshipValues,
 }) => {
