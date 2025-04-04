@@ -370,7 +370,7 @@
 .layout-wrapper {
   display: grid;
   grid-template-rows: auto;
-  grid-template-columns: 64px 1fr minmax(min-content, 4fr) 1.4fr 64px;
+  grid-template-columns: 64px 1fr minmax(min-content,4fr) 1.1fr 64px;
   max-height: calc(100vh - 58px);
   max-width: 100%;
 }
@@ -396,11 +396,10 @@
   height: 100%;
 }
 
-@media screen and (min-width:1025px) and (max-width:1440px) {
-  .layout-wrapper {
-    grid-template-columns: 64px 1fr minmax(min-content, 4fr) minmax(min-content, 2fr) 64px;
-
-  }
+@media screen and (min-width:1025px) and (max-width:1440px){
+  .layout-wrapper{
+    grid-template-columns: 64px 1fr minmax(min-content,4fr) minmax(min-content,2fr) 64px;
+    }
 }
 
 @media screen and (min-width:1536px) and (max-width:2560px) {
