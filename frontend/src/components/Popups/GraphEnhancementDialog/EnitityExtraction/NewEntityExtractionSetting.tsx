@@ -47,8 +47,6 @@ export default function NewEntityExtractionSetting({
   const [selectedTarget, setTarget] = useState<OptionType | null>(null);
   const [pattern, setPattern] = useState<string[]>([]);
   const [highlightPattern, setHighlightedPattern] = useState<string | null>(null);
-  const [openSchemaPopup, setOpenSchemaPopup] = useState<boolean>(false);
-  const [schemaPopupView, setSchemaPopupView] = useState<string>('');
 
   useEffect(() => {
     if (relationshipTypeOptions.length > 0) {
@@ -136,8 +134,8 @@ export default function NewEntityExtractionSetting({
       closeEnhanceGraphSchemaDialog();
     }
     const selectedNodePayload = {
-      db: userCredentials?.uri || '',
-      selectedOptions: nodeLabelOptions || [],
+      db: userCredentials?.uri || '', 
+      selectedOptions: nodeLabelOptions || [], 
     };
     const selectedRelPayload = {
       db: userCredentials?.uri || '',
