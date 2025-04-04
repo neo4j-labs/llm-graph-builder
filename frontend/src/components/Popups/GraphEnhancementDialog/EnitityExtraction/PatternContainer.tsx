@@ -16,12 +16,12 @@ interface PatternContainerProps {
 
 
 const PatternContainer = ({ pattern, handleRemove, handleSchemaView, highlightPattern, nodes, rels }: PatternContainerProps) => {
-    const [nodeCount, setNodeCount]= useState(0);
-    const [relCount, setRelCount]= useState(0);
-    useEffect (()=>{
+    const [nodeCount, setNodeCount] = useState(0);
+    const [relCount, setRelCount] = useState(0);
+    useEffect(() => {
         setNodeCount(nodes?.length ?? 0);
         setRelCount(rels?.length ?? 0)
-    },[nodes,rels]);
+    }, [nodes, rels]);
 
     console.log('count', nodeCount);
     return (
@@ -32,9 +32,9 @@ const PatternContainer = ({ pattern, handleRemove, handleSchemaView, highlightPa
             <div className="flex flex-col gap-4 mt-4">
                 <div className="relative patternContainer border p-4 rounded-md shadow-sm">
                     <div className="top-0 right-0 flex justify-end z-10 pb-2 ">
-                        <span className='n-body-small p-1'>
-                            {nodeCount > 0  || relCount > 0 ? `${nodeCount } Node & ${relCount} Relationship` : ''}
-                        </span>
+                        {pattern.length > 0 && <span className='n-body-small p-1'>
+                            {nodeCount > 0 || relCount > 0 ? `${nodeCount} Node & ${relCount} Relationship` : ''}
+                        </span>}
                         <ButtonWithToolTip
                             label={'Graph Schema'}
                             text={tooltips.visualizeGraph}

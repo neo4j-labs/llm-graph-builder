@@ -1,12 +1,11 @@
-import { Dialog, Button, Select } from '@neo4j-ndl/react';
+import { Dialog, Button,Select } from '@neo4j-ndl/react';
 import { useState, useMemo } from 'react';
 import PatternContainer from '../../GraphEnhancementDialog/EnitityExtraction/PatternContainer';
 import { OptionType, TupleType } from '../../../../types';
 import { updateLocalStorage, extractOptions, getSelectedTriplets } from '../../../../utils/Utils';
 import SchemaViz from '../../../../components/Graph/SchemaViz';
-import { getDefaultSchemaExamples } from '../../../../utils/Constants';
+import { getDefaultSchemaExamples, appLabels } from '../../../../utils/Constants';
 import { useCredentials } from '../../../../context/UserCredentials';
-import { appLabels } from '../../../../utils/Constants';
 import { useFileContext } from '../../../../context/UsersFiles';
 
 interface SchemaFromTextProps {
@@ -16,41 +15,48 @@ interface SchemaFromTextProps {
 }
 
 const PredefinedSchemaDialog = ({ open, onClose, onApply }: SchemaFromTextProps) => {
+
     const defaultExamples = useMemo(() => getDefaultSchemaExamples(), []);
+
     const { userCredentials } = useCredentials();
-    const { setPreDefinedPattern, preDefinedPattern, preDefinedNodes, setPreDefinedNodes, preDefinedRels, setPreDefinedRels } = useFileContext();
-    const [selectedPreDefOption, setSelectedPreDefOption] = useState<readonly OptionType[]>([]);
+
+    const {
+        setPreDefinedPattern,
+        preDefinedPattern,
+        preDefinedNodes,
+        setPreDefinedNodes,
+        preDefinedRels,
+        setPreDefinedRels,
+    } = useFileContext();
+
     const [openGraphView, setOpenGraphView] = useState<boolean>(false);
     const [viewPoint, setViewPoint] = useState<string>('');
 
+    const [selectedPreDefOption, setSelectedPreDefOption] = useState<OptionType | null>(null);
 
     const handleRemovePattern = (patternToRemove: string) => {
         setPreDefinedPattern((prevPatterns) => prevPatterns.filter((p) => p !== patternToRemove));
     };
 
-    const onChangeSchema = (selectedOptions: readonly OptionType[], actionMeta: any) => {
-        if (actionMeta.action === 'remove-value') {
-            const removedSchema = JSON.parse(actionMeta.removedValue.value);
-            setPreDefinedPattern((prev) => prev.filter((p) => !removedSchema.includes(p)));
-        } else if (actionMeta.action === 'clear') {
+    const onChangeSchema = (selectedOption: OptionType | null | void) => {
+        if (!selectedOption) {
             setPreDefinedPattern([]);
             setPreDefinedNodes([]);
             setPreDefinedRels([]);
-        } else {
-            const selectedTriplets: TupleType[] = getSelectedTriplets(selectedOptions);
-            setPreDefinedPattern(selectedTriplets.map(t => t.label));
-            const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(selectedTriplets)
-            setPreDefinedNodes(nodeLabelOptions);
-            setPreDefinedRels(relationshipTypeOptions);
+            setSelectedPreDefOption(null);
+            return;
         }
-        setSelectedPreDefOption(selectedOptions);
+        setSelectedPreDefOption(selectedOption);
+        const selectedTriplets: TupleType[] = getSelectedTriplets([selectedOption]);
+        setPreDefinedPattern(selectedTriplets.map((t) => t.label));
+        const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(selectedTriplets);
+        setPreDefinedNodes(nodeLabelOptions);
+        setPreDefinedRels(relationshipTypeOptions);
     };
 
     const handleSchemaView = () => {
-        if (preDefinedPattern.length > 0 && preDefinedNodes.length > 0 && preDefinedRels.length > 0) {
             setOpenGraphView(true);
             setViewPoint('showSchemaView');
-        }
     };
 
     const handlePreDefinedSchemaApply = () => {
@@ -62,7 +68,7 @@ const PredefinedSchemaDialog = ({ open, onClose, onApply }: SchemaFromTextProps)
     }
 
     const handleCancel = () => {
-        setSelectedPreDefOption([]);
+        setSelectedPreDefOption(null);
         setPreDefinedPattern([]);
         setPreDefinedNodes([]);
         setPreDefinedRels([]);
@@ -82,47 +88,38 @@ const PredefinedSchemaDialog = ({ open, onClose, onApply }: SchemaFromTextProps)
                 }}
             >
                 <Dialog.Header>Entity Graph Extraction Settings</Dialog.Header>
-                <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
-                    <>
-                        <div className='flex align-self-center justify-center'>
-                            <h5>{appLabels.predefinedSchema}</h5>
-                        </div>
-                        <Select
-                            helpText='Schema Examples'
-                            label='Predefined Schema'
-                            size='medium'
-                            selectProps={{
-                                isClearable: true,
-                                isMulti: true,
-                                options: defaultExamples,
-                                onChange: onChangeSchema,
-                                value: selectedPreDefOption,
-                                menuPosition: 'fixed',
-                            }}
-                            type='select'
-                        />
-                    </>
-                    {preDefinedPattern.length > 0 && (
-                        <>
-                            <div className="mt-6">
-                                <PatternContainer
-                                    pattern={preDefinedPattern}
-                                    handleRemove={handleRemovePattern}
-                                    handleSchemaView={handleSchemaView}
-                                    nodes={preDefinedNodes}
-                                    rels={preDefinedRels}
-                                />
-                            </div>
-                            <Dialog.Actions className='mt-3'>
-                                <Button onClick={handleCancel} isDisabled={preDefinedPattern.length === 0}>
-                                    Cancel
-                                </Button>
-                                <Button onClick={handlePreDefinedSchemaApply} isDisabled={preDefinedPattern.length === 0}>
-                                    Apply
-                                </Button>
-                            </Dialog.Actions>
-                        </>
-                    )}
+                <Dialog.Content className='n-flex n-flex-col n-gap-token-6 p-6'>
+                    <div className='text-center'>
+                        <h5 className='text-lg font-semibold'>{appLabels.predefinedSchema}</h5>
+                    </div>
+                    <Select
+                        helpText='Schema Examples'
+                        label='Predefined Schema'
+                        size='medium'
+                        selectProps={{
+                            isClearable: true,
+                            options: defaultExamples,
+                            onChange: onChangeSchema,
+                            value: selectedPreDefOption,
+                            menuPosition: 'fixed',
+                        }}
+                        type='select'
+                    />
+                    <PatternContainer
+                        pattern={preDefinedPattern}
+                        handleRemove={handleRemovePattern}
+                        handleSchemaView={handleSchemaView}
+                        nodes={preDefinedNodes}
+                        rels={preDefinedRels}
+                    />
+                    <Dialog.Actions className='n-flex n-justify-end n-gap-token-4 pt-4'>
+                        <Button onClick={handleCancel} isDisabled={preDefinedPattern.length === 0}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handlePreDefinedSchemaApply} isDisabled={preDefinedPattern.length === 0}>
+                            Apply
+                        </Button>
+                    </Dialog.Actions>
                 </Dialog.Content>
             </Dialog>
             {openGraphView && (
@@ -130,8 +127,8 @@ const PredefinedSchemaDialog = ({ open, onClose, onApply }: SchemaFromTextProps)
                     open={openGraphView}
                     setGraphViewOpen={setOpenGraphView}
                     viewPoint={viewPoint}
-                    nodeValues={(preDefinedNodes) ?? []}
-                    relationshipValues={(preDefinedRels) ?? []}
+                    nodeValues={preDefinedNodes ?? []}
+                    relationshipValues={preDefinedRels ?? []}
                 />
             )}
         </>

@@ -615,21 +615,22 @@ export const userDefinedGraphSchema = (nodes: OptionType[], relationships: Optio
   };
 };
 
-export const getSelectedTriplets = (selectedOptions: readonly OptionType[]): {
-  value: string; label: string; source: string; target: string; type: string;
+export const getSelectedTriplets = (
+  selectedOptions: OptionType[] | OptionType
+): {
+  value: string;
+  label: string;
+  source: string;
+  target: string;
+  type: string;
 }[] => {
-  let triplets: {
-    value: string;
-    label: string;
-    source: string;
-    target: string;
-    type: string;
-  }[] = [];
-  selectedOptions.forEach((option) => {
+  const selectedArray = Array.isArray(selectedOptions) ? selectedOptions : [selectedOptions];
+  const triplets = [];
+  for (const option of selectedArray) {
     try {
       const tripletArray = JSON.parse(option.value);
       if (Array.isArray(tripletArray)) {
-        tripletArray.forEach((tripletString) => {
+        for (const tripletString of tripletArray) {
           const matchResult = tripletString.match(/(.*?)-([A-Z_]+)->(.*)/);
           if (matchResult) {
             const [source, rel, target] = matchResult.slice(1).map((s: any) => s.trim());
@@ -640,15 +641,13 @@ export const getSelectedTriplets = (selectedOptions: readonly OptionType[]): {
               target,
               type: rel,
             });
-          } else {
-            console.warn("Invalid triplet format:", tripletString);
           }
-        });
+        }
       }
     } catch (error) {
-      console.error("Error parsing selected option value:", option.value, error);
+      console.error('Error parsing selected option value:', option.value, error);
     }
-  });
+  }
   return triplets;
 };
 

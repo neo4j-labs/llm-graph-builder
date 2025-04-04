@@ -294,8 +294,6 @@ export default function NewEntityExtractionSetting({
           selectedTupleOptions={tupleOptions}
         >
         </GraphPattern>
-        {
-          combinedPatterns.length > 0 && (
             <PatternContainer
               pattern={combinedPatterns}
               handleRemove={handleRemovePattern}
@@ -304,8 +302,6 @@ export default function NewEntityExtractionSetting({
               nodes={combinedNodes}
               rels={combinedRels}
             ></PatternContainer>
-          )
-        }
         <Flex className='mt-4! mb-2 flex! items-center' flexDirection='row' justifyContent='flex-end'>
           <Flex flexDirection='row' gap='4'>
             <ButtonWithToolTip
