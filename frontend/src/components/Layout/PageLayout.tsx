@@ -280,6 +280,7 @@ const PageLayout: React.FC = () => {
       setActiveSpotlight('loginbutton');
     }
 
+
     if ((isAuthenticated || SKIP_AUTH) && isFirstTimeUser) {
       setActiveSpotlight('connectbutton');
     }
