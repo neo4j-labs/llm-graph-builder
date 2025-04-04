@@ -7,7 +7,6 @@ import { NonOAuthError } from '@react-oauth/google';
 import { BannerType } from '@neo4j-ndl/react';
 import Queue from './utils/Queue';
 import FileTable from './components/FileTable';
-import { OnChangeValue, ActionMeta } from 'react-select';
 
 export interface CustomFileBase extends Partial<globalThis.File> {
   processingTotalTime: number | string;
@@ -260,7 +259,7 @@ export type ChatbotProps = {
   isChatOnly?: boolean;
   isDeleteChatLoading: boolean;
 };
-export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> { }
+export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> {}
 
 export interface GraphViewModalProps {
   open: boolean;
@@ -401,15 +400,15 @@ export interface commonserverresponse {
   message?: string | orphanTotalNodes;
   file_name?: string;
   data?:
-  | OptionType
-  | OptionType[]
-  | string
-  | string[]
-  | uploadData
-  | orphanNodeProps[]
-  | dupNodes[]
-  | { pageitems: chunkdata[]; total_pages: number }
-  | { triplets: string[] };
+    | OptionType
+    | OptionType[]
+    | string
+    | string[]
+    | uploadData
+    | orphanNodeProps[]
+    | dupNodes[]
+    | { pageitems: chunkdata[]; total_pages: number }
+    | { triplets: string[] };
 }
 export interface dupNodeProps {
   id: string;
@@ -498,20 +497,20 @@ export interface chatInfoMessage extends Partial<Messages> {
   relationships: ExtendedRelationship[];
   chunks: Chunk[];
   metricDetails:
-  | {
-    [key: string]: number | string;
-  }
-  | undefined;
+    | {
+        [key: string]: number | string;
+      }
+    | undefined;
   metricError: string;
   infoEntities: Entity[];
   communities: Community[];
   infoLoading: boolean;
   metricsLoading: boolean;
   activeChatmodes:
-  | {
-    [key: string]: ResponseMode;
-  }
-  | undefined;
+    | {
+        [key: string]: ResponseMode;
+      }
+    | undefined;
   multiModelMetrics: multimodelmetric[];
   saveInfoEntitites: (entities: Entity[]) => void;
   saveNodes: (chatNodes: ExtendedNode[]) => void;
@@ -864,7 +863,6 @@ export interface predefinedSchemaDialogType {
   onApply?: (selectedPattern: string[], nodes: OptionType[], rels: OptionType[]) => void;
 }
 
-
 export interface FileContextType {
   files: (File | null)[] | [];
   filesData: CustomFile[] | [];
@@ -898,7 +896,7 @@ export interface FileContextType {
   setPostProcessingVal: Dispatch<SetStateAction<boolean>>;
   additionalInstructions: string;
   setAdditionalInstructions: Dispatch<SetStateAction<string>>;
-  //all nodes and all patterns
+  // all nodes and all patterns
   allPatterns: string[];
   setAllPatterns: Dispatch<SetStateAction<string[]>>;
   selectedNodes: readonly OptionType[] | OptionType[];
@@ -914,7 +912,7 @@ export interface FileContextType {
   setUserDefinedRels: Dispatch<SetStateAction<OptionType[] | OptionType[]>>;
   userDefinedPattern: string[];
   setUserDefinedPattern: Dispatch<SetStateAction<string[]>>;
-  //Load Existing schema from db
+  // Load Existing schema from db
   schemaLoadDialog: schemaLoadDialogType;
   setSchemaLoadDialog: React.Dispatch<React.SetStateAction<schemaLoadDialogType>>;
   dbNodes: OptionType[] | OptionType[];
@@ -923,7 +921,7 @@ export interface FileContextType {
   setDbRels: Dispatch<SetStateAction<OptionType[] | OptionType[]>>;
   dbPattern: string[];
   setDbPattern: Dispatch<SetStateAction<string[]>>;
-  //Predefined schema 
+  // Predefined schema
   predefinedSchemaDialog: predefinedSchemaDialogType;
   setPredefinedSchemaDialog: React.Dispatch<React.SetStateAction<predefinedSchemaDialogType>>;
   preDefinedNodes: OptionType[] | OptionType[];
@@ -1033,18 +1031,22 @@ export type TupleCreationProps = {
   selectedSource: OptionType | null;
   selectedType: OptionType | null;
   selectedTarget: OptionType | null;
-  onPatternChange: (source: OptionType | OptionType[], type: OptionType | OptionType[], target: OptionType | OptionType[]) => void;
+  onPatternChange: (
+    source: OptionType | OptionType[],
+    type: OptionType | OptionType[],
+    target: OptionType | OptionType[]
+  ) => void;
   onAddPattern: () => void;
   selectedTupleOptions: readonly OptionType[];
 };
 
 export interface TupleType {
-  value: string,
-  label: string,
-  source: string,
-  target: string,
-  type: string,
-  sourceType?: string
+  value: string;
+  label: string;
+  source: string;
+  target: string;
+  type: string;
+  sourceType?: string;
 }
 
 export interface SchemaViewModalProps {
@@ -1064,12 +1066,12 @@ export type UserDefinedGraphSchema = {
 };
 
 export interface SchemaSelectionProps {
-  open: boolean,
+  open: boolean;
   onClose: () => void;
-  pattern: string[],
-  handleRemove: (pattern: string) => void,
-  handleSchemaView: (view?: string) => void,
-  loading: boolean,
+  pattern: string[];
+  handleRemove: (pattern: string) => void;
+  handleSchemaView: (view?: string) => void;
+  loading: boolean;
   highlightPattern?: string;
   onApply: () => void;
   onCancel: () => void;
