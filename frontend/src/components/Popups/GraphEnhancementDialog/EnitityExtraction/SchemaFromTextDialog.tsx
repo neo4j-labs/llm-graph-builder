@@ -5,11 +5,11 @@ import { useCredentials } from '../../../../context/UserCredentials';
 import { useFileContext } from '../../../../context/UsersFiles';
 import { buttonCaptions } from '../../../../utils/Constants';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
-import { showNormalToast, showSuccessToast } from '../../../../utils/Toasts';
+import { showNormalToast } from '../../../../utils/Toasts';
 import PatternContainer from './PatternContainer';
 import { OptionType, TupleType } from '../../../../types';
-import { updateLocalStorage, extractOptions } from '../../../../utils/Utils';
 import SchemaViz from '../../../Graph/SchemaViz';
+import { extractOptions } from '../../../../utils/Utils';
 
 interface SchemaFromTextProps {
   open: boolean;

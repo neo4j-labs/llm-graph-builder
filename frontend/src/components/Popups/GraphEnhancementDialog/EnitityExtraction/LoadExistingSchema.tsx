@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import SchemaSelectionDialog from '../../../UI/SchemaSelectionPopup';
 import { getNodeLabelsAndRelTypes } from '../../../../services/GetNodeLabelsRelTypes';
 import { OptionType, TupleType } from '../../../../types';
-import { extractOptions, updateLocalStorage } from '../../../../utils/Utils';
-import { useCredentials } from '../../../../context/UserCredentials';
+import { extractOptions } from '../../../../utils/Utils';
 import { useFileContext } from '../../../../context/UsersFiles';
 import SchemaViz from '../../../../components/Graph/SchemaViz';
 
@@ -14,7 +13,6 @@ interface LoadExistingSchemaDialogProps {
 }
 const LoadExistingSchemaDialog = ({ open, onClose, onApply }: LoadExistingSchemaDialogProps) => {
   const [loading, setLoading] = useState<boolean>(false);
-  const { userCredentials } = useCredentials();
   const { setDbPattern, dbPattern, dbNodes, setDbNodes, dbRels, setDbRels } = useFileContext();
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [viewPoint, setViewPoint] = useState<string>('');

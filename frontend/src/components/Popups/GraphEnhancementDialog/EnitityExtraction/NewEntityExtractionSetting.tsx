@@ -1,7 +1,7 @@
-import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
+import { MouseEventHandler, useCallback, useEffect, useState, useRef } from 'react';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
 import { buttonCaptions, tooltips } from '../../../../utils/Constants';
-import { Flex, Typography } from '@neo4j-ndl/react';
+import { Flex, Typography, DropdownButton, Menu } from '@neo4j-ndl/react';
 import { useCredentials } from '../../../../context/UserCredentials';
 import { useFileContext } from '../../../../context/UsersFiles';
 import { OptionType, TupleType } from '../../../../types';
@@ -10,6 +10,7 @@ import PatternContainer from './PatternContainer';
 import SchemaViz from '../../../Graph/SchemaViz';
 import GraphPattern from './GraphPattern';
 import { updateLocalStorage, extractOptions } from '../../../../utils/Utils';
+import TooltipWrapper from '../../../UI/TipWrapper';
 
 export default function NewEntityExtractionSetting({
   view,
@@ -71,7 +72,8 @@ export default function NewEntityExtractionSetting({
   const [combinedPatterns, setCombinedPatterns] = useState<string[]>([]);
   const [combinedNodes, setCombinedNodes] = useState<OptionType[]>([]);
   const [combinedRels, setCombinedRels] = useState<OptionType[]>([]);
-
+  const [isSchemaMenuOpen, setIsSchemaMenuOpen] = useState<boolean>(false);
+  const schemaBtnRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     const patterns = Array.from(
       new Set([...userDefinedPattern, ...preDefinedPattern, ...dbPattern, ...schemaTextPattern])
@@ -334,40 +336,57 @@ export default function NewEntityExtractionSetting({
           onAddPattern={handleAddPattern}
           selectedTupleOptions={tupleOptions}
         ></GraphPattern>
-        <PatternContainer
-          pattern={combinedPatterns}
-          handleRemove={handleRemovePattern}
-          handleSchemaView={handleSchemaView}
-          highlightPattern={highlightPattern ?? ''}
-          nodes={combinedNodes}
-          rels={combinedRels}
-        ></PatternContainer>
-        <Flex className='mt-4! mb-2 flex! items-center' flexDirection='row' justifyContent='flex-end'>
+          <PatternContainer
+            pattern={combinedPatterns}
+            handleRemove={handleRemovePattern}
+            handleSchemaView={handleSchemaView}
+            highlightPattern={highlightPattern ?? ''}
+            nodes={combinedNodes}
+            rels={combinedRels}
+          ></PatternContainer>
+        <Flex className='my-8! mb-2 flex! items-center' flexDirection='row' justifyContent='flex-end'>
+          <DropdownButton
+            isOpen={isSchemaMenuOpen}
+            htmlAttributes={{
+              onClick: () => setIsSchemaMenuOpen((old) => !old),
+            }}
+            ref={schemaBtnRef}
+          >
+            Add Schema from ...
+          </DropdownButton>
+          <Menu isOpen={isSchemaMenuOpen} anchorRef={schemaBtnRef} onClose={() => setIsSchemaMenuOpen(false)}>
+            <Menu.Items
+              htmlAttributes={{
+                id: 'default-menu',
+              }}
+            >
+              <Menu.Item
+                title={
+                  <TooltipWrapper placement='right' tooltip={tooltips.predinedSchema}>
+                    Predefined Schema
+                  </TooltipWrapper>
+                }
+                onClick={onPredefinedSchemaCLick}
+              />
+              <Menu.Item
+                title={
+                  <TooltipWrapper placement='right' tooltip={tooltips.useExistingSchema}>
+                    Load Existing Schema
+                  </TooltipWrapper>
+                }
+                onClick={onLoadExistingSchemaCLick}
+              />
+              <Menu.Item
+                title={
+                  <TooltipWrapper placement='right' tooltip={tooltips.createSchema}>
+                    Get Schema From Text
+                  </TooltipWrapper>
+                }
+                onClick={onSchemaFromTextCLick}
+              />
+            </Menu.Items>
+          </Menu>
           <Flex flexDirection='row' gap='4'>
-            <ButtonWithToolTip
-              text={tooltips.predinedSchema}
-              placement='top'
-              onClick={onPredefinedSchemaCLick}
-              label='Use Predefined Schema'
-            >
-              Predefined Schema
-            </ButtonWithToolTip>
-            <ButtonWithToolTip
-              text={tooltips.useExistingSchema}
-              onClick={onLoadExistingSchemaCLick}
-              label='Use Existing Schema'
-              placement='top'
-            >
-              Load Existing Schema
-            </ButtonWithToolTip>
-            <ButtonWithToolTip
-              text={tooltips.createSchema}
-              placement='top'
-              onClick={onSchemaFromTextCLick}
-              label='Get Existing Schema From Text'
-            >
-              Get Schema From Text
-            </ButtonWithToolTip>
             {settingView === 'contentView' ? (
               <ButtonWithToolTip
                 text={tooltips.continue}
