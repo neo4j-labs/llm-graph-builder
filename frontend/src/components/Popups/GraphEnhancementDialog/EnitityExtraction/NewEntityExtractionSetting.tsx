@@ -336,14 +336,14 @@ export default function NewEntityExtractionSetting({
           onAddPattern={handleAddPattern}
           selectedTupleOptions={tupleOptions}
         ></GraphPattern>
-          <PatternContainer
-            pattern={combinedPatterns}
-            handleRemove={handleRemovePattern}
-            handleSchemaView={handleSchemaView}
-            highlightPattern={highlightPattern ?? ''}
-            nodes={combinedNodes}
-            rels={combinedRels}
-          ></PatternContainer>
+        <PatternContainer
+          pattern={combinedPatterns}
+          handleRemove={handleRemovePattern}
+          handleSchemaView={handleSchemaView}
+          highlightPattern={highlightPattern ?? ''}
+          nodes={combinedNodes}
+          rels={combinedRels}
+        ></PatternContainer>
         <Flex className='my-8! mb-2 flex! items-center' flexDirection='row' justifyContent='flex-end'>
           <DropdownButton
             isOpen={isSchemaMenuOpen}
