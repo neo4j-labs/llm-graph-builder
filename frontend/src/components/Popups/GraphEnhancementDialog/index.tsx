@@ -15,7 +15,13 @@ import { useCredentials } from '../../../context/UserCredentials';
 export default function GraphEnhancementDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { breakpoints } = tokens;
   const [orphanDeleteAPIloading, setorphanDeleteAPIloading] = useState<boolean>(false);
-  const { setShowTextFromSchemaDialog, setSchemaLoadDialog, setPredefinedSchemaDialog, setSelectedNodes, setAllPatterns, setSelectedRels,
+  const {
+    setShowTextFromSchemaDialog,
+    setSchemaLoadDialog,
+    setPredefinedSchemaDialog,
+    setSelectedNodes,
+    setAllPatterns,
+    setSelectedRels,
     setUserDefinedPattern,
     setUserDefinedNodes,
     setUserDefinedRels,
@@ -27,7 +33,8 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
     setSchemaTextPattern,
     setPreDefinedNodes,
     setPreDefinedRels,
-    setPreDefinedPattern } = useFileContext();
+    setPreDefinedPattern,
+  } = useFileContext();
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
   const { userCredentials } = useCredentials();
 
@@ -43,7 +50,7 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
   };
 
   const handleOnclose = () => {
-    // overall  
+    // overall
     setSelectedNodes([]);
     setSelectedRels([]);
     setAllPatterns([]);
@@ -68,7 +75,7 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
     updateLocalStorage(userCredentials!, 'selectedRelationshipLabels', []);
     updateLocalStorage(userCredentials!, 'selectedPattern', []);
     onClose();
-  }
+  };
 
   const [activeTab, setactiveTab] = useState<number>(0);
   return (
@@ -162,7 +169,7 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
               }}
               openLoadSchema={() => setSchemaLoadDialog({ triggeredFrom: 'enhancementtab', show: true })}
               openPredefinedSchema={() => {
-                setPredefinedSchemaDialog({ triggeredFrom: 'enhancementtab', show: true })
+                setPredefinedSchemaDialog({ triggeredFrom: 'enhancementtab', show: true });
               }}
               closeEnhanceGraphSchemaDialog={onClose}
               settingView='headerView'

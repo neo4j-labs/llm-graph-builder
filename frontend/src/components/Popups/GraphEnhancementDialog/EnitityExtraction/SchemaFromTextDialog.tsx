@@ -12,9 +12,9 @@ import { updateLocalStorage, extractOptions } from '../../../../utils/Utils';
 import SchemaViz from '../../../Graph/SchemaViz';
 
 interface SchemaFromTextProps {
-  open: boolean,
-  onClose: () => void,
-  onApply: (patterns: string[], nodes: OptionType[], rels: OptionType[], view: string) => void
+  open: boolean;
+  onClose: () => void;
+  onApply: (patterns: string[], nodes: OptionType[], rels: OptionType[], view: string) => void;
 }
 
 const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) => {
@@ -23,10 +23,16 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
   const { userCredentials } = useCredentials();
   const [isSchemaText, setIsSchemaText] = useState<boolean>(false);
   const { model } = useFileContext();
-  const { schemaValNodes, setSchemaValNodes, schemaValRels, setSchemaValRels, schemaTextPattern, setSchemaTextPattern } = useFileContext();
+  const {
+    schemaValNodes,
+    setSchemaValNodes,
+    schemaValRels,
+    setSchemaValRels,
+    schemaTextPattern,
+    setSchemaTextPattern,
+  } = useFileContext();
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [viewPoint, setViewPoint] = useState<string>('');
-
 
   const clickHandler = useCallback(async () => {
     setLoading(true);
@@ -35,25 +41,26 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
       setLoading(false);
       if (response.data.status === 'Success' && response.data?.data?.triplets?.length) {
         const schemaData: string[] = response.data.data.triplets;
-        const schemaTuples: TupleType[] = schemaData.map((item: string) => {
-          const matchResult = item.match(/^(.+?)-([A-Z_]+)->(.+)$/);
-          if (matchResult) {
-            const [source, rel, target] = matchResult.slice(1).map((s) => s.trim());
-            return {
-              value: `${source},${rel},${target}`,
-              label: `${source} -[:${rel}]-> ${target}`,
-              source,
-              target,
-              type: rel,
-            };
-          }
-          return null;
-        })
+        const schemaTuples: TupleType[] = schemaData
+          .map((item: string) => {
+            const matchResult = item.match(/^(.+?)-([A-Z_]+)->(.+)$/);
+            if (matchResult) {
+              const [source, rel, target] = matchResult.slice(1).map((s) => s.trim());
+              return {
+                value: `${source},${rel},${target}`,
+                label: `${source} -[:${rel}]-> ${target}`,
+                source,
+                target,
+                type: rel,
+              };
+            }
+            return null;
+          })
           .filter(Boolean) as TupleType[];
         const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(schemaTuples);
         setSchemaValNodes(nodeLabelOptions);
         setSchemaValRels(relationshipTypeOptions);
-        setSchemaTextPattern(schemaTuples.map(t => t.label));
+        setSchemaTextPattern(schemaTuples.map((t) => t.label));
       } else {
         showNormalToast(`Please provide meaningful text.`);
       }
@@ -73,20 +80,22 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
       return;
     }
     // Otherwise, recalculate nodes and rels from updated patterns
-    const updatedTuples: TupleType[] = updatedPatterns.map((item: string) => {
-      const matchResult = item.match(/^(.+?)-\[:([A-Z_]+)\]->(.+)$/);
-      if (matchResult) {
-        const [source, rel, target] = matchResult.slice(1).map((s) => s.trim());
-        return {
-          value: `${source},${rel},${target}`,
-          label: `${source} -[:${rel}]-> ${target}`,
-          source,
-          target,
-          type: rel,
-        };
-      }
-      return null;
-    }).filter(Boolean) as TupleType[];
+    const updatedTuples: TupleType[] = updatedPatterns
+      .map((item: string) => {
+        const matchResult = item.match(/^(.+?)-\[:([A-Z_]+)\]->(.+)$/);
+        if (matchResult) {
+          const [source, rel, target] = matchResult.slice(1).map((s) => s.trim());
+          return {
+            value: `${source},${rel},${target}`,
+            label: `${source} -[:${rel}]-> ${target}`,
+            source,
+            target,
+            type: rel,
+          };
+        }
+        return null;
+      })
+      .filter(Boolean) as TupleType[];
     const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(updatedTuples);
     setSchemaTextPattern(updatedPatterns);
     setSchemaValNodes(nodeLabelOptions);
@@ -140,19 +149,19 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
             htmlAttributes={{
               onChange: (e) => {
                 const textVal = e.target.value;
-                setUserText(textVal)
+                setUserText(textVal);
                 if (textVal.trim() === '') {
                   setSchemaTextPattern([]);
                   setSchemaValNodes([]);
                   setSchemaValRels([]);
                 }
-              }
+              },
             }}
             size='large'
           />
           <div className='flex justify-between mt-4'>
             <Checkbox
-              label="Text is schema description"
+              label='Text is schema description'
               onChange={(e) => {
                 setIsSchemaText(e.target.checked);
               }}
@@ -171,7 +180,7 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
           </div>
           {schemaTextPattern.length > 0 && (
             <>
-              <div className="mt-6">
+              <div className='mt-6'>
                 <PatternContainer
                   pattern={schemaTextPattern}
                   handleRemove={handleRemovePattern}
@@ -198,11 +207,10 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
           setGraphViewOpen={setOpenGraphView}
           viewPoint={viewPoint}
           nodeValues={(schemaValNodes as OptionType[]) ?? []}
-          relationshipValues={(schemaValRels) ?? []}
+          relationshipValues={schemaValRels ?? []}
         />
       )}
     </>
   );
-
 };
 export default SchemaFromTextDialog;

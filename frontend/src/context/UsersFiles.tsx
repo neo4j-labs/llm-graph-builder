@@ -6,7 +6,7 @@ import {
   OptionType,
   showTextFromSchemaDialogType,
   schemaLoadDialogType,
-  predefinedSchemaDialogType
+  predefinedSchemaDialogType,
 } from '../types';
 import {
   chatModeLables,
@@ -61,7 +61,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     show: false,
   });
 
-  const [predefinedSchemaDialog, setPredefinedSchemaDialog,] = useState<predefinedSchemaDialogType>({
+  const [predefinedSchemaDialog, setPredefinedSchemaDialog] = useState<predefinedSchemaDialogType>({
     triggeredFrom: '',
     show: false,
   });
@@ -86,8 +86,8 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [schemaView, setSchemaView] = useState<string | string[]>('');
   const [preDefinedNodes, setPreDefinedNodes] = useState<OptionType[]>([]);
   const [preDefinedRels, setPreDefinedRels] = useState<OptionType[]>([]);
-  const [userDefinedNodes, setUserDefinedNodes,] = useState<OptionType[]>([]);
-  const [userDefinedRels, setUserDefinedRels,] = useState<OptionType[]>([]);
+  const [userDefinedNodes, setUserDefinedNodes] = useState<OptionType[]>([]);
+  const [userDefinedRels, setUserDefinedRels] = useState<OptionType[]>([]);
   const [preDefinedPattern, setPreDefinedPattern] = useState<string[]>([]);
 
   useEffect(() => {
@@ -97,7 +97,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
         setSelectedNodes(selectedNodeLabel.selectedOptions);
       }
     }
-    if(selectedPatternsStr != null){
+    if (selectedPatternsStr != null) {
       const selectedPatternLabel = JSON.parse(selectedPatternsStr);
       if (userCredentials?.uri === selectedPatternLabel.db) {
         setSelectedNodes(selectedPatternLabel.selectedOptions);
@@ -170,20 +170,34 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     setSchemaTextPattern,
     allPatterns,
     setAllPatterns,
-    schemaValRels, setSchemaValRels,
-    schemaValNodes, setSchemaValNodes,
-    schemaLoadDialog, setSchemaLoadDialog,
-    dbNodes, setDbNodes,
-    dbRels, setDbRels,
-    dbPattern, setDbPattern,
-    predefinedSchemaDialog, setPredefinedSchemaDialog,
-    preDefinedNodes, setPreDefinedNodes,
-    preDefinedRels, setPreDefinedRels,
-    preDefinedPattern, setPreDefinedPattern,
-    schemaView, setSchemaView,
-    userDefinedNodes, setUserDefinedNodes,
-    userDefinedRels, setUserDefinedRels,
-    userDefinedPattern, setUserDefinedPattern,
+    schemaValRels,
+    setSchemaValRels,
+    schemaValNodes,
+    setSchemaValNodes,
+    schemaLoadDialog,
+    setSchemaLoadDialog,
+    dbNodes,
+    setDbNodes,
+    dbRels,
+    setDbRels,
+    dbPattern,
+    setDbPattern,
+    predefinedSchemaDialog,
+    setPredefinedSchemaDialog,
+    preDefinedNodes,
+    setPreDefinedNodes,
+    preDefinedRels,
+    setPreDefinedRels,
+    preDefinedPattern,
+    setPreDefinedPattern,
+    schemaView,
+    setSchemaView,
+    userDefinedNodes,
+    setUserDefinedNodes,
+    userDefinedRels,
+    setUserDefinedRels,
+    userDefinedPattern,
+    setUserDefinedPattern,
   };
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };

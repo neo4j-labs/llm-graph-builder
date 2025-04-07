@@ -13,7 +13,7 @@ import {
   UserCredentials,
   OptionType,
   UserDefinedGraphSchema,
-  TupleType
+  TupleType,
 } from '../types';
 import Wikipediadarkmode from '../assets/images/wikipedia-darkmode.svg';
 import Wikipediadlogo from '../assets/images/wikipedia.svg';
@@ -590,9 +590,7 @@ export const userDefinedGraphSchema = (nodes: OptionType[], relationships: Optio
       }
       const [start, type, end] = parts.map((part) => part.trim());
       if (!nodeMap[start] || !nodeMap[end]) {
-        console.warn(
-          `Missing node(s) for relationship: ${start} -[:${type}]-> ${end}`
-        );
+        console.warn(`Missing node(s) for relationship: ${start} -[:${type}]-> ${end}`);
         return null; // Skip relationships with missing nodes
       }
       return {
