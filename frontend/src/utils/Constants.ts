@@ -12,13 +12,14 @@ export const llms =
   process.env?.VITE_LLM_MODELS?.trim() != ''
     ? (process.env.VITE_LLM_MODELS?.split(',') as string[])
     : [
-        'openai_gpt_4.5',
-        'openai-gpt-o3-mini',
         'openai_gpt_4o',
         'openai_gpt_4o_mini',
+        'openai-gpt-o3-mini',
+        'openai_gpt_4.5',
         'gemini_1.5_pro',
         'gemini_1.5_flash',
         'gemini_2.0_flash',
+        'gemini_2.5_pro',
         'diffbot',
         'azure_ai_gpt_35',
         'azure_ai_gpt_4o',
@@ -43,6 +44,7 @@ export const supportedLLmsForRagas = [
   'gemini_1.5_pro',
   'gemini_1.5_flash',
   'gemini_2.0_flash',
+  'gemini_2.5_pro',
   'azure_ai_gpt_35',
   'azure_ai_gpt_4o',
   'groq_llama3_70b',
