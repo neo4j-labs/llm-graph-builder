@@ -627,25 +627,29 @@ export const getSelectedTriplets = (
   const selectedArray = Array.isArray(selectedOptions) ? selectedOptions : [selectedOptions];
   const triplets = [];
   for (const option of selectedArray) {
+    let tripletArray: string[];
     try {
-      const tripletArray = JSON.parse(option.value);
-      if (Array.isArray(tripletArray)) {
-        for (const tripletString of tripletArray) {
-          const matchResult = tripletString.match(/(.*?)-([A-Z_]+)->(.*)/);
-          if (matchResult) {
-            const [source, rel, target] = matchResult.slice(1).map((s: any) => s.trim());
-            triplets.push({
-              value: `${source},${rel},${target}`,
-              label: `${source} -[:${rel}]-> ${target}`,
-              source,
-              target,
-              type: rel,
-            });
-          }
-        }
-      }
+      tripletArray = JSON.parse(option.value);
     } catch (error) {
       console.error('Error parsing selected option value:', option.value, error);
+      continue;
+    }
+    if (!Array.isArray(tripletArray)) {
+      continue;
+    }
+    for (const tripletString of tripletArray) {
+      const matchResult = tripletString.match(/(.*?)-([A-Z_]+)->(.*)/);
+      if (!matchResult) {
+        continue;
+      }
+      const [source, rel, target] = matchResult.slice(1).map((s: any) => s.trim());
+      triplets.push({
+        value: `${source},${rel},${target}`,
+        label: `${source} -[:${rel}]-> ${target}`,
+        source,
+        target,
+        type: rel,
+      });
     }
   }
   return triplets;

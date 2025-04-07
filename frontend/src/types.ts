@@ -1069,6 +1069,8 @@ export interface SchemaSelectionProps {
   open: boolean;
   onClose: () => void;
   pattern: string[];
+  nodes: OptionType[];
+  rels:OptionType[];
   handleRemove: (pattern: string) => void;
   handleSchemaView: (view?: string) => void;
   loading: boolean;

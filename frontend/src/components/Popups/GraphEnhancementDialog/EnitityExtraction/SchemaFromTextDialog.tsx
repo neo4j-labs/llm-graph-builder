@@ -23,77 +23,10 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
   const { userCredentials } = useCredentials();
   const [isSchemaText, setIsSchemaText] = useState<boolean>(false);
   const { model } = useFileContext();
-  const {schemaValNodes, setSchemaValNodes, schemaValRels,setSchemaValRels,schemaTextPattern, setSchemaTextPattern } = useFileContext();
+  const { schemaValNodes, setSchemaValNodes, schemaValRels, setSchemaValRels, schemaTextPattern, setSchemaTextPattern } = useFileContext();
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [viewPoint, setViewPoint] = useState<string>('');
 
-  // const clickHandler = useCallback(async () => {
-  //   try {
-  //     setIsLoading(true);
-  //     const response = await getNodeLabelsAndRelTypesFromText(model, userText, isSchemaText, false);
-  //     setIsLoading(false);
-  //     if (response.data.status === 'Success') {
-  //       console.log('hello', response.data.data);
-  //       if (response.data?.data) {
-  //         const nodelabels = response.data?.data?.labels?.map((l) => ({ value: l, label: l }));
-  //         setSelectedNodes((prev) => {
-  //           const combinedData = [...prev, ...nodelabels];
-  //           const uniqueLabels = new Set();
-  //           const updatedOptions = combinedData.filter((item) => {
-  //             if (!uniqueLabels.has(item.label)) {
-  //               uniqueLabels.add(item.label);
-  //               return true;
-  //             }
-  //             return false;
-  //           });
-  //           localStorage.setItem(
-  //             'selectedNodeLabels',
-  //             JSON.stringify({ db: userCredentials?.uri, selectedOptions: updatedOptions })
-  //           );
-  //           return updatedOptions;
-  //         });
-  //       }
-  //       if (response.data?.data?.relationshipTypes.length) {
-  //         const reltypes = response.data?.data?.relationshipTypes.map((t) => ({ value: t, label: t }));
-  //         setSelectedRels((prev) => {
-  //           const combinedData = [...prev, ...reltypes];
-  //           const uniqueLabels = new Set();
-  //           const updatedOptions = combinedData.filter((item) => {
-  //             if (!uniqueLabels.has(item.label)) {
-  //               uniqueLabels.add(item.label);
-  //               return true;
-  //             }
-  //             return false;
-  //           });
-  //           localStorage.setItem(
-  //             'selectedRelationshipLabels',
-  //             JSON.stringify({ db: userCredentials?.uri, selectedOptions: updatedOptions })
-  //           );
-  //           return updatedOptions;
-  //         });
-  //       }
-  //       if (response.data?.data?.relationshipTypes.length && response.data?.data?.labels.length) {
-  //         showSuccessToast(
-  //           `Successfully Created ${response.data?.data?.labels.length} Node labels and ${response.data?.data?.relationshipTypes.length} Relationship labels`
-  //         );
-  //       } else if (response.data?.data?.relationshipTypes.length && !response.data?.data?.labels.length) {
-  //         showSuccessToast(`Successfully Created ${response.data?.data?.relationshipTypes.length} Relationship labels`);
-  //       } else if (!response.data?.data?.relationshipTypes.length && response.data?.data?.labels.length) {
-  //         showSuccessToast(`Successfully Created ${response.data?.data?.labels.length} Node labels`);
-  //       } else {
-  //         showNormalToast(`Please give meaningful text`);
-  //       }
-  //     } else {
-  //       throw new Error('Unable to create labels from ');
-  //     }
-  //     onClose();
-  //     setUserText('');
-  //     setIsSchemaText(false);
-  //   } catch (error) {
-  //     setIsLoading(false);
-  //     console.log(error);
-  //   }
-  // }, [userCredentials, userText, isSchemaText]);
 
   const clickHandler = useCallback(async () => {
     setLoading(true);
@@ -121,13 +54,6 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
         setSchemaValNodes(nodeLabelOptions);
         setSchemaValRels(relationshipTypeOptions);
         setSchemaTextPattern(schemaTuples.map(t => t.label));
-        if (nodeLabelOptions.length && relationshipTypeOptions.length) {
-          showSuccessToast(
-            `Successfully Created ${nodeLabelOptions.length} Node labels and ${relationshipTypeOptions.length} Relationship labels`
-          );
-        } else {
-          showNormalToast(`Please provide meaningful text.`);
-        }
       } else {
         showNormalToast(`Please provide meaningful text.`);
       }
@@ -138,8 +64,35 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
   }, [userCredentials, userText, isSchemaText]);
 
   const handleRemovePattern = (pattern: string) => {
-    setSchemaTextPattern((prevPatterns) => prevPatterns.filter((p) => p !== pattern));
+    const updatedPatterns = schemaTextPattern.filter((p) => p !== pattern);
+    if (updatedPatterns.length === 0) {
+      setSchemaTextPattern([]);
+      setSchemaValNodes([]);
+      setSchemaValRels([]);
+      setUserText('');
+      return;
+    }
+    // Otherwise, recalculate nodes and rels from updated patterns
+    const updatedTuples: TupleType[] = updatedPatterns.map((item: string) => {
+      const matchResult = item.match(/^(.+?)-\[:([A-Z_]+)\]->(.+)$/);
+      if (matchResult) {
+        const [source, rel, target] = matchResult.slice(1).map((s) => s.trim());
+        return {
+          value: `${source},${rel},${target}`,
+          label: `${source} -[:${rel}]-> ${target}`,
+          source,
+          target,
+          type: rel,
+        };
+      }
+      return null;
+    }).filter(Boolean) as TupleType[];
+    const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(updatedTuples);
+    setSchemaTextPattern(updatedPatterns);
+    setSchemaValNodes(nodeLabelOptions);
+    setSchemaValRels(relationshipTypeOptions);
   };
+
   const handleSchemaView = () => {
     setOpenGraphView(true);
     setViewPoint('showSchemaView');
@@ -149,9 +102,6 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
     if (onApply) {
       onApply(schemaTextPattern, schemaValNodes, schemaValRels, 'text');
     }
-    updateLocalStorage(userCredentials!!, 'textNodeLabels', schemaValNodes);
-    updateLocalStorage(userCredentials!!, 'textRelationLabels', schemaValRels);
-    updateLocalStorage(userCredentials!!, 'textPatterns', schemaTextPattern);
     onClose();
   };
 
@@ -171,9 +121,7 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
         isOpen={open}
         onClose={() => {
           setLoading(false);
-          setIsSchemaText(false);
-          setUserText('');
-          onClose();
+          handleCancel();
         }}
         htmlAttributes={{
           'aria-labelledby': 'form-dialog-title',
@@ -190,7 +138,15 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
             isFluid={true}
             value={userText}
             htmlAttributes={{
-              onChange: (e) => setUserText(e.target.value),
+              onChange: (e) => {
+                const textVal = e.target.value;
+                setUserText(textVal)
+                if (textVal.trim() === '') {
+                  setSchemaTextPattern([]);
+                  setSchemaValNodes([]);
+                  setSchemaValRels([]);
+                }
+              }
             }}
             size='large'
           />

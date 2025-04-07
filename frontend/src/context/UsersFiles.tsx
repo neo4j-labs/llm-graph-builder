@@ -26,6 +26,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const isProdEnv = process.env.VITE_ENV === 'PROD';
   const selectedNodeLabelstr = localStorage.getItem('selectedNodeLabels');
   const selectedNodeRelsstr = localStorage.getItem('selectedRelationshipLabels');
+  const selectedPatternsStr = localStorage.getItem('selectedPattern');
   const selectedTokenChunkSizeStr = localStorage.getItem('selectedTokenChunkSize');
   const selectedChunk_overlapStr = localStorage.getItem('selectedChunk_overlap');
   const selectedChunks_to_combineStr = localStorage.getItem('selectedChunks_to_combine');
@@ -94,6 +95,12 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
       const selectedNodeLabel = JSON.parse(selectedNodeLabelstr);
       if (userCredentials?.uri === selectedNodeLabel.db) {
         setSelectedNodes(selectedNodeLabel.selectedOptions);
+      }
+    }
+    if(selectedPatternsStr != null){
+      const selectedPatternLabel = JSON.parse(selectedPatternsStr);
+      if (userCredentials?.uri === selectedPatternLabel.db) {
+        setSelectedNodes(selectedPatternLabel.selectedOptions);
       }
     }
     if (selectedNodeRelsstr != null) {

@@ -1,11 +1,10 @@
-import { Dialog, Button,Select } from '@neo4j-ndl/react';
+import { Dialog, Button, Select } from '@neo4j-ndl/react';
 import { useState, useMemo } from 'react';
 import PatternContainer from '../../GraphEnhancementDialog/EnitityExtraction/PatternContainer';
 import { OptionType, TupleType } from '../../../../types';
-import { updateLocalStorage, extractOptions, getSelectedTriplets } from '../../../../utils/Utils';
+import { extractOptions, getSelectedTriplets } from '../../../../utils/Utils';
 import SchemaViz from '../../../../components/Graph/SchemaViz';
 import { getDefaultSchemaExamples, appLabels } from '../../../../utils/Constants';
-import { useCredentials } from '../../../../context/UserCredentials';
 import { useFileContext } from '../../../../context/UsersFiles';
 
 interface SchemaFromTextProps {
@@ -15,11 +14,7 @@ interface SchemaFromTextProps {
 }
 
 const PredefinedSchemaDialog = ({ open, onClose, onApply }: SchemaFromTextProps) => {
-
     const defaultExamples = useMemo(() => getDefaultSchemaExamples(), []);
-
-    const { userCredentials } = useCredentials();
-
     const {
         setPreDefinedPattern,
         preDefinedPattern,
@@ -35,15 +30,28 @@ const PredefinedSchemaDialog = ({ open, onClose, onApply }: SchemaFromTextProps)
     const [selectedPreDefOption, setSelectedPreDefOption] = useState<OptionType | null>(null);
 
     const handleRemovePattern = (patternToRemove: string) => {
-        setPreDefinedPattern((prevPatterns) => prevPatterns.filter((p) => p !== patternToRemove));
-    };
-
-    const onChangeSchema = (selectedOption: OptionType | null | void) => {
-        if (!selectedOption) {
+        const updatedPatterns = preDefinedPattern.filter((p) => p !== patternToRemove);
+        if (updatedPatterns.length === 0) {
+            setSelectedPreDefOption(null);
             setPreDefinedPattern([]);
             setPreDefinedNodes([]);
             setPreDefinedRels([]);
+            return;
+        }
+        setPreDefinedPattern(updatedPatterns);
+        const selectedTriplets: TupleType[] = getSelectedTriplets(
+            selectedPreDefOption ? [selectedPreDefOption] : []
+        ).filter((t) => updatedPatterns.includes(t.label));
+        const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(selectedTriplets);
+        setPreDefinedNodes(nodeLabelOptions);
+        setPreDefinedRels(relationshipTypeOptions);
+    };
+    const onChangeSchema = (selectedOption: OptionType | null | void) => {
+        if (!selectedOption) {
             setSelectedPreDefOption(null);
+            setPreDefinedPattern([]);
+            setPreDefinedNodes([]);
+            setPreDefinedRels([]);
             return;
         }
         setSelectedPreDefOption(selectedOption);
@@ -55,15 +63,12 @@ const PredefinedSchemaDialog = ({ open, onClose, onApply }: SchemaFromTextProps)
     };
 
     const handleSchemaView = () => {
-            setOpenGraphView(true);
-            setViewPoint('showSchemaView');
+        setOpenGraphView(true);
+        setViewPoint('showSchemaView');
     };
 
     const handlePreDefinedSchemaApply = () => {
         onApply(preDefinedPattern, preDefinedNodes, preDefinedRels, 'preDefined');
-        updateLocalStorage(userCredentials!!, 'preDefinedNodeLabels', preDefinedNodes);
-        updateLocalStorage(userCredentials!!, 'preDefinedRelationshipLabels', preDefinedRels);
-        updateLocalStorage(userCredentials!!, 'preDefinedPatterns', preDefinedPattern);
         onClose();
     }
 
@@ -81,7 +86,7 @@ const PredefinedSchemaDialog = ({ open, onClose, onApply }: SchemaFromTextProps)
                 size='medium'
                 isOpen={open}
                 onClose={() => {
-                    onClose();
+                    handleCancel()
                 }}
                 htmlAttributes={{
                     'aria-labelledby': 'form-dialog-title',

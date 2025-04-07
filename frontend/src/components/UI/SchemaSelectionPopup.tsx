@@ -2,7 +2,7 @@ import { Dialog, Button, LoadingSpinner } from '@neo4j-ndl/react';
 import PatternContainer from '../Popups/GraphEnhancementDialog/EnitityExtraction/PatternContainer';
 import { SchemaSelectionProps } from '../../types';
 
-const SchemaSelectionDialog = ({ open, onClose, pattern, handleRemove, handleSchemaView, loading, highlightPattern, onApply, onCancel }: SchemaSelectionProps) => {
+const SchemaSelectionDialog = ({ open, onClose, pattern, nodes, rels, handleRemove, handleSchemaView, loading, highlightPattern, onApply, onCancel }: SchemaSelectionProps) => {
 
     return (
         <Dialog
@@ -25,6 +25,8 @@ const SchemaSelectionDialog = ({ open, onClose, pattern, handleRemove, handleSch
                             handleRemove={handleRemove}
                             handleSchemaView={handleSchemaView}
                             highlightPattern={highlightPattern ?? ''}
+                            nodes={nodes}
+                            rels={rels}
                         >
                         </PatternContainer>))}
                 <Dialog.Actions className='mt-3'>

@@ -19,7 +19,7 @@ const LoadExistingSchemaDialog = ({
 }: LoadExistingSchemaDialogProps) => {
     const [loading, setLoading] = useState<boolean>(false);
     const { userCredentials } = useCredentials();
-    const { setDbPattern, dbPattern , dbNodes, setDbNodes, dbRels, setDbRels} = useFileContext();
+    const { setDbPattern, dbPattern, dbNodes, setDbNodes, dbRels, setDbRels } = useFileContext();
     const [openGraphView, setOpenGraphView] = useState<boolean>(false);
     const [viewPoint, setViewPoint] = useState<string>('');
 
@@ -61,8 +61,33 @@ const LoadExistingSchemaDialog = ({
         }
     };
     const handleRemovePattern = (patternToRemove: string) => {
-        setDbPattern((prevPatterns) => prevPatterns.filter((p) => p !== patternToRemove));
+        const updatedPatterns = dbPattern.filter((p) => p !== patternToRemove);
+        if (updatedPatterns.length === 0) {
+            setDbPattern([]);
+            setDbNodes([]);
+            setDbRels([]);
+            return;
+        }
+        const updatedTuples: TupleType[] = updatedPatterns.map((item: string) => {
+            const matchResult = item.match(/^(.+?)-\[:([A-Z_]+)\]->(.+)$/);
+            if (matchResult) {
+                const [source, rel, target] = matchResult.slice(1).map((s) => s.trim());
+                return {
+                    value: `${source},${rel},${target}`,
+                    label: `${source} -[:${rel}]-> ${target}`,
+                    source,
+                    target,
+                    type: rel,
+                };
+            }
+            return null;
+        }).filter(Boolean) as TupleType[];
+        const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(updatedTuples);
+        setDbPattern(updatedPatterns);
+        setDbNodes(nodeLabelOptions);
+        setDbRels(relationshipTypeOptions);
     };
+
     const handleSchemaView = () => {
         setOpenGraphView(true);
         setViewPoint('showSchemaView');
@@ -70,9 +95,6 @@ const LoadExistingSchemaDialog = ({
 
     const handleDBApply = () => {
         onApply(dbPattern, dbNodes, dbRels, 'db');
-        updateLocalStorage(userCredentials!!, 'dbNodeLabels', dbNodes);
-        updateLocalStorage(userCredentials!!, 'dbRelationLabels', dbRels);
-        updateLocalStorage(userCredentials!!, 'dbPatterns', dbPattern);
         onClose();
     }
 
@@ -86,13 +108,15 @@ const LoadExistingSchemaDialog = ({
         <>
             <SchemaSelectionDialog
                 open={open}
-                onClose={onClose}
+                onClose={handleCancel}
                 pattern={dbPattern}
                 handleRemove={handleRemovePattern}
                 handleSchemaView={handleSchemaView}
                 loading={loading}
                 onApply={handleDBApply}
                 onCancel={handleCancel}
+                nodes={dbNodes}
+                rels={dbRels}
             />
             {openGraphView && (
                 <SchemaViz

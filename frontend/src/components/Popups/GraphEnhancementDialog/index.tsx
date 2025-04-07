@@ -9,12 +9,27 @@ import DeduplicationTab from './Deduplication';
 import { tokens } from '@neo4j-ndl/base';
 import PostProcessingCheckList from './PostProcessingCheckList';
 import AdditionalInstructionsText from './AdditionalInstructions';
+import { updateLocalStorage } from '../../../utils/Utils';
+import { useCredentials } from '../../../context/UserCredentials';
 
 export default function GraphEnhancementDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { breakpoints } = tokens;
   const [orphanDeleteAPIloading, setorphanDeleteAPIloading] = useState<boolean>(false);
-  const { setShowTextFromSchemaDialog, setSchemaLoadDialog , setPredefinedSchemaDialog} = useFileContext();
+  const { setShowTextFromSchemaDialog, setSchemaLoadDialog, setPredefinedSchemaDialog, setSelectedNodes, setAllPatterns, setSelectedRels,
+    setUserDefinedPattern,
+    setUserDefinedNodes,
+    setUserDefinedRels,
+    setDbPattern,
+    setDbNodes,
+    setDbRels,
+    setSchemaValNodes,
+    setSchemaValRels,
+    setSchemaTextPattern,
+    setPreDefinedNodes,
+    setPreDefinedRels,
+    setPreDefinedPattern } = useFileContext();
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
+  const { userCredentials } = useCredentials();
 
   const orphanNodesDeleteHandler = async (selectedEntities: string[]) => {
     try {
@@ -27,6 +42,34 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
     }
   };
 
+  const handleOnclose = () => {
+    // overall  
+    setSelectedNodes([]);
+    setSelectedRels([]);
+    setAllPatterns([]);
+    // User
+    setUserDefinedPattern([]);
+    setUserDefinedNodes([]);
+    setUserDefinedRels([]);
+    // DB
+    setDbPattern([]);
+    setDbNodes([]);
+    setDbRels([]);
+    // Text
+    setSchemaTextPattern([]);
+    setSchemaValNodes([]);
+    setSchemaValRels([]);
+    // Predefined
+    setPreDefinedNodes([]);
+    setPreDefinedRels([]);
+    setPreDefinedPattern([]);
+
+    updateLocalStorage(userCredentials!, 'selectedNodeLabels', []);
+    updateLocalStorage(userCredentials!, 'selectedRelationshipLabels', []);
+    updateLocalStorage(userCredentials!, 'selectedPattern', []);
+    onClose();
+  }
+
   const [activeTab, setactiveTab] = useState<number>(0);
   return (
     <Dialog
@@ -37,7 +80,7 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
       isOpen={open}
       size='unset'
       hasDisabledCloseButton={false}
-      onClose={onClose}
+      onClose={handleOnclose}
     >
       <Dialog.Header className='flex justify-between self-end mb-0! '>
         <div className='n-bg-palette-neutral-bg-weak px-4'>

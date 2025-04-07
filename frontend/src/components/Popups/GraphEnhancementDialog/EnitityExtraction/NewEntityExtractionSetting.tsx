@@ -114,37 +114,37 @@ export default function NewEntityExtractionSetting({
     setSelectedNodes([]);
     setSelectedRels([]);
     setAllPatterns([]);
-    //User
+    // User
     setUserDefinedPattern([]);
     setUserDefinedNodes([]);
     setUserDefinedRels([]);
-    //DB
+    // DB
     setDbPattern([]);
     setDbNodes([]);
     setDbRels([]);
-    //Text
+    // Text
     setSchemaTextPattern([]);
     setSchemaValNodes([]);
     setSchemaValRels([]);
-    //Predefined
+    // Predefined
     setPreDefinedNodes([]);
     setPreDefinedRels([]);
     setPreDefinedPattern([]);
     setCombinedPatterns([]);
     setCombinedNodes([]);
     setCombinedRels([]);
-    updateLocalStorage(userCredentials!!, 'selectedNodeLabels', []);
-    updateLocalStorage(userCredentials!!, 'selectedRelationshipLabels', []);
-    updateLocalStorage(userCredentials!!, 'selectedPattern', []);
-    updateLocalStorage(userCredentials!!, 'preDefinedNodeLabels', []);
-    updateLocalStorage(userCredentials!!, 'preDefinedRelationshipLabels', []);
-    updateLocalStorage(userCredentials!!, 'preDefinedPatterns', []);
-    updateLocalStorage(userCredentials!!, 'textNodeLabels', []);
-    updateLocalStorage(userCredentials!!, 'textRelationLabels', []);
-    updateLocalStorage(userCredentials!!, 'textPatterns', []);
-    updateLocalStorage(userCredentials!!, 'dbNodeLabels', []);
-    updateLocalStorage(userCredentials!!, 'dbRelationLabels', []);
-    updateLocalStorage(userCredentials!!, 'dbPatterns', []);
+    updateLocalStorage(userCredentials!, 'selectedNodeLabels', []);
+    updateLocalStorage(userCredentials!, 'selectedRelationshipLabels', []);
+    updateLocalStorage(userCredentials!, 'selectedPattern', []);
+    updateLocalStorage(userCredentials!, 'preDefinedNodeLabels', []);
+    updateLocalStorage(userCredentials!, 'preDefinedRelationshipLabels', []);
+    updateLocalStorage(userCredentials!, 'preDefinedPatterns', []);
+    updateLocalStorage(userCredentials!, 'textNodeLabels', []);
+    updateLocalStorage(userCredentials!, 'textRelationLabels', []);
+    updateLocalStorage(userCredentials!, 'textPatterns', []);
+    updateLocalStorage(userCredentials!, 'dbNodeLabels', []);
+    updateLocalStorage(userCredentials!, 'dbRelationLabels', []);
+    updateLocalStorage(userCredentials!, 'dbPatterns', []);
     showNormalToast(`Successfully Removed the Schema settings`);
   };
 
@@ -156,9 +156,9 @@ export default function NewEntityExtractionSetting({
     setAllPatterns(pattern);
     setSelectedNodes(nodeLables);
     setSelectedRels(relationshipLabels);
-    updateLocalStorage(userCredentials!!, 'selectedNodeLabels', nodeLables);
-    updateLocalStorage(userCredentials!!, 'selectedRelationshipLabels', relationshipLabels);
-    updateLocalStorage(userCredentials!!, 'selectedPatterns', pattern);
+    updateLocalStorage(userCredentials!, 'selectedNodeLabels', nodeLables);
+    updateLocalStorage(userCredentials!, 'selectedRelationshipLabels', relationshipLabels);
+    updateLocalStorage(userCredentials!, 'selectedPatterns', pattern);
   };
 
   const handleSchemaView = () => {
@@ -209,35 +209,47 @@ export default function NewEntityExtractionSetting({
   };
 
   const handleRemovePattern = (pattern: string) => {
-    // const updatedPatterns = combinedPatterns.filter((p) => p !== pattern);
-    // setCombinedPatterns(updatedPatterns);
-    // setUserDefinedPattern((prev) => prev.filter((p) => p !== pattern));
-    // setDbPattern((prev) => prev.filter((p) => p !== pattern));
-    // setPreDefinedPattern((prev) => prev.filter((p) => p !== pattern));
-    // setSchemaTextPattern((prev) => prev.filter((p) => p !== pattern));
-    // const match = pattern.match(/(.*?) -\[:(.*?)\]-> (.*)/);
-    // if (!match) return;
-    // const [, source, type, target] = match;
-    // const remainingPatterns = [
-    //   ...userDefinedPattern,
-    //   ...preDefinedPattern,
-    //   ...dbPattern,
-    //   ...schemaTextPattern,
-    // ].filter((p) => p !== pattern);
-    // const isNodeStillUsed = (nodeValue: string) =>
-    //   remainingPatterns.some((p) => p.includes(nodeValue));
-    // const isRelStillUsed = (relValue: string) =>
-    //   remainingPatterns.some((p) => p.includes(`[:${relValue}]`));
-    // const updatedNodes = combinedNodes.filter(
-    //   (n) => !(n.value === source && !isNodeStillUsed(source)) &&
-    //     !(n.value === target && !isNodeStillUsed(target))
-    // );
-    // const updatedRels = combinedRels.filter(
-    //   (r) => !(r.value === type && !isRelStillUsed(type))
-    // );
-    // setCombinedNodes(updatedNodes);
-    // setCombinedRels(updatedRels);
-    setUserDefinedPattern((prevPatterns) => prevPatterns.filter((p) => p !== pattern));
+    const match = pattern.match(/(.*?) -\[:(.*?)\]-> (.*)/);
+    if (!match) {
+      return;
+    }
+    const [, source, type, target] = match;
+    const updatePatternAndLabels = (
+      patterns: string[],
+      setPatterns: React.Dispatch<React.SetStateAction<string[]>>,
+      nodes: OptionType[],
+      setNodes: React.Dispatch<React.SetStateAction<OptionType[]>>,
+      rels: OptionType[],
+      setRels: React.Dispatch<React.SetStateAction<OptionType[]>>
+    ) => {
+      const updatedPatterns = patterns.filter(p => p !== pattern);
+      setPatterns(updatedPatterns);
+      const isNodeStillUsed = (value: string) =>
+        updatedPatterns.some(p => p.includes(value));
+      const isRelStillUsed = (value: string) =>
+        updatedPatterns.some(p => p.includes(`[:${value}]`));
+      const updatedNodes = nodes.filter(n =>
+        (n.value !== source || isNodeStillUsed(source)) &&
+        (n.value !== target || isNodeStillUsed(target))
+      );
+      const updatedRels = rels.filter(r =>
+        r.value !== type || isRelStillUsed(type)
+      );
+      setNodes(updatedNodes);
+      setRels(updatedRels);
+    };
+    updatePatternAndLabels(userDefinedPattern, setUserDefinedPattern, userDefinedNodes, setUserDefinedNodes, userDefinedRels, setUserDefinedRels);
+    updatePatternAndLabels(preDefinedPattern, setPreDefinedPattern, preDefinedNodes, setPreDefinedNodes, preDefinedRels, setPreDefinedRels);
+    updatePatternAndLabels(dbPattern, setDbPattern, dbNodes, setDbNodes, dbRels, setDbRels);
+    updatePatternAndLabels(schemaTextPattern, setSchemaTextPattern, schemaValNodes, setSchemaValNodes, schemaValRels, setSchemaValRels);
+    setCombinedPatterns(prev => prev.filter(p => p !== pattern));
+    setCombinedNodes(prev =>
+      prev.filter(n => !(n.value === source || n.value === target))
+    );
+    setCombinedRels(prev =>
+      prev.filter(r => r.value !== type)
+    );
+    setTupleOptions(prev => prev.filter(t => t.label !== pattern));
   };
 
   const onSchemaFromTextCLick = () => {
@@ -270,8 +282,6 @@ export default function NewEntityExtractionSetting({
     openLoadSchema();
   }, []);
 
-  console.log('allNodes', combinedNodes)
-  console.log('allRels', combinedRels);
   return (
     <div>
       <Typography variant='body-medium'>
@@ -294,14 +304,14 @@ export default function NewEntityExtractionSetting({
           selectedTupleOptions={tupleOptions}
         >
         </GraphPattern>
-            <PatternContainer
-              pattern={combinedPatterns}
-              handleRemove={handleRemovePattern}
-              handleSchemaView={handleSchemaView}
-              highlightPattern={highlightPattern ?? ''}
-              nodes={combinedNodes}
-              rels={combinedRels}
-            ></PatternContainer>
+        <PatternContainer
+          pattern={combinedPatterns}
+          handleRemove={handleRemovePattern}
+          handleSchemaView={handleSchemaView}
+          highlightPattern={highlightPattern ?? ''}
+          nodes={combinedNodes}
+          rels={combinedRels}
+        ></PatternContainer>
         <Flex className='mt-4! mb-2 flex! items-center' flexDirection='row' justifyContent='flex-end'>
           <Flex flexDirection='row' gap='4'>
             <ButtonWithToolTip

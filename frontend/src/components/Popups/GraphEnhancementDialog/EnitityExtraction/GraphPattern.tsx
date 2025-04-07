@@ -22,10 +22,12 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
     const sourceRef = useRef<HTMLDivElement | null>(null);
 
     const handleNewValue = (newValue: string, type: 'source' | 'type' | 'target') => {
-        if (!newValue.trim()) return;
+        if (!newValue.trim()) {
+            return;
+        }
         const newOption: OptionType = { value: newValue.trim(), label: newValue.trim() };
         const checkUniqueValue = (list: OptionType[], value: OptionType) =>
-            list.some((opt) => opt.value === value.value) ? list : [...list, value];
+            (list.some((opt) => opt.value === value.value) ? list : [...list, value]);
         switch (type) {
             case 'source':
                 setSourceOptions((prev) => checkUniqueValue(prev, newOption));
@@ -38,6 +40,9 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
             case 'target':
                 setTargetOptions((prev) => checkUniqueValue(prev, newOption));
                 onPatternChange(selectedSource as OptionType, selectedType as OptionType, newOption);
+                break;
+            default:
+                console.log('wrong type added');
                 break;
         }
         setInputValues((prev) => ({ ...prev, [type]: '' }));
@@ -75,7 +80,7 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
             <div className='flex gap-4 items-end mb-6 mt-3 justify-between'>
                 <div className='w-1/4' ref={sourceRef}>
                     <Select
-                        label='Select Source'
+                        label='Select/Create Source'
                         size='medium'
                         selectProps={{
                             isClearable: true,
@@ -92,7 +97,7 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
                     />
                 </div>
                 <Select
-                    label='Select Type'
+                    label='Select/Create Type'
                     size='medium'
                     selectProps={{
                         isClearable: true,
@@ -109,7 +114,7 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
                     className='w-1/4'
                 />
                 <Select
-                    label='Select Target'
+                    label='Select/Create Target'
                     size='medium'
                     selectProps={{
                         isClearable: true,
