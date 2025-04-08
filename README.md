@@ -220,7 +220,7 @@ If you encounter any issues, please feel free to open an issue or reach out to u
 8. Amazon Bedrock(dev deployed version)
 9. Ollama(dev deployed version)
 10. Deepseek(dev deployed version)
-11. Other OpenAI compabtile baseurl models(dev deployed version)
+11. Other OpenAI Compatible baseurl models(dev deployed version)
 
 ## For local llms (Ollama)
 1. Pull the docker imgage of ollama
