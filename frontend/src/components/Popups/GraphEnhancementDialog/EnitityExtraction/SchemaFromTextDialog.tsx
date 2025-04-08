@@ -1,7 +1,6 @@
 import { Checkbox, Dialog, TextArea, Button } from '@neo4j-ndl/react';
 import { useCallback, useState } from 'react';
 import { getNodeLabelsAndRelTypesFromText } from '../../../../services/SchemaFromTextAPI';
-import { useCredentials } from '../../../../context/UserCredentials';
 import { useFileContext } from '../../../../context/UsersFiles';
 import { buttonCaptions } from '../../../../utils/Constants';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
@@ -20,7 +19,6 @@ interface SchemaFromTextProps {
 const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) => {
   const [userText, setUserText] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
-  const { userCredentials } = useCredentials();
   const [isSchemaText, setIsSchemaText] = useState<boolean>(false);
   const { model } = useFileContext();
   const {
@@ -39,8 +37,9 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
     try {
       const response = await getNodeLabelsAndRelTypesFromText(model, userText, isSchemaText, false);
       setLoading(false);
-      if (response.data.status === 'Success' && response.data?.data?.triplets?.length) {
-        const schemaData: string[] = response.data.data.triplets;
+      const { status, message, data } = response.data;
+      if (status === 'Success' && data?.triplets?.length) {
+        const schemaData: string[] = data.triplets;
         const schemaTuples: TupleType[] = schemaData
           .map((item: string) => {
             const matchResult = item.match(/^(.+?)-([A-Z_]+)->(.+)$/);
@@ -61,14 +60,15 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
         setSchemaValNodes(nodeLabelOptions);
         setSchemaValRels(relationshipTypeOptions);
         setSchemaTextPattern(schemaTuples.map((t) => t.label));
-      } else {
-        showNormalToast(`Please provide meaningful text.`);
+      } else if (status === 'Failed') {
+        showNormalToast(message  as string);
       }
-    } catch (error) {
+    } catch (error: any) {
       setLoading(false);
       console.error('Error processing schema:', error);
+      showNormalToast(error?.message || 'Unexpected error occurred.');
     }
-  }, [userCredentials, userText, isSchemaText]);
+  }, [model, userText, isSchemaText]);
 
   const handleRemovePattern = (pattern: string) => {
     const updatedPatterns = schemaTextPattern.filter((p) => p !== pattern);
@@ -150,11 +150,9 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
               onChange: (e) => {
                 const textVal = e.target.value;
                 setUserText(textVal);
-                if (textVal.trim() === '') {
                   setSchemaTextPattern([]);
                   setSchemaValNodes([]);
                   setSchemaValRels([]);
-                }
               },
             }}
             size='large'

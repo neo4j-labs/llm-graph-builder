@@ -34,6 +34,7 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
     setPreDefinedNodes,
     setPreDefinedRels,
     setPreDefinedPattern,
+    setSelectedPreDefOption,
   } = useFileContext();
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
   const { userCredentials } = useCredentials();
@@ -70,6 +71,7 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
     setPreDefinedNodes([]);
     setPreDefinedRels([]);
     setPreDefinedPattern([]);
+    setSelectedPreDefOption(null);
 
     updateLocalStorage(userCredentials!, 'selectedNodeLabels', []);
     updateLocalStorage(userCredentials!, 'selectedRelationshipLabels', []);

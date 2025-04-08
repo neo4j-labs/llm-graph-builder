@@ -33,6 +33,9 @@ export default function NewEntityExtractionSetting({
   closeEnhanceGraphSchemaDialog?: () => void;
 }) {
   const {
+    selectedRels,
+    selectedNodes,
+    allPatterns,
     setSelectedRels,
     setSelectedNodes,
     userDefinedPattern,
@@ -175,7 +178,7 @@ export default function NewEntityExtractionSetting({
     setSelectedRels(relationshipLabels);
     updateLocalStorage(userCredentials!, 'selectedNodeLabels', nodeLables);
     updateLocalStorage(userCredentials!, 'selectedRelationshipLabels', relationshipLabels);
-    updateLocalStorage(userCredentials!, 'selectedPatterns', pattern);
+    updateLocalStorage(userCredentials!, 'selectedPattern', pattern);
   };
 
   const handleSchemaView = () => {
@@ -337,12 +340,12 @@ export default function NewEntityExtractionSetting({
           selectedTupleOptions={tupleOptions}
         ></GraphPattern>
         <PatternContainer
-          pattern={combinedPatterns}
+          pattern={allPatterns.length > 0 ? allPatterns : combinedPatterns}
           handleRemove={handleRemovePattern}
           handleSchemaView={handleSchemaView}
           highlightPattern={highlightPattern ?? ''}
-          nodes={combinedNodes}
-          rels={combinedRels}
+          nodes={selectedNodes.length > 0 ? selectedNodes as OptionType[] : combinedNodes}
+          rels={selectedRels.length > 0 ? selectedRels as OptionType[] : combinedRels}
         ></PatternContainer>
         <Flex className='my-8! mb-2 flex! items-center' flexDirection='row' justifyContent='flex-end'>
           <DropdownButton
@@ -402,7 +405,7 @@ export default function NewEntityExtractionSetting({
                 placement='top'
                 onClick={handleFinalClear}
                 label='Clear Graph Settings'
-                disabled={!combinedNodes.length || !combinedRels.length}
+                disabled={allPatterns.length > 0 ? !allPatterns.length : !combinedPatterns.length}
               >
                 {buttonCaptions.clearSettings}
               </ButtonWithToolTip>
@@ -412,7 +415,7 @@ export default function NewEntityExtractionSetting({
               placement='top'
               onClick={() => handleFinalApply(combinedPatterns, combinedNodes, combinedRels)}
               label='Apply Graph Settings'
-              disabled={!combinedNodes.length || !combinedRels.length}
+              disabled={allPatterns.length > 0 ? !allPatterns.length : !combinedPatterns.length}
             >
               {buttonCaptions.applyGraphSchema}
             </ButtonWithToolTip>
@@ -424,8 +427,8 @@ export default function NewEntityExtractionSetting({
           open={openGraphView}
           setGraphViewOpen={setOpenGraphView}
           viewPoint={viewPoint}
-          nodeValues={combinedNodes ?? []}
-          relationshipValues={combinedRels ?? []}
+          nodeValues={combinedNodes.length > 0 ? combinedNodes : selectedNodes as OptionType[]}
+          relationshipValues={combinedRels.length > 0 ? combinedRels : selectedRels as OptionType[]}
         />
       )}
     </div>
