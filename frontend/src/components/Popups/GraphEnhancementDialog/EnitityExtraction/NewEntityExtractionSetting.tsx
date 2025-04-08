@@ -33,9 +33,6 @@ export default function NewEntityExtractionSetting({
   closeEnhanceGraphSchemaDialog?: () => void;
 }) {
   const {
-    selectedRels,
-    selectedNodes,
-    allPatterns,
     setSelectedRels,
     setSelectedNodes,
     userDefinedPattern,
@@ -187,9 +184,9 @@ export default function NewEntityExtractionSetting({
   };
 
   const handlePatternChange = (
-    source: OptionType[] | OptionType,
-    type: OptionType[] | OptionType,
-    target: OptionType[] | OptionType
+    source: OptionType[] | OptionType |null,
+    type: OptionType[] | OptionType |null,
+    target: OptionType[] | OptionType | null
   ) => {
     setSource(source as OptionType);
     setType(type as OptionType);
@@ -232,60 +229,60 @@ export default function NewEntityExtractionSetting({
     }
   };
 
-  const handleRemovePattern = (pattern: string) => {
-    const match = pattern.match(/(.*?) -\[:(.*?)\]-> (.*)/);
-    if (!match) {
-      return;
-    }
-    const [, source, type, target] = match;
-    const updatePatternAndLabels = (
+  const handleRemovePattern = (patternToRemove: string) => {
+    const match = patternToRemove.match(/(.*?) -\[:(.*?)\]-> (.*)/);
+    if (!match) return;
+    const [, source, type, target] = match.map((s) => s.trim());
+    const updateStore = (
       patterns: string[],
       setPatterns: React.Dispatch<React.SetStateAction<string[]>>,
-      nodes: OptionType[],
       setNodes: React.Dispatch<React.SetStateAction<OptionType[]>>,
-      rels: OptionType[],
       setRels: React.Dispatch<React.SetStateAction<OptionType[]>>
     ) => {
-      const updatedPatterns = patterns.filter((p) => p !== pattern);
+      const updatedPatterns = patterns.filter((p) => p !== patternToRemove);
+      if (updatedPatterns.length === 0) {
+        setPatterns([]);
+        setNodes([]);
+        setRels([]);
+        return;
+      }
+      const updatedTuples: TupleType[] = updatedPatterns
+        .map((item) => {
+          const parts = item.match(/(.*?) -\[:(.*?)\]-> (.*)/);
+          if (!parts) return null;
+          const [src, rel, tgt] = parts.slice(1).map((s) => s.trim());
+          return {
+            value: `${src},${rel},${tgt}`,
+            label: `${src} -[:${rel}]-> ${tgt}`,
+            source: src,
+            target: tgt,
+            type: rel,
+          };
+        })
+        .filter(Boolean) as TupleType[];
+      const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(updatedTuples);
       setPatterns(updatedPatterns);
-      const isNodeStillUsed = (value: string) => updatedPatterns.some((p) => p.includes(value));
-      const isRelStillUsed = (value: string) => updatedPatterns.some((p) => p.includes(`[:${value}]`));
-      const updatedNodes = nodes.filter(
-        (n) => (n.value !== source || isNodeStillUsed(source)) && (n.value !== target || isNodeStillUsed(target))
-      );
-      const updatedRels = rels.filter((r) => r.value !== type || isRelStillUsed(type));
-      setNodes(updatedNodes);
-      setRels(updatedRels);
+      setNodes(nodeLabelOptions);
+      setRels(relationshipTypeOptions);
     };
-    updatePatternAndLabels(
-      userDefinedPattern,
-      setUserDefinedPattern,
-      userDefinedNodes,
-      setUserDefinedNodes,
-      userDefinedRels,
-      setUserDefinedRels
+    if (userDefinedPattern.includes(patternToRemove)) {
+      updateStore(userDefinedPattern, setUserDefinedPattern, setUserDefinedNodes, setUserDefinedRels);
+    }
+    if (preDefinedPattern.includes(patternToRemove)) {
+      updateStore(preDefinedPattern, setPreDefinedPattern, setPreDefinedNodes, setPreDefinedRels);
+    }
+    if (dbPattern.includes(patternToRemove)) {
+      updateStore(dbPattern, setDbPattern, setDbNodes, setDbRels);
+    }
+    if (schemaTextPattern.includes(patternToRemove)) {
+      updateStore(schemaTextPattern, setSchemaTextPattern, setSchemaValNodes, setSchemaValRels);
+    }
+    setCombinedPatterns((prev) => prev.filter((p) => p !== patternToRemove));
+    setCombinedNodes((prev) =>
+      prev.filter((n) => n.value !== source && n.value !== target)
     );
-    updatePatternAndLabels(
-      preDefinedPattern,
-      setPreDefinedPattern,
-      preDefinedNodes,
-      setPreDefinedNodes,
-      preDefinedRels,
-      setPreDefinedRels
-    );
-    updatePatternAndLabels(dbPattern, setDbPattern, dbNodes, setDbNodes, dbRels, setDbRels);
-    updatePatternAndLabels(
-      schemaTextPattern,
-      setSchemaTextPattern,
-      schemaValNodes,
-      setSchemaValNodes,
-      schemaValRels,
-      setSchemaValRels
-    );
-    setCombinedPatterns((prev) => prev.filter((p) => p !== pattern));
-    setCombinedNodes((prev) => prev.filter((n) => !(n.value === source || n.value === target)));
     setCombinedRels((prev) => prev.filter((r) => r.value !== type));
-    setTupleOptions((prev) => prev.filter((t) => t.label !== pattern));
+    setTupleOptions((prev) => prev.filter((t) => t.label !== patternToRemove));
   };
 
   const onSchemaFromTextCLick = () => {
@@ -340,12 +337,12 @@ export default function NewEntityExtractionSetting({
           selectedTupleOptions={tupleOptions}
         ></GraphPattern>
         <PatternContainer
-          pattern={allPatterns.length > 0 ? allPatterns : combinedPatterns}
+          pattern={combinedPatterns}
           handleRemove={handleRemovePattern}
           handleSchemaView={handleSchemaView}
           highlightPattern={highlightPattern ?? ''}
-          nodes={selectedNodes.length > 0 ? selectedNodes as OptionType[] : combinedNodes}
-          rels={selectedRels.length > 0 ? selectedRels as OptionType[] : combinedRels}
+          nodes={combinedNodes}
+          rels={combinedRels}
         ></PatternContainer>
         <Flex className='my-8! mb-2 flex! items-center' flexDirection='row' justifyContent='flex-end'>
           <DropdownButton
@@ -405,7 +402,7 @@ export default function NewEntityExtractionSetting({
                 placement='top'
                 onClick={handleFinalClear}
                 label='Clear Graph Settings'
-                disabled={allPatterns.length > 0 ? !allPatterns.length : !combinedPatterns.length}
+                disabled={!combinedPatterns.length}
               >
                 {buttonCaptions.clearSettings}
               </ButtonWithToolTip>
@@ -415,7 +412,7 @@ export default function NewEntityExtractionSetting({
               placement='top'
               onClick={() => handleFinalApply(combinedPatterns, combinedNodes, combinedRels)}
               label='Apply Graph Settings'
-              disabled={allPatterns.length > 0 ? !allPatterns.length : !combinedPatterns.length}
+              disabled={!combinedPatterns.length}
             >
               {buttonCaptions.applyGraphSchema}
             </ButtonWithToolTip>
@@ -427,8 +424,8 @@ export default function NewEntityExtractionSetting({
           open={openGraphView}
           setGraphViewOpen={setOpenGraphView}
           viewPoint={viewPoint}
-          nodeValues={combinedNodes.length > 0 ? combinedNodes : selectedNodes as OptionType[]}
-          relationshipValues={combinedRels.length > 0 ? combinedRels : selectedRels as OptionType[]}
+          nodeValues={combinedNodes}
+          relationshipValues={combinedRels}
         />
       )}
     </div>
