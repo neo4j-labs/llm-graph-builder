@@ -25,7 +25,7 @@ This application allows you to upload files from various sources (local machine,
 ### **Chat with Data**
 - Interact with your data in the Neo4j database through conversational queries.
 - Retrieve metadata about the source of responses to your queries.
-- For a dedicated chat interface, use the standalone chat application: **[Chat-Only](#).**
+- For a dedicated chat interface, use the standalone chat application with **[Chat-Only](/chat-only).** route
 
 ---
 
