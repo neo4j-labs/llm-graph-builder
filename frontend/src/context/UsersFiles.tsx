@@ -89,6 +89,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [userDefinedNodes, setUserDefinedNodes] = useState<OptionType[]>([]);
   const [userDefinedRels, setUserDefinedRels] = useState<OptionType[]>([]);
   const [preDefinedPattern, setPreDefinedPattern] = useState<string[]>([]);
+  const [selectedPreDefOption, setSelectedPreDefOption] = useState<OptionType | null>(null);
 
   useEffect(() => {
     if (selectedNodeLabelstr != null) {
@@ -100,7 +101,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     if (selectedPatternsStr != null) {
       const selectedPatternLabel = JSON.parse(selectedPatternsStr);
       if (userCredentials?.uri === selectedPatternLabel.db) {
-        setSelectedNodes(selectedPatternLabel.selectedOptions);
+        setAllPatterns(selectedPatternLabel.selectedOptions);
       }
     }
     if (selectedNodeRelsstr != null) {
@@ -198,6 +199,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     setUserDefinedRels,
     userDefinedPattern,
     setUserDefinedPattern,
+    selectedPreDefOption, setSelectedPreDefOption
   };
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };

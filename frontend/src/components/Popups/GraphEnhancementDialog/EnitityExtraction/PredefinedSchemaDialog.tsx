@@ -22,12 +22,12 @@ const PredefinedSchemaDialog = ({ open, onClose, onApply }: SchemaFromTextProps)
     setPreDefinedNodes,
     preDefinedRels,
     setPreDefinedRels,
+    setSelectedPreDefOption,
+    selectedPreDefOption
   } = useFileContext();
 
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [viewPoint, setViewPoint] = useState<string>('');
-
-  const [selectedPreDefOption, setSelectedPreDefOption] = useState<OptionType | null>(null);
 
   const handleRemovePattern = (patternToRemove: string) => {
     const updatedPatterns = preDefinedPattern.filter((p) => p !== patternToRemove);

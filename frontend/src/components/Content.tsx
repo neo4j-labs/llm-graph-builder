@@ -103,6 +103,7 @@ const Content: React.FC<ContentProps> = ({
     selectedChunk_overlap,
     selectedChunks_to_combine,
     setSelectedNodes,
+    setAllPatterns,
     setRowSelection,
     setSelectedRels,
     setSelectedTokenChunkSize,
@@ -586,6 +587,7 @@ const Content: React.FC<ContentProps> = ({
     setUserCredentials({ uri: '', password: '', userName: '', database: '', email: '' });
     setSelectedNodes([]);
     setSelectedRels([]);
+    setAllPatterns([]);
     localStorage.removeItem('selectedTokenChunkSize');
     setSelectedTokenChunkSize(tokenchunkSize);
     localStorage.removeItem('selectedChunk_overlap');
