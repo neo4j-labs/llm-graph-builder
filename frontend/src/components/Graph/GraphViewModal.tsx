@@ -9,6 +9,7 @@ import {
   GraphType,
   GraphViewModalProps,
   Scheme,
+  OptionType
 } from '../../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
 import NVL from '@neo4j-nvl/base';
@@ -21,7 +22,7 @@ import {
   MagnifyingGlassPlusIconOutline,
 } from '@neo4j-ndl/react/icons';
 import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
-import { filterData, getCheckboxConditions, graphTypeFromNodes, processGraphData } from '../../utils/Utils';
+import { filterData, getCheckboxConditions, graphTypeFromNodes, processGraphData, userDefinedGraphSchema } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
 
 import { getGraphSchema, graphQueryAPI } from '../../services/GraphQuery';
@@ -31,6 +32,8 @@ import CheckboxSelection from './CheckboxSelection';
 import ResultOverview from './ResultOverview';
 import { ResizePanelDetails } from './ResizePanel';
 import GraphPropertiesPanel from './GraphPropertiesPanel';
+import SchemaDropdown from './SchemaDropdown';
+import { useFileContext } from '../../context/UsersFiles';
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -59,15 +62,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [selected, setSelected] = useState<{ type: EntityType; id: string } | undefined>(undefined);
   const [mode, setMode] = useState<boolean>(false);
   const graphQueryAbortControllerRef = useRef<AbortController>();
+  const { setSelectedRels, setSelectedNodes, selectedNodes, selectedRels, allPatterns } = useFileContext();
 
   const graphQuery: string =
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
       ? queryMap.DocChunkEntities
       : graphType.includes('DocumentChunk')
-      ? queryMap.DocChunks
-      : graphType.includes('Entities')
-      ? queryMap.Entities
-      : '';
+        ? queryMap.DocChunks
+        : graphType.includes('Entities')
+          ? queryMap.Entities
+          : '';
 
   // fit graph to original position
   const handleZoomToFit = () => {
@@ -195,6 +199,27 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     }
   }, [debouncedQuery]);
 
+  const mouseEventCallbacks = useMemo(() => ({
+    onNodeClick: (clickedNode: Node) => {
+      if (selected?.id !== clickedNode.id || selected?.type !== 'node') {
+        setSelected({ type: 'node', id: clickedNode.id });
+      }
+    },
+    onRelationshipClick: (clickedRelationship: Relationship) => {
+      if (selected?.id !== clickedRelationship.id || selected?.type !== 'relationship') {
+        setSelected({ type: 'relationship', id: clickedRelationship.id });
+      }
+    },
+    onCanvasClick: () => {
+      if (selected !== undefined) {
+        setSelected(undefined);
+      }
+    },
+    onPan: true,
+    onZoom: true,
+    onDrag: true,
+  }), [selected]);
+
   const initGraph = (
     graphType: GraphType[],
     finalNodes: ExtendedNode[],
@@ -224,7 +249,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     return relationships.find((relationship) => relationship.id === selected.id);
   }, [selected, relationships, nodes]);
 
-  // The search and update nodes
   const handleSearch = useCallback(
     (value: string) => {
       const query = value.toLowerCase();
@@ -244,7 +268,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           selected: match,
         };
       });
-      // deactivating any active relationships
       const updatedRelationships = relationships.map((rel) => {
         return {
           ...rel,
@@ -257,7 +280,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     [nodes, relationships]
   );
 
-  // Unmounting the component
   if (!open) {
     return <></>;
   }
@@ -266,12 +288,11 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     viewPoint === graphLabels.showGraphView || viewPoint === graphLabels.chatInfoView
       ? graphLabels.generateGraph
       : viewPoint === graphLabels.showSchemaView
-      ? graphLabels.renderSchemaGraph
-      : `${graphLabels.inspectGeneratedGraphFrom} ${inspectedName}`;
+        ? graphLabels.renderSchemaGraph
+        : `${graphLabels.inspectGeneratedGraphFrom} ${inspectedName}`;
 
   const checkBoxView = viewPoint !== graphLabels.chatInfoView;
 
-  // the checkbox selection
   const handleCheckboxChange = (graph: GraphType) => {
     const currentIndex = graphType.indexOf(graph);
     const newGraphSelected = [...graphType];
@@ -331,20 +352,18 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setSelected(undefined);
   };
 
-  const mouseEventCallbacks = {
-    onNodeClick: (clickedNode: Node) => {
-      setSelected({ type: 'node', id: clickedNode.id });
-    },
-    onRelationshipClick: (clickedRelationship: Relationship) => {
-      setSelected({ type: 'relationship', id: clickedRelationship.id });
-    },
-    onCanvasClick: () => {
-      setSelected(undefined);
-    },
-    onPan: true,
-    onZoom: true,
-    onDrag: true,
-  };
+  const handleSchemaSelect = (source: string, nodeVal: any[], relVal: any[]) => {
+    const { nodes, relationships, scheme } = userDefinedGraphSchema(
+      (nodeVal as OptionType[]) ?? [],
+      (relVal as OptionType[]) ?? []
+    );
+    setNodes(nodes);
+    setRelationships(relationships);
+    setNewScheme(scheme);
+    if (nvlRef.current && nvlRef?.current?.getScale() > 1) {
+      handleZoomToFit();
+    }
+  }
 
   return (
     <>
@@ -371,7 +390,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               <span className='n-body-small ml-1'>{graphLabels.chunksInfo}</span>
             </div>
           )}
-          <Flex className='w-full' alignItems='center' flexDirection='row'>
+          <Flex className='w-full' alignItems='center' flexDirection='row' justifyContent='space-between'>
             {checkBoxView && (
               <CheckboxSelection
                 graphType={graphType}
@@ -380,6 +399,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                 {...getCheckboxConditions(allNodes)}
               />
             )}
+            <SchemaDropdown isDisabled={!selectedNodes.length || !selectedRels.length} onSchemaSelect={handleSchemaSelect} />
           </Flex>
         </Dialog.Header>
         <Dialog.Content className='flex flex-col n-gap-token-4 w-full grow overflow-auto border! border-palette-neutral-border-weak!'>
