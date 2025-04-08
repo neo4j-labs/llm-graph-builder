@@ -33,6 +33,9 @@ export default function NewEntityExtractionSetting({
   closeEnhanceGraphSchemaDialog?: () => void;
 }) {
   const {
+    selectedRels,
+    selectedNodes,
+    allPatterns,
     setSelectedRels,
     setSelectedNodes,
     userDefinedPattern,

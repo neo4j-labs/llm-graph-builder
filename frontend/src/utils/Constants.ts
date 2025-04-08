@@ -49,6 +49,7 @@ export const supportedLLmsForRagas = [
   'groq_llama3_70b',
   'anthropic_claude_3_7_sonnet',
   'fireworks_llama_v3_70b',
+  'fireworks_llama4_instruct',
   'bedrock_claude_3_5_sonnet',
   'openai-gpt-o3-mini',
 ];
@@ -62,6 +63,7 @@ export const supportedLLmsForGroundTruthMetrics = [
   'groq_llama3_70b',
   'anthropic_claude_3_7_sonnet',
   'fireworks_llama_v3_70b',
+  'fireworks_llama4_instruct',
   'bedrock_claude_3_5_sonnet',
   'openai-gpt-o3-mini',
 ];

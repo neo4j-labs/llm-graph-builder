@@ -585,8 +585,11 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
         else:
             return create_api_response('Success', message=result)
     except Exception as e:
-        message="Unable to upload large file into chunks. "
+        message="Unable to upload file in chunks"
         error_message = str(e)
+        graph = create_graph_database_connection(uri, userName, password, database)   
+        graphDb_data_Access = graphDBdataAccess(graph)
+        graphDb_data_Access.update_exception_db(originalname,error_message)
         logging.info(message)
         logging.exception(f'Exception:{error_message}')
         return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = originalname)
