@@ -339,7 +339,6 @@ const PageLayout: React.FC = () => {
   const handleApplyPatternsFromText = (newPatterns: string[], nodes: OptionType[], rels: OptionType[]) => {
     setSchemaTextPattern((prevPatterns: string[]) => {
       const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
-      // updateLocalStorage(userCredentials!!, 'selectedTuplePatterns', uniquePatterns);
       return uniquePatterns;
     });
     setShowTextFromSchemaDialog({
@@ -354,7 +353,6 @@ const PageLayout: React.FC = () => {
   const handleDbApply = (newPatterns: string[], nodes: OptionType[], rels: OptionType[]) => {
     setDbPattern((prevPatterns: string[]) => {
       const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
-      // updateLocalStorage(userCredentials!!, 'selectedTuplePatterns', uniquePatterns);
       return uniquePatterns;
     });
     setSchemaLoadDialog({
@@ -369,7 +367,6 @@ const PageLayout: React.FC = () => {
   const handlePredinedApply = (newPatterns: string[], nodes: OptionType[], rels: OptionType[]) => {
     setDbPattern((prevPatterns: string[]) => {
       const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
-      // updateLocalStorage(userCredentials!!, 'selectedTuplePatterns', uniquePatterns);
       return uniquePatterns;
     });
     setPredefinedSchemaDialog({

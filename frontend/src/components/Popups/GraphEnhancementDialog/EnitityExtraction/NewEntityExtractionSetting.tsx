@@ -1,7 +1,7 @@
-import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
+import { MouseEventHandler, useCallback, useEffect, useState, useRef } from 'react';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
 import { buttonCaptions, tooltips } from '../../../../utils/Constants';
-import { Flex, Typography } from '@neo4j-ndl/react';
+import { Flex, Typography, DropdownButton, Menu } from '@neo4j-ndl/react';
 import { useCredentials } from '../../../../context/UserCredentials';
 import { useFileContext } from '../../../../context/UsersFiles';
 import { OptionType, TupleType } from '../../../../types';
@@ -10,6 +10,7 @@ import PatternContainer from './PatternContainer';
 import SchemaViz from '../../../Graph/SchemaViz';
 import GraphPattern from './GraphPattern';
 import { updateLocalStorage, extractOptions } from '../../../../utils/Utils';
+import TooltipWrapper from '../../../UI/TipWrapper';
 
 export default function NewEntityExtractionSetting({
   view,
@@ -32,27 +33,41 @@ export default function NewEntityExtractionSetting({
   closeEnhanceGraphSchemaDialog?: () => void;
 }) {
   const {
+    selectedRels,
+    selectedNodes,
+    allPatterns,
     setSelectedRels,
     setSelectedNodes,
-    userDefinedPattern, setUserDefinedPattern,
-    userDefinedNodes, setUserDefinedNodes,
-    userDefinedRels, setUserDefinedRels,
+    userDefinedPattern,
+    setUserDefinedPattern,
+    userDefinedNodes,
+    setUserDefinedNodes,
+    userDefinedRels,
+    setUserDefinedRels,
     setAllPatterns,
-    dbPattern, setDbPattern,
-    dbNodes, setDbNodes,
-    dbRels, setDbRels,
-    schemaValNodes, setSchemaValNodes,
-    schemaValRels, setSchemaValRels,
-    schemaTextPattern, setSchemaTextPattern,
-    preDefinedNodes, setPreDefinedNodes,
-    preDefinedRels, setPreDefinedRels,
-    preDefinedPattern, setPreDefinedPattern
-  } =
-    useFileContext();
+    dbPattern,
+    setDbPattern,
+    dbNodes,
+    setDbNodes,
+    dbRels,
+    setDbRels,
+    schemaValNodes,
+    setSchemaValNodes,
+    schemaValRels,
+    setSchemaValRels,
+    schemaTextPattern,
+    setSchemaTextPattern,
+    preDefinedNodes,
+    setPreDefinedNodes,
+    preDefinedRels,
+    setPreDefinedRels,
+    preDefinedPattern,
+    setPreDefinedPattern,
+  } = useFileContext();
   const { userCredentials } = useCredentials();
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [viewPoint, setViewPoint] = useState<string>('tableView');
-  const [tupleOptions, setTupleOptions] = useState<TupleType[]>([])
+  const [tupleOptions, setTupleOptions] = useState<TupleType[]>([]);
   const [selectedSource, setSource] = useState<OptionType | null>(null);
   const [selectedType, setType] = useState<OptionType | null>(null);
   const [selectedTarget, setTarget] = useState<OptionType | null>(null);
@@ -60,33 +75,30 @@ export default function NewEntityExtractionSetting({
   const [combinedPatterns, setCombinedPatterns] = useState<string[]>([]);
   const [combinedNodes, setCombinedNodes] = useState<OptionType[]>([]);
   const [combinedRels, setCombinedRels] = useState<OptionType[]>([]);
-
+  const [isSchemaMenuOpen, setIsSchemaMenuOpen] = useState<boolean>(false);
+  const schemaBtnRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    const patterns = Array.from(new Set([
-      ...userDefinedPattern,
-      ...preDefinedPattern,
-      ...dbPattern,
-      ...schemaTextPattern
-    ]));
-    const nodesVal = Array.from(new Set([
-      ...userDefinedNodes,
-      ...preDefinedNodes,
-      ...dbNodes,
-      ...schemaValNodes
-    ]));
-    const relsVal = Array.from(new Set([
-      ...userDefinedRels,
-      ...preDefinedRels,
-      ...dbRels,
-      ...schemaValRels
-    ]));
+    const patterns = Array.from(
+      new Set([...userDefinedPattern, ...preDefinedPattern, ...dbPattern, ...schemaTextPattern])
+    );
+    const nodesVal = Array.from(new Set([...userDefinedNodes, ...preDefinedNodes, ...dbNodes, ...schemaValNodes]));
+    const relsVal = Array.from(new Set([...userDefinedRels, ...preDefinedRels, ...dbRels, ...schemaValRels]));
     setCombinedPatterns(patterns);
     setCombinedNodes(nodesVal);
     setCombinedRels(relsVal);
   }, [
-    userDefinedPattern, preDefinedPattern, dbPattern, schemaTextPattern,
-    userDefinedNodes, preDefinedNodes, dbNodes, schemaValNodes,
-    userDefinedRels, preDefinedRels, dbRels, schemaValRels
+    userDefinedPattern,
+    preDefinedPattern,
+    dbPattern,
+    schemaTextPattern,
+    userDefinedNodes,
+    preDefinedNodes,
+    dbNodes,
+    schemaValNodes,
+    userDefinedRels,
+    preDefinedRels,
+    dbRels,
+    schemaValRels,
   ]);
 
   useEffect(() => {
@@ -103,48 +115,56 @@ export default function NewEntityExtractionSetting({
     setCombinedNodes([...userDefinedNodes, ...preDefinedNodes, ...dbNodes, ...schemaValNodes]);
     setCombinedRels([...userDefinedRels, ...preDefinedRels, ...dbRels, ...schemaValRels]);
   }, [
-    userDefinedNodes, preDefinedNodes, dbNodes, schemaValNodes,
-    userDefinedRels, preDefinedRels, dbRels, schemaValRels,
-    userDefinedPattern, preDefinedPattern, dbPattern, schemaTextPattern
+    userDefinedNodes,
+    preDefinedNodes,
+    dbNodes,
+    schemaValNodes,
+    userDefinedRels,
+    preDefinedRels,
+    dbRels,
+    schemaValRels,
+    userDefinedPattern,
+    preDefinedPattern,
+    dbPattern,
+    schemaTextPattern,
   ]);
 
-
   const handleFinalClear = () => {
-    // overall  
+    // overall
     setSelectedNodes([]);
     setSelectedRels([]);
     setAllPatterns([]);
-    //User
+    // User
     setUserDefinedPattern([]);
     setUserDefinedNodes([]);
     setUserDefinedRels([]);
-    //DB
+    // DB
     setDbPattern([]);
     setDbNodes([]);
     setDbRels([]);
-    //Text
+    // Text
     setSchemaTextPattern([]);
     setSchemaValNodes([]);
     setSchemaValRels([]);
-    //Predefined
+    // Predefined
     setPreDefinedNodes([]);
     setPreDefinedRels([]);
     setPreDefinedPattern([]);
     setCombinedPatterns([]);
     setCombinedNodes([]);
     setCombinedRels([]);
-    updateLocalStorage(userCredentials!!, 'selectedNodeLabels', []);
-    updateLocalStorage(userCredentials!!, 'selectedRelationshipLabels', []);
-    updateLocalStorage(userCredentials!!, 'selectedPattern', []);
-    updateLocalStorage(userCredentials!!, 'preDefinedNodeLabels', []);
-    updateLocalStorage(userCredentials!!, 'preDefinedRelationshipLabels', []);
-    updateLocalStorage(userCredentials!!, 'preDefinedPatterns', []);
-    updateLocalStorage(userCredentials!!, 'textNodeLabels', []);
-    updateLocalStorage(userCredentials!!, 'textRelationLabels', []);
-    updateLocalStorage(userCredentials!!, 'textPatterns', []);
-    updateLocalStorage(userCredentials!!, 'dbNodeLabels', []);
-    updateLocalStorage(userCredentials!!, 'dbRelationLabels', []);
-    updateLocalStorage(userCredentials!!, 'dbPatterns', []);
+    updateLocalStorage(userCredentials!, 'selectedNodeLabels', []);
+    updateLocalStorage(userCredentials!, 'selectedRelationshipLabels', []);
+    updateLocalStorage(userCredentials!, 'selectedPattern', []);
+    updateLocalStorage(userCredentials!, 'preDefinedNodeLabels', []);
+    updateLocalStorage(userCredentials!, 'preDefinedRelationshipLabels', []);
+    updateLocalStorage(userCredentials!, 'preDefinedPatterns', []);
+    updateLocalStorage(userCredentials!, 'textNodeLabels', []);
+    updateLocalStorage(userCredentials!, 'textRelationLabels', []);
+    updateLocalStorage(userCredentials!, 'textPatterns', []);
+    updateLocalStorage(userCredentials!, 'dbNodeLabels', []);
+    updateLocalStorage(userCredentials!, 'dbRelationLabels', []);
+    updateLocalStorage(userCredentials!, 'dbPatterns', []);
     showNormalToast(`Successfully Removed the Schema settings`);
   };
 
@@ -156,9 +176,9 @@ export default function NewEntityExtractionSetting({
     setAllPatterns(pattern);
     setSelectedNodes(nodeLables);
     setSelectedRels(relationshipLabels);
-    updateLocalStorage(userCredentials!!, 'selectedNodeLabels', nodeLables);
-    updateLocalStorage(userCredentials!!, 'selectedRelationshipLabels', relationshipLabels);
-    updateLocalStorage(userCredentials!!, 'selectedPatterns', pattern);
+    updateLocalStorage(userCredentials!, 'selectedNodeLabels', nodeLables);
+    updateLocalStorage(userCredentials!, 'selectedRelationshipLabels', relationshipLabels);
+    updateLocalStorage(userCredentials!, 'selectedPattern', pattern);
   };
 
   const handleSchemaView = () => {
@@ -166,7 +186,11 @@ export default function NewEntityExtractionSetting({
     setViewPoint('showSchemaView');
   };
 
-  const handlePatternChange = (source: OptionType[] | OptionType, type: OptionType[] | OptionType, target: OptionType[] | OptionType) => {
+  const handlePatternChange = (
+    source: OptionType[] | OptionType,
+    type: OptionType[] | OptionType,
+    target: OptionType[] | OptionType
+  ) => {
     setSource(source as OptionType);
     setType(type as OptionType);
     setTarget(target as OptionType);
@@ -194,7 +218,7 @@ export default function NewEntityExtractionSetting({
       setTupleOptions((prev: TupleType[]) => {
         const alreadyExists = prev.some((tuple) => tuple.value === relValue);
         if (!alreadyExists) {
-          const updatedTupples = [relationshipOption, ...prev,];
+          const updatedTupples = [relationshipOption, ...prev];
           const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(updatedTupples);
           setUserDefinedNodes(nodeLabelOptions);
           setUserDefinedRels(relationshipTypeOptions);
@@ -209,35 +233,59 @@ export default function NewEntityExtractionSetting({
   };
 
   const handleRemovePattern = (pattern: string) => {
-    // const updatedPatterns = combinedPatterns.filter((p) => p !== pattern);
-    // setCombinedPatterns(updatedPatterns);
-    // setUserDefinedPattern((prev) => prev.filter((p) => p !== pattern));
-    // setDbPattern((prev) => prev.filter((p) => p !== pattern));
-    // setPreDefinedPattern((prev) => prev.filter((p) => p !== pattern));
-    // setSchemaTextPattern((prev) => prev.filter((p) => p !== pattern));
-    // const match = pattern.match(/(.*?) -\[:(.*?)\]-> (.*)/);
-    // if (!match) return;
-    // const [, source, type, target] = match;
-    // const remainingPatterns = [
-    //   ...userDefinedPattern,
-    //   ...preDefinedPattern,
-    //   ...dbPattern,
-    //   ...schemaTextPattern,
-    // ].filter((p) => p !== pattern);
-    // const isNodeStillUsed = (nodeValue: string) =>
-    //   remainingPatterns.some((p) => p.includes(nodeValue));
-    // const isRelStillUsed = (relValue: string) =>
-    //   remainingPatterns.some((p) => p.includes(`[:${relValue}]`));
-    // const updatedNodes = combinedNodes.filter(
-    //   (n) => !(n.value === source && !isNodeStillUsed(source)) &&
-    //     !(n.value === target && !isNodeStillUsed(target))
-    // );
-    // const updatedRels = combinedRels.filter(
-    //   (r) => !(r.value === type && !isRelStillUsed(type))
-    // );
-    // setCombinedNodes(updatedNodes);
-    // setCombinedRels(updatedRels);
-    setUserDefinedPattern((prevPatterns) => prevPatterns.filter((p) => p !== pattern));
+    const match = pattern.match(/(.*?) -\[:(.*?)\]-> (.*)/);
+    if (!match) {
+      return;
+    }
+    const [, source, type, target] = match;
+    const updatePatternAndLabels = (
+      patterns: string[],
+      setPatterns: React.Dispatch<React.SetStateAction<string[]>>,
+      nodes: OptionType[],
+      setNodes: React.Dispatch<React.SetStateAction<OptionType[]>>,
+      rels: OptionType[],
+      setRels: React.Dispatch<React.SetStateAction<OptionType[]>>
+    ) => {
+      const updatedPatterns = patterns.filter((p) => p !== pattern);
+      setPatterns(updatedPatterns);
+      const isNodeStillUsed = (value: string) => updatedPatterns.some((p) => p.includes(value));
+      const isRelStillUsed = (value: string) => updatedPatterns.some((p) => p.includes(`[:${value}]`));
+      const updatedNodes = nodes.filter(
+        (n) => (n.value !== source || isNodeStillUsed(source)) && (n.value !== target || isNodeStillUsed(target))
+      );
+      const updatedRels = rels.filter((r) => r.value !== type || isRelStillUsed(type));
+      setNodes(updatedNodes);
+      setRels(updatedRels);
+    };
+    updatePatternAndLabels(
+      userDefinedPattern,
+      setUserDefinedPattern,
+      userDefinedNodes,
+      setUserDefinedNodes,
+      userDefinedRels,
+      setUserDefinedRels
+    );
+    updatePatternAndLabels(
+      preDefinedPattern,
+      setPreDefinedPattern,
+      preDefinedNodes,
+      setPreDefinedNodes,
+      preDefinedRels,
+      setPreDefinedRels
+    );
+    updatePatternAndLabels(dbPattern, setDbPattern, dbNodes, setDbNodes, dbRels, setDbRels);
+    updatePatternAndLabels(
+      schemaTextPattern,
+      setSchemaTextPattern,
+      schemaValNodes,
+      setSchemaValNodes,
+      schemaValRels,
+      setSchemaValRels
+    );
+    setCombinedPatterns((prev) => prev.filter((p) => p !== pattern));
+    setCombinedNodes((prev) => prev.filter((n) => !(n.value === source || n.value === target)));
+    setCombinedRels((prev) => prev.filter((r) => r.value !== type));
+    setTupleOptions((prev) => prev.filter((t) => t.label !== pattern));
   };
 
   const onSchemaFromTextCLick = () => {
@@ -248,7 +296,7 @@ export default function NewEntityExtractionSetting({
       closeEnhanceGraphSchemaDialog();
     }
     openTextSchema();
-  }
+  };
 
   const onPredefinedSchemaCLick = () => {
     if (view === 'Dialog' && onClose != undefined) {
@@ -258,7 +306,7 @@ export default function NewEntityExtractionSetting({
       closeEnhanceGraphSchemaDialog();
     }
     openPredefinedSchema();
-  }
+  };
 
   const onLoadExistingSchemaCLick: MouseEventHandler<HTMLButtonElement> = useCallback(async () => {
     if (view === 'Dialog' && onClose != undefined) {
@@ -270,8 +318,6 @@ export default function NewEntityExtractionSetting({
     openLoadSchema();
   }, []);
 
-  console.log('allNodes', combinedNodes)
-  console.log('allRels', combinedRels);
   return (
     <div>
       <Typography variant='body-medium'>
@@ -292,46 +338,58 @@ export default function NewEntityExtractionSetting({
           onPatternChange={handlePatternChange}
           onAddPattern={handleAddPattern}
           selectedTupleOptions={tupleOptions}
-        >
-        </GraphPattern>
-        {
-          combinedPatterns.length > 0 && (
-            <PatternContainer
-              pattern={combinedPatterns}
-              handleRemove={handleRemovePattern}
-              handleSchemaView={handleSchemaView}
-              highlightPattern={highlightPattern ?? ''}
-              nodes={combinedNodes}
-              rels={combinedRels}
-            ></PatternContainer>
-          )
-        }
-        <Flex className='mt-4! mb-2 flex! items-center' flexDirection='row' justifyContent='flex-end'>
+        ></GraphPattern>
+        <PatternContainer
+          pattern={allPatterns.length > 0 ? allPatterns : combinedPatterns}
+          handleRemove={handleRemovePattern}
+          handleSchemaView={handleSchemaView}
+          highlightPattern={highlightPattern ?? ''}
+          nodes={selectedNodes.length > 0 ? selectedNodes as OptionType[] : combinedNodes}
+          rels={selectedRels.length > 0 ? selectedRels as OptionType[] : combinedRels}
+        ></PatternContainer>
+        <Flex className='my-8! mb-2 flex! items-center' flexDirection='row' justifyContent='flex-end'>
+          <DropdownButton
+            isOpen={isSchemaMenuOpen}
+            htmlAttributes={{
+              onClick: () => setIsSchemaMenuOpen((old) => !old),
+            }}
+            ref={schemaBtnRef}
+          >
+            Add Schema from ...
+          </DropdownButton>
+          <Menu isOpen={isSchemaMenuOpen} anchorRef={schemaBtnRef} onClose={() => setIsSchemaMenuOpen(false)}>
+            <Menu.Items
+              htmlAttributes={{
+                id: 'default-menu',
+              }}
+            >
+              <Menu.Item
+                title={
+                  <TooltipWrapper placement='right' tooltip={tooltips.predinedSchema}>
+                    Predefined Schema
+                  </TooltipWrapper>
+                }
+                onClick={onPredefinedSchemaCLick}
+              />
+              <Menu.Item
+                title={
+                  <TooltipWrapper placement='right' tooltip={tooltips.useExistingSchema}>
+                    Load Existing Schema
+                  </TooltipWrapper>
+                }
+                onClick={onLoadExistingSchemaCLick}
+              />
+              <Menu.Item
+                title={
+                  <TooltipWrapper placement='right' tooltip={tooltips.createSchema}>
+                    Get Schema From Text
+                  </TooltipWrapper>
+                }
+                onClick={onSchemaFromTextCLick}
+              />
+            </Menu.Items>
+          </Menu>
           <Flex flexDirection='row' gap='4'>
-            <ButtonWithToolTip
-              text={tooltips.predinedSchema}
-              placement='top'
-              onClick={onPredefinedSchemaCLick}
-              label='Use Predefined Schema'
-            >
-              Predefined Schema
-            </ButtonWithToolTip>
-            <ButtonWithToolTip
-              text={tooltips.useExistingSchema}
-              onClick={onLoadExistingSchemaCLick}
-              label='Use Existing Schema'
-              placement='top'
-            >
-              Load Existing Schema
-            </ButtonWithToolTip>
-            <ButtonWithToolTip
-              text={tooltips.createSchema}
-              placement='top'
-              onClick={onSchemaFromTextCLick}
-              label='Get Existing Schema From Text'
-            >
-              Get Schema From Text
-            </ButtonWithToolTip>
             {settingView === 'contentView' ? (
               <ButtonWithToolTip
                 text={tooltips.continue}
@@ -347,7 +405,7 @@ export default function NewEntityExtractionSetting({
                 placement='top'
                 onClick={handleFinalClear}
                 label='Clear Graph Settings'
-                disabled={!combinedNodes.length || !combinedRels.length}
+                disabled={allPatterns.length > 0 ? !allPatterns.length : !combinedPatterns.length}
               >
                 {buttonCaptions.clearSettings}
               </ButtonWithToolTip>
@@ -357,7 +415,7 @@ export default function NewEntityExtractionSetting({
               placement='top'
               onClick={() => handleFinalApply(combinedPatterns, combinedNodes, combinedRels)}
               label='Apply Graph Settings'
-              disabled={!combinedNodes.length || !combinedRels.length}
+              disabled={allPatterns.length > 0 ? !allPatterns.length : !combinedPatterns.length}
             >
               {buttonCaptions.applyGraphSchema}
             </ButtonWithToolTip>
@@ -369,8 +427,8 @@ export default function NewEntityExtractionSetting({
           open={openGraphView}
           setGraphViewOpen={setOpenGraphView}
           viewPoint={viewPoint}
-          nodeValues={(combinedNodes) ?? []}
-          relationshipValues={(combinedRels) ?? []}
+          nodeValues={combinedNodes.length > 0 ? combinedNodes : selectedNodes as OptionType[]}
+          relationshipValues={combinedRels.length > 0 ? combinedRels : selectedRels as OptionType[]}
         />
       )}
     </div>

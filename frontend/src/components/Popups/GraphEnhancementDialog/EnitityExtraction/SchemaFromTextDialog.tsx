@@ -1,145 +1,107 @@
 import { Checkbox, Dialog, TextArea, Button } from '@neo4j-ndl/react';
 import { useCallback, useState } from 'react';
 import { getNodeLabelsAndRelTypesFromText } from '../../../../services/SchemaFromTextAPI';
-import { useCredentials } from '../../../../context/UserCredentials';
 import { useFileContext } from '../../../../context/UsersFiles';
 import { buttonCaptions } from '../../../../utils/Constants';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
-import { showNormalToast, showSuccessToast } from '../../../../utils/Toasts';
+import { showNormalToast } from '../../../../utils/Toasts';
 import PatternContainer from './PatternContainer';
 import { OptionType, TupleType } from '../../../../types';
-import { updateLocalStorage, extractOptions } from '../../../../utils/Utils';
 import SchemaViz from '../../../Graph/SchemaViz';
+import { extractOptions } from '../../../../utils/Utils';
 
 interface SchemaFromTextProps {
-  open: boolean,
-  onClose: () => void,
-  onApply: (patterns: string[], nodes: OptionType[], rels: OptionType[], view: string) => void
+  open: boolean;
+  onClose: () => void;
+  onApply: (patterns: string[], nodes: OptionType[], rels: OptionType[], view: string) => void;
 }
 
 const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) => {
   const [userText, setUserText] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
-  const { userCredentials } = useCredentials();
   const [isSchemaText, setIsSchemaText] = useState<boolean>(false);
   const { model } = useFileContext();
-  const {schemaValNodes, setSchemaValNodes, schemaValRels,setSchemaValRels,schemaTextPattern, setSchemaTextPattern } = useFileContext();
+  const {
+    schemaValNodes,
+    setSchemaValNodes,
+    schemaValRels,
+    setSchemaValRels,
+    schemaTextPattern,
+    setSchemaTextPattern,
+  } = useFileContext();
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [viewPoint, setViewPoint] = useState<string>('');
-
-  // const clickHandler = useCallback(async () => {
-  //   try {
-  //     setIsLoading(true);
-  //     const response = await getNodeLabelsAndRelTypesFromText(model, userText, isSchemaText, false);
-  //     setIsLoading(false);
-  //     if (response.data.status === 'Success') {
-  //       console.log('hello', response.data.data);
-  //       if (response.data?.data) {
-  //         const nodelabels = response.data?.data?.labels?.map((l) => ({ value: l, label: l }));
-  //         setSelectedNodes((prev) => {
-  //           const combinedData = [...prev, ...nodelabels];
-  //           const uniqueLabels = new Set();
-  //           const updatedOptions = combinedData.filter((item) => {
-  //             if (!uniqueLabels.has(item.label)) {
-  //               uniqueLabels.add(item.label);
-  //               return true;
-  //             }
-  //             return false;
-  //           });
-  //           localStorage.setItem(
-  //             'selectedNodeLabels',
-  //             JSON.stringify({ db: userCredentials?.uri, selectedOptions: updatedOptions })
-  //           );
-  //           return updatedOptions;
-  //         });
-  //       }
-  //       if (response.data?.data?.relationshipTypes.length) {
-  //         const reltypes = response.data?.data?.relationshipTypes.map((t) => ({ value: t, label: t }));
-  //         setSelectedRels((prev) => {
-  //           const combinedData = [...prev, ...reltypes];
-  //           const uniqueLabels = new Set();
-  //           const updatedOptions = combinedData.filter((item) => {
-  //             if (!uniqueLabels.has(item.label)) {
-  //               uniqueLabels.add(item.label);
-  //               return true;
-  //             }
-  //             return false;
-  //           });
-  //           localStorage.setItem(
-  //             'selectedRelationshipLabels',
-  //             JSON.stringify({ db: userCredentials?.uri, selectedOptions: updatedOptions })
-  //           );
-  //           return updatedOptions;
-  //         });
-  //       }
-  //       if (response.data?.data?.relationshipTypes.length && response.data?.data?.labels.length) {
-  //         showSuccessToast(
-  //           `Successfully Created ${response.data?.data?.labels.length} Node labels and ${response.data?.data?.relationshipTypes.length} Relationship labels`
-  //         );
-  //       } else if (response.data?.data?.relationshipTypes.length && !response.data?.data?.labels.length) {
-  //         showSuccessToast(`Successfully Created ${response.data?.data?.relationshipTypes.length} Relationship labels`);
-  //       } else if (!response.data?.data?.relationshipTypes.length && response.data?.data?.labels.length) {
-  //         showSuccessToast(`Successfully Created ${response.data?.data?.labels.length} Node labels`);
-  //       } else {
-  //         showNormalToast(`Please give meaningful text`);
-  //       }
-  //     } else {
-  //       throw new Error('Unable to create labels from ');
-  //     }
-  //     onClose();
-  //     setUserText('');
-  //     setIsSchemaText(false);
-  //   } catch (error) {
-  //     setIsLoading(false);
-  //     console.log(error);
-  //   }
-  // }, [userCredentials, userText, isSchemaText]);
 
   const clickHandler = useCallback(async () => {
     setLoading(true);
     try {
       const response = await getNodeLabelsAndRelTypesFromText(model, userText, isSchemaText, false);
       setLoading(false);
-      if (response.data.status === 'Success' && response.data?.data?.triplets?.length) {
-        const schemaData: string[] = response.data.data.triplets;
-        const schemaTuples: TupleType[] = schemaData.map((item: string) => {
-          const matchResult = item.match(/^(.+?)-([A-Z_]+)->(.+)$/);
-          if (matchResult) {
-            const [source, rel, target] = matchResult.slice(1).map((s) => s.trim());
-            return {
-              value: `${source},${rel},${target}`,
-              label: `${source} -[:${rel}]-> ${target}`,
-              source,
-              target,
-              type: rel,
-            };
-          }
-          return null;
-        })
+      const { status, message, data } = response.data;
+      if (status === 'Success' && data?.triplets?.length) {
+        const schemaData: string[] = data.triplets;
+        const schemaTuples: TupleType[] = schemaData
+          .map((item: string) => {
+            const matchResult = item.match(/^(.+?)-([A-Z_]+)->(.+)$/);
+            if (matchResult) {
+              const [source, rel, target] = matchResult.slice(1).map((s) => s.trim());
+              return {
+                value: `${source},${rel},${target}`,
+                label: `${source} -[:${rel}]-> ${target}`,
+                source,
+                target,
+                type: rel,
+              };
+            }
+            return null;
+          })
           .filter(Boolean) as TupleType[];
         const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(schemaTuples);
         setSchemaValNodes(nodeLabelOptions);
         setSchemaValRels(relationshipTypeOptions);
-        setSchemaTextPattern(schemaTuples.map(t => t.label));
-        if (nodeLabelOptions.length && relationshipTypeOptions.length) {
-          showSuccessToast(
-            `Successfully Created ${nodeLabelOptions.length} Node labels and ${relationshipTypeOptions.length} Relationship labels`
-          );
-        } else {
-          showNormalToast(`Please provide meaningful text.`);
-        }
-      } else {
-        showNormalToast(`Please provide meaningful text.`);
+        setSchemaTextPattern(schemaTuples.map((t) => t.label));
+      } else if (status === 'Failed') {
+        showNormalToast(message  as string);
       }
-    } catch (error) {
+    } catch (error: any) {
       setLoading(false);
       console.error('Error processing schema:', error);
+      showNormalToast(error?.message || 'Unexpected error occurred.');
     }
-  }, [userCredentials, userText, isSchemaText]);
+  }, [model, userText, isSchemaText]);
 
   const handleRemovePattern = (pattern: string) => {
-    setSchemaTextPattern((prevPatterns) => prevPatterns.filter((p) => p !== pattern));
+    const updatedPatterns = schemaTextPattern.filter((p) => p !== pattern);
+    if (updatedPatterns.length === 0) {
+      setSchemaTextPattern([]);
+      setSchemaValNodes([]);
+      setSchemaValRels([]);
+      setUserText('');
+      return;
+    }
+    // Otherwise, recalculate nodes and rels from updated patterns
+    const updatedTuples: TupleType[] = updatedPatterns
+      .map((item: string) => {
+        const matchResult = item.match(/^(.+?)-\[:([A-Z_]+)\]->(.+)$/);
+        if (matchResult) {
+          const [source, rel, target] = matchResult.slice(1).map((s) => s.trim());
+          return {
+            value: `${source},${rel},${target}`,
+            label: `${source} -[:${rel}]-> ${target}`,
+            source,
+            target,
+            type: rel,
+          };
+        }
+        return null;
+      })
+      .filter(Boolean) as TupleType[];
+    const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(updatedTuples);
+    setSchemaTextPattern(updatedPatterns);
+    setSchemaValNodes(nodeLabelOptions);
+    setSchemaValRels(relationshipTypeOptions);
   };
+
   const handleSchemaView = () => {
     setOpenGraphView(true);
     setViewPoint('showSchemaView');
@@ -149,9 +111,6 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
     if (onApply) {
       onApply(schemaTextPattern, schemaValNodes, schemaValRels, 'text');
     }
-    updateLocalStorage(userCredentials!!, 'textNodeLabels', schemaValNodes);
-    updateLocalStorage(userCredentials!!, 'textRelationLabels', schemaValRels);
-    updateLocalStorage(userCredentials!!, 'textPatterns', schemaTextPattern);
     onClose();
   };
 
@@ -171,9 +130,7 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
         isOpen={open}
         onClose={() => {
           setLoading(false);
-          setIsSchemaText(false);
-          setUserText('');
-          onClose();
+          handleCancel();
         }}
         htmlAttributes={{
           'aria-labelledby': 'form-dialog-title',
@@ -190,13 +147,19 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
             isFluid={true}
             value={userText}
             htmlAttributes={{
-              onChange: (e) => setUserText(e.target.value),
+              onChange: (e) => {
+                const textVal = e.target.value;
+                setUserText(textVal);
+                  setSchemaTextPattern([]);
+                  setSchemaValNodes([]);
+                  setSchemaValRels([]);
+              },
             }}
             size='large'
           />
           <div className='flex justify-between mt-4'>
             <Checkbox
-              label="Text is schema description"
+              label='Text is schema description'
               onChange={(e) => {
                 setIsSchemaText(e.target.checked);
               }}
@@ -215,7 +178,7 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
           </div>
           {schemaTextPattern.length > 0 && (
             <>
-              <div className="mt-6">
+              <div className='mt-6'>
                 <PatternContainer
                   pattern={schemaTextPattern}
                   handleRemove={handleRemovePattern}
@@ -242,11 +205,10 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
           setGraphViewOpen={setOpenGraphView}
           viewPoint={viewPoint}
           nodeValues={(schemaValNodes as OptionType[]) ?? []}
-          relationshipValues={(schemaValRels) ?? []}
+          relationshipValues={schemaValRels ?? []}
         />
       )}
     </>
   );
-
 };
 export default SchemaFromTextDialog;

@@ -13,7 +13,7 @@ import {
   UserCredentials,
   OptionType,
   UserDefinedGraphSchema,
-  TupleType
+  TupleType,
 } from '../types';
 import Wikipediadarkmode from '../assets/images/wikipedia-darkmode.svg';
 import Wikipediadlogo from '../assets/images/wikipedia.svg';
@@ -590,9 +590,7 @@ export const userDefinedGraphSchema = (nodes: OptionType[], relationships: Optio
       }
       const [start, type, end] = parts.map((part) => part.trim());
       if (!nodeMap[start] || !nodeMap[end]) {
-        console.warn(
-          `Missing node(s) for relationship: ${start} -[:${type}]-> ${end}`
-        );
+        console.warn(`Missing node(s) for relationship: ${start} -[:${type}]-> ${end}`);
         return null; // Skip relationships with missing nodes
       }
       return {
@@ -615,40 +613,43 @@ export const userDefinedGraphSchema = (nodes: OptionType[], relationships: Optio
   };
 };
 
-export const getSelectedTriplets = (selectedOptions: readonly OptionType[]): {
-  value: string; label: string; source: string; target: string; type: string;
+export const getSelectedTriplets = (
+  selectedOptions: OptionType[] | OptionType
+): {
+  value: string;
+  label: string;
+  source: string;
+  target: string;
+  type: string;
 }[] => {
-  let triplets: {
-    value: string;
-    label: string;
-    source: string;
-    target: string;
-    type: string;
-  }[] = [];
-  selectedOptions.forEach((option) => {
+  const selectedArray = Array.isArray(selectedOptions) ? selectedOptions : [selectedOptions];
+  const triplets = [];
+  for (const option of selectedArray) {
+    let tripletArray: string[];
     try {
-      const tripletArray = JSON.parse(option.value);
-      if (Array.isArray(tripletArray)) {
-        tripletArray.forEach((tripletString) => {
-          const matchResult = tripletString.match(/(.*?)-([A-Z_]+)->(.*)/);
-          if (matchResult) {
-            const [source, rel, target] = matchResult.slice(1).map((s: any) => s.trim());
-            triplets.push({
-              value: `${source},${rel},${target}`,
-              label: `${source} -[:${rel}]-> ${target}`,
-              source,
-              target,
-              type: rel,
-            });
-          } else {
-            console.warn("Invalid triplet format:", tripletString);
-          }
-        });
-      }
+      tripletArray = JSON.parse(option.value);
     } catch (error) {
-      console.error("Error parsing selected option value:", option.value, error);
+      console.error('Error parsing selected option value:', option.value, error);
+      continue;
     }
-  });
+    if (!Array.isArray(tripletArray)) {
+      continue;
+    }
+    for (const tripletString of tripletArray) {
+      const matchResult = tripletString.match(/(.*?)-([A-Z_]+)->(.*)/);
+      if (!matchResult) {
+        continue;
+      }
+      const [source, rel, target] = matchResult.slice(1).map((s: any) => s.trim());
+      triplets.push({
+        value: `${source},${rel},${target}`,
+        label: `${source} -[:${rel}]-> ${target}`,
+        source,
+        target,
+        type: rel,
+      });
+    }
+  }
   return triplets;
 };
 

@@ -12,14 +12,13 @@ export const llms =
   process.env?.VITE_LLM_MODELS?.trim() != ''
     ? (process.env.VITE_LLM_MODELS?.split(',') as string[])
     : [
+        'openai_gpt_4.5',
+        'openai-gpt-o3-mini',
         'openai_gpt_4o',
         'openai_gpt_4o_mini',
-        'openai-gpt-o3-mini',
-        'openai_gpt_4.5',
         'gemini_1.5_pro',
         'gemini_1.5_flash',
         'gemini_2.0_flash',
-        'gemini_2.5_pro',
         'diffbot',
         'azure_ai_gpt_35',
         'azure_ai_gpt_4o',
@@ -149,7 +148,7 @@ export const largeFileSize = process.env.VITE_LARGE_FILE_SIZE
 
 export const tooltips = {
   generateGraph: 'Generate graph from selected files',
-  deleteFile: 'Select one or more files to delete.',
+  deleteFile: 'Select one or more files to delete',
   showGraph: 'Preview generated graph.',
   bloomGraph: 'Visualize the graph in Bloom',
   deleteSelectedFiles: 'File/Files to be deleted',
@@ -165,7 +164,7 @@ export const tooltips = {
   copied: 'Copied',
   stopSpeaking: 'Stop Speaking',
   textTospeech: 'Text to Speech',
-  createSchema: 'Define schema from text.',
+  createSchema: 'Define schema from text',
   useExistingSchema: 'Fetch schema from database',
   clearChat: 'Clear Chat History',
   continue: 'Continue',
@@ -175,7 +174,7 @@ export const tooltips = {
   downloadChat: 'Download Conversation',
   visualizeGraph: 'Visualize Graph Schema',
   additionalInstructions: 'Analyze instructions for schema',
-  predinedSchema: 'Predefined Schema.',
+  predinedSchema: 'Predefined Schema',
 };
 export const PRODMODLES = ['openai_gpt_4o', 'openai_gpt_4o_mini', 'diffbot', 'gemini_1.5_flash'];
 export const buttonCaptions = {

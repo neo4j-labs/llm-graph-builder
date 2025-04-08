@@ -6,7 +6,7 @@ import {
   OptionType,
   showTextFromSchemaDialogType,
   schemaLoadDialogType,
-  predefinedSchemaDialogType
+  predefinedSchemaDialogType,
 } from '../types';
 import {
   chatModeLables,
@@ -26,6 +26,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const isProdEnv = process.env.VITE_ENV === 'PROD';
   const selectedNodeLabelstr = localStorage.getItem('selectedNodeLabels');
   const selectedNodeRelsstr = localStorage.getItem('selectedRelationshipLabels');
+  const selectedPatternsStr = localStorage.getItem('selectedPattern');
   const selectedTokenChunkSizeStr = localStorage.getItem('selectedTokenChunkSize');
   const selectedChunk_overlapStr = localStorage.getItem('selectedChunk_overlap');
   const selectedChunks_to_combineStr = localStorage.getItem('selectedChunks_to_combine');
@@ -60,7 +61,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     show: false,
   });
 
-  const [predefinedSchemaDialog, setPredefinedSchemaDialog,] = useState<predefinedSchemaDialogType>({
+  const [predefinedSchemaDialog, setPredefinedSchemaDialog] = useState<predefinedSchemaDialogType>({
     triggeredFrom: '',
     show: false,
   });
@@ -85,15 +86,22 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [schemaView, setSchemaView] = useState<string | string[]>('');
   const [preDefinedNodes, setPreDefinedNodes] = useState<OptionType[]>([]);
   const [preDefinedRels, setPreDefinedRels] = useState<OptionType[]>([]);
-  const [userDefinedNodes, setUserDefinedNodes,] = useState<OptionType[]>([]);
-  const [userDefinedRels, setUserDefinedRels,] = useState<OptionType[]>([]);
+  const [userDefinedNodes, setUserDefinedNodes] = useState<OptionType[]>([]);
+  const [userDefinedRels, setUserDefinedRels] = useState<OptionType[]>([]);
   const [preDefinedPattern, setPreDefinedPattern] = useState<string[]>([]);
+  const [selectedPreDefOption, setSelectedPreDefOption] = useState<OptionType | null>(null);
 
   useEffect(() => {
     if (selectedNodeLabelstr != null) {
       const selectedNodeLabel = JSON.parse(selectedNodeLabelstr);
       if (userCredentials?.uri === selectedNodeLabel.db) {
         setSelectedNodes(selectedNodeLabel.selectedOptions);
+      }
+    }
+    if (selectedPatternsStr != null) {
+      const selectedPatternLabel = JSON.parse(selectedPatternsStr);
+      if (userCredentials?.uri === selectedPatternLabel.db) {
+        setAllPatterns(selectedPatternLabel.selectedOptions);
       }
     }
     if (selectedNodeRelsstr != null) {
@@ -163,20 +171,35 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     setSchemaTextPattern,
     allPatterns,
     setAllPatterns,
-    schemaValRels, setSchemaValRels,
-    schemaValNodes, setSchemaValNodes,
-    schemaLoadDialog, setSchemaLoadDialog,
-    dbNodes, setDbNodes,
-    dbRels, setDbRels,
-    dbPattern, setDbPattern,
-    predefinedSchemaDialog, setPredefinedSchemaDialog,
-    preDefinedNodes, setPreDefinedNodes,
-    preDefinedRels, setPreDefinedRels,
-    preDefinedPattern, setPreDefinedPattern,
-    schemaView, setSchemaView,
-    userDefinedNodes, setUserDefinedNodes,
-    userDefinedRels, setUserDefinedRels,
-    userDefinedPattern, setUserDefinedPattern,
+    schemaValRels,
+    setSchemaValRels,
+    schemaValNodes,
+    setSchemaValNodes,
+    schemaLoadDialog,
+    setSchemaLoadDialog,
+    dbNodes,
+    setDbNodes,
+    dbRels,
+    setDbRels,
+    dbPattern,
+    setDbPattern,
+    predefinedSchemaDialog,
+    setPredefinedSchemaDialog,
+    preDefinedNodes,
+    setPreDefinedNodes,
+    preDefinedRels,
+    setPreDefinedRels,
+    preDefinedPattern,
+    setPreDefinedPattern,
+    schemaView,
+    setSchemaView,
+    userDefinedNodes,
+    setUserDefinedNodes,
+    userDefinedRels,
+    setUserDefinedRels,
+    userDefinedPattern,
+    setUserDefinedPattern,
+    selectedPreDefOption, setSelectedPreDefOption
   };
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };

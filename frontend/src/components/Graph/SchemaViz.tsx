@@ -19,9 +19,7 @@ import {
   MagnifyingGlassPlusIconOutline,
 } from '@neo4j-ndl/react/icons';
 import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
-import {
-  userDefinedGraphSchema,
-} from '../../utils/Utils';
+import { userDefinedGraphSchema } from '../../utils/Utils';
 import { graphLabels, nvlOptions } from '../../utils/Constants';
 import ResultOverview from './ResultOverview';
 import { ResizePanelDetails } from './ResizePanel';
@@ -89,7 +87,6 @@ const SchemaViz: React.FunctionComponent<SchemaViewModalProps> = ({
     }
   }, [debouncedQuery]);
 
-
   const selectedItem = useMemo(() => {
     if (selected === undefined) {
       return undefined;
@@ -139,7 +136,6 @@ const SchemaViz: React.FunctionComponent<SchemaViewModalProps> = ({
   }
 
   const headerTitle = graphLabels.generateGraph;
-
 
   // Callback
   const nvlCallbacks = {
@@ -202,9 +198,7 @@ const SchemaViz: React.FunctionComponent<SchemaViewModalProps> = ({
           'aria-labelledby': 'form-dialog-title',
         }}
       >
-        <Dialog.Header htmlAttributes={{ id: 'graph-title' }}>
-          {headerTitle}
-        </Dialog.Header>
+        <Dialog.Header htmlAttributes={{ id: 'graph-title' }}>{headerTitle}</Dialog.Header>
         <Dialog.Content className='flex flex-col n-gap-token-4 w-full grow overflow-auto border! border-palette-neutral-border-weak!'>
           <div className='bg-white relative w-full h-full max-h-full border! border-palette-neutral-border-weak!'>
             {loading ? (
