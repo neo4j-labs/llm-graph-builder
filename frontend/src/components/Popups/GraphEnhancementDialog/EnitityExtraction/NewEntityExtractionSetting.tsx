@@ -112,22 +112,12 @@ export default function NewEntityExtractionSetting({
   }, [userDefinedPattern]);
 
   useEffect(() => {
-    setCombinedNodes([...userDefinedNodes, ...preDefinedNodes, ...dbNodes, ...schemaValNodes]);
-    setCombinedRels([...userDefinedRels, ...preDefinedRels, ...dbRels, ...schemaValRels]);
-  }, [
-    userDefinedNodes,
-    preDefinedNodes,
-    dbNodes,
-    schemaValNodes,
-    userDefinedRels,
-    preDefinedRels,
-    dbRels,
-    schemaValRels,
-    userDefinedPattern,
-    preDefinedPattern,
-    dbPattern,
-    schemaTextPattern,
-  ]);
+    if (allPatterns.length ) {
+      setCombinedNodes(selectedNodes as OptionType[]);
+      setCombinedPatterns(allPatterns);
+      setCombinedRels(selectedRels as OptionType[])
+    }
+  },[allPatterns, selectedNodes,selectedRels])
 
   const handleFinalClear = () => {
     // overall
@@ -187,8 +177,8 @@ export default function NewEntityExtractionSetting({
   };
 
   const handlePatternChange = (
-    source: OptionType[] | OptionType |null,
-    type: OptionType[] | OptionType |null,
+    source: OptionType[] | OptionType | null,
+    type: OptionType[] | OptionType | null,
     target: OptionType[] | OptionType | null
   ) => {
     setSource(source as OptionType);
