@@ -37,7 +37,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const { userCredentials } = useCredentials();
   const [files, setFiles] = useState<(File | null)[] | []>([]);
   const [filesData, setFilesData] = useState<CustomFile[] | []>([]);
-  const [queue, setQueue] = useState<Queue<any>>(
+  const [queue, setQueue] = useState<Queue<CustomFile>>(
     new Queue(JSON.parse(persistedQueue ?? JSON.stringify({ queue: [] })).queue)
   );
   const [model, setModel] = useState<string>(isProdDefaultModel ? selectedModel : isProdEnv ? PRODMODLES[0] : llms[0]);
