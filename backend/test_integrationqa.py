@@ -11,10 +11,10 @@ from src.QA_integration import QA_RAG
 # Load environment variables
 load_dotenv()
 
-URI = get_value_from_env_or_secret_manager('NEO4J_URI')
-USERNAME = get_value_from_env_or_secret_manager('NEO4J_USERNAME')
-PASSWORD = get_value_from_env_or_secret_manager('NEO4J_PASSWORD')
-DATABASE = get_value_from_env_or_secret_manager('NEO4J_DATABASE')
+URI = get_value_from_env_or_sm('NEO4J_URI')
+USERNAME = get_value_from_env_or_sm('NEO4J_USERNAME')
+PASSWORD = get_value_from_env_or_sm('NEO4J_PASSWORD')
+DATABASE = get_value_from_env_or_sm('NEO4J_DATABASE')
 # Logging configuration
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 # Directory Paths

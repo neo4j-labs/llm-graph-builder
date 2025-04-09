@@ -60,9 +60,9 @@ def get_chunk_and_graphDocument(graph_document_list, chunkId_chunkDoc_list):
   return lst_chunk_chunkId_document  
                  
 def create_graph_database_connection(uri, userName, password, database):
-  enable_user_agent = get_value_from_env_or_secret_manager("ENABLE_USER_AGENT", "False" ,"bool")
+  enable_user_agent = get_value_from_env_or_sm("ENABLE_USER_AGENT", "False" ,"bool")
   if enable_user_agent:
-    graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, refresh_schema=False, sanitize=True,driver_config={'user_agent':get_value_from_env_or_secret_manager("USER_AGENT","LLM-Graph-Builder")})  
+    graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, refresh_schema=False, sanitize=True,driver_config={'user_agent':get_value_from_env_or_sm("USER_AGENT","LLM-Graph-Builder")})  
   else:
     graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, refresh_schema=False, sanitize=True)    
   return graph
@@ -151,7 +151,7 @@ def get_bedrock_embeddings():
        BedrockEmbeddings: An instance of the BedrockEmbeddings class.
    """
    try:
-       env_value = get_value_from_env_or_secret_manager("BEDROCK_EMBEDDING_MODEL")
+       env_value = get_value_from_env_or_sm("BEDROCK_EMBEDDING_MODEL")
        if not env_value:
            raise ValueError("Environment variable 'BEDROCK_EMBEDDING_MODEL' is not set.")
        try:
@@ -176,7 +176,7 @@ def get_bedrock_embeddings():
        print(f"An unexpected error occurred: {e}")
        raise
 
-def get_value_from_env_or_secret_manager(secret_name: str, default_value: Any = None, data_type: type = str):
+def get_value_from_env_or_sm(secret_name: str, default_value: Any = None, data_type: type = str):
   """
   Fetches a secret from Google Cloud Secret Manager.
   If GET_VALUE_FROM_SECRET_MANAGER env value True, Otherwise get from local .env file
@@ -188,9 +188,9 @@ def get_value_from_env_or_secret_manager(secret_name: str, default_value: Any = 
   Returns:
       Converted value of the secret or environment variable.
   """
-  get_value_from_env_or_secret_manager = os.getenv("GET_VALUE_FROM_SECRET_MANAGER","False").lower() in ["true", "1", "yes"]
+  get_value_from_env_or_sm = os.getenv("GET_VALUE_FROM_SECRET_MANAGER","False").lower() in ["true", "1", "yes"]
   try:
-    if get_value_from_env_or_secret_manager:
+    if get_value_from_env_or_sm:
       project_id = os.getenv("PROJECT_ID")
       client = secretmanager.SecretManagerServiceClient()
       secret_path = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
@@ -200,8 +200,11 @@ def get_value_from_env_or_secret_manager(secret_name: str, default_value: Any = 
     else:
       secret_value = os.getenv(secret_name, None) 
   except (NotFound, PermissionDenied):
-    logging.warning(f"key not found in Secret Manager. Checking environment variable.")
-    secret_value = os.getenv(secret_name, None)
+    try:
+      logging.warning(f"key not found in Secret Manager. Checking environment variable.")
+      secret_value = os.getenv(secret_name, None)
+    except Exception as e:
+       raise e
 
   if secret_value is None:
     return convert_type(default_value, data_type) # Return the default value when key not found in secret manager not in .env file.

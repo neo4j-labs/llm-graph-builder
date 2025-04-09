@@ -1,5 +1,5 @@
 import logging
-from src.shared.common_fn import get_value_from_env_or_secret_manager
+from src.shared.common_fn import get_value_from_env_or_sm
 from neo4j import time 
 from neo4j import GraphDatabase
 import os
@@ -18,13 +18,13 @@ def get_graphDB_driver(uri, username, password,database="neo4j"):
     try:
         logging.info(f"Attempting to connect to the Neo4j database at {uri}")
         if all(v is None for v in [username, password]):
-            username= get_value_from_env_or_secret_manager('NEO4J_USERNAME')
-            database= get_value_from_env_or_secret_manager('NEO4J_DATABASE')
-            password= get_value_from_env_or_secret_manager('NEO4J_PASSWORD')
+            username= get_value_from_env_or_sm('NEO4J_USERNAME')
+            database= get_value_from_env_or_sm('NEO4J_DATABASE')
+            password= get_value_from_env_or_sm('NEO4J_PASSWORD')
 
-        enable_user_agent = get_value_from_env_or_secret_manager("ENABLE_USER_AGENT","False","bool")
+        enable_user_agent = get_value_from_env_or_sm("ENABLE_USER_AGENT","False","bool")
         if enable_user_agent:
-            driver = GraphDatabase.driver(uri, auth=(username, password),database=database, user_agent= get_value_from_env_or_secret_manager("USER_AGENT","LLM-Graph-Builder"))
+            driver = GraphDatabase.driver(uri, auth=(username, password),database=database, user_agent= get_value_from_env_or_sm("USER_AGENT","LLM-Graph-Builder"))
         else:
             driver = GraphDatabase.driver(uri, auth=(username, password),database=database)
         logging.info("Connection successful")

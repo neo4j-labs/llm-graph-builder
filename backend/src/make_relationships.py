@@ -8,7 +8,7 @@ import time
 from langchain_neo4j import Neo4jVector
 
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
-embedding_model = get_value_from_env_or_secret_manager("EMBEDDING_MODEL")
+embedding_model = get_value_from_env_or_sm("EMBEDDING_MODEL")
 EMBEDDING_FUNCTION , EMBEDDING_DIMENSION = load_embedding_model(embedding_model)
 
 def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_documents_chunk_chunk_Id : list):
@@ -35,7 +35,7 @@ def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_docume
 
     
 def create_chunk_embeddings(graph, chunkId_chunkDoc_list, file_name):
-    isEmbedding= get_value_from_env_or_secret_manager("IS_EMBEDDING", "True" ,"bool")
+    isEmbedding= get_value_from_env_or_sm("IS_EMBEDDING", "True" ,"bool")
     
     embeddings, dimension = EMBEDDING_FUNCTION , EMBEDDING_DIMENSION
     logging.info(f'embedding model:{embeddings} and dimesion:{dimension}')

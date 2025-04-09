@@ -131,7 +131,7 @@ def create_fulltext(driver,type):
 
 def create_vector_fulltext_indexes(uri, username, password, database):
     types = ["entities", "hybrid"]
-    embedding_model = get_value_from_env_or_secret_manager("EMBEDDING_MODEL")
+    embedding_model = get_value_from_env_or_sm("EMBEDDING_MODEL")
     embeddings, dimension = load_embedding_model(embedding_model)
     if not dimension:
         dimension = CHUNK_VECTOR_EMBEDDING_DIMENSION
@@ -184,7 +184,7 @@ def fetch_entities_for_embedding(graph):
     return [{"elementId": record["elementId"], "text": record["text"]} for record in result]
 
 def update_embeddings(rows, graph):
-    embedding_model = get_value_from_env_or_secret_manager("EMBEDDING_MODEL")
+    embedding_model = get_value_from_env_or_sm("EMBEDDING_MODEL")
     embeddings, dimension = load_embedding_model(embedding_model)
     logging.info(f"update embedding for entities")
     for row in rows:
@@ -204,7 +204,7 @@ def graph_schema_consolidation(graph):
         messages=[("system", GRAPH_CLEANUP_PROMPT), ("human", "{input}")],
         partial_variables={"format_instructions": parser.get_format_instructions()}
     )
-    graph_cleanup_model = get_value_from_env_or_secret_manager("GRAPH_CLEANUP_MODEL", 'openai_gpt_4o')
+    graph_cleanup_model = get_value_from_env_or_sm("GRAPH_CLEANUP_MODEL", 'openai_gpt_4o')
     llm, _ = get_llm(graph_cleanup_model)
     chain = prompt | llm | parser
 

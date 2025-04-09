@@ -229,11 +229,11 @@ def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
 async def extract_graph_from_file_local_file(uri, userName, password, database, model, merged_file_path, fileName, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions):
 
   logging.info(f'Process file name :{fileName}')
-  gcs_file_cache = get_value_from_env_or_secret_manager("GCS_FILE_CACHE","False","bool")
-  gcs_bucket_name_upload = get_value_from_env_or_secret_manager("BUCKET_UPLOAD_FILE")
+  gcs_file_cache = get_value_from_env_or_sm("GCS_FILE_CACHE","False","bool")
+  gcs_bucket_name_upload = get_value_from_env_or_sm("BUCKET_UPLOAD_FILE")
   if not retry_condition:
     if gcs_file_cache:
-      project_id = get_value_from_env_or_secret_manager("PROJECT_ID")
+      project_id = get_value_from_env_or_sm("PROJECT_ID")
       folder_name = create_gcs_bucket_folder_name_hashed(uri, fileName)
       file_name, pages = get_documents_from_gcs( project_id, gcs_bucket_name_upload, folder_name, fileName)
     else:
@@ -367,7 +367,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
       uri_latency["update_source_node"] = f'{elapsed_update_source_node:.2f}'
 
       logging.info('Update the status as Processing')
-      update_graph_chunk_processed = get_value_from_env_or_secret_manager("UPDATE_GRAPH_CHUNKS_PROCESSED",20,"int")
+      update_graph_chunk_processed = get_value_from_env_or_sm("UPDATE_GRAPH_CHUNKS_PROCESSED",20,"int")
       # selected_chunks = []
       is_cancelled_status = False
       job_status = "Completed"
@@ -426,8 +426,8 @@ async def processing_source(uri, userName, password, database, model, file_name,
 
       graphDb_data_Access.update_source_node(obj_source_node)
       graphDb_data_Access.update_node_relationship_count(file_name)
-      gcs_file_cache = get_value_from_env_or_secret_manager("GCS_FILE_CACHE","False","bool")
-      gcs_bucket_name_upload = get_value_from_env_or_secret_manager("BUCKET_UPLOAD_FILE")
+      gcs_file_cache = get_value_from_env_or_sm("GCS_FILE_CACHE","False","bool")
+      gcs_bucket_name_upload = get_value_from_env_or_sm("BUCKET_UPLOAD_FILE")
       logging.info('Updated the nodeCount and relCount properties in Document node')
       logging.info(f'file:{file_name} extraction has been completed')
       # merged_file_path have value only when file uploaded from local
@@ -630,8 +630,8 @@ def merge_chunks_local(file_name, total_chunks, chunk_dir, merged_dir):
 
 
 def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, originalname, uri, chunk_dir, merged_dir):
-  gcs_file_cache = get_value_from_env_or_secret_manager("GCS_FILE_CACHE","False","bool")
-  gcs_bucket_name_upload = get_value_from_env_or_secret_manager("BUCKET_UPLOAD_FILE")
+  gcs_file_cache = get_value_from_env_or_sm("GCS_FILE_CACHE","False","bool")
+  gcs_bucket_name_upload = get_value_from_env_or_sm("BUCKET_UPLOAD_FILE")
   if gcs_file_cache:
     folder_name = create_gcs_bucket_folder_name_hashed(uri,originalname)
     upload_file_to_gcs(chunk, chunk_number, originalname, gcs_bucket_name_upload, folder_name)
@@ -694,8 +694,8 @@ def manually_cancelled_job(graph, filenames, source_types, merged_dir, uri):
   
   filename_list= list(map(str.strip, json.loads(filenames)))
   source_types_list= list(map(str.strip, json.loads(source_types)))
-  gcs_file_cache = get_value_from_env_or_secret_manager("GCS_FILE_CACHE","False","bool")
-  gcs_bucket_name_upload = get_value_from_env_or_secret_manager("BUCKET_UPLOAD_FILE")
+  gcs_file_cache = get_value_from_env_or_sm("GCS_FILE_CACHE","False","bool")
+  gcs_bucket_name_upload = get_value_from_env_or_sm("BUCKET_UPLOAD_FILE")
   
   for (file_name,source_type) in zip(filename_list, source_types_list):
       obj_source_node = sourceNode()
@@ -748,9 +748,9 @@ def set_status_retry(graph, file_name, retry_condition):
     graphDb_data_Access.update_source_node(obj_source_node)
 
 def failed_file_process(uri,file_name, merged_file_path):
-  gcs_file_cache = get_value_from_env_or_secret_manager("GCS_FILE_CACHE","False","bool")
-  gcs_bucket_name_upload = get_value_from_env_or_secret_manager("BUCKET_UPLOAD_FILE")
-  gcs_bucket_name_failed = get_value_from_env_or_secret_manager("BUCKET_FAILED_FILE") 
+  gcs_file_cache = get_value_from_env_or_sm("GCS_FILE_CACHE","False","bool")
+  gcs_bucket_name_upload = get_value_from_env_or_sm("BUCKET_UPLOAD_FILE")
+  gcs_bucket_name_failed = get_value_from_env_or_sm("BUCKET_FAILED_FILE") 
   if gcs_file_cache:
       folder_name = create_gcs_bucket_folder_name_hashed(uri,file_name)
       copy_failed_file(gcs_bucket_name_upload, gcs_bucket_name_failed, folder_name, file_name)

@@ -9,11 +9,11 @@ from datetime import timedelta
 from src.shared.constants import YOUTUBE_CHUNK_SIZE_SECONDS
 import os
 import re
-from src.shared.common_fn import get_value_from_env_or_secret_manager
+from src.shared.common_fn import get_value_from_env_or_sm
 
 def get_youtube_transcript(youtube_id):
   try:
-    proxy = get_value_from_env_or_secret_manager("YOUTUBE_TRANSCRIPT_PROXY")
+    proxy = get_value_from_env_or_sm("YOUTUBE_TRANSCRIPT_PROXY")
     proxies = { 'https': proxy }
     transcript_pieces = YouTubeTranscriptApi.get_transcript(youtube_id, proxies = proxies)
     return transcript_pieces

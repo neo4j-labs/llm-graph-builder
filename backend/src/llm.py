@@ -21,7 +21,7 @@ def get_llm(model: str):
     """Retrieve the specified language model based on the model name."""
     model = model.lower().strip()
     env_key = f"LLM_MODEL_CONFIG_{model}"
-    env_value = get_value_from_env_or_secret_manager(env_key)
+    env_value = get_value_from_env_or_sm(env_key)
 
     if not env_value:
         err = f"Environment variable '{env_key}' is not defined as per format or missing"
