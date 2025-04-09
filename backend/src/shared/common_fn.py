@@ -196,20 +196,20 @@ def get_value_from_env_or_sm(secret_name: str, default_value: Any = None, data_t
       secret_path = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
     
       response = client.access_secret_version(request={"name": secret_path})
-      secret_value = response.payload.data.decode("UTF-8")
+      value = response.payload.data.decode("UTF-8")
     else:
-      secret_value = os.getenv(secret_name, None) 
+      value = os.getenv(secret_name, None) 
   except (NotFound, PermissionDenied):
     try:
       logging.warning(f"key not found in Secret Manager. Checking environment variable.")
-      secret_value = os.getenv(secret_name, None)
+      value = os.getenv(secret_name, None)
     except Exception as e:
        raise e
 
-  if secret_value is None:
+  if value is None:
     return convert_type(default_value, data_type) # Return the default value when key not found in secret manager not in .env file.
   
-  return convert_type(secret_value, data_type)
+  return convert_type(value, data_type)
 
 
 def convert_type(value: str, data_type: type):
