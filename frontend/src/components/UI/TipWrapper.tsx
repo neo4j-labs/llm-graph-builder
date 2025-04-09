@@ -10,7 +10,7 @@ function TooltipWrapper({
   placement: Side;
   children: React.ReactNode;
   tooltip: string;
-  hasButtonWrapper: boolean;
+  hasButtonWrapper?: boolean;
 }) {
   return (
     <Tooltip type='simple' placement={placement}>
