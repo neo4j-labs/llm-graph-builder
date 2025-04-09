@@ -112,12 +112,12 @@ export default function NewEntityExtractionSetting({
   }, [userDefinedPattern]);
 
   useEffect(() => {
-    if (allPatterns.length ) {
+    if (allPatterns.length) {
       setCombinedNodes(selectedNodes as OptionType[]);
       setCombinedPatterns(allPatterns);
-      setCombinedRels(selectedRels as OptionType[])
+      setCombinedRels(selectedRels as OptionType[]);
     }
-  },[allPatterns, selectedNodes,selectedRels])
+  }, [allPatterns, selectedNodes, selectedRels]);
 
   const handleFinalClear = () => {
     // overall
@@ -224,7 +224,9 @@ export default function NewEntityExtractionSetting({
 
   const handleRemovePattern = (patternToRemove: string) => {
     const match = patternToRemove.match(/(.*?) -\[:(.*?)\]-> (.*)/);
-    if (!match) return;
+    if (!match) {
+      return;
+    }
     const [, source, type, target] = match.map((s) => s.trim());
     const updateStore = (
       patterns: string[],
@@ -242,7 +244,9 @@ export default function NewEntityExtractionSetting({
       const updatedTuples: TupleType[] = updatedPatterns
         .map((item) => {
           const parts = item.match(/(.*?) -\[:(.*?)\]-> (.*)/);
-          if (!parts) return null;
+          if (!parts) {
+            return null;
+          }
           const [src, rel, tgt] = parts.slice(1).map((s) => s.trim());
           return {
             value: `${src},${rel},${tgt}`,
@@ -271,9 +275,7 @@ export default function NewEntityExtractionSetting({
       updateStore(schemaTextPattern, setSchemaTextPattern, setSchemaValNodes, setSchemaValRels);
     }
     setCombinedPatterns((prev) => prev.filter((p) => p !== patternToRemove));
-    setCombinedNodes((prev) =>
-      prev.filter((n) => n.value !== source && n.value !== target)
-    );
+    setCombinedNodes((prev) => prev.filter((n) => n.value !== source && n.value !== target));
     setCombinedRels((prev) => prev.filter((r) => r.value !== type));
     setTupleOptions((prev) => prev.filter((t) => t.label !== patternToRemove));
   };
@@ -355,7 +357,7 @@ export default function NewEntityExtractionSetting({
             >
               <Menu.Item
                 title={
-                  <TooltipWrapper placement='right' tooltip={tooltips.predinedSchema}>
+                  <TooltipWrapper hasButtonWrapper={true} placement='right' tooltip={tooltips.predinedSchema}>
                     Predefined Schema
                   </TooltipWrapper>
                 }
@@ -363,7 +365,7 @@ export default function NewEntityExtractionSetting({
               />
               <Menu.Item
                 title={
-                  <TooltipWrapper placement='right' tooltip={tooltips.useExistingSchema}>
+                  <TooltipWrapper hasButtonWrapper={true} placement='right' tooltip={tooltips.useExistingSchema}>
                     Load Existing Schema
                   </TooltipWrapper>
                 }
@@ -371,7 +373,7 @@ export default function NewEntityExtractionSetting({
               />
               <Menu.Item
                 title={
-                  <TooltipWrapper placement='right' tooltip={tooltips.createSchema}>
+                  <TooltipWrapper hasButtonWrapper={true} placement='right' tooltip={tooltips.createSchema}>
                     Get Schema From Text
                   </TooltipWrapper>
                 }

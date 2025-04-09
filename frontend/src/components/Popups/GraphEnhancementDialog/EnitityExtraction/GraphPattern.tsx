@@ -28,12 +28,18 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
   const sourceRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const savedSources = localStorage.getItem('customSourceOptions');
-    const savedTypes = localStorage.getItem('customTypeOptions');
-    const savedTargets = localStorage.getItem('customTargetOptions');
-    if (savedSources) setSourceOptions(JSON.parse(savedSources));
-    if (savedTypes) setTypeOptions(JSON.parse(savedTypes));
-    if (savedTargets) setTargetOptions(JSON.parse(savedTargets));
+    const savedSources = JSON.parse(localStorage.getItem('customSourceOptions') ?? 'null');
+    const savedTypes = JSON.parse(localStorage.getItem('customTypeOptions') ?? 'null');
+    const savedTargets = JSON.parse(localStorage.getItem('customTargetOptions') ?? 'null');
+    if (savedSources) {
+      setSourceOptions(savedSources);
+    }
+    if (savedTypes) {
+      setTypeOptions(savedTypes);
+    }
+    if (savedTargets) {
+      setTargetOptions(savedTargets);
+    }
   }, []);
 
   const handleNewValue = (newValue: string, type: 'source' | 'type' | 'target') => {
