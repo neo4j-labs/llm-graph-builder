@@ -1034,9 +1034,9 @@ export type TupleCreationProps = {
   selectedType: OptionType | null;
   selectedTarget: OptionType | null;
   onPatternChange: (
-    source: OptionType | OptionType[],
-    type: OptionType | OptionType[],
-    target: OptionType | OptionType[]
+    source: OptionType | OptionType[] | null,
+    type: OptionType | OptionType[] | null,
+    target: OptionType | OptionType[] |null
   ) => void;
   onAddPattern: () => void;
   selectedTupleOptions: readonly OptionType[];

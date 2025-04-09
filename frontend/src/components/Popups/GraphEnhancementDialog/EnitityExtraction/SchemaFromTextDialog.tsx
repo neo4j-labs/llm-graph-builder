@@ -63,6 +63,9 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
       } else if (status === 'Failed') {
         showNormalToast(message  as string);
       }
+      else{
+        showNormalToast('Please provide meaningful text.');
+      }
     } catch (error: any) {
       setLoading(false);
       console.error('Error processing schema:', error);
