@@ -1059,6 +1059,7 @@ export interface SchemaViewModalProps {
   nodeValues?: ExtendedNode[] | OptionType[];
   relationshipValues?: ExtendedRelationship[] | string[] | OptionType[];
   selectedRows?: CustomFile[] | undefined;
+  schemaLoading?:boolean;
 }
 
 export type UserDefinedGraphSchema = {

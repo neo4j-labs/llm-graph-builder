@@ -30,6 +30,7 @@ const SchemaViz: React.FunctionComponent<SchemaViewModalProps> = ({
   setGraphViewOpen,
   nodeValues,
   relationshipValues,
+  schemaLoading,
 }) => {
   const nvlRef = useRef<NVL>(null);
   const [nodes, setNodes] = useState<ExtendedNode[]>([]);
@@ -43,14 +44,13 @@ const SchemaViz: React.FunctionComponent<SchemaViewModalProps> = ({
   const [selected, setSelected] = useState<{ type: EntityType; id: string } | undefined>(undefined);
   const graphQueryAbortControllerRef = useRef<AbortController>();
 
-  // fit graph to original position
   const handleZoomToFit = () => {
     nvlRef.current?.fit(
       nodes.map((node) => node.id),
       {}
     );
   };
-  // Unmounting the component
+
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       handleZoomToFit();
@@ -201,7 +201,7 @@ const SchemaViz: React.FunctionComponent<SchemaViewModalProps> = ({
         <Dialog.Header htmlAttributes={{ id: 'graph-title' }}>{headerTitle}</Dialog.Header>
         <Dialog.Content className='flex flex-col n-gap-token-4 w-full grow overflow-auto border! border-palette-neutral-border-weak!'>
           <div className='bg-white relative w-full h-full max-h-full border! border-palette-neutral-border-weak!'>
-            {loading ? (
+            {loading || schemaLoading ? (
               <div className='my-40 flex! items-center justify-center'>
                 <LoadingSpinner size='large' />
               </div>
