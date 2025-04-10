@@ -2,6 +2,7 @@ from typing import List
 from pydantic.v1 import BaseModel, Field
 from src.llm import get_llm
 from langchain_core.prompts import ChatPromptTemplate
+import logging
 
 class Schema(BaseModel):
     """Knowledge Graph Schema."""
@@ -21,9 +22,9 @@ You are an expert in schema extraction, especially in identifying node and relat
 Analyze the following text and extract only the types of entities (node types) and their relationship types.
 Do not return specific instances or attributes — only abstract schema information.
 Return the result in the following format:
-{"triplets": ["<NodeType1>-<RELATIONSHIP_TYPE>-><NodeType2>"]}
+{{"triplets": ["<NodeType1>-<RELATIONSHIP_TYPE>-><NodeType2>"]}}
 For example, if the text says “John works at Microsoft”, the output should be:
-{"triplets": ["Person-WORKS_AT->Company"]}"
+{{"triplets": ["Person-WORKS_AT->Company"]}}"
 """
 )
 
@@ -58,24 +59,30 @@ def get_schema_local_storage(input_text,llm):
 
 
 def schema_extraction_from_text(input_text:str, model:str, is_schema_description_checked:bool,is_local_storage:bool):
-    
-    llm, model_name = get_llm(model)
-    if is_local_storage:
-        raw_schema = get_schema_local_storage(input_text,llm)
-        return raw_schema
-    if is_schema_description_checked:
-        schema_prompt = PROMPT_TEMPLATE_WITH_SCHEMA
-    else:
-        schema_prompt = PROMPT_TEMPLATE_WITHOUT_SCHEMA
-    prompt = ChatPromptTemplate.from_messages(
-    [("system", schema_prompt), ("user", "{text}")]
-    )
-    
-    runnable = prompt | llm.with_structured_output(
-        schema=Schema,
-        method="function_calling",
-        include_raw=False,
-    )
-    
-    raw_schema = runnable.invoke({"text": input_text})
-    return raw_schema
+    try:
+        llm, model_name = get_llm(model)
+        if str(is_local_storage).lower().strip() == "true":
+            raw_schema = get_schema_local_storage(input_text,llm)
+            return raw_schema
+        if str(is_schema_description_checked).lower().strip() == "true":
+            schema_prompt = PROMPT_TEMPLATE_WITH_SCHEMA
+        else:
+            schema_prompt = PROMPT_TEMPLATE_WITHOUT_SCHEMA
+        prompt = ChatPromptTemplate.from_messages(
+        [("system", schema_prompt), ("user", "{text}")]
+        )
+        
+        runnable = prompt | llm.with_structured_output(
+            schema=Schema,
+            method="function_calling",
+            include_raw=False,
+        )
+
+        raw_schema = runnable.invoke({"text": input_text})
+        if raw_schema:
+            return raw_schema
+        else:
+            raise Exception("Unable to get schema from text for given model")
+    except Exception as e:
+        logging.info(str(e))
+        raise Exception(str(e))

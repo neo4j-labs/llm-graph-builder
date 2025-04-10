@@ -1,9 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Select } from '@neo4j-ndl/react';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
 import { OptionType, TupleCreationProps } from '../../../../types';
 import {
   appLabels,
+  LOCAL_KEYS,
   sourceOptions as initialSourceOptions,
   targetOptions as initialTargetOptions,
   typeOptions as initialTypeOptions,
@@ -25,6 +26,21 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
     target: '',
   });
   const sourceRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const savedSources = JSON.parse(localStorage.getItem('customSourceOptions') ?? 'null');
+    const savedTypes = JSON.parse(localStorage.getItem('customTypeOptions') ?? 'null');
+    const savedTargets = JSON.parse(localStorage.getItem('customTargetOptions') ?? 'null');
+    if (savedSources) {
+      setSourceOptions(savedSources);
+    }
+    if (savedTypes) {
+      setTypeOptions(savedTypes);
+    }
+    if (savedTargets) {
+      setTargetOptions(savedTargets);
+    }
+  }, []);
 
   const handleNewValue = (newValue: string, type: 'source' | 'type' | 'target') => {
     if (!newValue.trim()) {
@@ -56,26 +72,18 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
   const handleInputChange = (newValue: string, type: 'source' | 'type' | 'target') => {
     setInputValues((prev) => ({ ...prev, [type]: newValue }));
   };
-  const handleKeyDown = (e: React.KeyboardEvent, type: 'source' | 'type' | 'target') => {
-    if (e.key === 'Enter' && inputValues[type].trim()) {
-      e.preventDefault();
-      handleNewValue(inputValues[type], type);
-    }
-  };
 
   const handleAddPattern = () => {
     onAddPattern();
+    localStorage.setItem(LOCAL_KEYS.source, JSON.stringify(sourceOptions));
+    localStorage.setItem(LOCAL_KEYS.type, JSON.stringify(typeOptions));
+    localStorage.setItem(LOCAL_KEYS.target, JSON.stringify(targetOptions));
     setTimeout(() => {
       const selectInput = sourceRef.current?.querySelector('input');
       selectInput?.focus();
     }, 100);
   };
 
-  const handleBlur = (type: 'source' | 'type' | 'target') => {
-    if (inputValues[type].trim()) {
-      handleNewValue(inputValues[type], type);
-    }
-  };
   const isDisabled = !selectedSource?.value.length || !selectedTarget?.value.length || !selectedType?.value.length;
   return (
     <div className='bg-white rounded-lg shadow-md'>
@@ -89,14 +97,18 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
             size='medium'
             selectProps={{
               isClearable: true,
-              isMulti: false,
               options: sourceOptions,
-              onChange: (selected) => handleNewValue(selected?.value || '', 'source'),
+              onChange: (selected) => {
+                if (!selected) {
+                  onPatternChange(null, selectedType, selectedTarget);
+                } else {
+                  handleNewValue(selected.value, 'source');
+                }
+              },
               value: selectedSource,
               inputValue: inputValues.source,
               onInputChange: (newValue) => handleInputChange(newValue, 'source'),
-              onKeyDown: (e) => handleKeyDown(e, 'source'),
-              onBlur: () => handleBlur('source'),
+              onCreateOption: (newOption) => handleNewValue(newOption, 'source'),
             }}
             type='creatable'
           />
@@ -106,14 +118,18 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
           size='medium'
           selectProps={{
             isClearable: true,
-            isMulti: false,
             options: typeOptions,
-            onChange: (selected) => handleNewValue(selected?.value || '', 'type'),
+            onChange: (selected) => {
+              if (!selected) {
+                onPatternChange(selectedSource, null, selectedTarget);
+              } else {
+                handleNewValue(selected.value, 'type');
+              }
+            },
             value: selectedType,
             inputValue: inputValues.type,
             onInputChange: (newValue) => handleInputChange(newValue, 'type'),
-            onKeyDown: (e) => handleKeyDown(e, 'type'),
-            onBlur: () => handleBlur('type'),
+            onCreateOption: (newOption) => handleNewValue(newOption, 'type'),
           }}
           type='creatable'
           className='w-1/4'
@@ -123,14 +139,18 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
           size='medium'
           selectProps={{
             isClearable: true,
-            isMulti: false,
             options: targetOptions,
-            onChange: (selected) => handleNewValue(selected?.value || '', 'target'),
+            onChange: (selected) => {
+              if (!selected) {
+                onPatternChange(selectedSource, selectedType, null);
+              } else {
+                handleNewValue(selected.value, 'target');
+              }
+            },
             value: selectedTarget,
             inputValue: inputValues.target,
             onInputChange: (newValue) => handleInputChange(newValue, 'target'),
-            onKeyDown: (e) => handleKeyDown(e, 'target'),
-            onBlur: () => handleBlur('target'),
+            onCreateOption: (newOption) => handleNewValue(newOption, 'target'),
           }}
           type='creatable'
           className='w-1/4'

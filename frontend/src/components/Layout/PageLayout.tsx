@@ -221,6 +221,7 @@ const PageLayout: React.FC = () => {
     setSchemaView,
     setPreDefinedNodes,
     setPreDefinedRels,
+    setPreDefinedPattern,
   } = useFileContext();
   const { cancel } = useSpeechSynthesis();
   const { setActiveSpotlight } = useSpotlightContext();
@@ -365,7 +366,7 @@ const PageLayout: React.FC = () => {
   };
 
   const handlePredinedApply = (newPatterns: string[], nodes: OptionType[], rels: OptionType[]) => {
-    setDbPattern((prevPatterns: string[]) => {
+    setPreDefinedPattern((prevPatterns: string[]) => {
       const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
       return uniquePatterns;
     });
