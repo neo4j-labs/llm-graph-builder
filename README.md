@@ -152,27 +152,23 @@ docker pull ollama/ollama
 ```bash
 docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
 ```
-3. Pull specific ollama model.
-```bash
-ollama pull llama3
-```
-4. Execute any llm model ex🦙3
+3. Execute any llm model ex llama3
 ```bash
 docker exec -it ollama ollama run llama3
 ```
-5. Configure  env variable in docker compose.
+4. Configure  env variable in docker compose.
 ```env
 LLM_MODEL_CONFIG_ollama_<model_name>
 #example
 LLM_MODEL_CONFIG_ollama_llama3=${LLM_MODEL_CONFIG_ollama_llama3-llama3,
 http://host.docker.internal:11434}
 ```
-6. Configure the backend API url
+5. Configure the backend API url
 ```env
 VITE_BACKEND_API_URL=${VITE_BACKEND_API_URL-backendurl}
 ```
-7. Open the application in browser and select the ollama model for the extraction.
-8. Enjoy Graph Building.
+6. Open the application in browser and select the ollama model for the extraction.
+7. Enjoy Graph Building.
 ---
 
 ## Additional Configuration
