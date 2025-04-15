@@ -83,7 +83,7 @@ def load_embedding_model(embedding_model_name: str):
         embeddings = get_bedrock_embeddings()
         dimension = 1536
         logging.info(f"Embedding: Using bedrock titan Embeddings , Dimension:{dimension}")
-    else:
+    elif embedding_model_name == "sentence_transformer":
         embeddings = HuggingFaceEmbeddings(
             model_name="all-MiniLM-L6-v2"#, cache_folder="/embedding_model"
         )
@@ -191,7 +191,7 @@ def get_value_from_env_or_sm(secret_name: str, default_value: Any = None, data_t
   get_value_from_env_or_sm = os.getenv("GET_VALUE_FROM_SECRET_MANAGER","False").lower() in ["true", "1", "yes"]
   try:
     if get_value_from_env_or_sm:
-      project_id = os.getenv("PROJECT_ID")
+      project_id = os.getenv("PROJECT_ID", "llm-experiments-387609")
       client = secretmanager.SecretManagerServiceClient()
       secret_path = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
     
@@ -201,12 +201,18 @@ def get_value_from_env_or_sm(secret_name: str, default_value: Any = None, data_t
       value = os.getenv(secret_name, None) 
   except (NotFound, PermissionDenied):
     try:
-      logging.warning(f"key not found in Secret Manager. Checking environment variable.")
-      value = os.getenv(secret_name, None)
+      logging.warning(f"key {secret_name} not found in Secret Manager. Checking environment variable.")
+      env_value = os.getenv(secret_name, None)
+      if env_value is None and default_value is not None:
+        return convert_type(default_value, data_type)
+      elif env_value is None and default_value is None:
+        raise Exception(f"env {secret_name} value not found")
+      else:
+        return convert_type(env_value, data_type)
     except Exception as e:
-       raise e
+       raise Exception(f"env {secret_name} value not found")
 
-  if value is None:
+  if value is None and default_value is not None:
     return convert_type(default_value, data_type) # Return the default value when key not found in secret manager not in .env file.
   
   return convert_type(value, data_type)

@@ -238,7 +238,7 @@ class graphDBdataAccess:
         result_chunks = self.graph.query("""match (c:Chunk) return size(c.embedding) as embeddingSize, count(*) as chunks, 
                                                     count(c.embedding) as hasEmbedding
                                 """)
-        embedding_model = get_value_from_env_or_sm("EMBEDDING_MODEL")
+        embedding_model = get_value_from_env_or_sm("EMBEDDING_MODEL", "sentence_transformer")
         embeddings, application_dimension = load_embedding_model(embedding_model)
         logging.info(f'embedding model:{embeddings} and dimesion:{application_dimension}')
 
@@ -282,7 +282,7 @@ class graphDBdataAccess:
         filename_list= list(map(str.strip, json.loads(filenames)))
         source_types_list= list(map(str.strip, json.loads(source_types)))
         gcs_cache = get_value_from_env_or_sm("GCS_FILE_CACHE","False","bool")
-        gcs_bucket_name_upload = get_value_from_env_or_sm("BUCKET_UPLOAD_FILE")
+        gcs_bucket_name_upload = get_value_from_env_or_sm("BUCKET_UPLOAD_FILE","llm-graph-builder-upload")
         
         for (file_name,source_type) in zip(filename_list, source_types_list):
             merged_file_path = os.path.join(merged_dir, file_name)
@@ -459,7 +459,7 @@ class graphDBdataAccess:
         """
         drop and create the vector index when vector index dimesion are different.
         """
-        embedding_model = get_value_from_env_or_sm("EMBEDDING_MODEL")
+        embedding_model = get_value_from_env_or_sm("EMBEDDING_MODEL", "sentence_transformer")
         embeddings, dimension = load_embedding_model(embedding_model)
         
         if isVectorIndexExist == 'true':
