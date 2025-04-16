@@ -271,19 +271,15 @@ export default function DeduplicationTab() {
       <div>
         <Flex justifyContent='space-between' flexDirection='row'>
           <Flex>
-            <Typography variant={isTablet ? 'subheading-medium' : 'subheading-large'}>
+            <Typography variant={'subheading-medium'}>
               Refine Your Knowledge Graph: Merge Duplicate Entities:
             </Typography>
-            <Typography variant={isTablet ? 'body-small' : 'subheading-large'}>
+            <Typography variant={'body-small'}>
               Identify and merge similar entries like "Apple" and "Apple Inc." to eliminate redundancy and improve the
               accuracy and clarity of your knowledge graph.
             </Typography>
           </Flex>
-          {nodesCount > 0 && (
-            <Typography variant={isTablet ? 'subheading-medium' : 'subheading-large'}>
-              Total Duplicate Nodes: {nodesCount}
-            </Typography>
-          )}
+          {nodesCount > 0 && <Typography variant={'subheading-medium'}>Total Duplicate Nodes: {nodesCount}</Typography>}
         </Flex>
         <DataGrid
           ref={tableRef}
@@ -332,7 +328,6 @@ export default function DeduplicationTab() {
               await clickHandler();
               await fetchDuplicateNodes();
             }}
-            size='large'
             loading={mergeAPIloading}
             text={
               isLoading

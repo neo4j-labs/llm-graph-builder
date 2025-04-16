@@ -1,6 +1,15 @@
-import { useEffect, useState, useMemo, useRef, Suspense, useReducer, useCallback } from 'react';
+import { useEffect, useState, useMemo, useRef, Suspense, useReducer, useCallback, useContext } from 'react';
 import FileTable from './FileTable';
-import { Button, Typography, Flex, StatusIndicator, useMediaQuery } from '@neo4j-ndl/react';
+import {
+  Button,
+  Typography,
+  Flex,
+  StatusIndicator,
+  useMediaQuery,
+  Menu,
+  SpotlightTarget,
+  useSpotlightContext,
+} from '@neo4j-ndl/react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { extractAPI } from '../utils/FileAPI';
@@ -40,12 +49,13 @@ import { getChunkText } from '../services/getChunkText';
 import ChunkPopUp from './Popups/ChunkPopUp';
 import { isExpired, isFileReadyToProcess } from '../utils/Utils';
 import { useHasSelections } from '../hooks/useHasSelections';
-import { Hierarchy1Icon } from '@neo4j-ndl/react/icons';
+import { ChevronUpIconOutline, ChevronDownIconOutline } from '@neo4j-ndl/react/icons';
+import { ThemeWrapperContext } from '../context/ThemeWrapper';
+import { useAuth0 } from '@auth0/auth0-react';
 
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
 
 let afterFirstRender = false;
-
 const Content: React.FC<ContentProps> = ({
   showEnhancementDialog,
   toggleEnhancementDialog,
@@ -55,7 +65,6 @@ const Content: React.FC<ContentProps> = ({
 }) => {
   const { breakpoints } = tokens;
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
-  // const [init, setInit] = useState<boolean>(false);
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
   const [documentName, setDocumentName] = useState<string>('');
@@ -72,8 +81,12 @@ const Content: React.FC<ContentProps> = ({
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [totalPageCount, setTotalPageCount] = useState<number | null>(null);
   const [textChunks, setTextChunks] = useState<chunkdata[]>([]);
+  const [isGraphBtnMenuOpen, setIsGraphBtnMenuOpen] = useState<boolean>(false);
+  const graphbtnRef = useRef<HTMLDivElement>(null);
   const chunksTextAbortController = useRef<AbortController>();
-
+  const { colorMode } = useContext(ThemeWrapperContext);
+  const { isAuthenticated } = useAuth0();
+  const { setIsOpen } = useSpotlightContext();
   const [alertStateForRetry, setAlertStateForRetry] = useState<BannerAlertProps>({
     showAlert: false,
     alertType: 'neutral',
@@ -90,6 +103,7 @@ const Content: React.FC<ContentProps> = ({
     selectedChunk_overlap,
     selectedChunks_to_combine,
     setSelectedNodes,
+    setAllPatterns,
     setRowSelection,
     setSelectedRels,
     setSelectedTokenChunkSize,
@@ -204,7 +218,14 @@ const Content: React.FC<ContentProps> = ({
     }
     afterFirstRender = true;
   }, [queue.items.length, userCredentials]);
-
+  const isFirstTimeUser = useMemo(() => {
+    return localStorage.getItem('neo4j.connection') === null;
+  }, []);
+  useEffect(() => {
+    if (!isAuthenticated && !connectionStatus && isFirstTimeUser) {
+      setIsOpen(true);
+    }
+  }, [connectionStatus, isAuthenticated, isFirstTimeUser]);
   const handleDropdownChange = (selectedOption: OptionType | null | void) => {
     if (selectedOption?.value) {
       setModel(selectedOption?.value);
@@ -249,7 +270,7 @@ const Content: React.FC<ContentProps> = ({
   };
 
   const extractHandler = async (fileItem: CustomFile, uid: string) => {
-    queue.remove(fileItem.name as string);
+    queue.remove((item) => item.name === fileItem.name);
     try {
       setFilesData((prevfiles) =>
         prevfiles.map((curfile) => {
@@ -334,7 +355,7 @@ const Content: React.FC<ContentProps> = ({
               return prev + 1;
             });
             const { message, fileName } = error;
-            queue.remove(fileName);
+            queue.remove((item) => item.name === fileName);
             const errorMessage = error.message;
             showErrorToast(message);
             setFilesData((prevfiles) =>
@@ -566,6 +587,7 @@ const Content: React.FC<ContentProps> = ({
     setUserCredentials({ uri: '', password: '', userName: '', database: '', email: '' });
     setSelectedNodes([]);
     setSelectedRels([]);
+    setAllPatterns([]);
     localStorage.removeItem('selectedTokenChunkSize');
     setSelectedTokenChunkSize(tokenchunkSize);
     localStorage.removeItem('selectedChunk_overlap');
@@ -904,7 +926,7 @@ const Content: React.FC<ContentProps> = ({
               </div>
             </Typography>
           </div>
-          <div>
+          <div className='enhancement-btn__wrapper'>
             <ButtonWithToolTip
               placement='top'
               text='Enhance graph quality'
@@ -917,13 +939,20 @@ const Content: React.FC<ContentProps> = ({
               Graph Enhancement
             </ButtonWithToolTip>
             {!connectionStatus ? (
-              <Button
-                size={isTablet ? 'small' : 'medium'}
-                className='mr-2!'
-                onClick={() => setOpenConnection((prev) => ({ ...prev, openPopUp: true }))}
+              <SpotlightTarget
+                id='connectbutton'
+                hasPulse={true}
+                indicatorVariant='border'
+                className='n-bg-palette-primary-bg-strong hover:n-bg-palette-primary-hover-strong'
               >
-                {buttonCaptions.connectToNeo4j}
-              </Button>
+                <Button
+                  size={isTablet ? 'small' : 'medium'}
+                  className='mr-2!'
+                  onClick={() => setOpenConnection((prev) => ({ ...prev, openPopUp: true }))}
+                >
+                  {buttonCaptions.connectToNeo4j}
+                </Button>
+              </SpotlightTarget>
             ) : (
               showDisconnectButton && (
                 <Button size={isTablet ? 'small' : 'medium'} className='mr-2.5' onClick={disconnect}>
@@ -961,11 +990,7 @@ const Content: React.FC<ContentProps> = ({
           handleGenerateGraph={processWaitingFilesOnRefresh}
         ></FileTable>
 
-        <Flex
-          className={`p-2.5  mt-1.5 absolute bottom-0 w-full`}
-          justifyContent='space-between'
-          flexDirection={isTablet ? 'column' : 'row'}
-        >
+        <Flex className={`p-2.5  mt-1.5 absolute bottom-0 w-full`} justifyContent='space-between' flexDirection={'row'}>
           <div>
             <DropdownComponent
               onSelect={handleDropdownChange}
@@ -977,50 +1002,21 @@ const Content: React.FC<ContentProps> = ({
             />
           </div>
           <Flex flexDirection='row' gap='4' className='self-end mb-2.5' flexWrap='wrap'>
-            <ButtonWithToolTip
-              text={tooltips.generateGraph}
-              placement='top'
-              label='generate graph'
-              onClick={onClickHandler}
-              disabled={disableCheck || isReadOnlyUser}
-              className='mr-0.5'
-              size={isTablet ? 'small' : 'medium'}
-            >
-              {buttonCaptions.generateGraph}{' '}
-              {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
-            </ButtonWithToolTip>
-            <ButtonWithToolTip
-              text={tooltips.showGraph}
-              placement='top'
-              onClick={handleGraphView}
-              disabled={showGraphCheck}
-              className='mr-0.5'
-              label='show graph'
-              size={isTablet ? 'small' : 'medium'}
-            >
-              {buttonCaptions.showPreviewGraph} {selectedfileslength && completedfileNo ? `(${completedfileNo})` : ''}
-            </ButtonWithToolTip>
-            <ButtonWithToolTip
-              label={'Graph Schema'}
-              text={tooltips.visualizeGraph}
-              placement='top'
-              fill='outlined'
-              onClick={handleSchemaView}
-              disabled={!connectionStatus}
-            >
-              <Hierarchy1Icon />
-            </ButtonWithToolTip>
-            <ButtonWithToolTip
-              text={tooltips.bloomGraph}
-              placement='top'
-              onClick={handleOpenGraphClick}
-              disabled={!filesData.some((f) => f?.status === 'Completed')}
-              className='ml-0.5'
-              label='Open Graph with Bloom'
-              size={isTablet ? 'small' : 'medium'}
-            >
-              {buttonCaptions.exploreGraphWithBloom}
-            </ButtonWithToolTip>
+            <SpotlightTarget id='generategraphbtn'>
+              <ButtonWithToolTip
+                text={tooltips.generateGraph}
+                placement='top'
+                label='generate graph'
+                onClick={onClickHandler}
+                disabled={disableCheck || isReadOnlyUser}
+                className='mr-0.5'
+                size={isTablet ? 'small' : 'medium'}
+              >
+                {buttonCaptions.generateGraph}{' '}
+                {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
+              </ButtonWithToolTip>
+            </SpotlightTarget>
+
             <ButtonWithToolTip
               text={
                 !selectedfileslength ? tooltips.deleteFile : `${selectedfileslength} ${tooltips.deleteSelectedFiles}`
@@ -1035,6 +1031,57 @@ const Content: React.FC<ContentProps> = ({
               {buttonCaptions.deleteFiles}
               {selectedfileslength != undefined && selectedfileslength > 0 && `(${selectedfileslength})`}
             </ButtonWithToolTip>
+            <SpotlightTarget id='visualizegraphbtn'>
+              <Flex flexDirection='row' gap='0'>
+                <Button
+                  onClick={handleGraphView}
+                  isDisabled={showGraphCheck}
+                  className='px-0! flex! items-center justify-between gap-4 graphbtn'
+                  size={isTablet ? 'small' : 'medium'}
+                >
+                  <span className='mx-2'>
+                    {buttonCaptions.showPreviewGraph}{' '}
+                    {selectedfileslength && completedfileNo ? `(${completedfileNo})` : ''}
+                  </span>
+                </Button>
+                <div
+                  className={`ndl-icon-btn ndl-clean dropdownbtn ${colorMode === 'dark' ? 'darktheme' : ''} ${
+                    isTablet ? 'small' : 'medium'
+                  }`}
+                  onClick={(e) => {
+                    setIsGraphBtnMenuOpen((old) => !old);
+                    e.stopPropagation();
+                  }}
+                  ref={graphbtnRef}
+                >
+                  {!isGraphBtnMenuOpen ? (
+                    <ChevronUpIconOutline className='n-size-token-5' />
+                  ) : (
+                    <ChevronDownIconOutline className='n-size-token-' />
+                  )}
+                </div>
+              </Flex>
+            </SpotlightTarget>
+
+            <Menu
+              placement='top-end-bottom-end'
+              isOpen={isGraphBtnMenuOpen}
+              anchorRef={graphbtnRef}
+              onClose={() => setIsGraphBtnMenuOpen(false)}
+            >
+              <Menu.Items
+                htmlAttributes={{
+                  id: 'default-menu',
+                }}
+              >
+                <Menu.Item title='Graph Schema' onClick={handleSchemaView} isDisabled={!connectionStatus} />
+                <Menu.Item
+                  title='Explore Graph in Neo4j'
+                  onClick={handleOpenGraphClick}
+                  isDisabled={!filesData.some((f) => f?.status === 'Completed')}
+                />
+              </Menu.Items>
+            </Menu>
           </Flex>
         </Flex>
       </div>

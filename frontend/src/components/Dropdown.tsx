@@ -1,9 +1,8 @@
-import { Tooltip, useMediaQuery, Select } from '@neo4j-ndl/react';
+import { Tooltip, useMediaQuery, Select, SpotlightTarget } from '@neo4j-ndl/react';
 import { OptionType, ReusableDropdownProps } from '../types';
 import { memo, useMemo } from 'react';
 import { capitalize, capitalizeWithUnderscore } from '../utils/Utils';
 import { prodllms } from '../utils/Constants';
-import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
 
 const DropdownComponent: React.FC<ReusableDropdownProps> = ({
   options,
@@ -28,53 +27,53 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
   return (
     <>
       <div className={view === 'ContentView' ? 'w-[150px]' : ''}>
-        <Select
-          type='select'
-          label='LLM Models'
-          helpText={
-            <div className='w-max! flex! gap-1 items-center'>
-              <span>
-                <InformationCircleIconOutline title='info' aria-label='infoicon' className='n-size-token-6' />
-              </span>
-              <span>LLM Model used for Extraction & Chat</span>
-            </div>
-          }
-          selectProps={{
-            onChange: handleChange,
-            // @ts-ignore
-            options: allOptions?.map((option) => {
-              const label = typeof option === 'string' ? capitalizeWithUnderscore(option) : capitalize(option.label);
-              const value = typeof option === 'string' ? option : option.value;
-              const isModelSupported = !isProdEnv || prodllms?.includes(value);
-              return {
-                label: !isModelSupported ? (
-                  <Tooltip type='simple' placement={isLargeDesktop ? 'left' : 'right'}>
-                    <Tooltip.Trigger>
-                      <span>{label}</span>
-                    </Tooltip.Trigger>
-                    <Tooltip.Content>Available In Development Version</Tooltip.Content>
-                  </Tooltip>
-                ) : (
-                  <span>{label}</span>
-                ),
-                value,
-                isDisabled: !isModelSupported,
-              };
-            }),
-            placeholder: placeholder || 'Select an option',
-            defaultValue: defaultValue
-              ? { label: capitalizeWithUnderscore(defaultValue), value: defaultValue }
-              : undefined,
-            menuPlacement: 'auto',
-            isDisabled: isDisabled,
-            value: value,
-          }}
-          size='medium'
-          isFluid
-          htmlAttributes={{
-            'aria-label': 'A selection dropdown',
-          }}
-        />
+        <SpotlightTarget id='llmdropdown'>
+          <Select
+            type='select'
+            aria-label='llm-dropdown'
+            label={
+              <div className='w-max! flex! gap-1 items-center'>
+                <span>LLM Model for Processing & Chat</span>
+              </div>
+            }
+            selectProps={{
+              onChange: handleChange,
+              // @ts-ignore
+              options: allOptions?.map((option) => {
+                const label = typeof option === 'string' ? capitalizeWithUnderscore(option) : capitalize(option.label);
+                const value = typeof option === 'string' ? option : option.value;
+                const isModelSupported = !isProdEnv || prodllms?.includes(value);
+                return {
+                  label: !isModelSupported ? (
+                    <Tooltip type='simple' placement={isLargeDesktop ? 'left' : 'right'}>
+                      <Tooltip.Trigger>
+                        <span className='text-nowrap'>{label}</span>
+                      </Tooltip.Trigger>
+                      <Tooltip.Content>Available In Development Version</Tooltip.Content>
+                    </Tooltip>
+                  ) : (
+                    <span className='text-nowrap'>{label}</span>
+                  ),
+                  value,
+                  isDisabled: !isModelSupported,
+                };
+              }),
+              placeholder: placeholder || 'Select an option',
+              defaultValue: defaultValue
+                ? { label: capitalizeWithUnderscore(defaultValue), value: defaultValue }
+                : undefined,
+              menuPlacement: 'auto',
+              isDisabled: isDisabled,
+              value: value,
+            }}
+            size='medium'
+            isFluid
+            htmlAttributes={{
+              'aria-label': 'A selection dropdown',
+            }}
+          />
+        </SpotlightTarget>
+
         {children}
       </div>
     </>

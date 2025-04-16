@@ -111,7 +111,6 @@ function ConfirmationDialog({
             setChecked([]);
             onClose();
           }}
-          size='large'
           isDisabled={largeFiles.some(
             (f) => f.createdAt != undefined && checked.includes(f.id) && isExpired(f?.createdAt as Date)
           )}

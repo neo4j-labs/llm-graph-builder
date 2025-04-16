@@ -10,26 +10,20 @@ import {
   ArrowLeftIconOutline,
   ArrowDownTrayIconOutline,
 } from '@neo4j-ndl/react/icons';
-import { Button, TextLink, Typography } from '@neo4j-ndl/react';
-import { Dispatch, memo, SetStateAction, useCallback, useContext, useRef, useState } from 'react';
+import { Button, SpotlightTarget, TextLink, Typography, useSpotlightContext } from '@neo4j-ndl/react';
+import { memo, useCallback, useContext, useEffect, useRef, useState, useMemo } from 'react';
 import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
 import { buttonCaptions, SKIP_AUTH, tooltips } from '../../utils/Constants';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 import { useCredentials } from '../../context/UserCredentials';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { useMessageContext } from '../../context/UserMessages';
 import { RiChatSettingsLine } from 'react-icons/ri';
 import ChatModeToggle from '../ChatBot/ChatModeToggle';
-import { connectionState } from '../../types';
+import { HeaderProp } from '../../types';
 import { downloadClickHandler, getIsLoading } from '../../utils/Utils';
 import Profile from '../User/Profile';
-
-interface HeaderProp {
-  chatOnly?: boolean;
-  deleteOnClick?: () => void;
-  setOpenConnection?: Dispatch<SetStateAction<connectionState>>;
-  showBackButton?: boolean;
-}
+import { useAuth0 } from '@auth0/auth0-react';
 
 const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnection, showBackButton }) => {
   const { colorMode, toggleColorMode } = useContext(ThemeWrapperContext);
@@ -39,9 +33,21 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
     window.open(url, '_blank');
   }, []);
   const downloadLinkRef = useRef<HTMLAnchorElement>(null);
+  const { loginWithRedirect } = useAuth0();
+  const firstTourTarget = useRef<HTMLDivElement>(null);
   const { connectionStatus } = useCredentials();
   const chatAnchor = useRef<HTMLDivElement>(null);
+  const { pathname } = useLocation();
   const [showChatModeOption, setShowChatModeOption] = useState<boolean>(false);
+  const { setIsOpen } = useSpotlightContext();
+  const isFirstTimeUser = useMemo(() => {
+    return localStorage.getItem('neo4j.connection') === null;
+  }, []);
+  useEffect(() => {
+    if (!connectionStatus && isFirstTimeUser) {
+      setIsOpen(true);
+    }
+  }, []);
   const openChatPopout = useCallback(() => {
     let session = localStorage.getItem('neo4j.connection');
     const isLoading = getIsLoading(messages);
@@ -66,6 +72,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
   const onBackButtonClick = () => {
     navigate('/', { state: messages });
   };
+
   return (
     <>
       <div
@@ -79,7 +86,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
           id='navigation'
           aria-label='main navigation'
         >
-          <section className='flex w-1/3 shrink-0 grow-0 items-center grow min-w-[200px]'>
+          <section className='flex w-1/3 shrink-0 grow-0 items-center min-w-[200px]'>
             <Typography variant='h6' as='a' href='#app-bar-with-responsive-menu'>
               <img
                 src={colorMode === 'dark' ? Neo4jLogoBW : Neo4jLogoColor}
@@ -144,6 +151,18 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                     <ArrowTopRightOnSquareIconOutline />
                   </IconButtonWithToolTip>
                   {!SKIP_AUTH && <Profile />}
+                  {pathname === '/readonly' &&
+                    (!connectionStatus ? (
+                      <SpotlightTarget id='loginbutton' hasPulse={true} indicatorVariant='border' ref={firstTourTarget}>
+                        <Button type='button' fill='outlined' onClick={() => loginWithRedirect()}>
+                          Login
+                        </Button>
+                      </SpotlightTarget>
+                    ) : (
+                      <Button type='button' fill='outlined' onClick={() => loginWithRedirect()}>
+                        Login
+                      </Button>
+                    ))}
                 </div>
               </div>
             </section>

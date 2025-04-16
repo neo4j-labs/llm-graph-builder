@@ -3,7 +3,7 @@ updates:
   - package-ecosystem: 'npm'
     directory: '/frontend'
     schedule:
-      interval: 'weekly'
+      interval: 'monthly'
     target-branch: 'dev'
 
   - package-ecosystem: 'pip'

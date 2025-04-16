@@ -14,7 +14,7 @@ export default function DropZoneForSmallLayouts() {
   const { filesData, setFilesData, model } = useFileContext();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isClicked, setIsClicked] = useState<boolean>(false);
-  const { userCredentials } = useCredentials();
+  const { userCredentials, connectionStatus, isReadOnlyUser } = useCredentials();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const uploadFileInChunks = (file: File) => {
@@ -218,7 +218,7 @@ export default function DropZoneForSmallLayouts() {
   return (
     <>
       <div {...getRootProps({ className: 'dropzone' })}>
-        <input {...getInputProps()} aria-label='dropzone' />
+        <input {...getInputProps()} aria-label='dropzone' disabled={isReadOnlyUser || !connectionStatus} />
         {isLoading ? <LoadingSpinner size='medium' /> : <DocumentPlusIconSolid className='n-size-token-7' />}
       </div>
     </>

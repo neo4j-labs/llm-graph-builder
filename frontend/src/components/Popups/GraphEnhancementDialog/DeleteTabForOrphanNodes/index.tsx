@@ -293,7 +293,6 @@ export default function DeletePopUpForOrphanNodes({
         <Flex className='mt-3' flexDirection='row' justifyContent='flex-end'>
           <ButtonWithToolTip
             onClick={() => setShowDeletePopUp(true)}
-            size='large'
             loading={loading}
             text={
               isLoading

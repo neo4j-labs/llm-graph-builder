@@ -8,7 +8,9 @@ import {
   ExtendedRelationship,
   GraphType,
   GraphViewModalProps,
+  OptionType,
   Scheme,
+  TupleType
 } from '../../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
 import NVL from '@neo4j-nvl/base';
@@ -19,6 +21,7 @@ import {
   InformationCircleIconOutline,
   MagnifyingGlassMinusIconOutline,
   MagnifyingGlassPlusIconOutline,
+  ExploreIcon
 } from '@neo4j-ndl/react/icons';
 import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
 import { filterData, getCheckboxConditions, graphTypeFromNodes, processGraphData } from '../../utils/Utils';
@@ -31,6 +34,11 @@ import CheckboxSelection from './CheckboxSelection';
 import ResultOverview from './ResultOverview';
 import { ResizePanelDetails } from './ResizePanel';
 import GraphPropertiesPanel from './GraphPropertiesPanel';
+import { useFileContext } from '../../context/UsersFiles';
+import SchemaViz from '../Graph/SchemaViz';
+import { getNodeLabelsAndRelTypesFromText } from '../../services/SchemaFromTextAPI';
+import { showNormalToast } from '../../utils/Toasts';
+import { extractOptions } from '../../utils/Utils';
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -42,8 +50,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   selectedRows,
 }) => {
   const nvlRef = useRef<NVL>(null);
-  const [nodes, setNodes] = useState<ExtendedNode[]>([]);
-  const [relationships, setRelationships] = useState<ExtendedRelationship[]>([]);
+  const [node, setNode] = useState<ExtendedNode[]>([]);
+  const [relationship, setRelationship] = useState<ExtendedRelationship[]>([]);
   const [allNodes, setAllNodes] = useState<ExtendedNode[]>([]);
   const [allRelationships, setAllRelationships] = useState<Relationship[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -59,15 +67,20 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [selected, setSelected] = useState<{ type: EntityType; id: string } | undefined>(undefined);
   const [mode, setMode] = useState<boolean>(false);
   const graphQueryAbortControllerRef = useRef<AbortController>();
+  const { model } = useFileContext();
+  const [openGraphView, setOpenGraphView] = useState<boolean>(false);
+  const [schemaNodes, setSchemaNodes] = useState<OptionType[]>([]);
+  const [schemaRels, setSchemaRels] = useState<OptionType[]>([]);
+  const [schemaLoading, setSchemaLoading] = useState<boolean>(false);
 
   const graphQuery: string =
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
       ? queryMap.DocChunkEntities
       : graphType.includes('DocumentChunk')
-      ? queryMap.DocChunks
-      : graphType.includes('Entities')
-      ? queryMap.Entities
-      : '';
+        ? queryMap.DocChunks
+        : graphType.includes('Entities')
+          ? queryMap.Entities
+          : '';
 
   // fit graph to original position
   const handleZoomToFit = () => {
@@ -88,8 +101,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       setGraphType([]);
       clearTimeout(timeoutId);
       setScheme({});
-      setNodes([]);
-      setRelationships([]);
+      setNode([]);
+      setRelationship([]);
       setAllNodes([]);
       setAllRelationships([]);
       setSearchQuery('');
@@ -100,7 +113,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   useEffect(() => {
     let updateGraphType;
     if (mode) {
-      updateGraphType = graphTypeFromNodes(nodes);
+      updateGraphType = graphTypeFromNodes(node);
     } else {
       updateGraphType = graphTypeFromNodes(allNodes);
     }
@@ -149,8 +162,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         if (mode === 'refreshMode') {
           initGraph(graphType, finalNodes, finalRels, schemeVal);
         } else {
-          setNodes(finalNodes);
-          setRelationships(finalRels);
+          setNode(finalNodes);
+          setRelationship(finalRels);
           setNewScheme(schemeVal);
           setLoading(false);
         }
@@ -181,8 +194,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         setAllNodes(finalNodes);
         setAllRelationships(finalRels);
         setScheme(schemeVal);
-        setNodes(finalNodes);
-        setRelationships(finalRels);
+        setNode(finalNodes);
+        setRelationship(finalRels);
         setNewScheme(schemeVal);
         setLoading(false);
       }
@@ -194,6 +207,27 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       handleSearch(debouncedQuery);
     }
   }, [debouncedQuery]);
+
+  const mouseEventCallbacks = useMemo(() => ({
+    onNodeClick: (clickedNode: Node) => {
+      if (selected?.id !== clickedNode.id || selected?.type !== 'node') {
+        setSelected({ type: 'node', id: clickedNode.id });
+      }
+    },
+    onRelationshipClick: (clickedRelationship: Relationship) => {
+      if (selected?.id !== clickedRelationship.id || selected?.type !== 'relationship') {
+        setSelected({ type: 'relationship', id: clickedRelationship.id });
+      }
+    },
+    onCanvasClick: () => {
+      if (selected !== undefined) {
+        setSelected(undefined);
+      }
+    },
+    onPan: true,
+    onZoom: true,
+    onDrag: true,
+  }), [selected]);
 
   const initGraph = (
     graphType: GraphType[],
@@ -208,8 +242,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         finalRels ?? [],
         schemeVal
       );
-      setNodes(filteredNodes);
-      setRelationships(filteredRelations);
+      setNode(filteredNodes);
+      setRelationship(filteredRelations);
       setNewScheme(filteredScheme);
     }
   };
@@ -219,45 +253,42 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       return undefined;
     }
     if (selected.type === 'node') {
-      return nodes.find((node) => node.id === selected.id);
+      return node.find((nodeVal) => nodeVal.id === selected.id);
     }
-    return relationships.find((relationship) => relationship.id === selected.id);
-  }, [selected, relationships, nodes]);
+    return relationship.find((relationshipVal) => relationshipVal.id === selected.id);
+  }, [selected, relationship, node]);
 
-  // The search and update nodes
   const handleSearch = useCallback(
     (value: string) => {
       const query = value.toLowerCase();
-      const updatedNodes = nodes.map((node) => {
+      const updatedNodes = node.map((nodeVal) => {
         if (query === '') {
           return {
-            ...node,
+            ...nodeVal,
             selected: false,
             size: graphLabels.nodeSize,
           };
         }
-        const { id, properties, caption } = node;
+        const { id, properties, caption } = nodeVal;
         const propertiesMatch = properties?.id?.toLowerCase().includes(query);
         const match = id.toLowerCase().includes(query) || propertiesMatch || caption?.toLowerCase().includes(query);
         return {
-          ...node,
+          ...nodeVal,
           selected: match,
         };
       });
-      // deactivating any active relationships
-      const updatedRelationships = relationships.map((rel) => {
+      const updatedRelationships = relationship.map((rel) => {
         return {
           ...rel,
           selected: false,
         };
       });
-      setNodes(updatedNodes);
-      setRelationships(updatedRelationships);
+      setNode(updatedNodes);
+      setRelationship(updatedRelationships);
     },
-    [nodes, relationships]
+    [node, relationship]
   );
 
-  // Unmounting the component
   if (!open) {
     return <></>;
   }
@@ -266,12 +297,11 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     viewPoint === graphLabels.showGraphView || viewPoint === graphLabels.chatInfoView
       ? graphLabels.generateGraph
       : viewPoint === graphLabels.showSchemaView
-      ? graphLabels.renderSchemaGraph
-      : `${graphLabels.inspectGeneratedGraphFrom} ${inspectedName}`;
+        ? graphLabels.renderSchemaGraph
+        : `${graphLabels.inspectGeneratedGraphFrom} ${inspectedName}`;
 
   const checkBoxView = viewPoint !== graphLabels.chatInfoView;
 
-  // the checkbox selection
   const handleCheckboxChange = (graph: GraphType) => {
     const currentIndex = graphType.indexOf(graph);
     const newGraphSelected = [...graphType];
@@ -323,28 +353,69 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setGraphViewOpen(false);
     setScheme({});
     setGraphType([]);
-    setNodes([]);
-    setRelationships([]);
+    setNode([]);
+    setRelationship([]);
     setAllNodes([]);
     setAllRelationships([]);
     setSearchQuery('');
     setSelected(undefined);
   };
-
-  const mouseEventCallbacks = {
-    onNodeClick: (clickedNode: Node) => {
-      setSelected({ type: 'node', id: clickedNode.id });
-    },
-    onRelationshipClick: (clickedRelationship: Relationship) => {
-      setSelected({ type: 'relationship', id: clickedRelationship.id });
-    },
-    onCanvasClick: () => {
-      setSelected(undefined);
-    },
-    onPan: true,
-    onZoom: true,
-    onDrag: true,
+  const handleSchemaView = async (
+    nodeSchema: OptionType[] | ExtendedNode[],
+    relSchema: OptionType[] | ExtendedRelationship[]
+  ) => {
+    setOpenGraphView(true);
+    setSchemaLoading(true);
+    try {
+      const response = await getNodeLabelsAndRelTypesFromText(
+        model,
+        JSON.stringify({ nodes: nodeSchema, rels: relSchema }),
+        false,
+        false
+      );
+      const { status, message, data } = response.data;
+      if (status !== 'Success') {
+        showNormalToast(message as string || 'Failed to fetch schema data.');
+        return;
+      }
+      if (!data?.triplets?.length) {
+        showNormalToast('No nodes or relationships found.');
+        return;
+      }
+      const schemaTuples: TupleType[] = data.triplets
+        .map((item: string) => {
+          const matchResult = item.match(/^(.+?)-([A-Z_]+)->(.+)$/);
+          if (matchResult) {
+            const [source, rel, target] = matchResult.slice(1).map((s) => s.trim());
+            return {
+              value: `${source},${rel},${target}`,
+              label: `${source} -[:${rel}]-> ${target}`,
+              source,
+              target,
+              type: rel,
+            };
+          }
+          return null;
+        })
+        .filter(Boolean) as TupleType[];
+      const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(schemaTuples);
+      if (!nodeLabelOptions.length || !relationshipTypeOptions.length) {
+        showNormalToast('No nodes or relationships found in the response.');
+        return;
+      }
+      setSchemaNodes(nodeLabelOptions);
+      setSchemaRels(relationshipTypeOptions);
+    } catch (error: any) {
+      setSchemaLoading(false);
+      console.error('Error processing schema:', error);
+      showNormalToast(error?.message || 'Unexpected error occurred.');
+      return { success: false, message: error?.message };
+    }
+    finally {
+      setSchemaLoading(false);
+    }
   };
+
 
   return (
     <>
@@ -371,7 +442,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               <span className='n-body-small ml-1'>{graphLabels.chunksInfo}</span>
             </div>
           )}
-          <Flex className='w-full' alignItems='center' flexDirection='row'>
+          <Flex className='w-full' alignItems='center' flexDirection='row' justifyContent='space-between'>
             {checkBoxView && (
               <CheckboxSelection
                 graphType={graphType}
@@ -380,10 +451,11 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                 {...getCheckboxConditions(allNodes)}
               />
             )}
+            {/* <SchemaDropdown isDisabled={!selectedNodes.length || !selectedRels.length} onSchemaSelect={handleSchemaSelect} /> */}
           </Flex>
         </Dialog.Header>
-        <Dialog.Content className='flex flex-col n-gap-token-4 w-full grow overflow-auto border border-palette-neutral-border-weak'>
-          <div className='bg-white relative w-full h-full max-h-full'>
+        <Dialog.Content className='flex flex-col n-gap-token-4 w-full grow overflow-auto border! border-palette-neutral-border-weak!'>
+          <div className='bg-white relative w-full h-full max-h-full border! border-palette-neutral-border-weak!'>
             {loading ? (
               <div className='my-40 flex! items-center justify-center'>
                 <LoadingSpinner size='large' />
@@ -392,7 +464,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
               <div className='my-40 flex! items-center justify-center'>
                 <Banner name='graph banner' description={statusMessage} type={status} usage='inline' />
               </div>
-            ) : nodes.length === 0 && relationships.length === 0 && graphType.length !== 0 ? (
+            ) : node.length === 0 && relationship.length === 0 && graphType.length !== 0 ? (
               <div className='my-40 flex! items-center justify-center'>
                 <Banner name='graph banner' description={graphLabels.noNodesRels} type='danger' usage='inline' />
               </div>
@@ -405,8 +477,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                 <div className='flex' style={{ height: '100%' }}>
                   <div className='bg-palette-neutral-bg-default relative' style={{ width: '100%', flex: '1' }}>
                     <InteractiveNvlWrapper
-                      nodes={nodes}
-                      rels={relationships}
+                      nodes={node}
+                      rels={relationship}
                       nvlOptions={nvlOptions}
                       ref={nvlRef}
                       mouseEventCallbacks={{ ...mouseEventCallbacks }}
@@ -415,6 +487,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                       }}
                       nvlCallbacks={nvlCallbacks}
                     />
+                    <IconButtonArray orientation='vertical' isFloating={true} className='absolute top-4 right-4'>
+                      <IconButtonWithToolTip
+                        label='Schema View'
+                        text='Schema View'
+                        onClick={() => handleSchemaView(node, relationship)}
+                        placement='left'
+                      >
+                        <ExploreIcon className='n-size-token-7' />
+                      </IconButtonWithToolTip>
+                    </IconButtonArray>
                     <IconButtonArray orientation='vertical' isFloating={true} className='absolute bottom-4 right-4'>
                       {viewPoint !== 'chatInfoView' && (
                         <IconButtonWithToolTip
@@ -451,13 +533,13 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                       />
                     ) : (
                       <ResultOverview
-                        nodes={nodes}
-                        relationships={relationships}
+                        nodes={node}
+                        relationships={relationship}
                         newScheme={newScheme}
                         searchQuery={searchQuery}
                         setSearchQuery={setSearchQuery}
-                        setNodes={setNodes}
-                        setRelationships={setRelationships}
+                        setNodes={setNode}
+                        setRelationships={setRelationship}
                       />
                     )}
                   </ResizePanelDetails>
@@ -467,7 +549,18 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           </div>
         </Dialog.Content>
       </Dialog>
+      {openGraphView && (
+        <SchemaViz
+          schemaLoading={schemaLoading}
+          open={openGraphView}
+          setGraphViewOpen={setOpenGraphView}
+          viewPoint={viewPoint}
+          nodeValues={schemaNodes}
+          relationshipValues={schemaRels}
+        />
+      )}
     </>
+
   );
 };
 export default GraphViewModal;
