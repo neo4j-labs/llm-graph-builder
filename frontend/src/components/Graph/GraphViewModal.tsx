@@ -10,7 +10,6 @@ import {
   GraphViewModalProps,
   OptionType,
   Scheme,
-  TupleType
 } from '../../types';
 import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
 import NVL from '@neo4j-nvl/base';
@@ -34,11 +33,8 @@ import CheckboxSelection from './CheckboxSelection';
 import ResultOverview from './ResultOverview';
 import { ResizePanelDetails } from './ResizePanel';
 import GraphPropertiesPanel from './GraphPropertiesPanel';
-import { useFileContext } from '../../context/UsersFiles';
 import SchemaViz from '../Graph/SchemaViz';
-import { getNodeLabelsAndRelTypesFromText } from '../../services/SchemaFromTextAPI';
-import { showNormalToast } from '../../utils/Toasts';
-import { extractOptions } from '../../utils/Utils';
+import { extractGraphSchemaFromRawData } from '../../utils/Utils';
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -67,11 +63,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [selected, setSelected] = useState<{ type: EntityType; id: string } | undefined>(undefined);
   const [mode, setMode] = useState<boolean>(false);
   const graphQueryAbortControllerRef = useRef<AbortController>();
-  const { model } = useFileContext();
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [schemaNodes, setSchemaNodes] = useState<OptionType[]>([]);
   const [schemaRels, setSchemaRels] = useState<OptionType[]>([]);
-  const [schemaLoading, setSchemaLoading] = useState<boolean>(false);
+  const [viewCheck, setViewcheck] = useState<string>('enhancement');
 
   const graphQuery: string =
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
@@ -360,60 +355,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setSearchQuery('');
     setSelected(undefined);
   };
+
   const handleSchemaView = async (
-    nodeSchema: OptionType[] | ExtendedNode[],
-    relSchema: OptionType[] | ExtendedRelationship[]
+    rawNodes: any[],
+    rawRelationships: any[]
   ) => {
+    const { nodes, relationships } = extractGraphSchemaFromRawData(rawNodes, rawRelationships);
+    setSchemaNodes(nodes as any);
+    setSchemaRels(relationships as any);
+    setViewcheck('viz');
     setOpenGraphView(true);
-    setSchemaLoading(true);
-    try {
-      const response = await getNodeLabelsAndRelTypesFromText(
-        model,
-        JSON.stringify({ nodes: nodeSchema, rels: relSchema }),
-        false,
-        false
-      );
-      const { status, message, data } = response.data;
-      if (status !== 'Success') {
-        showNormalToast(message as string || 'Failed to fetch schema data.');
-        return;
-      }
-      if (!data?.triplets?.length) {
-        showNormalToast('No nodes or relationships found.');
-        return;
-      }
-      const schemaTuples: TupleType[] = data.triplets
-        .map((item: string) => {
-          const matchResult = item.match(/^(.+?)-([A-Z_]+)->(.+)$/);
-          if (matchResult) {
-            const [source, rel, target] = matchResult.slice(1).map((s) => s.trim());
-            return {
-              value: `${source},${rel},${target}`,
-              label: `${source} -[:${rel}]-> ${target}`,
-              source,
-              target,
-              type: rel,
-            };
-          }
-          return null;
-        })
-        .filter(Boolean) as TupleType[];
-      const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(schemaTuples);
-      if (!nodeLabelOptions.length || !relationshipTypeOptions.length) {
-        showNormalToast('No nodes or relationships found in the response.');
-        return;
-      }
-      setSchemaNodes(nodeLabelOptions);
-      setSchemaRels(relationshipTypeOptions);
-    } catch (error: any) {
-      setSchemaLoading(false);
-      console.error('Error processing schema:', error);
-      showNormalToast(error?.message || 'Unexpected error occurred.');
-      return { success: false, message: error?.message };
-    }
-    finally {
-      setSchemaLoading(false);
-    }
   };
 
 
@@ -551,12 +502,12 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       </Dialog>
       {openGraphView && (
         <SchemaViz
-          schemaLoading={schemaLoading}
           open={openGraphView}
           setGraphViewOpen={setOpenGraphView}
           viewPoint={viewPoint}
           nodeValues={schemaNodes}
           relationshipValues={schemaRels}
+          view={viewCheck}
         />
       )}
     </>

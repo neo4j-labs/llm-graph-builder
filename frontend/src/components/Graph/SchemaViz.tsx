@@ -19,7 +19,7 @@ import {
   MagnifyingGlassPlusIconOutline,
 } from '@neo4j-ndl/react/icons';
 import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
-import { userDefinedGraphSchema } from '../../utils/Utils';
+import { userDefinedGraphSchema, generateGraphFromNodeAndRelVals } from '../../utils/Utils';
 import { graphLabels, nvlOptions } from '../../utils/Constants';
 import ResultOverview from './ResultOverview';
 import { ResizePanelDetails } from './ResizePanel';
@@ -31,6 +31,7 @@ const SchemaViz: React.FunctionComponent<SchemaViewModalProps> = ({
   nodeValues,
   relationshipValues,
   schemaLoading,
+  view
 }) => {
   const nvlRef = useRef<NVL>(null);
   const [nodes, setNodes] = useState<ExtendedNode[]>([]);
@@ -69,15 +70,27 @@ const SchemaViz: React.FunctionComponent<SchemaViewModalProps> = ({
 
   useEffect(() => {
     if (open) {
+      if (view !== 'viz') {
       setLoading(true);
-      const { nodes, relationships, scheme } = userDefinedGraphSchema(
-        (nodeValues as OptionType[]) ?? [],
-        (relationshipValues as OptionType[]) ?? []
-      );
-      setNodes(nodes);
-      setRelationships(relationships);
-      setNewScheme(scheme);
-      setLoading(false);
+        const { nodes, relationships, scheme } = userDefinedGraphSchema(
+          (nodeValues as OptionType[]) ?? [],
+          (relationshipValues as OptionType[]) ?? []
+        );
+
+        setNodes(nodes);
+        setRelationships(relationships);
+        setNewScheme(scheme);
+        setLoading(false);
+      }
+      else {
+        console.log('relsschema', relationshipValues);
+        const { nodes, relationships, scheme } =
+          generateGraphFromNodeAndRelVals(nodeValues as any, relationshipValues as any);
+   
+        setNodes(nodes);
+        setRelationships(relationships);
+        setNewScheme(scheme);
+      }
     }
   }, [open]);
 
