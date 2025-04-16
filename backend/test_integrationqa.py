@@ -190,35 +190,6 @@ def flatten_extract_dataframe(df: pd.DataFrame):
    flat_df = pd.DataFrame(rows)
    return flat_df
 
-def flatten_chatbot_dataframe(df: pd.DataFrame):
-   rows = []
-   for _, row in df.iterrows():
-       try:
-           model_name, mode, result, execution_date = row[0], row[1], row[2], row[3] if len(row) > 3 else None
-           result_dict = ast.literal_eval(result) if isinstance(result, str) and result.startswith("{") else {}
-           session_id = result_dict.get("session_id", None)
-           message = result_dict.get("message", None)
-           info_dict = result_dict.get("info", {})
-           sources = str(info_dict.get("sources", None))
-           model = info_dict.get("model", None)
-           nodedetails = str(info_dict.get("nodedetails", None))  
-           extracted_data = {
-               "model_name": model_name,
-               "mode": mode,
-               "session_id": session_id,
-               "message": message,
-               "sources": sources,
-               "model": model,
-               "nodedetails": nodedetails,
-               "execution_date": execution_date,
-           }
-           rows.append(extracted_data)
-       except (SyntaxError, ValueError, TypeError) as e:
-           print(f"Error parsing row: {row} - {e}")
-           continue
-   flat_df = pd.DataFrame(rows)
-   return flat_df
-
 def run_tests():
    """Runs all integration tests and logs results."""
    extract_list = []
@@ -226,7 +197,7 @@ def run_tests():
    chatbot_list = []
    chatbot_error_list = []
    other_api_list = []
-   models = ['openai_gpt_4o','openai_gpt_4o_mini','gemini_2.0_flash','openai-gpt-o3-mini','fireworks_deepseek_r1']
+   models = ['openai_gpt_4o','openai_gpt_4o_mini','openai_gpt_4.1','openai_gpt_4.1_mini','gemini_2.0_flash','fireworks_llama4_maverick','bedrock_nova_pro_v1']
    chatbot_modes = [
        "vector",
        "graph+vector",
@@ -286,12 +257,10 @@ def run_tests():
    # Convert results to DataFrame
    df_extract = pd.DataFrame(extract_list)
    df_extract['execution_date'] = dt.today().strftime('%Y-%m-%d')
-   df_extract=flatten_extract_dataframe(df_extract)
    df_extract.to_csv(f"test_results/Extract_Integration_TestResult_{dt.now().strftime('%Y%m%d_%H%M%S')}.csv", index=False)
 
    df_chatbot = pd.DataFrame(chatbot_list)
    df_chatbot['execution_date'] = dt.today().strftime('%Y-%m-%d')
-   df_chatbot=flatten_chatbot_dataframe(df_chatbot)
    df_chatbot.to_csv(f"test_results/chatbot_Integration_TestResult_{dt.now().strftime('%Y%m%d_%H%M%S')}.csv", index=False)
 
    other_api_dict = {'disconnected_nodes':dis_status,'delete_disconnected_nodes' : delete_status,'get_duplicate_nodes':dup,'test_populate_graph_schema_from_text':other_api_list}
