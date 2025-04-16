@@ -15,9 +15,8 @@ export const llms =
         'openai_gpt_4o',
         'openai_gpt_4o_mini',
         'openai_gpt_4.1',
-        'openai_gpt_4.1-mini',
-        'openai-gpt-o3-mini',
-        'openai_gpt_4.5',
+        'openai_gpt_4.1_mini',
+        'openai_gpt_o3_mini',
         'gemini_1.5_pro',
         'gemini_1.5_flash',
         'gemini_2.0_flash',
@@ -30,7 +29,6 @@ export const llms =
         'anthropic_claude_3_7_sonnet',
         'fireworks_llama4_maverick',
         'fireworks_llama4_scout',
-        'fireworks_llama_v3p2_90b',
         'fireworks_qwen72b_instruct',
         'bedrock_claude_3_5_sonnet',
         'bedrock_nova_micro_v1',
@@ -41,12 +39,11 @@ export const llms =
       ];
 
 export const supportedLLmsForRagas = [
-  'openai_gpt_4.5',
   'openai_gpt_4',
   'openai_gpt_4o',
   'openai_gpt_4o_mini',
   'openai_gpt_4.1',
-  'openai_gpt_4.1-mini',
+  'openai_gpt_4.1_mini',
   'gemini_1.5_pro',
   'gemini_1.5_flash',
   'gemini_2.0_flash',
@@ -57,31 +54,28 @@ export const supportedLLmsForRagas = [
   'anthropic_claude_3_7_sonnet',
   'fireworks_llama4_maverick',
   'fireworks_llama4_scout',
-  'fireworks_llama_v3p2_90b',
   'bedrock_claude_3_5_sonnet',
-  'openai-gpt-o3-mini',
+  'openai_gpt_o3_mini',
 ];
 export const supportedLLmsForGroundTruthMetrics = [
-  'openai_gpt_4.5',
   'openai_gpt_4',
   'openai_gpt_4o',
   'openai_gpt_4o_mini',
   'openai_gpt_4.1',
-  'openai_gpt_4.1-mini',
+  'openai_gpt_4.1_mini',
   'azure_ai_gpt_35',
   'azure_ai_gpt_4o',
   'groq_llama3_70b',
   'anthropic_claude_3_7_sonnet',
   'fireworks_llama4_maverick',
   'fireworks_llama4_scout',
-  'fireworks_llama_v3p2_90b',
   'bedrock_claude_3_5_sonnet',
-  'openai-gpt-o3-mini',
+  'openai_gpt_o3_mini',
 ];
 export const prodllms =
   process.env.VITE_LLM_MODELS_PROD?.trim() != ''
     ? (process.env.VITE_LLM_MODELS_PROD?.split(',') as string[])
-    : ['openai_gpt_4o', 'openai_gpt_4o_mini', 'diffbot', 'gemini_1.5_flash'];
+    : ['openai_gpt_4o', 'openai_gpt_4o_mini', 'diffbot', 'gemini_2.0_flash'];
 
 export const chatModeLables = {
   vector: 'vector',
