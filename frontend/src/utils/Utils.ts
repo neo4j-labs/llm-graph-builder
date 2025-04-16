@@ -704,8 +704,8 @@ export const extractGraphSchemaFromRawData = (
   const relList: OptionType[] = relationships.map((rel) => {
     const startNode = nodes.find((n) => n.id === rel.from);
     const endNode = nodes.find((n) => n.id === rel.to);
-    const startVal = startNode?.labels;
-    const endVal = endNode?.labels;
+    const startVal = startNode?.labels[0];
+    const endVal = endNode?.labels[0];
     const relType = rel.caption;
     return {
       label: `${startVal} -[:${relType}]-> ${endVal}`,
