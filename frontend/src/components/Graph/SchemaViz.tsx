@@ -83,7 +83,6 @@ const SchemaViz: React.FunctionComponent<SchemaViewModalProps> = ({
         setLoading(false);
       }
       else {
-        console.log('relsschema', relationshipValues);
         const { nodes, relationships, scheme } =
           generateGraphFromNodeAndRelVals(nodeValues as any, relationshipValues as any);
    

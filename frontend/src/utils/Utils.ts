@@ -724,6 +724,7 @@ export const generateGraphFromNodeAndRelVals = (
 ): UserDefinedGraphSchema => {
   const schemeVal: Scheme = {};
   const uniqueNodesMap = new Map<string, ExtendedNode>();
+  console.log('first rels', relVals)
   let nodeIdCounter = 0;
   nodeVals.forEach((node) => {
     const key = `${node.label}-${node.value}`;
@@ -751,33 +752,35 @@ export const generateGraphFromNodeAndRelVals = (
     // @ts-ignore
     nodeValueToIdMap[node.caption] = node.id;
   });
-  const transformedRelationships: ExtendedRelationship[] = relVals
-    .map((rel, index) => {
-      const parts = rel.value.split(',');
-      if (parts.length !== 3) {
-        console.warn(`Invalid relationship format: ${rel.value}`);
-        return null;
-      }
-      const [start, type, end] = parts.map((part) => part.trim());
-      const fromId = nodeValueToIdMap[start];
-      const toId = nodeValueToIdMap[end];
-      if (!fromId || !toId) {
-        console.warn(`Missing node(s) for relationship: ${start} -[:${type}]-> ${end}`);
-        return null;
-      }
-      return {
-        id: `rel-${index + 100}`,
-        element_id: `rel-${index + 100}`,
-        from: fromId,
-        to: toId,
-        caption: type,
-        type,
-        properties: {
-          name: type,
-        },
-      };
-    })
-    .filter((rel) => rel !== null) as ExtendedRelationship[];
+  const seenTriples = new Set<string>();
+  const transformedRelationships: ExtendedRelationship[] = [];
+  relVals.forEach((rel) => {
+    const parts = rel.value.split(',');
+    if (parts.length !== 3) {
+      console.warn(`Invalid relationship format: ${rel.value}`);
+      return;
+    }
+    const [start, type, end] = parts.map((part) => part.trim());
+    const tripleKey = `${start}-${type}-${end}`;
+    if (seenTriples.has(tripleKey)) {
+      return;
+    }
+    seenTriples.add(tripleKey);
+    const fromId = nodeValueToIdMap[start];
+    const toId = nodeValueToIdMap[end];
+    if (!fromId || !toId) {
+      console.warn(`Missing node(s) for relationship: ${start} -[:${type}]-> ${end}`);
+      return;
+    }
+    transformedRelationships.push({
+      id: `rel-${transformedRelationships.length + 100}`,
+      from: fromId,
+      to: toId,
+      caption: type,
+      type,
+    });
+  });
+  console.log('new rels', transformedRelationships);
   return {
     nodes: transformedNodes,
     relationships: transformedRelationships,
