@@ -16,7 +16,6 @@ body {
   margin: 0;
 }
 
-
 .ndl-progress-bar-wrapper .ndl-header .ndl-heading::after{
   animation: none !important;
 }
