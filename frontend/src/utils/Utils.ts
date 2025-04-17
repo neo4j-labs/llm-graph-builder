@@ -696,22 +696,32 @@ export const extractGraphSchemaFromRawData = (
   nodes: OptionType[],
   relationships: OptionType[]
 } => {
-  const nodeList: OptionType[] = nodes.map((node) => {
-    const label = node.labels[0];
-    const value = node.labels[0];
-    return { label, value };
-  });
-  const relList: OptionType[] = relationships.map((rel) => {
-    const startNode = nodes.find((n) => n.id === rel.from);
-    const endNode = nodes.find((n) => n.id === rel.to);
-    const startVal = startNode?.labels[0];
-    const endVal = endNode?.labels[0];
+  const uniqueLabels = new Set<string>();
+  const nodeList: OptionType[] = [];
+  for (const node of nodes) {
+    for (const label of node.labels) {
+      if (!uniqueLabels.has(label)) {
+        uniqueLabels.add(label);
+        nodeList.push({ label, value: label });
+      }
+    }
+  }
+  const relList: OptionType[] = [];
+  for (const rel of relationships) {
+    const startNodes = nodes.filter((n) => n.id === rel.from);
+    const endNodes = nodes.filter((n) => n.id === rel.to);
     const relType = rel.caption;
-    return {
-      label: `${startVal} -[:${relType}]-> ${endVal}`,
-      value: `${startVal}, ${relType}, ${endVal}`
-    };
-  });
+    for (const startNode of startNodes) {
+      for (const endNode of endNodes) {
+        const startLabel = startNode.labels[0];
+        const endLabel = endNode.labels[0];
+        relList.push({
+          label: `${startLabel} -[:${relType}]-> ${endLabel}`,
+          value: `${startLabel}, ${relType}, ${endLabel}`,
+        });
+      }
+    }
+  }
   return {
     nodes: nodeList,
     relationships: relList
@@ -752,7 +762,7 @@ export const generateGraphFromNodeAndRelVals = (
     // @ts-ignore
     nodeValueToIdMap[node.caption] = node.id;
   });
-  const seenTriples = new Set<string>();
+  const seenRelTypes = new Set<string>();
   const transformedRelationships: ExtendedRelationship[] = [];
   relVals.forEach((rel) => {
     const parts = rel.value.split(',');
@@ -761,11 +771,10 @@ export const generateGraphFromNodeAndRelVals = (
       return;
     }
     const [start, type, end] = parts.map((part) => part.trim());
-    const tripleKey = `${start}-${type}-${end}`;
-    if (seenTriples.has(tripleKey)) {
+    if (seenRelTypes.has(type)) {
       return;
     }
-    seenTriples.add(tripleKey);
+    seenRelTypes.add(type);
     const fromId = nodeValueToIdMap[start];
     const toId = nodeValueToIdMap[end];
     if (!fromId || !toId) {
