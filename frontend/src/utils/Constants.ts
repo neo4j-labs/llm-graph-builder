@@ -1,9 +1,8 @@
 import { NvlOptions } from '@neo4j-nvl/base';
-import { GraphType, OptionType } from '../types';
+import { GraphType, OptionType, PatternOption } from '../types';
 import { getDateTime, getDescriptionForChatMode } from './Utils';
 import chatbotmessages from '../assets/ChatbotMessages.json';
-import schemaExamples from '../assets/schemas.json';
-
+import schemaExamples from '../assets/newSchema.json';
 export const APP_SOURCES =
   process.env.VITE_REACT_APP_SOURCES !== ''
     ? (process.env.VITE_REACT_APP_SOURCES?.split(',') as string[])
@@ -13,20 +12,23 @@ export const llms =
   process.env?.VITE_LLM_MODELS?.trim() != ''
     ? (process.env.VITE_LLM_MODELS?.split(',') as string[])
     : [
-        'openai_gpt_4.5',
-        'openai-gpt-o3-mini',
         'openai_gpt_4o',
         'openai_gpt_4o_mini',
+        'openai_gpt_4.1',
+        'openai_gpt_4.1_mini',
+        'openai_gpt_o3_mini',
         'gemini_1.5_pro',
         'gemini_1.5_flash',
         'gemini_2.0_flash',
+        'gemini_2.5_pro',
         'diffbot',
         'azure_ai_gpt_35',
         'azure_ai_gpt_4o',
         'ollama_llama3',
         'groq_llama3_70b',
         'anthropic_claude_3_7_sonnet',
-        'fireworks_llama_v3p2_90b',
+        'fireworks_llama4_maverick',
+        'fireworks_llama4_scout',
         'fireworks_qwen72b_instruct',
         'bedrock_claude_3_5_sonnet',
         'bedrock_nova_micro_v1',
@@ -37,38 +39,43 @@ export const llms =
       ];
 
 export const supportedLLmsForRagas = [
-  'openai_gpt_4.5',
   'openai_gpt_4',
   'openai_gpt_4o',
   'openai_gpt_4o_mini',
+  'openai_gpt_4.1',
+  'openai_gpt_4.1_mini',
   'gemini_1.5_pro',
   'gemini_1.5_flash',
   'gemini_2.0_flash',
+  'gemini_2.5_pro',
   'azure_ai_gpt_35',
   'azure_ai_gpt_4o',
   'groq_llama3_70b',
   'anthropic_claude_3_7_sonnet',
-  'fireworks_llama_v3_70b',
+  'fireworks_llama4_maverick',
+  'fireworks_llama4_scout',
   'bedrock_claude_3_5_sonnet',
-  'openai-gpt-o3-mini',
+  'openai_gpt_o3_mini',
 ];
 export const supportedLLmsForGroundTruthMetrics = [
-  'openai_gpt_4.5',
   'openai_gpt_4',
   'openai_gpt_4o',
   'openai_gpt_4o_mini',
+  'openai_gpt_4.1',
+  'openai_gpt_4.1_mini',
   'azure_ai_gpt_35',
   'azure_ai_gpt_4o',
   'groq_llama3_70b',
   'anthropic_claude_3_7_sonnet',
-  'fireworks_llama_v3_70b',
+  'fireworks_llama4_maverick',
+  'fireworks_llama4_scout',
   'bedrock_claude_3_5_sonnet',
-  'openai-gpt-o3-mini',
+  'openai_gpt_o3_mini',
 ];
 export const prodllms =
   process.env.VITE_LLM_MODELS_PROD?.trim() != ''
     ? (process.env.VITE_LLM_MODELS_PROD?.split(',') as string[])
-    : ['openai_gpt_4o', 'openai_gpt_4o_mini', 'diffbot', 'gemini_1.5_flash'];
+    : ['openai_gpt_4o', 'openai_gpt_4o_mini', 'diffbot', 'gemini_2.0_flash'];
 
 export const chatModeLables = {
   vector: 'vector',
@@ -145,7 +152,7 @@ export const largeFileSize = process.env.VITE_LARGE_FILE_SIZE
 
 export const tooltips = {
   generateGraph: 'Generate graph from selected files',
-  deleteFile: 'Select one or more files to delete.',
+  deleteFile: 'Select one or more files to delete',
   showGraph: 'Preview generated graph.',
   bloomGraph: 'Visualize the graph in Bloom',
   deleteSelectedFiles: 'File/Files to be deleted',
@@ -161,7 +168,7 @@ export const tooltips = {
   copied: 'Copied',
   stopSpeaking: 'Stop Speaking',
   textTospeech: 'Text to Speech',
-  createSchema: 'Define schema from text.',
+  createSchema: 'Define schema from text',
   useExistingSchema: 'Fetch schema from database',
   clearChat: 'Clear Chat History',
   continue: 'Continue',
@@ -171,6 +178,7 @@ export const tooltips = {
   downloadChat: 'Download Conversation',
   visualizeGraph: 'Visualize Graph Schema',
   additionalInstructions: 'Analyze instructions for schema',
+  predinedSchema: 'Predefined Schema',
 };
 export const PRODMODLES = ['openai_gpt_4o', 'openai_gpt_4o_mini', 'diffbot', 'gemini_1.5_flash'];
 export const buttonCaptions = {
@@ -332,6 +340,7 @@ export const graphLabels = {
   chunksInfo: 'We are visualizing 50 chunks at a time',
   showSchemaView: 'showSchemaView',
   renderSchemaGraph: 'Graph from Database Schema',
+  generatedGraphFromUserSchema: 'Generated Graph from User Defined Schema',
 };
 
 export const RESULT_STEP_SIZE = 25;
@@ -352,24 +361,21 @@ export const appLabels = {
   ownSchema: 'Or Define your own Schema',
   predefinedSchema: 'Select a Pre-defined Schema',
   chunkingConfiguration: 'Select a Chunking Configuration',
+  graphPatternTuple: 'Graph Pattern',
+  selectedPatterns: 'Selected Patterns',
 };
 
 export const LLMDropdownLabel = {
   disabledModels: 'Disabled models are available in the development version. Access more models in our ',
   devEnv: 'development environment',
 };
-export const getDefaultSchemaExamples = () =>
-  schemaExamples.reduce((accu: OptionType[], example) => {
-    const examplevalues: OptionType = {
-      label: example.schema,
-      value: JSON.stringify({
-        nodelabels: example.labels,
-        relationshipTypes: example.relationshipTypes,
-      }),
-    };
-    accu.push(examplevalues);
-    return accu;
-  }, []);
+export const getDefaultSchemaExamples = () => {
+  return schemaExamples.map((example) => ({
+    label: example.schema,
+    value: JSON.stringify(example.triplet),
+  }));
+};
+
 export function mergeNestedObjects(objects: Record<string, Record<string, number>>[]) {
   return objects.reduce((merged, obj) => {
     for (const key in obj) {
@@ -400,3 +406,13 @@ export const metricsinfo: Record<string, string> = {
 };
 export const EXPIRATION_DAYS = 3;
 export const SKIP_AUTH = (process.env.VITE_SKIP_AUTH ?? 'true') == 'true';
+
+export const sourceOptions: PatternOption[] = [{ label: 'Person', value: 'Person' }];
+export const typeOptions: PatternOption[] = [{ label: 'WORKS_FOR', value: 'WORKS_FOR' }];
+export const targetOptions: PatternOption[] = [{ label: 'Company', value: 'Company' }];
+
+export const LOCAL_KEYS = {
+  source: 'customSourceOptions',
+  type: 'customTypeOptions',
+  target: 'customTargetOptions',
+};

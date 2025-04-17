@@ -11,6 +11,9 @@ import {
   Scheme,
   SourceNode,
   UserCredentials,
+  OptionType,
+  UserDefinedGraphSchema,
+  TupleType,
 } from '../types';
 import Wikipediadarkmode from '../assets/images/wikipedia-darkmode.svg';
 import Wikipediadlogo from '../assets/images/wikipedia.svg';
@@ -544,3 +547,252 @@ export function isFileReadyToProcess(file: CustomFile, withLocalCheck: boolean) 
   }
   return file.status === 'New' || file.status == 'Ready to Reprocess';
 }
+
+export const updateLocalStorage = (userCredentials: UserCredentials, key: string, data: any) => {
+  localStorage.setItem(key, JSON.stringify({ db: userCredentials?.uri, selectedOptions: data }));
+};
+
+export const userDefinedGraphSchema = (nodes: OptionType[], relationships: OptionType[]): UserDefinedGraphSchema => {
+  const schemeVal: Scheme = {};
+  let iterator = 0;
+  const transformedNodes: ExtendedNode[] = nodes.map((node, index) => {
+    const { label } = node;
+    if (schemeVal[label] === undefined) {
+      schemeVal[label] = calcWordColor(label);
+      iterator += 1;
+    }
+    return {
+      id: `node-${index + 0}`,
+      element_id: `node-${index + 0}`,
+      color: schemeVal[label],
+      caption: label,
+      labels: [label],
+      properties: {
+        name: label,
+        indexes: label === 'Chunk' ? ['text', 'embedding'] : [],
+        constraints: [],
+      },
+    };
+  });
+
+  const nodeMap: Record<string, string> = transformedNodes.reduce((acc, node) => {
+    acc[node.labels[0]] = node.id;
+    return acc;
+  }, {} as Record<string, string>);
+  const transformedRelationships: ExtendedRelationship[] = relationships
+    .map((rel, index) => {
+      const parts = rel.value.split(',');
+      if (parts.length !== 3) {
+        console.warn(`Invalid relationship format: ${rel}`);
+        return null;
+      }
+      const [start, type, end] = parts.map((part) => part.trim());
+      if (!nodeMap[start] || !nodeMap[end]) {
+        console.warn(`Missing node(s) for relationship: ${start} -[:${type}]-> ${end}`);
+        return null;
+      }
+      return {
+        id: `rel-${index + 100}`,
+        element_id: `rel-${index + 100}`,
+        from: nodeMap[start],
+        to: nodeMap[end],
+        caption: type,
+        type,
+        properties: {
+          name: type,
+        },
+      };
+    })
+    .filter((rel) => rel !== null) as ExtendedRelationship[];
+  return {
+    nodes: transformedNodes,
+    relationships: transformedRelationships,
+    scheme: schemeVal,
+  };
+};
+
+export const getSelectedTriplets = (
+  selectedOptions: OptionType[] | OptionType
+): {
+  value: string;
+  label: string;
+  source: string;
+  target: string;
+  type: string;
+}[] => {
+  const selectedArray = Array.isArray(selectedOptions) ? selectedOptions : [selectedOptions];
+  const triplets = [];
+  for (const option of selectedArray) {
+    let tripletArray: string[];
+    try {
+      tripletArray = JSON.parse(option.value);
+    } catch (error) {
+      console.error('Error parsing selected option value:', option.value, error);
+      continue;
+    }
+    if (!Array.isArray(tripletArray)) {
+      continue;
+    }
+    for (const tripletString of tripletArray) {
+      const matchResult = tripletString.match(/(.*?)-([A-Z_]+)->(.*)/);
+      if (!matchResult) {
+        continue;
+      }
+      const [source, rel, target] = matchResult.slice(1).map((s: any) => s.trim());
+      triplets.push({
+        value: `${source},${rel},${target}`,
+        label: `${source} -[:${rel}]-> ${target}`,
+        source,
+        target,
+        type: rel,
+      });
+    }
+  }
+  return triplets;
+};
+
+export const extractOptions = (schemaTuples: TupleType[]) => {
+  const nodeLabelSet = new Set<string>();
+  const relationshipSet = new Set<string>();
+  schemaTuples.forEach((tuple) => {
+    if (tuple.source) {
+      nodeLabelSet.add(tuple.source);
+    }
+    if (tuple.target) {
+      nodeLabelSet.add(tuple.target);
+    }
+    if (tuple.value) {
+      relationshipSet.add(tuple.value);
+    }
+  });
+  const nodeLabelOptions: OptionType[] = Array.from(nodeLabelSet).map((label) => ({
+    label,
+    value: label,
+  }));
+
+  const relationshipTypeOptions: OptionType[] = Array.from(relationshipSet).map((relValue) => ({
+    label: relValue,
+    value: relValue,
+  }));
+  return { nodeLabelOptions, relationshipTypeOptions };
+};
+
+type RawNode = {
+  id: string;
+  labels: string[];
+  properties: Record<string, any>;
+};
+type RawRelationship = {
+  id: string;
+  caption: string;
+  from: string;
+  to: string;
+};
+
+export const extractGraphSchemaFromRawData = (
+  nodes: RawNode[],
+  relationships: RawRelationship[]
+): {
+  nodes: OptionType[],
+  relationships: OptionType[]
+} => {
+  const uniqueLabels = new Set<string>();
+  const nodeList: OptionType[] = [];
+  for (const node of nodes) {
+    for (const label of node.labels) {
+      if (!uniqueLabels.has(label)) {
+        uniqueLabels.add(label);
+        nodeList.push({ label, value: label });
+      }
+    }
+  }
+  const relList: OptionType[] = [];
+  for (const rel of relationships) {
+    const startNodes = nodes.filter((n) => n.id === rel.from);
+    const endNodes = nodes.filter((n) => n.id === rel.to);
+    const relType = rel.caption;
+    for (const startNode of startNodes) {
+      for (const endNode of endNodes) {
+        const startLabel = startNode.labels[0];
+        const endLabel = endNode.labels[0];
+        relList.push({
+          label: `${startLabel} -[:${relType}]-> ${endLabel}`,
+          value: `${startLabel}, ${relType}, ${endLabel}`,
+        });
+      }
+    }
+  }
+  return {
+    nodes: nodeList,
+    relationships: relList
+  };
+};
+
+export const generateGraphFromNodeAndRelVals = (
+  nodeVals: OptionType[],
+  relVals: OptionType[]
+): UserDefinedGraphSchema => {
+  const schemeVal: Scheme = {};
+  const uniqueNodesMap = new Map<string, ExtendedNode>();
+  console.log('first rels', relVals)
+  let nodeIdCounter = 0;
+  nodeVals.forEach((node) => {
+    const key = `${node.label}-${node.value}`;
+    if (!uniqueNodesMap.has(key)) {
+      if (!schemeVal[node.label]) {
+        schemeVal[node.label] = calcWordColor(node.label);
+      }
+      uniqueNodesMap.set(key, {
+        id: `node-${nodeIdCounter}`,
+        color: schemeVal[node.label],
+        caption: node.label,
+        labels: [node.label],
+        properties: {
+          name: node.value,
+          indexes: node.label === 'Chunk' ? ['text', 'embedding'] : [],
+          constraints: [],
+        },
+      });
+      nodeIdCounter++;
+    }
+  });
+  const transformedNodes = Array.from(uniqueNodesMap.values());
+  const nodeValueToIdMap: Record<string, string> = {};
+  transformedNodes.forEach((node) => {
+    // @ts-ignore
+    nodeValueToIdMap[node.caption] = node.id;
+  });
+  const seenRelTypes = new Set<string>();
+  const transformedRelationships: ExtendedRelationship[] = [];
+  relVals.forEach((rel) => {
+    const parts = rel.value.split(',');
+    if (parts.length !== 3) {
+      console.warn(`Invalid relationship format: ${rel.value}`);
+      return;
+    }
+    const [start, type, end] = parts.map((part) => part.trim());
+    if (seenRelTypes.has(type)) {
+      return;
+    }
+    seenRelTypes.add(type);
+    const fromId = nodeValueToIdMap[start];
+    const toId = nodeValueToIdMap[end];
+    if (!fromId || !toId) {
+      console.warn(`Missing node(s) for relationship: ${start} -[:${type}]-> ${end}`);
+      return;
+    }
+    transformedRelationships.push({
+      id: `rel-${transformedRelationships.length + 100}`,
+      from: fromId,
+      to: toId,
+      caption: type,
+      type,
+    });
+  });
+  console.log('new rels', transformedRelationships);
+  return {
+    nodes: transformedNodes,
+    relationships: transformedRelationships,
+    scheme: schemeVal,
+  };
+};
