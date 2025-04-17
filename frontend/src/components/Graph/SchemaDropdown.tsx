@@ -10,18 +10,14 @@ const SchemaDropdown: React.FunctionComponent<SchemaDropdownProps> = ({ isDisabl
     const [isOpen, setIsOpen] = useState(false);
     const btnRef = useRef(null);
     const {
-        userDefinedPattern,
         userDefinedNodes,
         userDefinedRels,
-        dbPattern,
         dbNodes,
         dbRels,
-        schemaTextPattern,
         schemaValNodes,
         schemaValRels,
         preDefinedNodes,
         preDefinedRels,
-        preDefinedPattern,
     } = useFileContext();
     const handleSelect = (source: string, nodes: any[], rels: any[]) => {
         setIsOpen(false);

@@ -555,7 +555,6 @@ export const updateLocalStorage = (userCredentials: UserCredentials, key: string
 export const userDefinedGraphSchema = (nodes: OptionType[], relationships: OptionType[]): UserDefinedGraphSchema => {
   const schemeVal: Scheme = {};
   let iterator = 0;
-  // Transform nodes and assign colors
   const transformedNodes: ExtendedNode[] = nodes.map((node, index) => {
     const { label } = node;
     if (schemeVal[label] === undefined) {
@@ -575,23 +574,22 @@ export const userDefinedGraphSchema = (nodes: OptionType[], relationships: Optio
       },
     };
   });
-  // Create a map of nodes for quick lookup
+
   const nodeMap: Record<string, string> = transformedNodes.reduce((acc, node) => {
     acc[node.labels[0]] = node.id;
     return acc;
   }, {} as Record<string, string>);
-  // Transform relationships with validation
   const transformedRelationships: ExtendedRelationship[] = relationships
     .map((rel, index) => {
       const parts = rel.value.split(',');
       if (parts.length !== 3) {
         console.warn(`Invalid relationship format: ${rel}`);
-        return null; // Skip invalid relationships
+        return null;
       }
       const [start, type, end] = parts.map((part) => part.trim());
       if (!nodeMap[start] || !nodeMap[end]) {
         console.warn(`Missing node(s) for relationship: ${start} -[:${type}]-> ${end}`);
-        return null; // Skip relationships with missing nodes
+        return null;
       }
       return {
         id: `rel-${index + 100}`,
@@ -677,4 +675,124 @@ export const extractOptions = (schemaTuples: TupleType[]) => {
     value: relValue,
   }));
   return { nodeLabelOptions, relationshipTypeOptions };
+};
+
+type RawNode = {
+  id: string;
+  labels: string[];
+  properties: Record<string, any>;
+};
+type RawRelationship = {
+  id: string;
+  caption: string;
+  from: string;
+  to: string;
+};
+
+export const extractGraphSchemaFromRawData = (
+  nodes: RawNode[],
+  relationships: RawRelationship[]
+): {
+  nodes: OptionType[],
+  relationships: OptionType[]
+} => {
+  const uniqueLabels = new Set<string>();
+  const nodeList: OptionType[] = [];
+  for (const node of nodes) {
+    for (const label of node.labels) {
+      if (!uniqueLabels.has(label)) {
+        uniqueLabels.add(label);
+        nodeList.push({ label, value: label });
+      }
+    }
+  }
+  const relList: OptionType[] = [];
+  for (const rel of relationships) {
+    const startNodes = nodes.filter((n) => n.id === rel.from);
+    const endNodes = nodes.filter((n) => n.id === rel.to);
+    const relType = rel.caption;
+    for (const startNode of startNodes) {
+      for (const endNode of endNodes) {
+        const startLabel = startNode.labels[0];
+        const endLabel = endNode.labels[0];
+        relList.push({
+          label: `${startLabel} -[:${relType}]-> ${endLabel}`,
+          value: `${startLabel}, ${relType}, ${endLabel}`,
+        });
+      }
+    }
+  }
+  return {
+    nodes: nodeList,
+    relationships: relList
+  };
+};
+
+export const generateGraphFromNodeAndRelVals = (
+  nodeVals: OptionType[],
+  relVals: OptionType[]
+): UserDefinedGraphSchema => {
+  const schemeVal: Scheme = {};
+  const uniqueNodesMap = new Map<string, ExtendedNode>();
+  console.log('first rels', relVals)
+  let nodeIdCounter = 0;
+  nodeVals.forEach((node) => {
+    const key = `${node.label}-${node.value}`;
+    if (!uniqueNodesMap.has(key)) {
+      if (!schemeVal[node.label]) {
+        schemeVal[node.label] = calcWordColor(node.label);
+      }
+      uniqueNodesMap.set(key, {
+        id: `node-${nodeIdCounter}`,
+        color: schemeVal[node.label],
+        caption: node.label,
+        labels: [node.label],
+        properties: {
+          name: node.value,
+          indexes: node.label === 'Chunk' ? ['text', 'embedding'] : [],
+          constraints: [],
+        },
+      });
+      nodeIdCounter++;
+    }
+  });
+  const transformedNodes = Array.from(uniqueNodesMap.values());
+  const nodeValueToIdMap: Record<string, string> = {};
+  transformedNodes.forEach((node) => {
+    // @ts-ignore
+    nodeValueToIdMap[node.caption] = node.id;
+  });
+  const seenRelTypes = new Set<string>();
+  const transformedRelationships: ExtendedRelationship[] = [];
+  relVals.forEach((rel) => {
+    const parts = rel.value.split(',');
+    if (parts.length !== 3) {
+      console.warn(`Invalid relationship format: ${rel.value}`);
+      return;
+    }
+    const [start, type, end] = parts.map((part) => part.trim());
+    if (seenRelTypes.has(type)) {
+      return;
+    }
+    seenRelTypes.add(type);
+    const fromId = nodeValueToIdMap[start];
+    const toId = nodeValueToIdMap[end];
+    if (!fromId || !toId) {
+      console.warn(`Missing node(s) for relationship: ${start} -[:${type}]-> ${end}`);
+      return;
+    }
+    transformedRelationships.push({
+      id: `rel-${transformedRelationships.length + 100}`,
+      from: fromId,
+      to: toId,
+      caption: type,
+      type,
+    });
+  });
+  console.log('new rels', transformedRelationships);
+  return {
+    nodes: transformedNodes,
+    relationships: transformedRelationships,
+    scheme: schemeVal,
+  };
 };
