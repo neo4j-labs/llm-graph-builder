@@ -23,6 +23,7 @@ import ChatModeToggle from '../ChatBot/ChatModeToggle';
 import { HeaderProp } from '../../types';
 import { downloadClickHandler, getIsLoading } from '../../utils/Utils';
 import Profile from '../User/Profile';
+import { useAuth0 } from '@auth0/auth0-react';
 
 
 const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnection, showBackButton }) => {
