@@ -67,6 +67,7 @@ import { ThemeWrapperContext } from '../context/ThemeWrapper';
 import BreakDownPopOver from './BreakDownPopOver';
 import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
 import { useAuth0 } from '@auth0/auth0-react';
+import React from 'react';
 
 let onlyfortheFirstRender = true;
 
@@ -89,7 +90,6 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
   const islargeDesktop = useMediaQuery(`(min-width:1440px )`);
   const tableRef = useRef(null);
   const { isAuthenticated } = useAuth0();
-
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
       showNormalToast(`${fileName} will take approx ${time} ${inMinutes ? 'Min' : 'Sec'}`);
@@ -729,8 +729,8 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                   name: item?.fileName,
                   size: item?.fileSize ?? 0,
                   type: item?.fileType?.includes('.')
-                    ? item?.fileType?.substring(1)?.toUpperCase() ?? 'None'
-                    : item?.fileType?.toUpperCase() ?? 'None',
+                    ? (item?.fileType?.substring(1)?.toUpperCase() ?? 'None')
+                    : (item?.fileType?.toUpperCase() ?? 'None'),
                   nodesCount: item?.nodeCount ?? 0,
                   processingTotalTime: item?.processingTime ?? 'None',
                   relationshipsCount: item?.relationshipCount ?? 0,
@@ -1061,4 +1061,4 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
   );
 };
 
-export default forwardRef(FileTable);
+export default React.memo(forwardRef(FileTable));

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useReducer, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import SideNav from './SideNav';
 import DrawerDropzone from './DrawerDropzone';
 import DrawerChatbot from './DrawerChatbot';
@@ -178,20 +178,20 @@ const PageLayout: React.FC = () => {
 
   const navigate = useNavigate();
 
-  const toggleLeftDrawer = () => {
+  const toggleLeftDrawer = useCallback(() => {
     if (isLargeDesktop) {
       setIsLeftExpanded(!isLeftExpanded);
     } else {
       setIsLeftExpanded(false);
     }
-  };
-  const toggleRightDrawer = () => {
+  }, [isLargeDesktop]);
+  const toggleRightDrawer = useCallback(() => {
     if (isLargeDesktop) {
       setIsRightExpanded(!isRightExpanded);
     } else {
       setIsRightExpanded(false);
     }
-  };
+  }, [isLargeDesktop]);
   const isYoutubeOnly = useMemo(
     () => APP_SOURCES.includes('youtube') && !APP_SOURCES.includes('wiki') && !APP_SOURCES.includes('web'),
     []
@@ -305,7 +305,7 @@ const PageLayout: React.FC = () => {
     }
   }, [isAuthenticated]);
 
-  const deleteOnClick = async () => {
+  const deleteOnClick = useCallback(async () => {
     try {
       setClearHistoryData(true);
       setIsDeleteChatLoading(true);
@@ -335,9 +335,9 @@ const PageLayout: React.FC = () => {
       console.log(error);
       setClearHistoryData(false);
     }
-  };
+  }, []);
 
-  const handleApplyPatternsFromText = (newPatterns: string[], nodes: OptionType[], rels: OptionType[]) => {
+  const handleApplyPatternsFromText = useCallback((newPatterns: string[], nodes: OptionType[], rels: OptionType[]) => {
     setSchemaTextPattern((prevPatterns: string[]) => {
       const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
       return uniquePatterns;
@@ -349,9 +349,9 @@ const PageLayout: React.FC = () => {
     setSchemaValNodes(nodes);
     setSchemaValRels(rels);
     setSchemaView('text');
-  };
+  }, []);
 
-  const handleDbApply = (newPatterns: string[], nodes: OptionType[], rels: OptionType[]) => {
+  const handleDbApply = useCallback((newPatterns: string[], nodes: OptionType[], rels: OptionType[]) => {
     setDbPattern((prevPatterns: string[]) => {
       const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
       return uniquePatterns;
@@ -363,9 +363,9 @@ const PageLayout: React.FC = () => {
     setSchemaView('db');
     setDbNodes(nodes);
     setDbRels(rels);
-  };
+  }, []);
 
-  const handlePredinedApply = (newPatterns: string[], nodes: OptionType[], rels: OptionType[]) => {
+  const handlePredinedApply = useCallback((newPatterns: string[], nodes: OptionType[], rels: OptionType[]) => {
     setPreDefinedPattern((prevPatterns: string[]) => {
       const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
       return uniquePatterns;
@@ -377,7 +377,7 @@ const PageLayout: React.FC = () => {
     setSchemaView('preDefined');
     setPreDefinedNodes(nodes);
     setPreDefinedRels(rels);
-  };
+  }, []);
 
   return (
     <>
@@ -491,17 +491,17 @@ const PageLayout: React.FC = () => {
             />
           )}
           <Content
-            openChatBot={() => setShowChatBot(true)}
+            openChatBot={useCallback(() => setShowChatBot(true), [])}
             showChatBot={showChatBot}
-            openTextSchema={() => {
+            openTextSchema={useCallback(() => {
               setShowTextFromSchemaDialog({ triggeredFrom: 'schemadialog', show: true });
-            }}
-            openLoadSchema={() => {
+            }, [])}
+            openLoadSchema={useCallback(() => {
               setSchemaLoadDialog({ triggeredFrom: 'loadDialog', show: true });
-            }}
-            openPredefinedSchema={() => {
+            }, [])}
+            openPredefinedSchema={useCallback(() => {
               setPredefinedSchemaDialog({ triggeredFrom: 'predefinedDialog', show: true });
-            }}
+            }, [])}
             showEnhancementDialog={showEnhancementDialog}
             toggleEnhancementDialog={toggleEnhancementDialog}
             setOpenConnection={setOpenConnection}
@@ -562,15 +562,15 @@ const PageLayout: React.FC = () => {
             <Content
               openChatBot={() => setShowChatBot(true)}
               showChatBot={showChatBot}
-              openTextSchema={() => {
+              openTextSchema={useCallback(() => {
                 setShowTextFromSchemaDialog({ triggeredFrom: 'schemaDialog', show: true });
-              }}
-              openLoadSchema={() => {
+              }, [])}
+              openLoadSchema={useCallback(() => {
                 setShowTextFromSchemaDialog({ triggeredFrom: 'loadDialog', show: true });
-              }}
-              openPredefinedSchema={() => {
+              }, [])}
+              openPredefinedSchema={useCallback(() => {
                 setPredefinedSchemaDialog({ triggeredFrom: 'prdefinedDialog', show: true });
-              }}
+              }, [])}
               showEnhancementDialog={showEnhancementDialog}
               toggleEnhancementDialog={toggleEnhancementDialog}
               setOpenConnection={setOpenConnection}

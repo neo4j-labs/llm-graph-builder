@@ -52,6 +52,7 @@ import { useHasSelections } from '../hooks/useHasSelections';
 import { ChevronUpIconOutline, ChevronDownIconOutline } from '@neo4j-ndl/react/icons';
 import { ThemeWrapperContext } from '../context/ThemeWrapper';
 import { useAuth0 } from '@auth0/auth0-react';
+import React from 'react';
 
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
 
@@ -168,10 +169,10 @@ const Content: React.FC<ContentProps> = ({
               ? postProcessingTasks.filter((task) => task !== 'graph_schema_consolidation')
               : postProcessingTasks
             : hasSelections
-            ? postProcessingTasks.filter(
-                (task) => task !== 'graph_schema_consolidation' && task !== 'enable_communities'
-              )
-            : postProcessingTasks.filter((task) => task !== 'enable_communities');
+              ? postProcessingTasks.filter(
+                  (task) => task !== 'graph_schema_consolidation' && task !== 'enable_communities'
+                )
+              : postProcessingTasks.filter((task) => task !== 'enable_communities');
           if (payload.length) {
             const response = await postProcessing(payload);
             if (response.data.status === 'Success') {
@@ -236,7 +237,7 @@ const Content: React.FC<ContentProps> = ({
           ...curfile,
           model:
             curfile.status === 'New' || curfile.status === 'Ready to Reprocess'
-              ? selectedOption?.value ?? ''
+              ? (selectedOption?.value ?? '')
               : curfile.model,
         };
       });
@@ -536,7 +537,7 @@ const Content: React.FC<ContentProps> = ({
     }
   };
 
-  const processWaitingFilesOnRefresh = () => {
+  const processWaitingFilesOnRefresh = useCallback(() => {
     let data = [];
     const processingFilesCount = filesData.filter((f) => f.status === 'Processing').length;
 
@@ -556,7 +557,7 @@ const Content: React.FC<ContentProps> = ({
         .filter((f) => f.status === 'New' || f.status == 'Ready to Reprocess');
       addFilesToQueue(selectedNewFiles as CustomFile[]);
     }
-  };
+  }, [filesData, queue]);
 
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.VITE_BLOOM_URL;
@@ -966,26 +967,29 @@ const Content: React.FC<ContentProps> = ({
         <FileTable
           connectionStatus={connectionStatus}
           setConnectionStatus={setConnectionStatus}
-          onInspect={(name) => {
+          onInspect={useCallback((name) => {
             setInspectedName(name);
             setOpenGraphView(true);
             setViewPoint('tableView');
-          }}
-          onRetry={(id) => {
+          }, [])}
+          onRetry={useCallback((id) => {
             setRetryFile(id);
             toggleRetryPopup();
-          }}
-          onChunkView={async (name) => {
-            setDocumentName(name);
-            if (name != documentName) {
-              toggleChunkPopup();
-              if (totalPageCount) {
-                setTotalPageCount(null);
+          }, [])}
+          onChunkView={useCallback(
+            async (name) => {
+              setDocumentName(name);
+              if (name != documentName) {
+                toggleChunkPopup();
+                if (totalPageCount) {
+                  setTotalPageCount(null);
+                }
+                setCurrentPage(1);
+                await getChunks(name, 1);
               }
-              setCurrentPage(1);
-              await getChunks(name, 1);
-            }
-          }}
+            },
+            [documentName, totalPageCount]
+          )}
           ref={childRef}
           handleGenerateGraph={processWaitingFilesOnRefresh}
         ></FileTable>
@@ -1089,4 +1093,4 @@ const Content: React.FC<ContentProps> = ({
   );
 };
 
-export default Content;
+export default React.memo(Content);
