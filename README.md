@@ -171,22 +171,6 @@ VITE_BACKEND_API_URL=${VITE_BACKEND_API_URL-backendurl}
 7. Enjoy Graph Building.
 ---
 
-## Additional Configuration
-
-### **LLM Models**
-Configure LLM models using the `VITE_LLM_MODELS_PROD` variable. Example:
-```bash
-VITE_LLM_MODELS_PROD="openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash"
-```
-
-### **Input Sources**
-The default input sources are: `local`, `YouTube`, `Wikipedia`, `AWS S3`, and `web`. 
-
-To enable GCS integration, include `gcs` and your Google client ID:
-```bash
-VITE_REACT_APP_SOURCES="local,youtube,wiki,s3,gcs,web"
-VITE_GOOGLE_CLIENT_ID="your-google-client-id"
-```
 
 ## Usage
 1. Connect to Neo4j Aura Instance which can be both AURA DS or AURA DB by passing URI and password through Backend env, fill using login dialog or drag and drop the Neo4j credentials file.
@@ -239,7 +223,7 @@ VITE_GOOGLE_CLIENT_ID="your-google-client-id"
 | **FRONTEND ENV** 
 | VITE_BACKEND_API_URL         | Optional           | http://localhost:8000 | URL for backend API                                                                       |
 | VITE_BLOOM_URL               | Optional           | https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true | URL for Bloom visualization |
-| VITE_REACT_APP_SOURCES       | Mandatory          | local,youtube,wiki,s3 | List of input sources that will be available                                               |
+| VITE_REACT_APP_SOURCES       | Optional          | local,youtube,wiki,s3 | List of input sources that will be available                                               |
 | VITE_CHAT_MODES              | Mandatory          | vector,graph+vector,graph,hybrid | Chat modes available for Q&A
 | VITE_ENV                     | Mandatory          | DEV or PROD           | Environment variable for the app                                                                 |
 | VITE_TIME_PER_PAGE          | Optional           | 50             | Time per page for processing                                                                    |
