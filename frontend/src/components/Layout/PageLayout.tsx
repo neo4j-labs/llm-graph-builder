@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useReducer, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import SideNav from './SideNav';
 import DrawerDropzone from './DrawerDropzone';
 import DrawerChatbot from './DrawerChatbot';
@@ -491,17 +491,17 @@ const PageLayout: React.FC = () => {
             />
           )}
           <Content
-            openChatBot={() => setShowChatBot(true)}
+            openChatBot={useCallback(() => setShowChatBot(true), [])}
             showChatBot={showChatBot}
-            openTextSchema={() => {
+            openTextSchema={useCallback(() => {
               setShowTextFromSchemaDialog({ triggeredFrom: 'schemadialog', show: true });
-            }}
-            openLoadSchema={() => {
+            }, [])}
+            openLoadSchema={useCallback(() => {
               setSchemaLoadDialog({ triggeredFrom: 'loadDialog', show: true });
-            }}
-            openPredefinedSchema={() => {
+            }, [])}
+            openPredefinedSchema={useCallback(() => {
               setPredefinedSchemaDialog({ triggeredFrom: 'predefinedDialog', show: true });
-            }}
+            }, [])}
             showEnhancementDialog={showEnhancementDialog}
             toggleEnhancementDialog={toggleEnhancementDialog}
             setOpenConnection={setOpenConnection}
