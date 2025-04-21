@@ -16,6 +16,7 @@ This application allows you to upload files from various sources (local machine,
 - Seamlessly transform unstructured data into structured Knowledge Graphs using advanced LLMs.
 - Extract nodes, relationships, and their properties to create structured graphs.
 
+
 ### **Schema Support**
 - Use a custom schema or existing schemas configured in the settings to generate graphs.
 

@@ -1020,7 +1020,6 @@ const Content: React.FC<ContentProps> = ({
                 {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
               </ButtonWithToolTip>
             </SpotlightTarget>
-
             <ButtonWithToolTip
               text={
                 !selectedfileslength ? tooltips.deleteFile : `${selectedfileslength} ${tooltips.deleteSelectedFiles}`
@@ -1066,7 +1065,6 @@ const Content: React.FC<ContentProps> = ({
                 </div>
               </Flex>
             </SpotlightTarget>
-
             <Menu
               placement='top-end-bottom-end'
               isOpen={isGraphBtnMenuOpen}

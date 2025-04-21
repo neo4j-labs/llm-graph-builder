@@ -1,3 +1,4 @@
+
 // import { MouseEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
 // import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
 // import { appLabels, buttonCaptions, getDefaultSchemaExamples, tooltips } from '../../../../utils/Constants';
@@ -12,6 +13,7 @@
 // import { useHasSelections } from '../../../../hooks/useHasSelections';
 // import { Hierarchy1Icon } from '@neo4j-ndl/react/icons';
 // import GraphViewModal from '../../../Graph/GraphViewModal';
+
 
 // export default function EntityExtractionSetting({
 //     view,
@@ -237,7 +239,6 @@
 //         setOpenGraphView(true);
 //         setViewPoint('showSchemaView');
 //     };
-
 //     return (
 //         <div>
 //             <Typography variant='body-medium'>
@@ -378,3 +379,4 @@
 //         </div>
 //     );
 // }
+
