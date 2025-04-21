@@ -6,7 +6,7 @@ import schemaExamples from '../assets/newSchema.json';
 export const APP_SOURCES =
   process.env.VITE_REACT_APP_SOURCES !== ''
     ? (process.env.VITE_REACT_APP_SOURCES?.split(',') as string[])
-    : ['gcs', 's3', 'local', 'wiki', 'youtube', 'web'];
+    : ['s3', 'local', 'wiki', 'youtube', 'web'];
 
 export const llms =
   process.env?.VITE_LLM_MODELS?.trim() != ''

@@ -8,8 +8,7 @@ from datetime import datetime as dt
 from dotenv import load_dotenv
 from src.main import *
 from src.QA_integration import QA_RAG
-from src.ragas_eval import get_ragas_metrics
-from datasets import Dataset
+
 # Load environment variables
 load_dotenv()
 URI = os.getenv('NEO4J_URI')
@@ -49,7 +48,7 @@ def test_graph_from_file_local(model_name):
        create_source_node_local(graph, model_name, file_name)
        result = asyncio.run(
            extract_graph_from_file_local_file(
-               URI, USERNAME, PASSWORD, DATABASE, model_name, merged_file_path, file_name, '', '', None, ''
+               URI, USERNAME, PASSWORD, DATABASE, model_name, merged_file_path, file_name, '', '',100,20,1, None,''
            )
        )
        logging.info(f"Local file test result: {result}")
@@ -67,7 +66,7 @@ def test_graph_from_wikipedia(model_name):
        create_source_node_graph_url_wikipedia(graph, model_name, wiki_query, "Wikipedia")
        result = asyncio.run(
            extract_graph_from_file_Wikipedia(
-               URI, USERNAME, PASSWORD, DATABASE, model_name, file_name, 'en', file_name, '', '', None, ''
+               URI, USERNAME, PASSWORD, DATABASE, model_name, file_name, 'en', file_name, '', '', 100,20,1,None,''
            )
        )
        logging.info(f"Wikipedia test result: {result}")
@@ -85,9 +84,9 @@ def test_graph_from_youtube_video(model_name):
        create_source_node_graph_url_youtube(graph, model_name, source_url, "youtube")
        result = asyncio.run(
            extract_graph_from_file_youtube(
-               URI, USERNAME, PASSWORD, DATABASE, model_name, source_url, file_name, '', '', None, ''
+               URI, USERNAME, PASSWORD, DATABASE, model_name, source_url, file_name, '', '',100,20,1, None,''
            )
-       )
+      )
        logging.info(f"YouTube video test result: {result}")
        if isinstance(result, dict) and result.get("status") == "Failed":
            return {"status": "Failed", "error": result.get("error", "Unknown error")}
@@ -104,7 +103,7 @@ def test_graph_website(model_name):
        create_source_node_graph_web_url(graph, model_name, source_url, "web-url")
        result = asyncio.run(
            extract_graph_from_web_page(
-               URI, USERNAME, PASSWORD, DATABASE, model_name, source_url, "Google Cloud Skills Boost", '', '', None, ''
+               URI, USERNAME, PASSWORD, DATABASE, model_name, source_url, "Google Cloud Skills Boost-www", '', '',100,20,1, None,''
            )
        )
        logging.info(f"Web URL test result: {result}")
@@ -122,7 +121,8 @@ def test_chatbot_qna(model_name, mode='vector'):
        result = QA_RAG(graph, model_name, 'Tell me about Amazon', '[]', 1, mode)
     #    assert len(result['message']) > 20
        logging.info(f"Chatbot QnA test passed for mode: {mode}")
-       return result
+       final_result = {'model_name':model_name,'mode':mode,'result':result}
+       return final_result
    except Exception as e:
        logging.error(f"Error in chatbot QnA: {e}")
        return {"status": "Failed", "error": str(e)}
@@ -170,7 +170,26 @@ def get_duplicate_nodes():
            return "Data successfully loaded"
        else:
            return "Unable to load data"
-       
+
+def flatten_extract_dataframe(df: pd.DataFrame):
+   rows = []
+   for _, row in df.iterrows():
+       try:
+           col1, col2, execution_date = row[0], row[1], row[2] if len(row) > 2 else None
+           data_dict = ast.literal_eval(col1) if isinstance(col1, str) and col1.startswith("{") else {}
+           meta_dict = ast.literal_eval(col2) if isinstance(col2, str) and col2.startswith("{") else {}
+           combined_dict = {**data_dict, **meta_dict}
+           for key in combined_dict.keys():
+               if isinstance(combined_dict[key], dict) and key.startswith("processed_chunk_detail"):
+                   combined_dict[key] = str(combined_dict[key])
+           combined_dict["execution_date"] = execution_date
+           rows.append(combined_dict)
+       except (SyntaxError, ValueError, TypeError) as e:
+           print(f"Error parsing row: {row} - {e}")
+           continue
+   flat_df = pd.DataFrame(rows)
+   return flat_df
+
 def run_tests():
    """Runs all integration tests and logs results."""
    extract_list = []
@@ -178,7 +197,7 @@ def run_tests():
    chatbot_list = []
    chatbot_error_list = []
    other_api_list = []
-   models = ['openai_gpt_4','openai_gpt_4o','openai_gpt_4o_mini','gemini_1.5_pro','gemini_1.5_flash','gemini_2.0_flash','bedrock_nova_micro_v1','bedrock_nova_lite_v1','bedrock_nova_pro_v1','fireworks_qwen72b_instruct']
+   models = ['openai_gpt_4o','openai_gpt_4o_mini','openai_gpt_4.1','openai_gpt_4.1_mini','gemini_2.0_flash','fireworks_llama4_maverick','bedrock_nova_pro_v1']
    chatbot_modes = [
        "vector",
        "graph+vector",
@@ -218,9 +237,7 @@ def run_tests():
 
        try:
             schema_result = test_populate_graph_schema_from_text(model_name)
-            print("KAUSTUBH : ",schema_result)
             other_api_list.append({f"{model_name}":schema_result}) 
-            print("other_api_list : ",other_api_list)
        except Exception as e:
            logging.error(f"Error in test_populate_graph_schema_from_text for {model_name}: {e}")
            other_api_list.append({f"{model_name}":str(e)}) 
