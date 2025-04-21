@@ -10,6 +10,7 @@ import {
   Flex,
   Box,
   TextLink,
+  SpotlightTarget,
 } from '@neo4j-ndl/react';
 import { ArrowDownTrayIconOutline, XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import ChatBotAvatar from '../../assets/images/chatbot-ai.png';
@@ -40,6 +41,8 @@ import { downloadClickHandler, getDateTime } from '../../utils/Utils';
 import ChatModesSwitch from './ChatModesSwitch';
 import CommonActions from './CommonChatActions';
 import Loader from '../../utils/Loader';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 const InfoModal = lazy(() => import('./ChatInfoModal'));
 if (typeof window !== 'undefined') {
   if (!sessionStorage.getItem('session_id')) {
@@ -466,9 +469,17 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                         chat.isLoading && index === listMessages.length - 1 && chat.user === 'chatbot' ? 'loader' : ''
                       }`}
                     >
-                      <ReactMarkdown className={!isFullScreen ? 'max-w-[250px]' : ''}>
-                        {chat.modes[chat.currentMode]?.message || ''}
-                      </ReactMarkdown>
+                      <div
+                        className={
+                          !isFullScreen
+                            ? 'max-w-[250px] prose prose-sm sm:prose lg:prose-lg xl:prose-xl'
+                            : 'prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none'
+                        }
+                      >
+                        <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw] as any}>
+                          {chat.modes[chat.currentMode]?.message || ''}
+                        </ReactMarkdown>
+                      </div>
                     </div>
                     <div>
                       <div>
@@ -560,17 +571,19 @@ const Chatbot: FC<ChatbotProps> = (props) => {
               name: 'chatbot-input',
             }}
           />
-          <ButtonWithToolTip
-            label='Q&A Button'
-            placement='top'
-            text={`Ask a question.`}
-            type='submit'
-            disabled={loading || !connectionStatus}
-            size='medium'
-          >
-            {buttonCaptions.ask}{' '}
-            {selectedFileNames != undefined && selectedFileNames.length > 0 && `(${selectedFileNames.length})`}
-          </ButtonWithToolTip>
+          <SpotlightTarget id='chatbtn' hasPulse={true} indicatorVariant='border'>
+            <ButtonWithToolTip
+              label='Q&A Button'
+              placement='top'
+              text={`Ask a question.`}
+              type='submit'
+              disabled={loading || !connectionStatus}
+              size='medium'
+            >
+              {buttonCaptions.ask}{' '}
+              {selectedFileNames != undefined && selectedFileNames.length > 0 && `(${selectedFileNames.length})`}
+            </ButtonWithToolTip>
+          </SpotlightTarget>
         </form>
       </div>
       <Suspense fallback={<FallBackDialog />}>

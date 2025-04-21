@@ -576,16 +576,20 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
         result = await asyncio.to_thread(upload_file, graph, model, file, chunkNumber, totalChunks, originalname, uri, CHUNK_DIR, MERGED_DIR)
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'upload','db_url':uri,'userName':userName, 'database':database, 'chunkNumber':chunkNumber,'totalChunks':totalChunks,
-                            'original_file_name':originalname,'model':model, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
-        logger.log_struct(json_obj, "INFO")
+        if int(chunkNumber) == int(totalChunks):
+            json_obj = {'api_name':'upload','db_url':uri,'userName':userName, 'database':database, 'chunkNumber':chunkNumber,'totalChunks':totalChunks,
+                                'original_file_name':originalname,'model':model, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
+            logger.log_struct(json_obj, "INFO")
         if int(chunkNumber) == int(totalChunks):
             return create_api_response('Success',data=result, message='Source Node Created Successfully')
         else:
             return create_api_response('Success', message=result)
     except Exception as e:
-        message="Unable to upload large file into chunks. "
+        message="Unable to upload file in chunks"
         error_message = str(e)
+        graph = create_graph_database_connection(uri, userName, password, database)   
+        graphDb_data_Access = graphDBdataAccess(graph)
+        graphDb_data_Access.update_exception_db(originalname,error_message)
         logging.info(message)
         logging.exception(f'Exception:{error_message}')
         return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = originalname)
@@ -596,8 +600,7 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
 async def get_structured_schema(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None),email=Form(None)):
     try:
         start = time.time()
-        graph = create_graph_database_connection(uri, userName, password, database)
-        result = await asyncio.to_thread(get_labels_and_relationtypes, graph)
+        result = await asyncio.to_thread(get_labels_and_relationtypes, uri, userName, password, database)
         end = time.time()
         elapsed_time = end - start
         logging.info(f'Schema result from DB: {result}')
@@ -764,10 +767,10 @@ async def cancelled_job(uri=Form(None), userName=Form(None), password=Form(None)
         gc.collect()
 
 @app.post("/populate_graph_schema")
-async def populate_graph_schema(input_text=Form(None), model=Form(None), is_schema_description_checked=Form(None),email=Form(None)):
+async def populate_graph_schema(input_text=Form(None), model=Form(None), is_schema_description_checked=Form(None),is_local_storage=Form(None),email=Form(None)):
     try:
         start = time.time()
-        result = populate_graph_schema_from_text(input_text, model, is_schema_description_checked)
+        result = populate_graph_schema_from_text(input_text, model, is_schema_description_checked, is_local_storage)
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name':'populate_graph_schema', 'model':model, 'is_schema_description_checked':is_schema_description_checked, 'input_text':input_text, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
@@ -894,7 +897,7 @@ async def retry_processing(uri=Form(None), userName=Form(None), password=Form(No
     try:
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
-        chunks =  graph.query(QUERY_TO_GET_CHUNKS, params={"filename":file_name})
+        chunks = execute_graph_query(graph,QUERY_TO_GET_CHUNKS,params={"filename":file_name})
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name':'retry_processing', 'db_url':uri, 'userName':userName, 'database':database, 'file_name':file_name,'retry_condition':retry_condition,

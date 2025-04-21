@@ -67,6 +67,7 @@ import { ThemeWrapperContext } from '../context/ThemeWrapper';
 import BreakDownPopOver from './BreakDownPopOver';
 import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
 import { useAuth0 } from '@auth0/auth0-react';
+import React from 'react';
 
 let onlyfortheFirstRender = true;
 
@@ -89,7 +90,6 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
   const islargeDesktop = useMediaQuery(`(min-width:1440px )`);
   const tableRef = useRef(null);
   const { isAuthenticated } = useAuth0();
-
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
       showNormalToast(`${fileName} will take approx ${time} ${inMinutes ? 'Min' : 'Sec'}`);
@@ -337,7 +337,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
       columnHelper.accessor((row) => row.uploadProgress, {
         id: 'uploadprogess',
         cell: (info: CellContext<CustomFile, string>) => {
-          if (parseInt(info.getValue()) === 100 || info.row.original?.status === 'New') {
+          if (Number(info.getValue()) === 100 || info.row.original?.status === 'New') {
             return (
               <div className='flex! gap-1 items-center'>
                 <Typography variant='body-medium'>
@@ -347,7 +347,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
               </div>
             );
           } else if (info.row.original?.status === 'Uploading') {
-            return <CustomProgressBar value={parseInt(info?.getValue())}></CustomProgressBar>;
+            return <CustomProgressBar value={Number(info?.getValue())}></CustomProgressBar>;
           } else if (info.row.original?.status === 'Failed') {
             return (
               <div className='flex! gap-1 items-center'>
@@ -372,7 +372,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
       }),
       columnHelper.accessor((row) => row.size, {
         id: 'fileSize',
-        cell: (info: CellContext<CustomFile, string>) => <i>{(parseInt(info?.getValue()) / 1000)?.toFixed(2)}</i>,
+        cell: (info: CellContext<CustomFile, string>) => <i>{(Number(info?.getValue()) / 1000)?.toFixed(2)}</i>,
         header: () => <span>Size (KB)</span>,
         footer: (info) => info.column.id,
       }),
@@ -714,7 +714,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                   waitingQueue.length && waitingQueue.find((f: CustomFile) => f.name === item.fileName);
                 if (isFileCompleted(waitingFile as CustomFile, item)) {
                   setProcessedCount((prev) => calculateProcessedCount(prev, batchSize));
-                  queue.remove(item.fileName);
+                  queue.remove((i) => i.name === item.fileName);
                 }
                 if (waitingFile && item.status === 'Completed') {
                   setProcessedCount((prev) => {
@@ -723,14 +723,14 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                     }
                     return prev + 1;
                   });
-                  queue.remove(item.fileName);
+                  queue.remove((i) => i.name === item.fileName);
                 }
                 prefiles.push({
                   name: item?.fileName,
                   size: item?.fileSize ?? 0,
                   type: item?.fileType?.includes('.')
-                    ? item?.fileType?.substring(1)?.toUpperCase() ?? 'None'
-                    : item?.fileType?.toUpperCase() ?? 'None',
+                    ? (item?.fileType?.substring(1)?.toUpperCase() ?? 'None')
+                    : (item?.fileType?.toUpperCase() ?? 'None'),
                   nodesCount: item?.nodeCount ?? 0,
                   processingTotalTime: item?.processingTime ?? 'None',
                   relationshipsCount: item?.relationshipCount ?? 0,
@@ -851,7 +851,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
           }
           return prev + 1;
         });
-        queue.remove(fileName);
+        queue.remove((i) => i.name === fileName);
       } else {
         let errorobj = { error: res.data.error, message: res.data.message, fileName };
         throw new Error(JSON.stringify(errorobj));
@@ -925,7 +925,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
         }
         return prev + 1;
       });
-      queue.remove(fileName);
+      queue.remove((i) => i.name === fileName);
     }
   };
 
@@ -1061,4 +1061,4 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
   );
 };
 
-export default forwardRef(FileTable);
+export default React.memo(forwardRef(FileTable));

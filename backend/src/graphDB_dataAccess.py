@@ -1,5 +1,7 @@
 import logging
 import os
+import time
+from neo4j.exceptions import TransientError
 from langchain_neo4j import Neo4jGraph
 from src.shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file, load_embedding_model
 from src.document_sources.gcs_bucket import delete_file_from_gcs
@@ -16,7 +18,7 @@ class graphDBdataAccess:
     def __init__(self, graph: Neo4jGraph):
         self.graph = graph
 
-    def update_exception_db(self, file_name, exp_msg, retry_condition):
+    def update_exception_db(self, file_name, exp_msg, retry_condition=None):
         try:
             job_status = "Failed"
             result = self.get_current_status_document_node(file_name)
@@ -39,7 +41,7 @@ class graphDBdataAccess:
     def create_source_node(self, obj_source_node:sourceNode):
         try:
             job_status = "New"
-            logging.info("creating source node if does not exist")
+            logging.info(f"creating source node if does not exist in database {self.graph._database}")
             self.graph.query("""MERGE(d:Document {fileName :$fn}) SET d.fileSize = $fs, d.fileType = $ft ,
                             d.status = $st, d.url = $url, d.awsAccessKeyId = $awsacc_key_id, 
                             d.fileSource = $f_source, d.createdAt = $c_at, d.updatedAt = $u_at, 
@@ -254,8 +256,20 @@ class graphDBdataAccess:
                 else:
                     return {'message':"Connection Successful","gds_status": gds_status,"write_access":write_access}
 
-    def execute_query(self, query, param=None):
-        return self.graph.query(query, param)
+    def execute_query(self, query, param=None,max_retries=3, delay=2):
+        retries = 0
+        while retries < max_retries:
+            try:
+                return self.graph.query(query, param)
+            except TransientError as e:
+                if "DeadlockDetected" in str(e):
+                    retries += 1
+                    logging.info(f"Deadlock detected. Retrying {retries}/{max_retries} in {delay} seconds...")
+                    time.sleep(delay)  # Wait before retrying
+                else:
+                    raise 
+        logging.error("Failed to execute query after maximum retries due to persistent deadlocks.")
+        raise RuntimeError("Query execution failed after multiple retries due to deadlock.")
 
     def get_current_status_document_node(self, file_name):
         query = """

@@ -9,6 +9,8 @@ import { ConnectionModalProps, Message, UserCredentials } from '../../../types';
 import VectorIndexMisMatchAlert from './VectorIndexMisMatchAlert';
 import { useAuth0 } from '@auth0/auth0-react';
 import { createDefaultFormData } from '../../../API/Index';
+import { getNodeLabelsAndRelTypesFromText } from '../../../services/SchemaFromTextAPI';
+import { useFileContext } from '../../../context/UsersFiles';
 
 export default function ConnectionModal({
   open,
@@ -58,13 +60,12 @@ export default function ConnectionModal({
   const [searchParams, setSearchParams] = useSearchParams();
   const [userDbVectorIndex, setUserDbVectorIndex] = useState<number | undefined>(initialuserdbvectorindex ?? undefined);
   const [vectorIndexLoading, setVectorIndexLoading] = useState<boolean>(false);
-
+  const { model } = useFileContext();
   const connectRef = useRef<HTMLButtonElement>(null);
   const uriRef = useRef<HTMLInputElement>(null);
   const databaseRef = useRef<HTMLInputElement>(null);
   const userNameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
-
   useEffect(() => {
     if (searchParams.has('connectURL')) {
       const url = searchParams.get('connectURL');
@@ -237,11 +238,25 @@ export default function ConnectionModal({
         const isgdsActive = response.data.data.gds_status;
         const isReadOnlyUser = !response.data.data.write_access;
         const isGCSActive = response.data.data.gcs_file_cache === 'True';
-        const chunksTobeProcess = parseInt(response.data.data.chunk_to_be_created);
+        const chunksTobeProcess = Number(response.data.data.chunk_to_be_created);
+        const existingRels = JSON.parse(localStorage.getItem('selectedRelationshipLabels') ?? 'null');
+        const existingNodes = JSON.parse(localStorage.getItem('selectedNodeLabels') ?? 'null');
+        const pattern = /^[^,]+,[^,]+,[^,]+$/;
+        if (existingRels && existingRels.selectedOptions.length) {
+          if (!pattern.test(existingRels.selectedOptions[0].value)) {
+            const response = await getNodeLabelsAndRelTypesFromText(
+              model,
+              JSON.stringify({ nodes: existingNodes.selectedOptions, rels: existingRels.selectedOptions }),
+              false,
+              true
+            );
+            console.log(response);
+          }
+        }
         setIsGCSActive(isGCSActive);
         setGdsActive(isgdsActive);
         setIsReadOnlyUser(isReadOnlyUser);
-        // setChunksToBeProces(chunksTobeProcess);
+
         localStorage.setItem(
           'neo4j.connection',
           JSON.stringify({
@@ -361,7 +376,7 @@ export default function ConnectionModal({
         <Dialog.Header htmlAttributes={{ id: 'form-dialog-title' }}>Connect to Neo4j</Dialog.Header>
         <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
           <Typography variant='body-medium' className='mb-4'>
-            <TextLink isExternalLink href='https://console.neo4j.io/'>
+            <TextLink type='external' href='https://console.neo4j.io/'>
               Don't have a Neo4j instance? Start for free today
             </TextLink>
           </Typography>

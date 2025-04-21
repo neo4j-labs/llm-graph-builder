@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { AppState, Auth0Provider, useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router';
@@ -26,7 +25,6 @@ const Auth0ProviderWithHistory: React.FC<{ children: React.ReactNode }> = ({ chi
 };
 
 export const AuthenticationGuard: React.FC<{ component: React.ComponentType<object> }> = ({ component }) => {
-
   const { isAuthenticated, isLoading } = useAuth0();
   const Component = component;
   const navigate = useNavigate();
@@ -36,8 +34,6 @@ export const AuthenticationGuard: React.FC<{ component: React.ComponentType<obje
       navigate('/readonly', { replace: true });
     }
   }, [isLoading, isAuthenticated]);
-
-
   return <Component />;
 };
 
