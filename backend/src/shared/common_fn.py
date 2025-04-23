@@ -176,13 +176,13 @@ def get_bedrock_embeddings():
        print(f"An unexpected error occurred: {e}")
        raise
 
-def get_value_from_env_or_sm(secret_name: str, default_value: Any = None, data_type: type = str):
+def get_value_from_env_or_sm(key_name: str, default_value: Any = None, data_type: type = str):
   """
   Fetches a secret from Google Cloud Secret Manager.
   If GET_VALUE_FROM_SECRET_MANAGER env value True, Otherwise get from local .env file
   Converts the value to the specified data type.
   Args:
-      secret_name (str): Name of the secret in Secret Manager.
+      key_name (str): Name of the secret in Secret Manager.
       default_value (Any) : Any type of default value
       data_type (type): Expected data type (str, int, float, bool, list, dict).
   Returns:
@@ -193,24 +193,24 @@ def get_value_from_env_or_sm(secret_name: str, default_value: Any = None, data_t
     if get_value_from_env_or_sm:
       project_id = os.getenv("PROJECT_ID", "llm-experiments-387609")
       client = secretmanager.SecretManagerServiceClient()
-      secret_path = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
+      secret_path = f"projects/{project_id}/secrets/{key_name}/versions/latest"
     
       response = client.access_secret_version(request={"name": secret_path})
       value = response.payload.data.decode("UTF-8")
     else:
-      value = os.getenv(secret_name, None) 
+      value = os.getenv(key_name, None) 
   except (NotFound, PermissionDenied):
     try:
-      logging.warning(f"key {secret_name} not found in Secret Manager. Checking environment variable.")
-      env_value = os.getenv(secret_name, None)
+      logging.warning(f"key {key_name} not found in Secret Manager. Checking environment variable.")
+      env_value = os.getenv(key_name, None)
       if env_value is None and default_value is not None:
         return convert_type(default_value, data_type)
       elif env_value is None and default_value is None:
-        raise Exception(f"env {secret_name} value not found")
+        raise Exception(f"env {key_name} value not found")
       else:
         return convert_type(env_value, data_type)
     except Exception as e:
-       raise Exception(f"env {secret_name} value not found")
+       raise Exception(f"env {key_name} value not found")
 
   if value is None and default_value is not None:
     return convert_type(default_value, data_type) # Return the default value when key not found in secret manager not in .env file.
