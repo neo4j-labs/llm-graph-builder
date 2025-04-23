@@ -81,10 +81,10 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     error?.length
       ? 10
       : mode === chatModeLables['global search+vector+fulltext']
-      ? 7
-      : mode === chatModeLables.graph
-      ? 4
-      : 3
+        ? 7
+        : mode === chatModeLables.graph
+          ? 4
+          : 3
   );
   const [, copy] = useCopyToClipboard();
   const [copiedText, setcopiedText] = useState<boolean>(false);
@@ -97,15 +97,15 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
     multiModelMetrics.length > 0 && Object.keys(multiModelMetrics[0]).length > 4
       ? true
       : multiModelMetrics.length > 0 && Object.keys(multiModelMetrics[0]).length <= 4
-      ? false
-      : null
+        ? false
+        : null
   );
   const [isAdditionalMetricsWithSingleMode, setIsAdditionalMetricsWithSingleMode] = useState<boolean | null>(
     metricDetails != undefined && Object.keys(metricDetails).length > 3
       ? true
       : metricDetails != undefined && Object.keys(metricDetails).length <= 3
-      ? false
-      : null
+        ? false
+        : null
   );
   const actions: React.ComponentProps<typeof IconButton<'button'>>[] = useMemo(
     () => [
@@ -320,6 +320,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           src={Neo4jRetrievalLogo}
           style={{ width: isTablet ? 80 : 95, height: isTablet ? 80 : 95, marginRight: 10 }}
           loading='lazy'
+          alt='Retrieval-logo'
         />
         <div className='flex! flex-col'>
           <Typography variant='h2'>Retrieval information</Typography>

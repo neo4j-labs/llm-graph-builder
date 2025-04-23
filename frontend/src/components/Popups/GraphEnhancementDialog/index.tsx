@@ -103,6 +103,7 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
                 objectFit: 'contain',
               }}
               loading='lazy'
+              alt='graph-enhancement-options-logo'
             />
             <div className='flex flex-col'>
               <Typography variant={isTablet ? 'h5' : 'h2'}>Graph Enhancements</Typography>
