@@ -153,7 +153,7 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
 def create_chunk_vector_index(graph):
     start_time = time.time()
     try:
-        vector_index_query = "SHOW INDEXES YIELD * WHERE labelsOrTypes = ['Chunk'] and type = 'VECTOR' AND name = 'vector' return options"
+        vector_index_query = "SHOW INDEXES YIELD name, type, labelsOrTypes, properties WHERE name = 'vector' AND type = 'VECTOR' AND 'Chunk' IN labelsOrTypes AND 'embedding' IN properties RETURN name"
         vector_index = execute_graph_query(graph,vector_index_query)
         if not vector_index:
             vector_store = Neo4jVector(embedding=EMBEDDING_FUNCTION,
@@ -168,7 +168,7 @@ def create_chunk_vector_index(graph):
         else:
             logging.info(f"Index already exist,Skipping creation. Time taken: {time.time() - start_time:.2f} seconds")
     except Exception as e:
-        if "EquivalentSchemaRuleAlreadyExists" in str(e):
+        if ("EquivalentSchemaRuleAlreadyExists" in str(e) or "An equivalent index already exists" in str(e)):
             logging.info("Vector index already exists, skipping creation.")
         else:
             raise
