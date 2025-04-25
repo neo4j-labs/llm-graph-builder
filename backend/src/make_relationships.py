@@ -153,7 +153,7 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
 def create_chunk_vector_index(graph):
     start_time = time.time()
     try:
-        vector_index_query = "SHOW INDEXES YIELD * WHERE labelsOrTypes = ['Chunk'] and type = 'VECTOR' AND name = 'vector' return options"
+        vector_index_query = "SHOW INDEXES YIELD name, type, labelsOrTypes, properties WHERE name = 'vector' AND type = 'VECTOR' AND 'Chunk' IN labelsOrTypes AND 'embedding' IN properties RETURN name"
         vector_index = execute_graph_query(graph,vector_index_query)
         if not vector_index:
             vector_store = Neo4jVector(embedding=EMBEDDING_FUNCTION,
