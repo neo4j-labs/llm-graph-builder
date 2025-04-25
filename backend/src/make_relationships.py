@@ -168,7 +168,7 @@ def create_chunk_vector_index(graph):
         else:
             logging.info(f"Index already exist,Skipping creation. Time taken: {time.time() - start_time:.2f} seconds")
     except Exception as e:
-        if "EquivalentSchemaRuleAlreadyExists" in str(e):
+        if ("EquivalentSchemaRuleAlreadyExists" in str(e) or "An equivalent index already exists" in str(e)):
             logging.info("Vector index already exists, skipping creation.")
         else:
             raise
