@@ -33,9 +33,9 @@ export default function NewEntityExtractionSetting({
   closeEnhanceGraphSchemaDialog?: () => void;
 }) {
   const {
-    selectedRels,
-    selectedNodes,
-    allPatterns,
+    // selectedRels,
+    // selectedNodes,
+    // allPatterns,
     setSelectedRels,
     setSelectedNodes,
     userDefinedPattern,
@@ -112,13 +112,13 @@ export default function NewEntityExtractionSetting({
     }
   }, [userDefinedPattern]);
 
-  useEffect(() => {
-    if (allPatterns.length) {
-      setCombinedNodes(selectedNodes as OptionType[]);
-      setCombinedPatterns(allPatterns);
-      setCombinedRels(selectedRels as OptionType[]);
-    }
-  }, [allPatterns, selectedNodes, selectedRels]);
+  // useEffect(() => {
+  //   if (allPatterns.length) {
+  //     setCombinedNodes(selectedNodes as OptionType[]);
+  //     setCombinedPatterns(allPatterns);
+  //     setCombinedRels(selectedRels as OptionType[]);
+  //   }
+  // }, [allPatterns, selectedNodes, selectedRels]);
 
   const handleFinalClear = () => {
     // overall
@@ -198,6 +198,7 @@ export default function NewEntityExtractionSetting({
         target: selectedTarget.value || '',
         type: selectedType.value || '',
       };
+      // Update User Defined Patterns
       setUserDefinedPattern((prev: string[]) => {
         const alreadyExists = prev.includes(patternValue);
         if (!alreadyExists) {
@@ -209,11 +210,29 @@ export default function NewEntityExtractionSetting({
       setTupleOptions((prev: TupleType[]) => {
         const alreadyExists = prev.some((tuple) => tuple.value === relValue);
         if (!alreadyExists) {
-          const updatedTupples = [relationshipOption, ...prev];
-          const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(updatedTupples);
+          const updatedTuples = [relationshipOption, ...prev];
+          const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(updatedTuples);
           setUserDefinedNodes(nodeLabelOptions);
           setUserDefinedRels(relationshipTypeOptions);
-          return updatedTupples;
+          setAllPatterns((prev) => {
+            if (!prev.includes(patternValue)) {
+              return [patternValue, ...prev];
+            }
+            return prev;
+          });
+          setSelectedNodes((prev) => {
+            const allNodeValues = prev.map((p) => p.value);
+            const toAdd = [selectedSource, selectedTarget].filter((node) => !allNodeValues.includes(node.value));
+            return [...toAdd, ...prev];
+          });
+          setSelectedRels((prev) => {
+            const allRelValues = prev.map((p) => p.value);
+            if (!allRelValues.includes(selectedType.value)) {
+              return [selectedType, ...prev];
+            }
+            return prev;
+          });
+          return updatedTuples;
         }
         return prev;
       });
