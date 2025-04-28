@@ -6,12 +6,12 @@ import { extractOptions } from '../../../../utils/Utils';
 import { useFileContext } from '../../../../context/UsersFiles';
 import SchemaViz from '../../../../components/Graph/SchemaViz';
 
-interface LoadExistingSchemaDialogProps {
+interface LoadDBSchemaDialogProps {
   open: boolean;
   onClose: () => void;
   onApply: (patterns: string[], nodeLabels: OptionType[], relationshipLabels: OptionType[], view: string) => void;
 }
-const LoadExistingSchemaDialog = ({ open, onClose, onApply }: LoadExistingSchemaDialogProps) => {
+const LoadDBSchemaDialog = ({ open, onClose, onApply }: LoadDBSchemaDialogProps) => {
   const [loading, setLoading] = useState<boolean>(false);
   const { setDbPattern, dbPattern, dbNodes, setDbNodes, dbRels, setDbRels } = useFileContext();
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
@@ -127,4 +127,4 @@ const LoadExistingSchemaDialog = ({ open, onClose, onApply }: LoadExistingSchema
   );
 };
 
-export default LoadExistingSchemaDialog;
+export default LoadDBSchemaDialog;

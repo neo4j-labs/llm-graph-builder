@@ -77,6 +77,7 @@ export default function NewEntityExtractionSetting({
   const [combinedRels, setCombinedRels] = useState<OptionType[]>([]);
   const [isSchemaMenuOpen, setIsSchemaMenuOpen] = useState<boolean>(false);
   const schemaBtnRef = useRef<HTMLButtonElement>(null);
+  
   useEffect(() => {
     const patterns = Array.from(
       new Set([...userDefinedPattern, ...preDefinedPattern, ...dbPattern, ...schemaTextPattern])

@@ -19,7 +19,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { showErrorToast } from '../../utils/Toasts';
 import { APP_SOURCES } from '../../utils/Constants';
 import { createDefaultFormData } from '../../API/Index';
-import LoadExistingSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/LoadExistingSchema';
+import LoadDBSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/LoadExistingSchema';
 import PredefinedSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/PredefinedSchemaDialog';
 
 const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
@@ -437,7 +437,7 @@ const PageLayout: React.FC = () => {
         }}
         onApply={handleApplyPatternsFromText}
       ></SchemaFromTextDialog>
-      <LoadExistingSchemaDialog
+      <LoadDBSchemaDialog
         open={schemaLoadDialog.show}
         onClose={() => {
           setSchemaLoadDialog({ triggeredFrom: '', show: false });
@@ -467,9 +467,8 @@ const PageLayout: React.FC = () => {
       ></PredefinedSchemaDialog>
       {isLargeDesktop ? (
         <div
-          className={`layout-wrapper ${!isLeftExpanded ? 'drawerdropzoneclosed' : ''} ${
-            !isRightExpanded ? 'drawerchatbotclosed' : ''
-          } ${!isRightExpanded && !isLeftExpanded ? 'drawerclosed' : ''}`}
+          className={`layout-wrapper ${!isLeftExpanded ? 'drawerdropzoneclosed' : ''} ${!isRightExpanded ? 'drawerchatbotclosed' : ''
+            } ${!isRightExpanded && !isLeftExpanded ? 'drawerclosed' : ''}`}
         >
           <SideNav
             toggles3Modal={toggleS3Modal}
