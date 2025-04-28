@@ -77,7 +77,7 @@ export default function NewEntityExtractionSetting({
   const [combinedRels, setCombinedRels] = useState<OptionType[]>([]);
   const [isSchemaMenuOpen, setIsSchemaMenuOpen] = useState<boolean>(false);
   const schemaBtnRef = useRef<HTMLButtonElement>(null);
-  
+
   useEffect(() => {
     const patterns = Array.from(
       new Set([...userDefinedPattern, ...preDefinedPattern, ...dbPattern, ...schemaTextPattern])
@@ -222,6 +222,41 @@ export default function NewEntityExtractionSetting({
       setTarget(null);
     }
   };
+  const updateStore = (
+    patterns: string[],
+    patternToRemove: string,
+    setPatterns: React.Dispatch<React.SetStateAction<string[]>>,
+    setNodes: React.Dispatch<React.SetStateAction<OptionType[]>>,
+    setRels: React.Dispatch<React.SetStateAction<OptionType[]>>
+  ) => {
+    const updatedPatterns = patterns.filter((p) => p !== patternToRemove);
+    if (updatedPatterns.length === 0) {
+      setPatterns([]);
+      setNodes([]);
+      setRels([]);
+      return;
+    }
+    const updatedTuples: TupleType[] = updatedPatterns
+      .map((item) => {
+        const parts = item.match(/(.*?) -\[:(.*?)\]-> (.*)/);
+        if (!parts) {
+          return null;
+        }
+        const [src, rel, tgt] = parts.slice(1).map((s) => s.trim());
+        return {
+          value: `${src},${rel},${tgt}`,
+          label: `${src} -[:${rel}]-> ${tgt}`,
+          source: src,
+          target: tgt,
+          type: rel,
+        };
+      })
+      .filter(Boolean) as TupleType[];
+    const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(updatedTuples);
+    setPatterns(updatedPatterns);
+    setNodes(nodeLabelOptions);
+    setRels(relationshipTypeOptions);
+  };
 
   const handleRemovePattern = (patternToRemove: string) => {
     const match = patternToRemove.match(/(.*?) -\[:(.*?)\]-> (.*)/);
@@ -229,51 +264,18 @@ export default function NewEntityExtractionSetting({
       return;
     }
     const [, source, type, target] = match.map((s) => s.trim());
-    const updateStore = (
-      patterns: string[],
-      setPatterns: React.Dispatch<React.SetStateAction<string[]>>,
-      setNodes: React.Dispatch<React.SetStateAction<OptionType[]>>,
-      setRels: React.Dispatch<React.SetStateAction<OptionType[]>>
-    ) => {
-      const updatedPatterns = patterns.filter((p) => p !== patternToRemove);
-      if (updatedPatterns.length === 0) {
-        setPatterns([]);
-        setNodes([]);
-        setRels([]);
-        return;
-      }
-      const updatedTuples: TupleType[] = updatedPatterns
-        .map((item) => {
-          const parts = item.match(/(.*?) -\[:(.*?)\]-> (.*)/);
-          if (!parts) {
-            return null;
-          }
-          const [src, rel, tgt] = parts.slice(1).map((s) => s.trim());
-          return {
-            value: `${src},${rel},${tgt}`,
-            label: `${src} -[:${rel}]-> ${tgt}`,
-            source: src,
-            target: tgt,
-            type: rel,
-          };
-        })
-        .filter(Boolean) as TupleType[];
-      const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(updatedTuples);
-      setPatterns(updatedPatterns);
-      setNodes(nodeLabelOptions);
-      setRels(relationshipTypeOptions);
-    };
+
     if (userDefinedPattern.includes(patternToRemove)) {
-      updateStore(userDefinedPattern, setUserDefinedPattern, setUserDefinedNodes, setUserDefinedRels);
+      updateStore(userDefinedPattern, patternToRemove, setUserDefinedPattern, setUserDefinedNodes, setUserDefinedRels);
     }
     if (preDefinedPattern.includes(patternToRemove)) {
-      updateStore(preDefinedPattern, setPreDefinedPattern, setPreDefinedNodes, setPreDefinedRels);
+      updateStore(preDefinedPattern, patternToRemove, setPreDefinedPattern, setPreDefinedNodes, setPreDefinedRels);
     }
     if (dbPattern.includes(patternToRemove)) {
-      updateStore(dbPattern, setDbPattern, setDbNodes, setDbRels);
+      updateStore(dbPattern, patternToRemove, setDbPattern, setDbNodes, setDbRels);
     }
     if (schemaTextPattern.includes(patternToRemove)) {
-      updateStore(schemaTextPattern, setSchemaTextPattern, setSchemaValNodes, setSchemaValRels);
+      updateStore(schemaTextPattern, patternToRemove, setSchemaTextPattern, setSchemaValNodes, setSchemaValRels);
     }
     setCombinedPatterns((prev) => prev.filter((p) => p !== patternToRemove));
     setCombinedNodes((prev) => prev.filter((n) => n.value !== source && n.value !== target));
