@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { Tag } from '@neo4j-ndl/react';
 import { appLabels, tooltips } from '../../../../utils/Constants';
 import { ExploreIcon } from '@neo4j-ndl/react/icons';
@@ -22,12 +22,8 @@ const PatternContainer = ({
   nodes,
   rels,
 }: PatternContainerProps) => {
-  const [nodeCount, setNodeCount] = useState(0);
-  const [relCount, setRelCount] = useState(0);
-  useEffect(() => {
-    setNodeCount(nodes?.length ?? 0);
-    setRelCount(rels?.length ?? 0);
-  }, [nodes, rels]);
+  const nodeCount = useMemo(() => nodes?.length ?? 0, [nodes]);
+  const relCount = useMemo(() => rels?.length ?? 0, [rels]);
 
   console.log('count', nodeCount);
   return (
