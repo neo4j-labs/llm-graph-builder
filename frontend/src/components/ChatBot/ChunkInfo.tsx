@@ -83,7 +83,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                 ) : chunk?.url && chunk?.start_time ? (
                   <>
                     <div className='flex! flex-row justiy-between items-center gap-1'>
-                      <img src={youtubelogo} width={20} height={20} className='mr-2' />
+                      <img src={youtubelogo} width={20} height={20} className='mr-2' alt='youtube-source-logo' />
                       <TextLink
                         href={generateYouTubeLink(chunk?.url, chunk?.start_time)}
                         type={'external'}
@@ -119,7 +119,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                 ) : chunk?.url && new URL(chunk.url).host === 'wikipedia.org' ? (
                   <>
                     <div className='flex! flex-row justiy-between items-center gap-1'>
-                      <img src={wikipedialogo} width={20} height={20} className='mr-2' />
+                      <img src={wikipedialogo} width={20} height={20} className='mr-2' alt='wikipedia-source-logo' />
                       <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
                     </div>
                     {mode !== chatModeLables['global search+vector+fulltext'] &&
@@ -146,7 +146,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                 ) : chunk?.url && new URL(chunk.url).host === 'storage.googleapis.com' ? (
                   <>
                     <div className='flex! flex-row justiy-between items-center gap-1'>
-                      <img src={gcslogo} width={20} height={20} className='mr-2' />
+                      <img src={gcslogo} width={20} height={20} className='mr-2' alt='gcs-source-logo' />
                       <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
                     </div>
                     {mode !== chatModeLables['global search+vector+fulltext'] &&
@@ -171,7 +171,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                 ) : chunk?.url && chunk?.url.startsWith('s3://') ? (
                   <>
                     <div className='flex! flex-row  justiy-between items-center gap-1'>
-                      <img src={s3logo} width={20} height={20} className='mr-2' />
+                      <img src={s3logo} width={20} height={20} className='mr-2' alt='s3-source-logo' />
                       <Typography variant='subheading-medium'>{chunk?.fileName}</Typography>
                     </div>
                     {mode !== chatModeLables['global search+vector+fulltext'] &&
