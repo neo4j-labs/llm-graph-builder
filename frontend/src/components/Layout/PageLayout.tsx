@@ -287,18 +287,18 @@ const PageLayout: React.FC = () => {
     if ((isAuthenticated || SKIP_AUTH) && isFirstTimeUser) {
       setActiveSpotlight('connectbutton');
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isFirstTimeUser]);
 
   const toggleLeftDrawer = useCallback(() => {
     if (isLargeDesktop) {
-      setIsLeftExpanded(!isLeftExpanded);
+      setIsLeftExpanded((old) => !old);
     } else {
       setIsLeftExpanded(false);
     }
   }, [isLargeDesktop]);
   const toggleRightDrawer = useCallback(() => {
     if (isLargeDesktop) {
-      setIsRightExpanded(!isRightExpanded);
+      setIsRightExpanded((prev) => !prev);
     } else {
       setIsRightExpanded(false);
     }
