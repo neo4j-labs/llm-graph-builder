@@ -575,10 +575,13 @@ export const userDefinedGraphSchema = (nodes: OptionType[], relationships: Optio
     };
   });
 
-  const nodeMap: Record<string, string> = transformedNodes.reduce((acc, node) => {
-    acc[node.labels[0]] = node.id;
-    return acc;
-  }, {} as Record<string, string>);
+  const nodeMap: Record<string, string> = transformedNodes.reduce(
+    (acc, node) => {
+      acc[node.labels[0]] = node.id;
+      return acc;
+    },
+    {} as Record<string, string>
+  );
   const transformedRelationships: ExtendedRelationship[] = relationships
     .map((rel, index) => {
       const parts = rel.value.split(',');
@@ -693,8 +696,8 @@ export const extractGraphSchemaFromRawData = (
   nodes: RawNode[],
   relationships: RawRelationship[]
 ): {
-  nodes: OptionType[],
-  relationships: OptionType[]
+  nodes: OptionType[];
+  relationships: OptionType[];
 } => {
   const uniqueLabels = new Set<string>();
   const nodeList: OptionType[] = [];
@@ -724,7 +727,7 @@ export const extractGraphSchemaFromRawData = (
   }
   return {
     nodes: nodeList,
-    relationships: relList
+    relationships: relList,
   };
 };
 
@@ -734,7 +737,7 @@ export const generateGraphFromNodeAndRelVals = (
 ): UserDefinedGraphSchema => {
   const schemeVal: Scheme = {};
   const uniqueNodesMap = new Map<string, ExtendedNode>();
-  console.log('first rels', relVals)
+  console.log('first rels', relVals);
   let nodeIdCounter = 0;
   nodeVals.forEach((node) => {
     const key = `${node.label}-${node.value}`;
@@ -796,3 +799,27 @@ export const generateGraphFromNodeAndRelVals = (
     scheme: schemeVal,
   };
 };
+export function parseRelationshipString(input: string): {
+  value: string;
+  label: string;
+  source: string;
+  target: string;
+  type: string;
+} {
+  const regex = /(\w+)\s+-\[:([\w_]+)]->\s+(\w+)/;
+  const match = input.match(regex);
+
+  if (!match) {
+    throw new Error(`Invalid relationship format: ${input}`);
+  }
+
+  const [_, source, type, target] = match;
+
+  return {
+    value: `${source},${type},${target}`,
+    label: input,
+    source,
+    target,
+    type,
+  };
+}

@@ -24,8 +24,6 @@ const PatternContainer = ({
 }: PatternContainerProps) => {
   const nodeCount = useMemo(() => nodes?.length ?? 0, [nodes]);
   const relCount = useMemo(() => rels?.length ?? 0, [rels]);
-
-  console.log('count', nodeCount);
   return (
     <div className='h-full'>
       <div className='flex align-self-center justify-center border'>

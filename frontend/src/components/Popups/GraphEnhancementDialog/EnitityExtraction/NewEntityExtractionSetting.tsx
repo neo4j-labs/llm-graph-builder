@@ -9,7 +9,7 @@ import { showNormalToast } from '../../../../utils/Toasts';
 import PatternContainer from './PatternContainer';
 import SchemaViz from '../../../Graph/SchemaViz';
 import GraphPattern from './GraphPattern';
-import { updateLocalStorage, extractOptions } from '../../../../utils/Utils';
+import { updateLocalStorage, extractOptions, parseRelationshipString } from '../../../../utils/Utils';
 import TooltipWrapper from '../../../UI/TipWrapper';
 
 export default function NewEntityExtractionSetting({
@@ -33,9 +33,6 @@ export default function NewEntityExtractionSetting({
   closeEnhanceGraphSchemaDialog?: () => void;
 }) {
   const {
-    // selectedRels,
-    // selectedNodes,
-    // allPatterns,
     setSelectedRels,
     setSelectedNodes,
     userDefinedPattern,
@@ -67,12 +64,12 @@ export default function NewEntityExtractionSetting({
   const { userCredentials } = useCredentials();
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [viewPoint, setViewPoint] = useState<string>('tableView');
+  const [combinedPatterns, setCombinedPatterns] = useState<string[]>([]);
   const [tupleOptions, setTupleOptions] = useState<TupleType[]>([]);
   const [selectedSource, setSource] = useState<OptionType | null>(null);
   const [selectedType, setType] = useState<OptionType | null>(null);
   const [selectedTarget, setTarget] = useState<OptionType | null>(null);
   const [highlightPattern, setHighlightedPattern] = useState<string | null>(null);
-  const [combinedPatterns, setCombinedPatterns] = useState<string[]>([]);
   const [combinedNodes, setCombinedNodes] = useState<OptionType[]>([]);
   const [combinedRels, setCombinedRels] = useState<OptionType[]>([]);
   const [isSchemaMenuOpen, setIsSchemaMenuOpen] = useState<boolean>(false);
@@ -101,7 +98,6 @@ export default function NewEntityExtractionSetting({
     dbRels,
     schemaValRels,
   ]);
-
   useEffect(() => {
     if (userDefinedPattern.length > 0) {
       const lastPattern = userDefinedPattern[0];
@@ -111,14 +107,6 @@ export default function NewEntityExtractionSetting({
       }, 100);
     }
   }, [userDefinedPattern]);
-
-  // useEffect(() => {
-  //   if (allPatterns.length) {
-  //     setCombinedNodes(selectedNodes as OptionType[]);
-  //     setCombinedPatterns(allPatterns);
-  //     setCombinedRels(selectedRels as OptionType[]);
-  //   }
-  // }, [allPatterns, selectedNodes, selectedRels]);
 
   const handleFinalClear = () => {
     // overall
@@ -187,7 +175,7 @@ export default function NewEntityExtractionSetting({
     setTarget(target as OptionType);
   };
 
-  const handleAddPattern = () => {
+  const handleAddPattern = (tupleOptionsValue: TupleType[]) => {
     if (selectedSource && selectedType && selectedTarget) {
       const patternValue = `${selectedSource.value} -[:${selectedType.value}]-> ${selectedTarget.value}`;
       const relValue = `${selectedSource.value},${selectedType.value},${selectedTarget.value}`;
@@ -198,7 +186,6 @@ export default function NewEntityExtractionSetting({
         target: selectedTarget.value || '',
         type: selectedType.value || '',
       };
-      // Update User Defined Patterns
       setUserDefinedPattern((prev: string[]) => {
         const alreadyExists = prev.includes(patternValue);
         if (!alreadyExists) {
@@ -207,35 +194,35 @@ export default function NewEntityExtractionSetting({
         }
         return prev;
       });
-      setTupleOptions((prev: TupleType[]) => {
-        const alreadyExists = prev.some((tuple) => tuple.value === relValue);
-        if (!alreadyExists) {
-          const updatedTuples = [relationshipOption, ...prev];
-          const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(updatedTuples);
-          setUserDefinedNodes(nodeLabelOptions);
-          setUserDefinedRels(relationshipTypeOptions);
-          setAllPatterns((prev) => {
-            if (!prev.includes(patternValue)) {
-              return [patternValue, ...prev];
-            }
-            return prev;
-          });
-          setSelectedNodes((prev) => {
-            const allNodeValues = prev.map((p) => p.value);
-            const toAdd = [selectedSource, selectedTarget].filter((node) => !allNodeValues.includes(node.value));
-            return [...toAdd, ...prev];
-          });
-          setSelectedRels((prev) => {
-            const allRelValues = prev.map((p) => p.value);
-            if (!allRelValues.includes(selectedType.value)) {
-              return [selectedType, ...prev];
-            }
-            return prev;
-          });
-          return updatedTuples;
-        }
-        return prev;
-      });
+      const alreadyExists = tupleOptionsValue.some((tuple) => tuple.value === relValue);
+      if (!alreadyExists) {
+        const updatedTuples = [relationshipOption, ...tupleOptionsValue];
+        const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(updatedTuples);
+        setUserDefinedNodes(nodeLabelOptions);
+        setUserDefinedRels(relationshipTypeOptions);
+        setAllPatterns((prev) => {
+          if (!prev.includes(patternValue)) {
+            return [patternValue, ...prev];
+          }
+          return prev;
+        });
+        setSelectedNodes((prev) => {
+          const allNodeValues = prev.map((p) => p.value);
+          const toAdd = [selectedSource, selectedTarget].filter((node) => !allNodeValues.includes(node.value));
+          return [...toAdd, ...prev];
+        });
+        setSelectedRels((prev) => {
+          const allRelValues = prev.map((p) => p.value);
+          if (!allRelValues.includes(selectedType.value)) {
+            return [selectedType, ...prev];
+          }
+          return prev;
+        });
+        console.log({ updatedTuples });
+        setTupleOptions(updatedTuples);
+      } else {
+        showNormalToast('Pattern Already Exists');
+      }
       setSource(null);
       setType(null);
       setTarget(null);
@@ -350,7 +337,13 @@ export default function NewEntityExtractionSetting({
           selectedType={selectedType}
           selectedTarget={selectedTarget}
           onPatternChange={handlePatternChange}
-          onAddPattern={handleAddPattern}
+          onAddPattern={() =>
+            handleAddPattern(
+              tupleOptions.length > 0
+                ? tupleOptions
+                : combinedPatterns.map((pattern) => parseRelationshipString(pattern))
+            )
+          }
           selectedTupleOptions={tupleOptions}
         ></GraphPattern>
         <PatternContainer
