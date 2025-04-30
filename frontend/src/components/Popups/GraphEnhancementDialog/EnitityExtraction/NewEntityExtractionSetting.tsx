@@ -218,9 +218,11 @@ export default function NewEntityExtractionSetting({
           }
           return prev;
         });
-        console.log({ updatedTuples });
         setTupleOptions(updatedTuples);
       } else {
+        if (tupleOptions.length == 0 && tupleOptionsValue.length > 0) {
+          setTupleOptions(tupleOptionsValue);
+        }
         showNormalToast('Pattern Already Exists');
       }
       setSource(null);
