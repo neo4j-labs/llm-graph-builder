@@ -11,7 +11,7 @@ google_auth_oauthlib==1.2.1
 google-cloud-core==2.4.3
 json-repair==0.39.1
 pip-install==1.3.5
-langchain==0.3.23
+langchain==0.3.24
 langchain-aws==0.2.18
 langchain-anthropic==0.3.9
 langchain-fireworks==0.2.9
