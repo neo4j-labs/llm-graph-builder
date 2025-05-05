@@ -480,8 +480,9 @@ const PageLayout: React.FC = () => {
       ></PredefinedSchemaDialog>
       {isLargeDesktop ? (
         <div
-          className={`layout-wrapper ${!isLeftExpanded ? 'drawerdropzoneclosed' : ''} ${!isRightExpanded ? 'drawerchatbotclosed' : ''
-            } ${!isRightExpanded && !isLeftExpanded ? 'drawerclosed' : ''}`}
+          className={`layout-wrapper ${!isLeftExpanded ? 'drawerdropzoneclosed' : ''} ${
+            !isRightExpanded ? 'drawerchatbotclosed' : ''
+          } ${!isRightExpanded && !isLeftExpanded ? 'drawerclosed' : ''}`}
         >
           <SideNav
             toggles3Modal={toggleS3Modal}
@@ -540,12 +541,17 @@ const PageLayout: React.FC = () => {
         </div>
       ) : (
         <>
-          <Suspense fallback={<FallBackDialog />}>
-            <GCSModal openGCSModal={toggleGCSModal} open={showGCSModal} hideModal={toggleGCSModal} />
-          </Suspense>
-          <Suspense fallback={<FallBackDialog />}>
-            <S3Modal hideModal={toggleS3Modal} open={shows3Modal} />
-          </Suspense>
+          {APP_SOURCES.includes('gcs') && (
+            <Suspense fallback={<FallBackDialog />}>
+              <GCSModal openGCSModal={toggleGCSModal} open={showGCSModal} hideModal={toggleGCSModal} />
+            </Suspense>
+          )}
+          {APP_SOURCES.includes('s3') && (
+            <Suspense fallback={<FallBackDialog />}>
+              <S3Modal hideModal={toggleS3Modal} open={shows3Modal} />
+            </Suspense>
+          )}
+
           <Suspense fallback={<FallBackDialog />}>
             <GenericModal
               isOnlyYoutube={isYoutubeOnly}
