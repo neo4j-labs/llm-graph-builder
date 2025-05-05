@@ -131,7 +131,6 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
             label='Select/Create Source'
             size='medium'
             errorText={showWarning.source.showError ? showWarning.source.errorMessage : ''}
-            helpText='Create/Select Source label without using commas Ex: Person'
             selectProps={{
               isClearable: true,
               options: sourceOptions,
@@ -156,7 +155,6 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
         <Select
           label='Select/Create Type'
           size='medium'
-          helpText='Create/Select Type label without using commas Ex: WORKS_FOR'
           errorText={showWarning.type.showError ? showWarning.type.errorMessage : ''}
           selectProps={{
             isClearable: true,
@@ -181,7 +179,6 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
         />
         <Select
           label='Select/Create Target'
-          helpText='Create/Select Target label without using commas Ex: Company'
           errorText={showWarning.target.showError ? showWarning.target.errorMessage : ''}
           size='medium'
           selectProps={{
