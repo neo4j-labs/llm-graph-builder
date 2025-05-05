@@ -24,7 +24,7 @@
     "@neo4j-nvl/react": "^0.3.7",
     "@react-oauth/google": "^0.12.1",
     "@tanstack/react-table": "^8.20.5",
-    "@types/uuid": "^9.0.7",
+    "@types/uuid": "^10.0.0",
     "axios": "^1.8.4",
     "clsx": "^2.1.1",
     "eslint-plugin-react": "^7.37.4",
