@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@auth0/auth0-react": "^2.2.4",
-    "@emotion/styled": "^11.11.0",
+    "@emotion/styled": "^11.14.0",
     "@mui/material": "^5.15.10",
     "@mui/styled-engine": "^7.0.2",
     "@neo4j-devtools/word-color": "^0.0.8",
