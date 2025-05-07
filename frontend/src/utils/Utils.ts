@@ -873,3 +873,13 @@ export const updateSourceTargetTypeOptions = async ({
   setTypeOptions(newTypeOptions);
   return [newSourceOptions, newTargetOptions, newTypeOptions];
 };
+
+export const deduplicateByValue = (arrays: { value: any }[]) => {
+  const map = new Map();
+  arrays.forEach((item: { value: any }) => {
+    if (!map.has(item.value)) {
+      map.set(item.value, item);
+    }
+  });
+  return Array.from(map.values());
+};

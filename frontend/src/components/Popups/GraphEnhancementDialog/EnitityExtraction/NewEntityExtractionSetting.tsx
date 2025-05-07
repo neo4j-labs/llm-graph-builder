@@ -9,7 +9,12 @@ import { showNormalToast } from '../../../../utils/Toasts';
 import PatternContainer from './PatternContainer';
 import SchemaViz from '../../../Graph/SchemaViz';
 import GraphPattern from './GraphPattern';
-import { updateLocalStorage, extractOptions, parseRelationshipString } from '../../../../utils/Utils';
+import {
+  updateLocalStorage,
+  extractOptions,
+  parseRelationshipString,
+  deduplicateByValue,
+} from '../../../../utils/Utils';
 import TooltipWrapper from '../../../UI/TipWrapper';
 
 export default function NewEntityExtractionSetting({
@@ -79,8 +84,10 @@ export default function NewEntityExtractionSetting({
     const patterns = Array.from(
       new Set([...userDefinedPattern, ...preDefinedPattern, ...dbPattern, ...schemaTextPattern])
     );
-    const nodesVal = Array.from(new Set([...userDefinedNodes, ...preDefinedNodes, ...dbNodes, ...schemaValNodes]));
-    const relsVal = Array.from(new Set([...userDefinedRels, ...preDefinedRels, ...dbRels, ...schemaValRels]));
+    const allNodes = [...userDefinedNodes, ...preDefinedNodes, ...dbNodes, ...schemaValNodes];
+    const nodesVal = deduplicateByValue(allNodes);
+    const allRels = [...userDefinedRels, ...preDefinedRels, ...dbRels, ...schemaValRels];
+    const relsVal = deduplicateByValue(allRels);
     setCombinedPatterns(patterns);
     setCombinedNodes(nodesVal);
     setCombinedRels(relsVal);

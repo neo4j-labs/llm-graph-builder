@@ -92,7 +92,6 @@ const PredefinedSchemaDialog = ({ open, onClose, onApply }: SchemaFromTextProps)
     });
     onApply(preDefinedPattern, preDefinedNodes, preDefinedRels, newSourceOptions, newTargetOptions, newTypeOptions);
     onClose();
-    setSelectedPreDefOption(null);
   };
 
   const handleCancel = () => {
