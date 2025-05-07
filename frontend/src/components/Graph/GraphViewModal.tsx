@@ -20,7 +20,7 @@ import {
   InformationCircleIconOutline,
   MagnifyingGlassMinusIconOutline,
   MagnifyingGlassPlusIconOutline,
-  ExploreIcon
+  ExploreIcon,
 } from '@neo4j-ndl/react/icons';
 import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
 import { filterData, getCheckboxConditions, graphTypeFromNodes, processGraphData } from '../../utils/Utils';
@@ -203,26 +203,29 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     }
   }, [debouncedQuery]);
 
-  const mouseEventCallbacks = useMemo(() => ({
-    onNodeClick: (clickedNode: Node) => {
-      if (selected?.id !== clickedNode.id || selected?.type !== 'node') {
-        setSelected({ type: 'node', id: clickedNode.id });
-      }
-    },
-    onRelationshipClick: (clickedRelationship: Relationship) => {
-      if (selected?.id !== clickedRelationship.id || selected?.type !== 'relationship') {
-        setSelected({ type: 'relationship', id: clickedRelationship.id });
-      }
-    },
-    onCanvasClick: () => {
-      if (selected !== undefined) {
-        setSelected(undefined);
-      }
-    },
-    onPan: true,
-    onZoom: true,
-    onDrag: true,
-  }), [selected]);
+  const mouseEventCallbacks = useMemo(
+    () => ({
+      onNodeClick: (clickedNode: Node) => {
+        if (selected?.id !== clickedNode.id || selected?.type !== 'node') {
+          setSelected({ type: 'node', id: clickedNode.id });
+        }
+      },
+      onRelationshipClick: (clickedRelationship: Relationship) => {
+        if (selected?.id !== clickedRelationship.id || selected?.type !== 'relationship') {
+          setSelected({ type: 'relationship', id: clickedRelationship.id });
+        }
+      },
+      onCanvasClick: () => {
+        if (selected !== undefined) {
+          setSelected(undefined);
+        }
+      },
+      onPan: true,
+      onZoom: true,
+      onDrag: true,
+    }),
+    [selected]
+  );
 
   const initGraph = (
     graphType: GraphType[],
@@ -356,17 +359,13 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setSelected(undefined);
   };
 
-  const handleSchemaView = async (
-    rawNodes: any[],
-    rawRelationships: any[]
-  ) => {
+  const handleSchemaView = async (rawNodes: any[], rawRelationships: any[]) => {
     const { nodes, relationships } = extractGraphSchemaFromRawData(rawNodes, rawRelationships);
     setSchemaNodes(nodes as any);
     setSchemaRels(relationships as any);
     setViewcheck('viz');
     setOpenGraphView(true);
   };
-
 
   return (
     <>
@@ -511,7 +510,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         />
       )}
     </>
-
   );
 };
 export default GraphViewModal;

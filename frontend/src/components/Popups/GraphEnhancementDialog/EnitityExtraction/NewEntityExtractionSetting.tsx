@@ -132,18 +132,10 @@ export default function NewEntityExtractionSetting({
     setCombinedPatterns([]);
     setCombinedNodes([]);
     setCombinedRels([]);
+    setTupleOptions([]);
     updateLocalStorage(userCredentials!, 'selectedNodeLabels', []);
     updateLocalStorage(userCredentials!, 'selectedRelationshipLabels', []);
     updateLocalStorage(userCredentials!, 'selectedPattern', []);
-    updateLocalStorage(userCredentials!, 'preDefinedNodeLabels', []);
-    updateLocalStorage(userCredentials!, 'preDefinedRelationshipLabels', []);
-    updateLocalStorage(userCredentials!, 'preDefinedPatterns', []);
-    updateLocalStorage(userCredentials!, 'textNodeLabels', []);
-    updateLocalStorage(userCredentials!, 'textRelationLabels', []);
-    updateLocalStorage(userCredentials!, 'textPatterns', []);
-    updateLocalStorage(userCredentials!, 'dbNodeLabels', []);
-    updateLocalStorage(userCredentials!, 'dbRelationLabels', []);
-    updateLocalStorage(userCredentials!, 'dbPatterns', []);
     showNormalToast(`Successfully Removed the Schema settings`);
   };
 
@@ -182,45 +174,48 @@ export default function NewEntityExtractionSetting({
       const relationshipOption: TupleType = {
         value: relValue,
         label: patternValue,
-        source: selectedSource.value || '',
-        target: selectedTarget.value || '',
-        type: selectedType.value || '',
+        source: selectedSource.value,
+        target: selectedTarget.value,
+        type: selectedType.value,
       };
-      setUserDefinedPattern((prev: string[]) => {
-        const alreadyExists = prev.includes(patternValue);
-        if (!alreadyExists) {
-          const updatedPattern = [patternValue, ...prev];
-          return updatedPattern;
-        }
-        return prev;
-      });
+      setUserDefinedPattern((prev) => (prev.includes(patternValue) ? prev : [patternValue, ...prev]));
       const alreadyExists = tupleOptionsValue.some((tuple) => tuple.value === relValue);
       if (!alreadyExists) {
-        const updatedTuples = [relationshipOption, ...tupleOptionsValue];
+        const updatedTuples = [relationshipOption];
         const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(updatedTuples);
-        setUserDefinedNodes(nodeLabelOptions);
-        setUserDefinedRels(relationshipTypeOptions);
-        setAllPatterns((prev) => {
-          if (!prev.includes(patternValue)) {
-            return [patternValue, ...prev];
-          }
-          return prev;
+        setUserDefinedNodes((prev: OptionType[]) => {
+          const mergedVal = [...prev, ...nodeLabelOptions];
+          const uniqueVal = mergedVal.filter(
+            (option, index, key) => index === key.findIndex((o) => o.value === option.value)
+          );
+          return uniqueVal;
         });
+        setUserDefinedRels((prev: OptionType[]) => {
+          const mergedVal = [...prev, ...relationshipTypeOptions];
+          const uniqueVal = mergedVal.filter(
+            (option, index, key) => index === key.findIndex((o) => o.value === option.value)
+          );
+          return uniqueVal;
+        });
+        setAllPatterns((prev) => (prev.includes(patternValue) ? prev : [patternValue, ...prev]));
         setSelectedNodes((prev) => {
-          const allNodeValues = prev.map((p) => p.value);
-          const toAdd = [selectedSource, selectedTarget].filter((node) => !allNodeValues.includes(node.value));
-          return [...toAdd, ...prev];
+          const mergedVal = [...prev, selectedSource, selectedTarget];
+          const uniqueVal = mergedVal.filter(
+            (option, index, key) => index === key.findIndex((o) => o.value === option.value)
+          );
+          return uniqueVal;
         });
+
         setSelectedRels((prev) => {
-          const allRelValues = prev.map((p) => p.value);
-          if (!allRelValues.includes(selectedType.value)) {
-            return [selectedType, ...prev];
-          }
-          return prev;
+          const merged = [...prev, selectedType];
+          const uniqueVal = merged.filter(
+            (option, index, key) => index === key.findIndex((o) => o.value === option.value)
+          );
+          return uniqueVal;
         });
-        setTupleOptions(updatedTuples);
+        setTupleOptions((prev) => [...updatedTuples, ...prev]);
       } else {
-        if (tupleOptions.length == 0 && tupleOptionsValue.length > 0) {
+        if (tupleOptions.length === 0 && tupleOptionsValue.length > 0) {
           setTupleOptions(tupleOptionsValue);
         }
         showNormalToast('Pattern Already Exists');

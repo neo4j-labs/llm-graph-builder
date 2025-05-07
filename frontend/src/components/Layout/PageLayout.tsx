@@ -16,7 +16,7 @@ import { envConnectionAPI } from '../../services/ConnectAPI';
 import { healthStatus } from '../../services/HealthStatus';
 import { useAuth0 } from '@auth0/auth0-react';
 import { showErrorToast } from '../../utils/Toasts';
-import { APP_SOURCES } from '../../utils/Constants';
+import { APP_SOURCES, LOCAL_KEYS } from '../../utils/Constants';
 import { createDefaultFormData } from '../../API/Index';
 import LoadDBSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/LoadExistingSchema';
 import PredefinedSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/PredefinedSchemaDialog';
@@ -336,47 +336,86 @@ const PageLayout: React.FC = () => {
     }
   }, []);
 
-  const handleApplyPatternsFromText = useCallback((newPatterns: string[], nodes: OptionType[], rels: OptionType[]) => {
-    setSchemaTextPattern((prevPatterns: string[]) => {
-      const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
-      return uniquePatterns;
-    });
-    setShowTextFromSchemaDialog({
-      triggeredFrom: 'schematextApply',
-      show: true,
-    });
-    setSchemaValNodes(nodes);
-    setSchemaValRels(rels);
-    setSchemaView('text');
-  }, []);
+  const handleApplyPatternsFromText = useCallback(
+    (
+      newPatterns: string[],
+      nodes: OptionType[],
+      rels: OptionType[],
+      updatedSource: OptionType[],
+      updatedTarget: OptionType[],
+      updatedType: OptionType[]
+    ) => {
+      setSchemaTextPattern((prevPatterns: string[]) => {
+        const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
+        return uniquePatterns;
+      });
+      setShowTextFromSchemaDialog({
+        triggeredFrom: 'schematextApply',
+        show: true,
+      });
+      setSchemaValNodes(nodes);
+      setSchemaValRels(rels);
+      setSchemaView('text');
+      localStorage.setItem(LOCAL_KEYS.source, JSON.stringify(updatedSource));
+      localStorage.setItem(LOCAL_KEYS.type, JSON.stringify(updatedType));
+      localStorage.setItem(LOCAL_KEYS.target, JSON.stringify(updatedTarget));
+    },
+    []
+  );
 
-  const handleDbApply = useCallback((newPatterns: string[], nodes: OptionType[], rels: OptionType[]) => {
-    setDbPattern((prevPatterns: string[]) => {
-      const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
-      return uniquePatterns;
-    });
-    setSchemaLoadDialog({
-      triggeredFrom: 'loadExistingSchemaApply',
-      show: true,
-    });
-    setSchemaView('db');
-    setDbNodes(nodes);
-    setDbRels(rels);
-  }, []);
+  const handleDbApply = useCallback(
+    (
+      newPatterns: string[],
+      nodes: OptionType[],
+      rels: OptionType[],
+      updatedSource: OptionType[],
+      updatedTarget: OptionType[],
+      updatedType: OptionType[]
+    ) => {
+      setDbPattern((prevPatterns: string[]) => {
+        const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
+        return uniquePatterns;
+      });
+      setSchemaLoadDialog({
+        triggeredFrom: 'loadExistingSchemaApply',
+        show: true,
+      });
+      setSchemaView('db');
+      setDbNodes(nodes);
+      setDbRels(rels);
+      localStorage.setItem(LOCAL_KEYS.source, JSON.stringify(updatedSource));
+      localStorage.setItem(LOCAL_KEYS.type, JSON.stringify(updatedType));
+      localStorage.setItem(LOCAL_KEYS.target, JSON.stringify(updatedTarget));
+    },
+    []
+  );
 
-  const handlePredinedApply = useCallback((newPatterns: string[], nodes: OptionType[], rels: OptionType[]) => {
-    setPreDefinedPattern((prevPatterns: string[]) => {
-      const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
-      return uniquePatterns;
-    });
-    setPredefinedSchemaDialog({
-      triggeredFrom: 'predefinedSchemaApply',
-      show: true,
-    });
-    setSchemaView('preDefined');
-    setPreDefinedNodes(nodes);
-    setPreDefinedRels(rels);
-  }, []);
+  const handlePredinedApply = useCallback(
+    (
+      newPatterns: string[],
+      nodes: OptionType[],
+      rels: OptionType[],
+      updatedSource: OptionType[],
+      updatedTarget: OptionType[],
+      updatedType: OptionType[]
+    ) => {
+      setPreDefinedPattern((prevPatterns: string[]) => {
+        const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
+        return uniquePatterns;
+      });
+      setPredefinedSchemaDialog({
+        triggeredFrom: 'predefinedSchemaApply',
+        show: true,
+      });
+      setSchemaView('preDefined');
+      setPreDefinedNodes(nodes);
+      setPreDefinedRels(rels);
+      localStorage.setItem(LOCAL_KEYS.source, JSON.stringify(updatedSource));
+      localStorage.setItem(LOCAL_KEYS.type, JSON.stringify(updatedType));
+      localStorage.setItem(LOCAL_KEYS.target, JSON.stringify(updatedTarget));
+    },
+    []
+  );
 
   const openPredefinedSchema = useCallback(() => {
     setPredefinedSchemaDialog({ triggeredFrom: 'predefinedDialog', show: true });
