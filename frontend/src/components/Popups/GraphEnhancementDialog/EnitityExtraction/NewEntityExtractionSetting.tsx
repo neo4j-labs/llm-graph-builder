@@ -13,7 +13,8 @@ import {
   updateLocalStorage,
   extractOptions,
   parseRelationshipString,
-  deduplicateByValue,
+  deduplicateByRelationshipTypeOnly,
+  deduplicateNodeByValue,
 } from '../../../../utils/Utils';
 import TooltipWrapper from '../../../UI/TipWrapper';
 
@@ -85,9 +86,9 @@ export default function NewEntityExtractionSetting({
       new Set([...userDefinedPattern, ...preDefinedPattern, ...dbPattern, ...schemaTextPattern])
     );
     const allNodes = [...userDefinedNodes, ...preDefinedNodes, ...dbNodes, ...schemaValNodes];
-    const nodesVal = deduplicateByValue(allNodes);
+    const nodesVal = deduplicateNodeByValue(allNodes);
     const allRels = [...userDefinedRels, ...preDefinedRels, ...dbRels, ...schemaValRels];
-    const relsVal = deduplicateByValue(allRels);
+    const relsVal = deduplicateByRelationshipTypeOnly(allRels);
     setCombinedPatterns(patterns);
     setCombinedNodes(nodesVal);
     setCombinedRels(relsVal);

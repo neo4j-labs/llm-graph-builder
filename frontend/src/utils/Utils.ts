@@ -874,7 +874,7 @@ export const updateSourceTargetTypeOptions = async ({
   return [newSourceOptions, newTargetOptions, newTypeOptions];
 };
 
-export const deduplicateByValue = (arrays: { value: any }[]) => {
+export const deduplicateNodeByValue = (arrays: { value: any }[]) => {
   const map = new Map();
   arrays.forEach((item: { value: any }) => {
     if (!map.has(item.value)) {
@@ -882,4 +882,17 @@ export const deduplicateByValue = (arrays: { value: any }[]) => {
     }
   });
   return Array.from(map.values());
+};
+
+export const deduplicateByRelationshipTypeOnly = (arrays: { value: string; label: string }[]) => {
+  const seen = new Set<string>();
+  const result: { value: string; label: string }[] = [];
+  arrays.forEach((item) => {
+    const [, type] = item.value.split(',');
+    if (!seen.has(type)) {
+      seen.add(type);
+      result.push(item);
+    }
+  });
+  return result;
 };
