@@ -98,7 +98,7 @@ def process_chunkids(driver, chunk_ids, entities):
         logging.info(f"Query process completed successfully for chunk ids: {chunk_ids}")
         return result
     except Exception as e:
-        logging.error(f"chunkid_entities module: Error processing chunk ids: {chunk_ids}. Error: {e}")
+        logging.error(f"_entities module: Error processing chunk ids: {chunk_ids}. Error: {e}")
         raise  
 
 def remove_duplicate_nodes(nodes,property="element_id"):

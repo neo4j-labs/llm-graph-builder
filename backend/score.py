@@ -18,7 +18,7 @@ from sse_starlette.sse import EventSourceResponse
 from src.communities import create_communities
 from src.neighbours import get_neighbour_nodes
 import json
-from typing import List
+from typing import List, Optional, Dict, Any
 from starlette.middleware.sessions import SessionMiddleware
 from google.oauth2.credentials import Credentials
 import os
@@ -34,6 +34,23 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 from langchain_neo4j import Neo4jGraph
 from pydantic import BaseModel
 
+# this load_dotenv added by ian for non-docker environments
+from dotenv import load_dotenv
+
+# Get the absolute path to the .env file
+env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+logging.info(f"Loading .env file from: {env_path}")
+
+# Debug: Print contents of .env file
+try:
+    with open(env_path, 'r') as f:
+        env_contents = f.read()
+        logging.info(f"\nContents of main .env file:\n{env_contents}")
+except Exception as e:
+    logging.error(f"Error reading .env file: {e}")
+
+load_dotenv(env_path)
+
 class Message(BaseModel):
     role: str
     content: str
@@ -41,6 +58,7 @@ class Message(BaseModel):
 class MessageData(BaseModel):
     messages: List[Message]  # Wrap the messages array in an object    
     question: str
+    filter_properties: Optional[Dict[str, Any]] = None
     # tools: List[str]
 
 logger = CustomLogger()
@@ -48,8 +66,18 @@ CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
 MERGED_DIR = os.path.join(os.path.dirname(__file__), "merged_files")
 
 def printEnvKey(key):
-    value = os.environ.get(key)
-    logging.info(f"{key} = {value}")
+    if key in os.environ:
+        value = os.environ.get(key)
+        logging.info(f"{key} exists and has value: {value}")
+    else:
+        logging.info(f"{key} does NOT exist in environment variables")
+
+def printAllEnvVars():
+    logging.info("All environment variables:")
+    for key, value in os.environ.items():
+        logging.info(f"{key} = {value}")
+
+# printAllEnvVars()
 
 def healthy_condition():
     output = {"healthy": True}
@@ -388,6 +416,7 @@ async def magic_trek_chat_bot(
     logging.info(messageData)
     messages = messageData.messages
     question = messageData.question
+    filter_properties = messageData.filter_properties
     print(f'question = {question}')
     print(messages)
     print(len(messages))
@@ -401,10 +430,18 @@ async def magic_trek_chat_bot(
     ## added by ian
     # mode = "graph_vector_fulltext" ## added by ian
     mode = "graph_vector" ## changed by ian from graph_vector_fulltext to graph_vector april 1, 2025
-    uri = "neo4j+s://939cd2a2.databases.neo4j.io"
+
+    # magic trek rag grade 6
+    # uri = "neo4j+s://939cd2a2.databases.neo4j.io"
+    # userName = "neo4j"
+    # password = "4SG1SUwI22yLo6DMNkRZe1ItvGp778LIEFpCE_aOEL0"
+    # database = "neo4j"
+    # trek-labs-rag-db-dev
+    uri = "neo4j+s://90ea8c8c.databases.neo4j.io"
     userName = "neo4j"
-    password = "4SG1SUwI22yLo6DMNkRZe1ItvGp778LIEFpCE_aOEL0"
+    password = "5MJ_WCRv7htDYH5XeQbQU1vVjuw9GC7F-bkPE8kKymk"
     database = "neo4j"
+
     # model = "openai_gpt_3.5" # changed from this model by ian friday mar 21, 2025
     model = "openai_gpt_4o_mini" 
     # model = "gpt-4-turbo-preview"
@@ -421,7 +458,7 @@ async def magic_trek_chat_bot(
         graph_DB_dataAccess = graphDBdataAccess(graph)
         write_access = graph_DB_dataAccess.check_account_access(database=database)
         result = await asyncio.to_thread(
-            MAGIC_TREK_QA_RAG ,
+            MAGIC_TREK_QA_RAG,
             graph=graph,
             model=model,
             messages=messages, 
@@ -429,7 +466,8 @@ async def magic_trek_chat_bot(
             document_names=document_names,
             session_id=session_id,
             mode=mode,
-            write_access=write_access
+            write_access=write_access,
+            filter_properties=filter_properties
         )
 
         total_call_time = time.time() - qa_rag_start_time

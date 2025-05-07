@@ -16,7 +16,7 @@ echo "Using ECR_REPOSITORY $ECR_REPOSITORY"
 
 # 1. Build Docker images using Docker Compose
 echo "Building Docker images..."
-docker-compose build
+docker-compose build --no-cache
 
 # 2. Authenticate Docker to AWS ECR
 echo "Authenticating to AWS ECR..."

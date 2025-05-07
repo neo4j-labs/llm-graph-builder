@@ -1,3 +1,4 @@
+pycryptodome==3.22.0
 asyncio==3.4.3
 boto3==1.35.69
 botocore==1.35.69
@@ -59,3 +60,4 @@ Secweb==1.11.0
 ragas==0.2.6
 rouge_score==0.1.2
 langchain-neo4j==0.1.1
+pdfminer.six==20240706

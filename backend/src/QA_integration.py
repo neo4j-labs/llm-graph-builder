@@ -79,6 +79,7 @@ class CustomCallback(BaseCallbackHandler):
     ) -> None:
         logging.info("question transformed")
         self.transformed_question = response.generations[0][0].text.strip()
+        logging.info(self.transformed_question)
 
 def get_history_by_session_id(session_id):
     try:
@@ -305,6 +306,8 @@ def create_document_retriever_chain(llm, retriever):
                 MessagesPlaceholder(variable_name="messages")
             ]
         )
+        logging.info("query_transform_prompt created")
+        logging.info(query_transform_prompt)
 
         output_parser = StrOutputParser()
 
@@ -380,7 +383,7 @@ def initialize_neo4j_vector(graph, chat_mode_settings):
         raise
     return neo_db
 
-def create_retriever(neo_db, document_names, chat_mode_settings,search_k, score_threshold):
+def create_retriever(neo_db, document_names, chat_mode_settings, search_k, score_threshold, filter_properties=None):
     if document_names and chat_mode_settings["document_filter"]:
         retriever = neo_db.as_retriever(
             search_type="similarity_score_threshold",
@@ -392,19 +395,26 @@ def create_retriever(neo_db, document_names, chat_mode_settings,search_k, score_
         )
         logging.info(f"Successfully created retriever with search_k={search_k}, score_threshold={score_threshold} for documents {document_names}")
     else:
+        search_kwargs = {
+            'k': search_k, 
+            'score_threshold': score_threshold
+        }
+        if filter_properties is not None:
+            search_kwargs['filter'] = filter_properties
+            
         retriever = neo_db.as_retriever(
             search_type="similarity_score_threshold",
-            search_kwargs={'k': search_k, 'score_threshold': score_threshold}
+            search_kwargs=search_kwargs
         )
         logging.info(f"Successfully created retriever with search_k={search_k}, score_threshold={score_threshold}")
     return retriever
 
-def get_neo4j_retriever(graph, document_names,chat_mode_settings, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD):
+def get_neo4j_retriever(graph, document_names, chat_mode_settings, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD, filter_properties=None):
     try:
         neo_db = initialize_neo4j_vector(graph, chat_mode_settings)
         # document_names= list(map(str.strip, json.loads(document_names)))
         search_k = chat_mode_settings["top_k"]
-        retriever = create_retriever(neo_db, document_names,chat_mode_settings, search_k, score_threshold)
+        retriever = create_retriever(neo_db, document_names, chat_mode_settings, search_k, score_threshold, filter_properties)
         return retriever
     except Exception as e:
         index_name = chat_mode_settings.get("index_name")
@@ -455,7 +465,7 @@ def extract_tool_calls_direct(model, messages):
     tools = list(map(remap_tool_names, tools))
     return tools
 
-def setup_chat(model, graph, document_names, chat_mode_settings):
+def setup_chat(model, graph, document_names, chat_mode_settings, filter_properties=None):
     start_time = time.time()
     try:
         if model == "diffbot":
@@ -464,7 +474,7 @@ def setup_chat(model, graph, document_names, chat_mode_settings):
         llm, model_name = get_llm(model=model)
         logging.info(f"Model called in chat: {model} (version: {model_name})")
 
-        retriever = get_neo4j_retriever(graph=graph, chat_mode_settings=chat_mode_settings, document_names=document_names)
+        retriever = get_neo4j_retriever(graph=graph, chat_mode_settings=chat_mode_settings, document_names=document_names, filter_properties=filter_properties)
         doc_retriever = create_document_retriever_chain(llm, retriever)
         
         chat_setup_time = time.time() - start_time
@@ -511,9 +521,9 @@ def extract_tool_calls(model, messages):
     return tools
 
 
-def process_chat_response(messages, history, question, model, graph, document_names, chat_mode_settings, extract_tools = False):
+def process_chat_response(messages, history, question, model, graph, document_names, chat_mode_settings, extract_tools=False, filter_properties=None):
     try:
-        llm, doc_retriever, model_version = setup_chat(model, graph, document_names, chat_mode_settings)
+        llm, doc_retriever, model_version = setup_chat(model, graph, document_names, chat_mode_settings, filter_properties)
 
         # Shared variable to store tool calls, initialized as empty list
         tool_calls = []
@@ -781,11 +791,12 @@ def convert_messages_to_langchain(messages):
     
     return langchain_messages
 
-def MAGIC_TREK_QA_RAG(graph,model, messages, question, document_names, session_id, mode, write_access=True):
+def MAGIC_TREK_QA_RAG(graph,model, messages, question, document_names, session_id, mode, write_access=True, filter_properties=None):
     logging.info(f"Chat Mode: {mode}")
     document_names = "[]"
 
     logging.info(f"question = {question}")
+    logging.info(f"filter_properties = {filter_properties}")
     # receive the message history from our frontend
     messages = convert_messages_to_langchain(messages)
     logging.info("translated message history:")
@@ -806,6 +817,7 @@ def MAGIC_TREK_QA_RAG(graph,model, messages, question, document_names, session_i
     logging.info(messages)
 
     if mode == CHAT_GRAPH_MODE:
+        logging.info("process_graph_response called")
         result = process_graph_response(model, graph, question, messages, history=None)
     else:
         chat_mode_settings = get_chat_mode_settings(mode=mode)
@@ -827,6 +839,7 @@ def MAGIC_TREK_QA_RAG(graph,model, messages, question, document_names, session_i
                 "user": "chatbot"
             }
         else:
+            logging.info("process_chat_response called")
             result = process_chat_response(
                 messages=messages,
                 history=None, # TODO: once we set up history pass it again instead of None
@@ -835,7 +848,8 @@ def MAGIC_TREK_QA_RAG(graph,model, messages, question, document_names, session_i
                 graph=graph, 
                 document_names=document_names,
                 chat_mode_settings=chat_mode_settings,
-                extract_tools=True
+                extract_tools=True,
+                filter_properties=filter_properties
             )
 
     # result["session_id"] = session_id
@@ -880,7 +894,7 @@ def QA_RAG(graph,model, question, document_names, session_id, mode, write_access
                 "user": "chatbot"
             }
         else:
-            result = process_chat_response(messages,history, question, model, graph, document_names,chat_mode_settings, extract_tools=False)
+            result = process_chat_response(messages,history, question, model, graph, document_names,chat_mode_settings, extract_tools=False, filter_properties={})
 
     result["session_id"] = session_id
     
