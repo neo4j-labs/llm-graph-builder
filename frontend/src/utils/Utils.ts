@@ -23,7 +23,7 @@ import youtubedarklogo from '../assets/images/youtube-darkmode.svg';
 import youtubelightlogo from '../assets/images/youtube-lightmode.svg';
 import s3logo from '../assets/images/s3logo.png';
 import gcslogo from '../assets/images/gcs.webp';
-import { chatModeLables, EXPIRATION_DAYS, LOCAL_KEYS, sourceOptions, targetOptions, typeOptions } from './Constants';
+import { chatModeLables, EXPIRATION_DAYS } from './Constants';
 
 // Get the Url
 export const url = () => {
