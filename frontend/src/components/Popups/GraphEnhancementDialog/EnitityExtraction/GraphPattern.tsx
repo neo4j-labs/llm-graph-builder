@@ -66,6 +66,7 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
       switch (type) {
         case 'source':
           setSourceOptions((prev) => checkUniqueValue(prev, newOption));
+          setTargetOptions((prev) => checkUniqueValue(prev, newOption));
           onPatternChange(newOption, selectedType as OptionType, selectedTarget as OptionType);
           break;
         case 'type':
@@ -74,6 +75,7 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
           break;
         case 'target':
           setTargetOptions((prev) => checkUniqueValue(prev, newOption));
+          setSourceOptions((prev) => checkUniqueValue(prev, newOption));
           onPatternChange(selectedSource as OptionType, selectedType as OptionType, newOption);
           break;
         default:
