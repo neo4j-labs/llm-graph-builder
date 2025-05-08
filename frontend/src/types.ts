@@ -159,6 +159,12 @@ export interface ContentProps {
   setOpenConnection: Dispatch<SetStateAction<connectionState>>;
   showDisconnectButton: boolean;
   connectionStatus: boolean;
+  combinedPatterns: string[];
+  setCombinedPatterns: Dispatch<SetStateAction<string[]>>;
+  combinedNodes: OptionType[];
+  setCombinedNodes: Dispatch<SetStateAction<OptionType[]>>;
+  combinedRels: OptionType[];
+  setCombinedRels: Dispatch<SetStateAction<OptionType[]>>;
 }
 
 export interface FileTableProps {

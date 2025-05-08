@@ -1,4 +1,4 @@
-import { MouseEventHandler, useCallback, useEffect, useState, useRef } from 'react';
+import { MouseEventHandler, useCallback, useEffect, useState, useRef, Dispatch, SetStateAction } from 'react';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
 import { buttonCaptions, tooltips } from '../../../../utils/Constants';
 import { Flex, Typography, DropdownButton, Menu } from '@neo4j-ndl/react';
@@ -27,6 +27,12 @@ export default function NewEntityExtractionSetting({
   settingView,
   onContinue,
   closeEnhanceGraphSchemaDialog,
+  combinedPatterns,
+  setCombinedPatterns,
+  combinedNodes,
+  setCombinedNodes,
+  combinedRels,
+  setCombinedRels,
 }: {
   view: 'Dialog' | 'Tabs';
   open?: boolean;
@@ -37,6 +43,12 @@ export default function NewEntityExtractionSetting({
   settingView: 'contentView' | 'headerView';
   onContinue?: () => void;
   closeEnhanceGraphSchemaDialog?: () => void;
+  combinedPatterns: string[];
+  setCombinedPatterns: Dispatch<SetStateAction<string[]>>;
+  combinedNodes: OptionType[];
+  setCombinedNodes: Dispatch<SetStateAction<OptionType[]>>;
+  combinedRels: OptionType[];
+  setCombinedRels: Dispatch<SetStateAction<OptionType[]>>;
 }) {
   const {
     setSelectedRels,
@@ -66,46 +78,45 @@ export default function NewEntityExtractionSetting({
     setPreDefinedRels,
     preDefinedPattern,
     setPreDefinedPattern,
+    allPatterns,
   } = useFileContext();
   const { userCredentials } = useCredentials();
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [viewPoint, setViewPoint] = useState<string>('tableView');
-  const [combinedPatterns, setCombinedPatterns] = useState<string[]>([]);
   const [tupleOptions, setTupleOptions] = useState<TupleType[]>([]);
   const [selectedSource, setSource] = useState<OptionType | null>(null);
   const [selectedType, setType] = useState<OptionType | null>(null);
   const [selectedTarget, setTarget] = useState<OptionType | null>(null);
   const [highlightPattern, setHighlightedPattern] = useState<string | null>(null);
-  const [combinedNodes, setCombinedNodes] = useState<OptionType[]>([]);
-  const [combinedRels, setCombinedRels] = useState<OptionType[]>([]);
+
   const [isSchemaMenuOpen, setIsSchemaMenuOpen] = useState<boolean>(false);
   const schemaBtnRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    const patterns = Array.from(
-      new Set([...userDefinedPattern, ...preDefinedPattern, ...dbPattern, ...schemaTextPattern])
-    );
-    const allNodes = [...userDefinedNodes, ...preDefinedNodes, ...dbNodes, ...schemaValNodes];
-    const nodesVal = deduplicateNodeByValue(allNodes);
-    const allRels = [...userDefinedRels, ...preDefinedRels, ...dbRels, ...schemaValRels];
-    const relsVal = deduplicateByRelationshipTypeOnly(allRels);
-    setCombinedPatterns(patterns);
-    setCombinedNodes(nodesVal);
-    setCombinedRels(relsVal);
-  }, [
-    userDefinedPattern,
-    preDefinedPattern,
-    dbPattern,
-    schemaTextPattern,
-    userDefinedNodes,
-    preDefinedNodes,
-    dbNodes,
-    schemaValNodes,
-    userDefinedRels,
-    preDefinedRels,
-    dbRels,
-    schemaValRels,
-  ]);
+  // useEffect(() => {
+  //   const patterns = Array.from(
+  //     new Set([...userDefinedPattern, ...preDefinedPattern, ...dbPattern, ...schemaTextPattern])
+  //   );
+  //   const allNodes = [...userDefinedNodes, ...preDefinedNodes, ...dbNodes, ...schemaValNodes];
+  //   const nodesVal = deduplicateNodeByValue(allNodes);
+  //   const allRels = [...userDefinedRels, ...preDefinedRels, ...dbRels, ...schemaValRels];
+  //   const relsVal = deduplicateByRelationshipTypeOnly(allRels);
+  //   setCombinedPatterns(patterns);
+  //   setCombinedNodes(nodesVal);
+  //   setCombinedRels(relsVal);
+  // }, [
+  //   userDefinedPattern,
+  //   preDefinedPattern,
+  //   dbPattern,
+  //   schemaTextPattern,
+  //   userDefinedNodes,
+  //   preDefinedNodes,
+  //   dbNodes,
+  //   schemaValNodes,
+  //   userDefinedRels,
+  //   preDefinedRels,
+  //   dbRels,
+  //   schemaValRels,
+  // ]);
   useEffect(() => {
     if (userDefinedPattern.length > 0) {
       const lastPattern = userDefinedPattern[0];
@@ -187,6 +198,8 @@ export default function NewEntityExtractionSetting({
         type: selectedType.value,
       };
       setUserDefinedPattern((prev) => (prev.includes(patternValue) ? prev : [patternValue, ...prev]));
+      setCombinedPatterns((prev) => (prev.includes(patternValue) ? prev : [patternValue, ...prev]));
+
       const alreadyExists = tupleOptionsValue.some((tuple) => tuple.value === relValue);
       if (!alreadyExists) {
         const updatedTuples = [relationshipOption];
@@ -205,18 +218,16 @@ export default function NewEntityExtractionSetting({
           );
           return uniqueVal;
         });
-        setAllPatterns((prev) => (prev.includes(patternValue) ? prev : [patternValue, ...prev]));
-        setSelectedNodes((prev) => {
-          const mergedVal = [...prev, selectedSource, selectedTarget];
+        setCombinedNodes((prev: OptionType[]) => {
+          const mergedVal = [...prev, ...nodeLabelOptions];
           const uniqueVal = mergedVal.filter(
             (option, index, key) => index === key.findIndex((o) => o.value === option.value)
           );
           return uniqueVal;
         });
-
-        setSelectedRels((prev) => {
-          const merged = [...prev, selectedType];
-          const uniqueVal = merged.filter(
+        setCombinedRels((prev: OptionType[]) => {
+          const mergedVal = [...prev, ...relationshipTypeOptions];
+          const uniqueVal = mergedVal.filter(
             (option, index, key) => index === key.findIndex((o) => o.value === option.value)
           );
           return uniqueVal;

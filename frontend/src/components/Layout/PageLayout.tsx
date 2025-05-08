@@ -192,6 +192,7 @@ const PageLayout: React.FC = () => {
     setPreDefinedNodes,
     setPreDefinedRels,
     setPreDefinedPattern,
+    allPatterns,
   } = useFileContext();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth0();
@@ -211,6 +212,16 @@ const PageLayout: React.FC = () => {
   );
   const { messages, setClearHistoryData, clearHistoryData, setMessages, setIsDeleteChatLoading } = useMessageContext();
   const isFirstTimeUser = useMemo(() => localStorage.getItem('neo4j.connection') === null, []);
+
+  const [combinedPatternsVal, setCombinedPatternsVal] = useState<string[]>([]);
+  const [combinedNodesVal, setCombinedNodesVal] = useState<OptionType[]>([]);
+  const [combinedRelsVal, setCombinedRelsVal] = useState<OptionType[]>([]);
+
+  useEffect(() => {
+    if (allPatterns.length > 0) {
+      setCombinedPatternsVal(allPatterns);
+    }
+  }, [allPatterns]);
 
   useEffect(() => {
     async function initializeConnection() {
@@ -349,6 +360,10 @@ const PageLayout: React.FC = () => {
         const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
         return uniquePatterns;
       });
+      setCombinedPatternsVal((prevPatterns: string[]) => {
+        const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
+        return uniquePatterns;
+      });
       setShowTextFromSchemaDialog({
         triggeredFrom: 'schematextApply',
         show: true,
@@ -376,6 +391,10 @@ const PageLayout: React.FC = () => {
         const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
         return uniquePatterns;
       });
+      setCombinedPatternsVal((prevPatterns: string[]) => {
+        const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
+        return uniquePatterns;
+      });
       setSchemaLoadDialog({
         triggeredFrom: 'loadExistingSchemaApply',
         show: true,
@@ -400,6 +419,10 @@ const PageLayout: React.FC = () => {
       updatedType: OptionType[]
     ) => {
       setPreDefinedPattern((prevPatterns: string[]) => {
+        const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
+        return uniquePatterns;
+      });
+      setCombinedPatternsVal((prevPatterns: string[]) => {
         const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
         return uniquePatterns;
       });
@@ -553,6 +576,12 @@ const PageLayout: React.FC = () => {
             setOpenConnection={setOpenConnection}
             showDisconnectButton={showDisconnectButton}
             connectionStatus={connectionStatus}
+            combinedPatterns={combinedPatternsVal}
+            setCombinedPatterns={setCombinedPatternsVal}
+            combinedNodes={combinedNodesVal}
+            setCombinedNodes={setCombinedNodesVal}
+            combinedRels={combinedRelsVal}
+            setCombinedRels={setCombinedRelsVal}
           />
           {isRightExpanded && (
             <DrawerChatbot
@@ -621,6 +650,12 @@ const PageLayout: React.FC = () => {
               setOpenConnection={setOpenConnection}
               showDisconnectButton={showDisconnectButton}
               connectionStatus={connectionStatus}
+              combinedPatterns={combinedPatternsVal}
+              setCombinedPatterns={setCombinedPatternsVal}
+              combinedNodes={combinedNodesVal}
+              setCombinedNodes={setCombinedNodesVal}
+              combinedRels={combinedRelsVal}
+              setCombinedRels={setCombinedRelsVal}
             />
             {isRightExpanded && (
               <DrawerChatbot
