@@ -665,40 +665,60 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
   return f"Chunk {chunk_number}/{total_chunks} saved"
 
 def get_labels_and_relationtypes(uri, userName, password, database):
-   excluded_labels = {'Document', 'Chunk', '_Bloom_Perspective_', '__Community__', '__Entity__', 'Session', 'Message'}
-   excluded_relationships = {
-   'NEXT_CHUNK', '_Bloom_Perspective_', 'FIRST_CHUNK',
-   'SIMILAR', 'IN_COMMUNITY', 'PARENT_COMMUNITY', 'NEXT', 'LAST_MESSAGE'}
+  #  excluded_labels = {'Document', 'Chunk', '_Bloom_Perspective_', '__Community__', '__Entity__', 'Session', 'Message'}
+  #  excluded_relationships = {
+  #  'NEXT_CHUNK', '_Bloom_Perspective_', 'FIRST_CHUNK',
+  #  'SIMILAR', 'IN_COMMUNITY', 'PARENT_COMMUNITY', 'NEXT', 'LAST_MESSAGE'}
    driver = get_graphDB_driver(uri, userName, password,database) 
    with driver.session(database=database) as session:
-       result = session.run("CALL db.schema.visualization() YIELD nodes, relationships RETURN nodes, relationships")
-       if not result:
-         return []
-       record = result.single()
-       nodes = record["nodes"]
-       relationships = record["relationships"]
-       node_map = {}
-       for node in nodes:
-           node_id = node.element_id
-           labels = list(node.labels)
-           if labels:
-               node_map[node_id] = ":".join(labels)
-       triples = []
-       for rel in relationships:
-           start_id = rel.start_node.element_id
-           end_id = rel.end_node.element_id
-           rel_type = rel.type
-           start_label = node_map.get(start_id)
-           end_label = node_map.get(end_id)
+       result = session.run("""
+                            WITH ['Document', 'Chunk', '_Bloom_Perspective_', '__Community__',
+                            '__Entity__', 'Session', 'Message'
+                            ] AS excluded_labels,
+                            [
+                            'NEXT_CHUNK', '_Bloom_Perspective_', 'FIRST_CHUNK',
+                            'SIMILAR', 'IN_COMMUNITY', 'PARENT_COMMUNITY', 'NEXT', 'LAST_MESSAGE'
+                            ] AS excluded_relationships
+                            MATCH (n)-[r]->(m)
+                            WHERE
+                            NONE(label IN labels(n) WHERE label IN excluded_labels) AND
+                            NONE(label IN labels(m) WHERE label IN excluded_labels) AND
+                            NOT type(r) IN excluded_relationships
+                            UNWIND labels(n) AS fromLabel
+                            UNWIND labels(m) AS toLabel
+                            RETURN DISTINCT
+                            fromLabel + '-' + type(r) + '->' + toLabel AS pattern
+                            ORDER BY pattern
+                            """)
+       pattrens = [record["pattern"] for record in result]
+       print(f'Result : {pattrens}')
+      #  if not result:
+      #    return []
+      #  record = result.single()
+      #  nodes = record["nodes"]
+      #  relationships = record["relationships"]
+      #  node_map = {}
+      #  for node in nodes:
+      #      node_id = node.element_id
+      #      labels = list(node.labels)
+      #      if labels:
+      #          node_map[node_id] = ":".join(labels)
+      #  triples = []
+      #  for rel in relationships:
+      #      start_id = rel.start_node.element_id
+      #      end_id = rel.end_node.element_id
+      #      rel_type = rel.type
+      #      start_label = node_map.get(start_id)
+      #      end_label = node_map.get(end_id)
            
-           if start_label and end_label:
-              if (
-                  start_label not in excluded_labels and
-                  end_label not in excluded_labels and
-                  rel_type not in excluded_relationships
-              ):
-                  triples.append(f"{start_label}-{rel_type}->{end_label}")
-       return {"triplets" : list(set(triples))}
+      #      if start_label and end_label:
+      #         if (
+      #             start_label not in excluded_labels and
+      #             end_label not in excluded_labels and
+      #             rel_type not in excluded_relationships
+      #         ):
+      #             triples.append(f"{start_label}-{rel_type}->{end_label}")
+       return {"triplets" : pattrens}
 
 def manually_cancelled_job(graph, filenames, source_types, merged_dir, uri):
   
