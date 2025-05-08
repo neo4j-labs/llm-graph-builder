@@ -2,13 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Select } from '@neo4j-ndl/react';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
 import { OptionType, TupleCreationProps } from '../../../../types';
-import {
-  appLabels,
-  LOCAL_KEYS,
-  sourceOptions as initialSourceOptions,
-  targetOptions as initialTargetOptions,
-  typeOptions as initialTypeOptions,
-} from '../../../../utils/Constants';
+import { appLabels, LOCAL_KEYS } from '../../../../utils/Constants';
+import { useFileContext } from '../../../../context/UsersFiles';
 interface IErrorState {
   showError: boolean;
   errorMessage: string;
@@ -20,9 +15,8 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
   onPatternChange,
   onAddPattern,
 }) => {
-  const [sourceOptions, setSourceOptions] = useState<OptionType[]>(initialSourceOptions);
-  const [typeOptions, setTypeOptions] = useState<OptionType[]>(initialTypeOptions);
-  const [targetOptions, setTargetOptions] = useState<OptionType[]>(initialTargetOptions);
+  const { sourceOptions, setSourceOptions, typeOptions, setTypeOptions, targetOptions, setTargetOptions } =
+    useFileContext();
   const [inputValues, setInputValues] = useState<{ source: string; type: string; target: string }>({
     source: '',
     type: '',
@@ -72,6 +66,7 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
       switch (type) {
         case 'source':
           setSourceOptions((prev) => checkUniqueValue(prev, newOption));
+          setTargetOptions((prev) => checkUniqueValue(prev, newOption));
           onPatternChange(newOption, selectedType as OptionType, selectedTarget as OptionType);
           break;
         case 'type':
@@ -80,6 +75,7 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
           break;
         case 'target':
           setTargetOptions((prev) => checkUniqueValue(prev, newOption));
+          setSourceOptions((prev) => checkUniqueValue(prev, newOption));
           onPatternChange(selectedSource as OptionType, selectedType as OptionType, newOption);
           break;
         default:

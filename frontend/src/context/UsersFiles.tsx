@@ -16,6 +16,9 @@ import {
   chunkOverlap,
   chunksToCombine,
   tokenchunkSize,
+  sourceOptions as initialSourceOptions,
+  targetOptions as initialTargetOptions,
+  typeOptions as initialTypeOptions,
 } from '../utils/Constants';
 import { useCredentials } from './UserCredentials';
 import Queue from '../utils/Queue';
@@ -90,6 +93,9 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [userDefinedRels, setUserDefinedRels] = useState<OptionType[]>([]);
   const [preDefinedPattern, setPreDefinedPattern] = useState<string[]>([]);
   const [selectedPreDefOption, setSelectedPreDefOption] = useState<OptionType | null>(null);
+  const [sourceOptions, setSourceOptions] = useState<OptionType[]>(initialSourceOptions);
+  const [typeOptions, setTypeOptions] = useState<OptionType[]>(initialTypeOptions);
+  const [targetOptions, setTargetOptions] = useState<OptionType[]>(initialTargetOptions);
 
   useEffect(() => {
     if (selectedNodeLabelstr != null) {
@@ -199,7 +205,14 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     setUserDefinedRels,
     userDefinedPattern,
     setUserDefinedPattern,
-    selectedPreDefOption, setSelectedPreDefOption
+    selectedPreDefOption,
+    setSelectedPreDefOption,
+    sourceOptions,
+    setSourceOptions,
+    typeOptions,
+    setTypeOptions,
+    targetOptions,
+    setTargetOptions,
   };
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };

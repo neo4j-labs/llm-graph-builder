@@ -28,14 +28,14 @@ export default function PostProcessingCheckList() {
                 job.title === 'enable_communities'
                   ? !isGdsActive
                   : job.title === 'graph_schema_consolidation'
-                  ? isGraphCleanupDisabled
-                  : false;
+                    ? isGraphCleanupDisabled
+                    : false;
               const isChecked =
                 job.title === 'graph_schema_consolidation'
                   ? !isGraphCleanupDisabled && postProcessingTasks.includes(job.title)
                   : job.title === 'enable_communities'
-                  ? isGdsActive && postProcessingTasks.includes(job.title)
-                  : postProcessingTasks.includes(job.title);
+                    ? isGdsActive && postProcessingTasks.includes(job.title)
+                    : postProcessingTasks.includes(job.title);
               return (
                 <Flex key={`${job.title}${idx}`}>
                   <Checkbox

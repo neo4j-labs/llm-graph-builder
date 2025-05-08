@@ -1,4 +1,4 @@
-import { MouseEventHandler, useCallback, useEffect, useState, useRef } from 'react';
+import { MouseEventHandler, useCallback, useEffect, useState, useRef, Dispatch, SetStateAction } from 'react';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
 import { buttonCaptions, tooltips } from '../../../../utils/Constants';
 import { Flex, Typography, DropdownButton, Menu } from '@neo4j-ndl/react';
@@ -9,7 +9,13 @@ import { showNormalToast } from '../../../../utils/Toasts';
 import PatternContainer from './PatternContainer';
 import SchemaViz from '../../../Graph/SchemaViz';
 import GraphPattern from './GraphPattern';
-import { updateLocalStorage, extractOptions, parseRelationshipString } from '../../../../utils/Utils';
+import {
+  updateLocalStorage,
+  extractOptions,
+  parseRelationshipString,
+  deduplicateByRelationshipTypeOnly,
+  deduplicateNodeByValue,
+} from '../../../../utils/Utils';
 import TooltipWrapper from '../../../UI/TipWrapper';
 
 export default function NewEntityExtractionSetting({
@@ -21,6 +27,12 @@ export default function NewEntityExtractionSetting({
   settingView,
   onContinue,
   closeEnhanceGraphSchemaDialog,
+  combinedPatterns,
+  setCombinedPatterns,
+  combinedNodes,
+  setCombinedNodes,
+  combinedRels,
+  setCombinedRels,
 }: {
   view: 'Dialog' | 'Tabs';
   open?: boolean;
@@ -31,32 +43,30 @@ export default function NewEntityExtractionSetting({
   settingView: 'contentView' | 'headerView';
   onContinue?: () => void;
   closeEnhanceGraphSchemaDialog?: () => void;
+  combinedPatterns: string[];
+  setCombinedPatterns: Dispatch<SetStateAction<string[]>>;
+  combinedNodes: OptionType[];
+  setCombinedNodes: Dispatch<SetStateAction<OptionType[]>>;
+  combinedRels: OptionType[];
+  setCombinedRels: Dispatch<SetStateAction<OptionType[]>>;
 }) {
   const {
     setSelectedRels,
     setSelectedNodes,
     userDefinedPattern,
     setUserDefinedPattern,
-    userDefinedNodes,
     setUserDefinedNodes,
-    userDefinedRels,
     setUserDefinedRels,
     setAllPatterns,
     dbPattern,
     setDbPattern,
-    dbNodes,
     setDbNodes,
-    dbRels,
     setDbRels,
-    schemaValNodes,
     setSchemaValNodes,
-    schemaValRels,
     setSchemaValRels,
     schemaTextPattern,
     setSchemaTextPattern,
-    preDefinedNodes,
     setPreDefinedNodes,
-    preDefinedRels,
     setPreDefinedRels,
     preDefinedPattern,
     setPreDefinedPattern,
@@ -64,40 +74,15 @@ export default function NewEntityExtractionSetting({
   const { userCredentials } = useCredentials();
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [viewPoint, setViewPoint] = useState<string>('tableView');
-  const [combinedPatterns, setCombinedPatterns] = useState<string[]>([]);
   const [tupleOptions, setTupleOptions] = useState<TupleType[]>([]);
   const [selectedSource, setSource] = useState<OptionType | null>(null);
   const [selectedType, setType] = useState<OptionType | null>(null);
   const [selectedTarget, setTarget] = useState<OptionType | null>(null);
   const [highlightPattern, setHighlightedPattern] = useState<string | null>(null);
-  const [combinedNodes, setCombinedNodes] = useState<OptionType[]>([]);
-  const [combinedRels, setCombinedRels] = useState<OptionType[]>([]);
+
   const [isSchemaMenuOpen, setIsSchemaMenuOpen] = useState<boolean>(false);
   const schemaBtnRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    const patterns = Array.from(
-      new Set([...userDefinedPattern, ...preDefinedPattern, ...dbPattern, ...schemaTextPattern])
-    );
-    const nodesVal = Array.from(new Set([...userDefinedNodes, ...preDefinedNodes, ...dbNodes, ...schemaValNodes]));
-    const relsVal = Array.from(new Set([...userDefinedRels, ...preDefinedRels, ...dbRels, ...schemaValRels]));
-    setCombinedPatterns(patterns);
-    setCombinedNodes(nodesVal);
-    setCombinedRels(relsVal);
-  }, [
-    userDefinedPattern,
-    preDefinedPattern,
-    dbPattern,
-    schemaTextPattern,
-    userDefinedNodes,
-    preDefinedNodes,
-    dbNodes,
-    schemaValNodes,
-    userDefinedRels,
-    preDefinedRels,
-    dbRels,
-    schemaValRels,
-  ]);
   useEffect(() => {
     if (userDefinedPattern.length > 0) {
       const lastPattern = userDefinedPattern[0];
@@ -132,18 +117,10 @@ export default function NewEntityExtractionSetting({
     setCombinedPatterns([]);
     setCombinedNodes([]);
     setCombinedRels([]);
+    setTupleOptions([]);
     updateLocalStorage(userCredentials!, 'selectedNodeLabels', []);
     updateLocalStorage(userCredentials!, 'selectedRelationshipLabels', []);
     updateLocalStorage(userCredentials!, 'selectedPattern', []);
-    updateLocalStorage(userCredentials!, 'preDefinedNodeLabels', []);
-    updateLocalStorage(userCredentials!, 'preDefinedRelationshipLabels', []);
-    updateLocalStorage(userCredentials!, 'preDefinedPatterns', []);
-    updateLocalStorage(userCredentials!, 'textNodeLabels', []);
-    updateLocalStorage(userCredentials!, 'textRelationLabels', []);
-    updateLocalStorage(userCredentials!, 'textPatterns', []);
-    updateLocalStorage(userCredentials!, 'dbNodeLabels', []);
-    updateLocalStorage(userCredentials!, 'dbRelationLabels', []);
-    updateLocalStorage(userCredentials!, 'dbPatterns', []);
     showNormalToast(`Successfully Removed the Schema settings`);
   };
 
@@ -182,45 +159,35 @@ export default function NewEntityExtractionSetting({
       const relationshipOption: TupleType = {
         value: relValue,
         label: patternValue,
-        source: selectedSource.value || '',
-        target: selectedTarget.value || '',
-        type: selectedType.value || '',
+        source: selectedSource.value,
+        target: selectedTarget.value,
+        type: selectedType.value,
       };
-      setUserDefinedPattern((prev: string[]) => {
-        const alreadyExists = prev.includes(patternValue);
-        if (!alreadyExists) {
-          const updatedPattern = [patternValue, ...prev];
-          return updatedPattern;
-        }
-        return prev;
-      });
+      setUserDefinedPattern((prev) => (prev.includes(patternValue) ? prev : [patternValue, ...prev]));
+      setCombinedPatterns((prev) => (prev.includes(patternValue) ? prev : [patternValue, ...prev]));
       const alreadyExists = tupleOptionsValue.some((tuple) => tuple.value === relValue);
       if (!alreadyExists) {
-        const updatedTuples = [relationshipOption, ...tupleOptionsValue];
+        const updatedTuples = [relationshipOption];
         const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(updatedTuples);
-        setUserDefinedNodes(nodeLabelOptions);
-        setUserDefinedRels(relationshipTypeOptions);
-        setAllPatterns((prev) => {
-          if (!prev.includes(patternValue)) {
-            return [patternValue, ...prev];
-          }
-          return prev;
+        setUserDefinedNodes((prev: OptionType[]) => {
+          const combined = [...prev, ...nodeLabelOptions];
+          return deduplicateNodeByValue(combined);
         });
-        setSelectedNodes((prev) => {
-          const allNodeValues = prev.map((p) => p.value);
-          const toAdd = [selectedSource, selectedTarget].filter((node) => !allNodeValues.includes(node.value));
-          return [...toAdd, ...prev];
+        setUserDefinedRels((prev: OptionType[]) => {
+          const combined = [...prev, ...relationshipTypeOptions];
+          return deduplicateByRelationshipTypeOnly(combined);
         });
-        setSelectedRels((prev) => {
-          const allRelValues = prev.map((p) => p.value);
-          if (!allRelValues.includes(selectedType.value)) {
-            return [selectedType, ...prev];
-          }
-          return prev;
+        setCombinedNodes((prev: OptionType[]) => {
+          const combined = [...prev, ...nodeLabelOptions];
+          return deduplicateNodeByValue(combined);
         });
-        setTupleOptions(updatedTuples);
+        setCombinedRels((prev: OptionType[]) => {
+          const combined = [...prev, ...relationshipTypeOptions];
+          return deduplicateByRelationshipTypeOnly(combined);
+        });
+        setTupleOptions((prev) => [...updatedTuples, ...prev]);
       } else {
-        if (tupleOptions.length == 0 && tupleOptionsValue.length > 0) {
+        if (tupleOptions.length === 0 && tupleOptionsValue.length > 0) {
           setTupleOptions(tupleOptionsValue);
         }
         showNormalToast('Pattern Already Exists');

@@ -823,3 +823,76 @@ export function parseRelationshipString(input: string): {
     type,
   };
 }
+
+interface UpdateOptionsParams {
+  patterns: { label: string; value: string }[];
+  currentSourceOptions: OptionType[];
+  currentTargetOptions: OptionType[];
+  currentTypeOptions: OptionType[];
+  setSourceOptions: React.Dispatch<React.SetStateAction<OptionType[]>>;
+  setTargetOptions: React.Dispatch<React.SetStateAction<OptionType[]>>;
+  setTypeOptions: React.Dispatch<React.SetStateAction<OptionType[]>>;
+}
+
+export const updateSourceTargetTypeOptions = async ({
+  patterns,
+  currentSourceOptions,
+  currentTargetOptions,
+  currentTypeOptions,
+  setSourceOptions,
+  setTargetOptions,
+  setTypeOptions,
+}: UpdateOptionsParams) => {
+  const newNodesSet = new Set<string>();
+  const newRelsSet = new Set<string>();
+  patterns.forEach(({ value }) => {
+    const match = value.match(/^(.+?) -\[:(.+?)\]-> (.+)$/);
+    if (match) {
+      const [, source, rel, target] = match.map((s) => s.trim());
+      newNodesSet.add(source);
+      newNodesSet.add(target);
+      newRelsSet.add(rel);
+    }
+  });
+
+  const appendNewValues = (current: OptionType[], newVal: Set<string>): OptionType[] => {
+    const existingLabels = new Set(current.map((item) => item.label));
+    const newItems: OptionType[] = [];
+    newVal.forEach((label) => {
+      if (!existingLabels.has(label)) {
+        newItems.push({ label, value: label });
+      }
+    });
+    return [...current, ...newItems];
+  };
+  const newSourceOptions = appendNewValues(currentSourceOptions, newNodesSet);
+  const newTargetOptions = appendNewValues(currentTargetOptions, newNodesSet);
+  const newTypeOptions = appendNewValues(currentTypeOptions, newRelsSet);
+  setSourceOptions(newSourceOptions);
+  setTargetOptions(newTargetOptions);
+  setTypeOptions(newTypeOptions);
+  return [newSourceOptions, newTargetOptions, newTypeOptions];
+};
+
+export const deduplicateNodeByValue = (arrays: { value: any }[]) => {
+  const map = new Map();
+  arrays.forEach((item: { value: any }) => {
+    if (!map.has(item.value)) {
+      map.set(item.value, item);
+    }
+  });
+  return Array.from(map.values());
+};
+
+export const deduplicateByRelationshipTypeOnly = (arrays: { value: string; label: string }[]) => {
+  const seen = new Set<string>();
+  const result: { value: string; label: string }[] = [];
+  arrays.forEach((item) => {
+    const [, type] = item.value.split(',');
+    if (!seen.has(type)) {
+      seen.add(type);
+      result.push(item);
+    }
+  });
+  return result;
+};

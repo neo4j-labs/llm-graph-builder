@@ -16,12 +16,13 @@ import { envConnectionAPI } from '../../services/ConnectAPI';
 import { healthStatus } from '../../services/HealthStatus';
 import { useAuth0 } from '@auth0/auth0-react';
 import { showErrorToast } from '../../utils/Toasts';
-import { APP_SOURCES } from '../../utils/Constants';
+import { APP_SOURCES, LOCAL_KEYS } from '../../utils/Constants';
 import { createDefaultFormData } from '../../API/Index';
 import LoadDBSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/LoadExistingSchema';
 import PredefinedSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/PredefinedSchemaDialog';
 import { SKIP_AUTH } from '../../utils/Constants';
 import { useNavigate } from 'react-router';
+import { deduplicateByRelationshipTypeOnly, deduplicateNodeByValue } from '../../utils/Utils';
 
 const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
 const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
@@ -192,6 +193,9 @@ const PageLayout: React.FC = () => {
     setPreDefinedNodes,
     setPreDefinedRels,
     setPreDefinedPattern,
+    allPatterns,
+    selectedNodes,
+    selectedRels,
   } = useFileContext();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth0();
@@ -211,6 +215,18 @@ const PageLayout: React.FC = () => {
   );
   const { messages, setClearHistoryData, clearHistoryData, setMessages, setIsDeleteChatLoading } = useMessageContext();
   const isFirstTimeUser = useMemo(() => localStorage.getItem('neo4j.connection') === null, []);
+
+  const [combinedPatternsVal, setCombinedPatternsVal] = useState<string[]>([]);
+  const [combinedNodesVal, setCombinedNodesVal] = useState<OptionType[]>([]);
+  const [combinedRelsVal, setCombinedRelsVal] = useState<OptionType[]>([]);
+
+  useEffect(() => {
+    if (allPatterns.length > 0 && selectedNodes.length > 0 && selectedRels.length > 0) {
+      setCombinedPatternsVal(allPatterns);
+      setCombinedNodesVal(selectedNodes as OptionType[]);
+      setCombinedRelsVal(selectedRels as OptionType[]);
+    }
+  }, [allPatterns, selectedNodes, selectedRels]);
 
   useEffect(() => {
     async function initializeConnection() {
@@ -336,47 +352,121 @@ const PageLayout: React.FC = () => {
     }
   }, []);
 
-  const handleApplyPatternsFromText = useCallback((newPatterns: string[], nodes: OptionType[], rels: OptionType[]) => {
-    setSchemaTextPattern((prevPatterns: string[]) => {
-      const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
-      return uniquePatterns;
-    });
-    setShowTextFromSchemaDialog({
-      triggeredFrom: 'schematextApply',
-      show: true,
-    });
-    setSchemaValNodes(nodes);
-    setSchemaValRels(rels);
-    setSchemaView('text');
-  }, []);
+  const handleApplyPatternsFromText = useCallback(
+    (
+      newPatterns: string[],
+      nodes: OptionType[],
+      rels: OptionType[],
+      updatedSource: OptionType[],
+      updatedTarget: OptionType[],
+      updatedType: OptionType[]
+    ) => {
+      setSchemaTextPattern((prevPatterns: string[]) => {
+        const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
+        return uniquePatterns;
+      });
+      setCombinedPatternsVal((prevPatterns: string[]) => {
+        const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
+        return uniquePatterns;
+      });
+      setShowTextFromSchemaDialog({
+        triggeredFrom: 'schematextApply',
+        show: true,
+      });
+      setSchemaValNodes(nodes);
+      setCombinedNodesVal((prevNodes: OptionType[]) => {
+        const combined = [...nodes, ...prevNodes];
+        return deduplicateNodeByValue(combined);
+      });
+      setSchemaValRels(rels);
+      setCombinedRelsVal((prevRels: OptionType[]) => {
+        const combined = [...rels, ...prevRels];
+        return deduplicateByRelationshipTypeOnly(combined);
+      });
+      setSchemaView('text');
+      localStorage.setItem(LOCAL_KEYS.source, JSON.stringify(updatedSource));
+      localStorage.setItem(LOCAL_KEYS.type, JSON.stringify(updatedType));
+      localStorage.setItem(LOCAL_KEYS.target, JSON.stringify(updatedTarget));
+    },
+    []
+  );
 
-  const handleDbApply = useCallback((newPatterns: string[], nodes: OptionType[], rels: OptionType[]) => {
-    setDbPattern((prevPatterns: string[]) => {
-      const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
-      return uniquePatterns;
-    });
-    setSchemaLoadDialog({
-      triggeredFrom: 'loadExistingSchemaApply',
-      show: true,
-    });
-    setSchemaView('db');
-    setDbNodes(nodes);
-    setDbRels(rels);
-  }, []);
-
-  const handlePredinedApply = useCallback((newPatterns: string[], nodes: OptionType[], rels: OptionType[]) => {
-    setPreDefinedPattern((prevPatterns: string[]) => {
-      const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
-      return uniquePatterns;
-    });
-    setPredefinedSchemaDialog({
-      triggeredFrom: 'predefinedSchemaApply',
-      show: true,
-    });
-    setSchemaView('preDefined');
-    setPreDefinedNodes(nodes);
-    setPreDefinedRels(rels);
-  }, []);
+  const handleDbApply = useCallback(
+    (
+      newPatterns: string[],
+      nodes: OptionType[],
+      rels: OptionType[],
+      updatedSource: OptionType[],
+      updatedTarget: OptionType[],
+      updatedType: OptionType[]
+    ) => {
+      setDbPattern((prevPatterns: string[]) => {
+        const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
+        return uniquePatterns;
+      });
+      setCombinedPatternsVal((prevPatterns: string[]) => {
+        const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
+        return uniquePatterns;
+      });
+      setSchemaLoadDialog({
+        triggeredFrom: 'loadExistingSchemaApply',
+        show: true,
+      });
+      setSchemaView('db');
+      setDbNodes(nodes);
+      setCombinedNodesVal((prevNodes: OptionType[]) => {
+        const combined = [...nodes, ...prevNodes];
+        return deduplicateNodeByValue(combined);
+      });
+      setDbRels(rels);
+      setCombinedRelsVal((prevRels: OptionType[]) => {
+        const combined = [...rels, ...prevRels];
+        return deduplicateByRelationshipTypeOnly(combined);
+      });
+      localStorage.setItem(LOCAL_KEYS.source, JSON.stringify(updatedSource));
+      localStorage.setItem(LOCAL_KEYS.type, JSON.stringify(updatedType));
+      localStorage.setItem(LOCAL_KEYS.target, JSON.stringify(updatedTarget));
+    },
+    []
+  );
+  const handlePredinedApply = useCallback(
+    (
+      newPatterns: string[],
+      nodes: OptionType[],
+      rels: OptionType[],
+      updatedSource: OptionType[],
+      updatedTarget: OptionType[],
+      updatedType: OptionType[]
+    ) => {
+      setPreDefinedPattern((prevPatterns: string[]) => {
+        const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
+        return uniquePatterns;
+      });
+      setCombinedPatternsVal((prevPatterns: string[]) => {
+        const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
+        return uniquePatterns;
+      });
+      setPredefinedSchemaDialog({
+        triggeredFrom: 'predefinedSchemaApply',
+        show: true,
+      });
+      setSchemaView('preDefined');
+      setPreDefinedNodes(nodes);
+      setCombinedNodesVal((prevNodes: OptionType[]) => {
+        const combined = [...nodes, ...prevNodes];
+        return deduplicateNodeByValue(combined);
+      });
+      setPreDefinedRels(rels);
+      setCombinedRelsVal((prevRels: OptionType[]) => {
+        const combined = [...rels, ...prevRels];
+        return deduplicateByRelationshipTypeOnly(combined);
+      });
+      localStorage.setItem(LOCAL_KEYS.source, JSON.stringify(updatedSource));
+      localStorage.setItem(LOCAL_KEYS.type, JSON.stringify(updatedType));
+      localStorage.setItem(LOCAL_KEYS.target, JSON.stringify(updatedTarget));
+    },
+    []
+  );
 
   const openPredefinedSchema = useCallback(() => {
     setPredefinedSchemaDialog({ triggeredFrom: 'predefinedDialog', show: true });
@@ -514,6 +604,12 @@ const PageLayout: React.FC = () => {
             setOpenConnection={setOpenConnection}
             showDisconnectButton={showDisconnectButton}
             connectionStatus={connectionStatus}
+            combinedPatterns={combinedPatternsVal}
+            setCombinedPatterns={setCombinedPatternsVal}
+            combinedNodes={combinedNodesVal}
+            setCombinedNodes={setCombinedNodesVal}
+            combinedRels={combinedRelsVal}
+            setCombinedRels={setCombinedRelsVal}
           />
           {isRightExpanded && (
             <DrawerChatbot
@@ -582,6 +678,12 @@ const PageLayout: React.FC = () => {
               setOpenConnection={setOpenConnection}
               showDisconnectButton={showDisconnectButton}
               connectionStatus={connectionStatus}
+              combinedPatterns={combinedPatternsVal}
+              setCombinedPatterns={setCombinedPatternsVal}
+              combinedNodes={combinedNodesVal}
+              setCombinedNodes={setCombinedNodesVal}
+              combinedRels={combinedRelsVal}
+              setCombinedRels={setCombinedRelsVal}
             />
             {isRightExpanded && (
               <DrawerChatbot
