@@ -602,6 +602,9 @@ const Content: React.FC<ContentProps> = ({
     localStorage.removeItem('selectedChunks_to_combine');
     setSelectedChunks_to_combine(chunksToCombine);
     localStorage.removeItem('instructions');
+    localStorage.removeItem('selectedNodeLabels');
+    localStorage.removeItem('selectedRelationshipLabels');
+    localStorage.removeItem('selectedPattern');
     setAdditionalInstructions('');
     setMessages([
       {
