@@ -667,7 +667,7 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
 def get_labels_and_relationtypes(uri, userName, password, database):
    excluded_labels = {'Document', 'Chunk', '_Bloom_Perspective_', '__Community__', '__Entity__', 'Session', 'Message'}
    excluded_relationships = {
-   'NEXT_CHUNK', 'HAS_ENTITY', '_Bloom_Perspective_', 'FIRST_CHUNK',
+   'NEXT_CHUNK', '_Bloom_Perspective_', 'FIRST_CHUNK',
    'SIMILAR', 'IN_COMMUNITY', 'PARENT_COMMUNITY', 'NEXT', 'LAST_MESSAGE'}
    driver = get_graphDB_driver(uri, userName, password,database) 
    with driver.session(database=database) as session:
@@ -690,13 +690,14 @@ def get_labels_and_relationtypes(uri, userName, password, database):
            rel_type = rel.type
            start_label = node_map.get(start_id)
            end_label = node_map.get(end_id)
+           
            if start_label and end_label:
-             if (
-                   start_label not in excluded_labels and
-                   end_label not in excluded_labels and
-                   rel_type not in excluded_relationships
-               ):
-                 triples.append(f"{start_label}-{rel_type}->{end_label}")
+              if (
+                  start_label not in excluded_labels and
+                  end_label not in excluded_labels and
+                  rel_type not in excluded_relationships
+              ):
+                  triples.append(f"{start_label}-{rel_type}->{end_label}")
        return {"triplets" : list(set(triples))}
 
 def manually_cancelled_job(graph, filenames, source_types, merged_dir, uri):
