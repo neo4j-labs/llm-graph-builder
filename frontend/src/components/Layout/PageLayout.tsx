@@ -22,6 +22,7 @@ import LoadDBSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtracti
 import PredefinedSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/PredefinedSchemaDialog';
 import { SKIP_AUTH } from '../../utils/Constants';
 import { useNavigate } from 'react-router';
+import { deduplicateByRelationshipTypeOnly, deduplicateNodeByValue } from '../../utils/Utils';
 
 const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
 const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
@@ -193,6 +194,8 @@ const PageLayout: React.FC = () => {
     setPreDefinedRels,
     setPreDefinedPattern,
     allPatterns,
+    selectedNodes,
+    selectedRels,
   } = useFileContext();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth0();
@@ -218,10 +221,12 @@ const PageLayout: React.FC = () => {
   const [combinedRelsVal, setCombinedRelsVal] = useState<OptionType[]>([]);
 
   useEffect(() => {
-    if (allPatterns.length > 0) {
+    if (allPatterns.length > 0 && selectedNodes.length > 0 && selectedRels.length > 0) {
       setCombinedPatternsVal(allPatterns);
+      setCombinedNodesVal(selectedNodes as OptionType[]);
+      setCombinedRelsVal(selectedRels as OptionType[]);
     }
-  }, [allPatterns]);
+  }, [allPatterns, selectedNodes, selectedRels]);
 
   useEffect(() => {
     async function initializeConnection() {
@@ -369,7 +374,15 @@ const PageLayout: React.FC = () => {
         show: true,
       });
       setSchemaValNodes(nodes);
+      setCombinedNodesVal((prevNodes: OptionType[]) => {
+        const combined = [...nodes, ...prevNodes];
+        return deduplicateNodeByValue(combined);
+      });
       setSchemaValRels(rels);
+      setCombinedRelsVal((prevRels: OptionType[]) => {
+        const combined = [...rels, ...prevRels];
+        return deduplicateByRelationshipTypeOnly(combined);
+      });
       setSchemaView('text');
       localStorage.setItem(LOCAL_KEYS.source, JSON.stringify(updatedSource));
       localStorage.setItem(LOCAL_KEYS.type, JSON.stringify(updatedType));
@@ -401,14 +414,21 @@ const PageLayout: React.FC = () => {
       });
       setSchemaView('db');
       setDbNodes(nodes);
+      setCombinedNodesVal((prevNodes: OptionType[]) => {
+        const combined = [...nodes, ...prevNodes];
+        return deduplicateNodeByValue(combined);
+      });
       setDbRels(rels);
+      setCombinedRelsVal((prevRels: OptionType[]) => {
+        const combined = [...rels, ...prevRels];
+        return deduplicateByRelationshipTypeOnly(combined);
+      });
       localStorage.setItem(LOCAL_KEYS.source, JSON.stringify(updatedSource));
       localStorage.setItem(LOCAL_KEYS.type, JSON.stringify(updatedType));
       localStorage.setItem(LOCAL_KEYS.target, JSON.stringify(updatedTarget));
     },
     []
   );
-
   const handlePredinedApply = useCallback(
     (
       newPatterns: string[],
@@ -432,7 +452,15 @@ const PageLayout: React.FC = () => {
       });
       setSchemaView('preDefined');
       setPreDefinedNodes(nodes);
+      setCombinedNodesVal((prevNodes: OptionType[]) => {
+        const combined = [...nodes, ...prevNodes];
+        return deduplicateNodeByValue(combined);
+      });
       setPreDefinedRels(rels);
+      setCombinedRelsVal((prevRels: OptionType[]) => {
+        const combined = [...rels, ...prevRels];
+        return deduplicateByRelationshipTypeOnly(combined);
+      });
       localStorage.setItem(LOCAL_KEYS.source, JSON.stringify(updatedSource));
       localStorage.setItem(LOCAL_KEYS.type, JSON.stringify(updatedType));
       localStorage.setItem(LOCAL_KEYS.target, JSON.stringify(updatedTarget));

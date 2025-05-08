@@ -55,30 +55,21 @@ export default function NewEntityExtractionSetting({
     setSelectedNodes,
     userDefinedPattern,
     setUserDefinedPattern,
-    userDefinedNodes,
     setUserDefinedNodes,
-    userDefinedRels,
     setUserDefinedRels,
     setAllPatterns,
     dbPattern,
     setDbPattern,
-    dbNodes,
     setDbNodes,
-    dbRels,
     setDbRels,
-    schemaValNodes,
     setSchemaValNodes,
-    schemaValRels,
     setSchemaValRels,
     schemaTextPattern,
     setSchemaTextPattern,
-    preDefinedNodes,
     setPreDefinedNodes,
-    preDefinedRels,
     setPreDefinedRels,
     preDefinedPattern,
     setPreDefinedPattern,
-    allPatterns,
   } = useFileContext();
   const { userCredentials } = useCredentials();
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
@@ -92,31 +83,6 @@ export default function NewEntityExtractionSetting({
   const [isSchemaMenuOpen, setIsSchemaMenuOpen] = useState<boolean>(false);
   const schemaBtnRef = useRef<HTMLButtonElement>(null);
 
-  // useEffect(() => {
-  //   const patterns = Array.from(
-  //     new Set([...userDefinedPattern, ...preDefinedPattern, ...dbPattern, ...schemaTextPattern])
-  //   );
-  //   const allNodes = [...userDefinedNodes, ...preDefinedNodes, ...dbNodes, ...schemaValNodes];
-  //   const nodesVal = deduplicateNodeByValue(allNodes);
-  //   const allRels = [...userDefinedRels, ...preDefinedRels, ...dbRels, ...schemaValRels];
-  //   const relsVal = deduplicateByRelationshipTypeOnly(allRels);
-  //   setCombinedPatterns(patterns);
-  //   setCombinedNodes(nodesVal);
-  //   setCombinedRels(relsVal);
-  // }, [
-  //   userDefinedPattern,
-  //   preDefinedPattern,
-  //   dbPattern,
-  //   schemaTextPattern,
-  //   userDefinedNodes,
-  //   preDefinedNodes,
-  //   dbNodes,
-  //   schemaValNodes,
-  //   userDefinedRels,
-  //   preDefinedRels,
-  //   dbRels,
-  //   schemaValRels,
-  // ]);
   useEffect(() => {
     if (userDefinedPattern.length > 0) {
       const lastPattern = userDefinedPattern[0];
@@ -199,38 +165,25 @@ export default function NewEntityExtractionSetting({
       };
       setUserDefinedPattern((prev) => (prev.includes(patternValue) ? prev : [patternValue, ...prev]));
       setCombinedPatterns((prev) => (prev.includes(patternValue) ? prev : [patternValue, ...prev]));
-
       const alreadyExists = tupleOptionsValue.some((tuple) => tuple.value === relValue);
       if (!alreadyExists) {
         const updatedTuples = [relationshipOption];
         const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(updatedTuples);
         setUserDefinedNodes((prev: OptionType[]) => {
-          const mergedVal = [...prev, ...nodeLabelOptions];
-          const uniqueVal = mergedVal.filter(
-            (option, index, key) => index === key.findIndex((o) => o.value === option.value)
-          );
-          return uniqueVal;
+          const combined = [...prev, ...nodeLabelOptions];
+          return deduplicateNodeByValue(combined);
         });
         setUserDefinedRels((prev: OptionType[]) => {
-          const mergedVal = [...prev, ...relationshipTypeOptions];
-          const uniqueVal = mergedVal.filter(
-            (option, index, key) => index === key.findIndex((o) => o.value === option.value)
-          );
-          return uniqueVal;
+          const combined = [...prev, ...relationshipTypeOptions];
+          return deduplicateByRelationshipTypeOnly(combined);
         });
         setCombinedNodes((prev: OptionType[]) => {
-          const mergedVal = [...prev, ...nodeLabelOptions];
-          const uniqueVal = mergedVal.filter(
-            (option, index, key) => index === key.findIndex((o) => o.value === option.value)
-          );
-          return uniqueVal;
+          const combined = [...prev, ...nodeLabelOptions];
+          return deduplicateNodeByValue(combined);
         });
         setCombinedRels((prev: OptionType[]) => {
-          const mergedVal = [...prev, ...relationshipTypeOptions];
-          const uniqueVal = mergedVal.filter(
-            (option, index, key) => index === key.findIndex((o) => o.value === option.value)
-          );
-          return uniqueVal;
+          const combined = [...prev, ...relationshipTypeOptions];
+          return deduplicateByRelationshipTypeOnly(combined);
         });
         setTupleOptions((prev) => [...updatedTuples, ...prev]);
       } else {
