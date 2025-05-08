@@ -667,7 +667,7 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
 def get_labels_and_relationtypes(uri, userName, password, database):
    excluded_labels = {'Document', 'Chunk', '_Bloom_Perspective_', '__Community__', '__Entity__', 'Session', 'Message'}
    excluded_relationships = {
-   'PART_OF', 'NEXT_CHUNK', 'HAS_ENTITY', '_Bloom_Perspective_', 'FIRST_CHUNK',
+   'NEXT_CHUNK', 'HAS_ENTITY', '_Bloom_Perspective_', 'FIRST_CHUNK',
    'SIMILAR', 'IN_COMMUNITY', 'PARENT_COMMUNITY', 'NEXT', 'LAST_MESSAGE'}
    driver = get_graphDB_driver(uri, userName, password,database) 
    with driver.session(database=database) as session:
