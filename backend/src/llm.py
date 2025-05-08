@@ -180,13 +180,16 @@ async def get_graph_document_list(
         else:
             node_properties = ["description"]
             relationship_properties = ["description"]
+        TOOL_SUPPORTED_MODELS = {"qwen3", "deepseek"} 
+        model_name = llm.model_name.lower() 
+        ignore_tool_usage = not any(pattern in model_name for pattern in TOOL_SUPPORTED_MODELS)
         llm_transformer = LLMGraphTransformer(
             llm=llm,
             node_properties=node_properties,
             relationship_properties=relationship_properties,
             allowed_nodes=allowedNodes,
             allowed_relationships=allowedRelationship,
-            ignore_tool_usage=True,
+            ignore_tool_usage=ignore_tool_usage,
             additional_instructions=ADDITIONAL_INSTRUCTIONS+ (additional_instructions if additional_instructions else "")
         )
     
