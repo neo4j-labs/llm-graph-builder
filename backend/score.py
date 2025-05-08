@@ -31,11 +31,10 @@ from fastapi.middleware.gzip import GZipMiddleware
 from src.ragas_eval import *
 from starlette.types import ASGIApp, Receive, Scope, Send
 from langchain_neo4j import Neo4jGraph
-from src.entities.source_node import sourceNode
 from starlette.middleware.sessions import SessionMiddleware
-from starlette.responses import HTMLResponse, RedirectResponse,JSONResponse
 from starlette.requests import Request
-import secrets
+from dotenv import load_dotenv
+load_dotenv(override=True)
 
 logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
