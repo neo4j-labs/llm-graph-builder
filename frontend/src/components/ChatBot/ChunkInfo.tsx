@@ -263,6 +263,11 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                     {chunk?.text}
                   </ReactMarkdown>
                 </div>
+                <div className='mt-2 prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none'>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw] as any}>
+                    {chunk?.text}
+                  </ReactMarkdown>
+                </div>
               </li>
             ))}
           </ul>

@@ -73,7 +73,6 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
             }}
           />
         </SpotlightTarget>
-
         {children}
       </div>
     </>

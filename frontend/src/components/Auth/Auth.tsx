@@ -34,7 +34,6 @@ export const AuthenticationGuard: React.FC<{ component: React.ComponentType<obje
       navigate('/readonly', { replace: true });
     }
   }, [isLoading, isAuthenticated]);
-
   return <Component />;
 };
 
