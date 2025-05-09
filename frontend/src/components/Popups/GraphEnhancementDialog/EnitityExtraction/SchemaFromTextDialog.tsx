@@ -8,12 +8,19 @@ import { showNormalToast } from '../../../../utils/Toasts';
 import PatternContainer from './PatternContainer';
 import { OptionType, TupleType } from '../../../../types';
 import SchemaViz from '../../../Graph/SchemaViz';
-import { extractOptions } from '../../../../utils/Utils';
+import { extractOptions, updateSourceTargetTypeOptions } from '../../../../utils/Utils';
 
 interface SchemaFromTextProps {
   open: boolean;
   onClose: () => void;
-  onApply: (patterns: string[], nodes: OptionType[], rels: OptionType[], view: string) => void;
+  onApply: (
+    patterns: string[],
+    nodes: OptionType[],
+    rels: OptionType[],
+    updatedSource: OptionType[],
+    updatedTarget: OptionType[],
+    updatedType: OptionType[]
+  ) => void;
 }
 
 const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) => {
@@ -28,6 +35,12 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
     setSchemaValRels,
     schemaTextPattern,
     setSchemaTextPattern,
+    sourceOptions,
+    setSourceOptions,
+    targetOptions,
+    setTargetOptions,
+    typeOptions,
+    setTypeOptions,
   } = useFileContext();
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [viewPoint, setViewPoint] = useState<string>('');
@@ -61,9 +74,8 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
         setSchemaValRels(relationshipTypeOptions);
         setSchemaTextPattern(schemaTuples.map((t) => t.label));
       } else if (status === 'Failed') {
-        showNormalToast(message  as string);
-      }
-      else{
+        showNormalToast(message as string);
+      } else {
         showNormalToast('Please provide meaningful text.');
       }
     } catch (error: any) {
@@ -110,9 +122,18 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
     setViewPoint('showSchemaView');
   };
 
-  const handleSchemaTextApply = () => {
+  const handleSchemaTextApply = async () => {
     if (onApply) {
-      onApply(schemaTextPattern, schemaValNodes, schemaValRels, 'text');
+      const [newSourceOptions, newTargetOptions, newTypeOptions] = await updateSourceTargetTypeOptions({
+        patterns: schemaTextPattern.map((label) => ({ label, value: label })),
+        currentSourceOptions: sourceOptions,
+        currentTargetOptions: targetOptions,
+        currentTypeOptions: typeOptions,
+        setSourceOptions,
+        setTargetOptions,
+        setTypeOptions,
+      });
+      onApply(schemaTextPattern, schemaValNodes, schemaValRels, newSourceOptions, newTargetOptions, newTypeOptions);
     }
     onClose();
   };
@@ -153,9 +174,9 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
               onChange: (e) => {
                 const textVal = e.target.value;
                 setUserText(textVal);
-                  setSchemaTextPattern([]);
-                  setSchemaValNodes([]);
-                  setSchemaValRels([]);
+                setSchemaTextPattern([]);
+                setSchemaValNodes([]);
+                setSchemaValRels([]);
               },
             }}
             size='large'

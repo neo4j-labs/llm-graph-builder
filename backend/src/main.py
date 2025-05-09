@@ -665,39 +665,40 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
   return f"Chunk {chunk_number}/{total_chunks} saved"
 
 def get_labels_and_relationtypes(uri, userName, password, database):
-   excluded_labels = {'Document', 'Chunk', '_Bloom_Perspective_', '__Community__', '__Entity__', 'Session', 'Message'}
-   excluded_relationships = {
-   'PART_OF', 'NEXT_CHUNK', 'HAS_ENTITY', '_Bloom_Perspective_', 'FIRST_CHUNK',
-   'SIMILAR', 'IN_COMMUNITY', 'PARENT_COMMUNITY', 'NEXT', 'LAST_MESSAGE'}
-   driver = get_graphDB_driver(uri, userName, password,database) 
-   with driver.session(database=database) as session:
-       result = session.run("CALL db.schema.visualization() YIELD nodes, relationships RETURN nodes, relationships")
-       if not result:
-         return []
-       record = result.single()
-       nodes = record["nodes"]
-       relationships = record["relationships"]
-       node_map = {}
-       for node in nodes:
-           node_id = node.element_id
-           labels = list(node.labels)
-           if labels:
-               node_map[node_id] = ":".join(labels)
-       triples = []
-       for rel in relationships:
-           start_id = rel.start_node.element_id
-           end_id = rel.end_node.element_id
-           rel_type = rel.type
-           start_label = node_map.get(start_id)
-           end_label = node_map.get(end_id)
-           if start_label and end_label:
-             if (
-                   start_label not in excluded_labels and
-                   end_label not in excluded_labels and
-                   rel_type not in excluded_relationships
-               ):
-                 triples.append(f"{start_label}-{rel_type}->{end_label}")
-       return {"triplets" : list(set(triples))}
+  excluded_labels = {'Document', 'Chunk', '_Bloom_Perspective_', '__Community__', '__Entity__', 'Session', 'Message'}
+  excluded_relationships = {
+       'NEXT_CHUNK', '_Bloom_Perspective_', 'FIRST_CHUNK',
+       'SIMILAR', 'IN_COMMUNITY', 'PARENT_COMMUNITY', 'NEXT', 'LAST_MESSAGE'
+   }
+  driver = get_graphDB_driver(uri, userName, password,database) 
+  triples = set()
+  with driver.session(database=database) as session:
+    result = session.run("""
+           MATCH (n)-[r]->(m)
+           RETURN DISTINCT labels(n) AS fromLabels, type(r) AS relType, labels(m) AS toLabels
+       """)
+    for record in result:
+      from_labels = record["fromLabels"]
+      to_labels = record["toLabels"]
+      rel_type = record["relType"]
+      from_label = next((lbl for lbl in from_labels if lbl not in excluded_labels), None)
+      to_label = next((lbl for lbl in to_labels if lbl not in excluded_labels), None)
+      if not from_label or not to_label:
+          continue
+      if rel_type == 'PART_OF':
+          if from_label == 'Chunk' and to_label == 'Document':
+              continue 
+      elif rel_type == 'HAS_ENTITY':
+          if from_label == 'Chunk':
+              continue 
+      elif (
+          from_label in excluded_labels or
+          to_label in excluded_labels or
+          rel_type in excluded_relationships
+      ):
+          continue
+      triples.add(f"{from_label}-{rel_type}->{to_label}")
+  return {"triplets": list(triples)}
 
 def manually_cancelled_job(graph, filenames, source_types, merged_dir, uri):
   

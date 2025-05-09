@@ -13,7 +13,7 @@ const CustomButton: React.FC<CommonButtonProps> = ({
       onClick={openModal}
       className={`custombutton ${wrapperclassName ?? ''} ${isDisabled ? 'blur-sm pointer-events-none' : ''}`}
     >
-      <img src={logo} className={`brandimg ${className}`}></img>
+      <img src={logo} className={`brandimg ${className}`} alt={'source logo'}></img>
       <h6>{title}</h6>
     </div>
   );

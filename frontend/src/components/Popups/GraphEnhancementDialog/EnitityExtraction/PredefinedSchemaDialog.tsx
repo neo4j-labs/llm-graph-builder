@@ -2,7 +2,7 @@ import { Dialog, Button, Select } from '@neo4j-ndl/react';
 import { useState, useMemo } from 'react';
 import PatternContainer from '../../GraphEnhancementDialog/EnitityExtraction/PatternContainer';
 import { OptionType, TupleType } from '../../../../types';
-import { extractOptions, getSelectedTriplets } from '../../../../utils/Utils';
+import { extractOptions, getSelectedTriplets, updateSourceTargetTypeOptions } from '../../../../utils/Utils';
 import SchemaViz from '../../../../components/Graph/SchemaViz';
 import { getDefaultSchemaExamples, appLabels } from '../../../../utils/Constants';
 import { useFileContext } from '../../../../context/UsersFiles';
@@ -10,7 +10,14 @@ import { useFileContext } from '../../../../context/UsersFiles';
 interface SchemaFromTextProps {
   open: boolean;
   onClose: () => void;
-  onApply: (patterns: string[], nodes: OptionType[], rels: OptionType[], view: string) => void;
+  onApply: (
+    patterns: string[],
+    nodes: OptionType[],
+    rels: OptionType[],
+    updatedSource: OptionType[],
+    updatedTarget: OptionType[],
+    updatedType: OptionType[]
+  ) => void;
 }
 
 const PredefinedSchemaDialog = ({ open, onClose, onApply }: SchemaFromTextProps) => {
@@ -23,7 +30,13 @@ const PredefinedSchemaDialog = ({ open, onClose, onApply }: SchemaFromTextProps)
     preDefinedRels,
     setPreDefinedRels,
     setSelectedPreDefOption,
-    selectedPreDefOption
+    selectedPreDefOption,
+    sourceOptions,
+    setSourceOptions,
+    targetOptions,
+    setTargetOptions,
+    typeOptions,
+    setTypeOptions,
   } = useFileContext();
 
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
@@ -67,10 +80,18 @@ const PredefinedSchemaDialog = ({ open, onClose, onApply }: SchemaFromTextProps)
     setViewPoint('showSchemaView');
   };
 
-  const handlePreDefinedSchemaApply = () => {
-    onApply(preDefinedPattern, preDefinedNodes, preDefinedRels, 'preDefined');
+  const handlePreDefinedSchemaApply = async () => {
+    const [newSourceOptions, newTargetOptions, newTypeOptions] = await updateSourceTargetTypeOptions({
+      patterns: preDefinedPattern.map((label) => ({ label, value: label })),
+      currentSourceOptions: sourceOptions,
+      currentTargetOptions: targetOptions,
+      currentTypeOptions: typeOptions,
+      setSourceOptions,
+      setTargetOptions,
+      setTypeOptions,
+    });
+    onApply(preDefinedPattern, preDefinedNodes, preDefinedRels, newSourceOptions, newTargetOptions, newTypeOptions);
     onClose();
-    setSelectedPreDefOption(null);
   };
 
   const handleCancel = () => {

@@ -36,6 +36,9 @@ export const llms =
         'bedrock_nova_pro_v1',
         'fireworks_deepseek_r1',
         'fireworks_deepseek_v3',
+        'llama4_maverick',
+        'fireworks_qwen3_30b',
+        'fireworks_qwen3_235b',
       ];
 
 export const supportedLLmsForRagas = [
@@ -56,6 +59,9 @@ export const supportedLLmsForRagas = [
   'fireworks_llama4_scout',
   'bedrock_claude_3_5_sonnet',
   'openai_gpt_o3_mini',
+  'llama4_maverick',
+  'fireworks_qwen3_30b',
+  'fireworks_qwen3_235b',
 ];
 export const supportedLLmsForGroundTruthMetrics = [
   'openai_gpt_4',
@@ -71,6 +77,9 @@ export const supportedLLmsForGroundTruthMetrics = [
   'fireworks_llama4_scout',
   'bedrock_claude_3_5_sonnet',
   'openai_gpt_o3_mini',
+  'llama4_maverick',
+  'fireworks_qwen3_30b',
+  'fireworks_qwen3_235b',
 ];
 export const prodllms =
   process.env.VITE_LLM_MODELS_PROD?.trim() != ''

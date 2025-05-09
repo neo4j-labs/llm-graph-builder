@@ -1,4 +1,4 @@
-import { MouseEventHandler, useCallback, useEffect, useState, useRef } from 'react';
+import { MouseEventHandler, useCallback, useEffect, useState, useRef, Dispatch, SetStateAction } from 'react';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
 import { buttonCaptions, tooltips } from '../../../../utils/Constants';
 import { Flex, Typography, DropdownButton, Menu } from '@neo4j-ndl/react';
@@ -9,7 +9,13 @@ import { showNormalToast } from '../../../../utils/Toasts';
 import PatternContainer from './PatternContainer';
 import SchemaViz from '../../../Graph/SchemaViz';
 import GraphPattern from './GraphPattern';
-import { updateLocalStorage, extractOptions } from '../../../../utils/Utils';
+import {
+  updateLocalStorage,
+  extractOptions,
+  parseRelationshipString,
+  deduplicateByRelationshipTypeOnly,
+  deduplicateNodeByValue,
+} from '../../../../utils/Utils';
 import TooltipWrapper from '../../../UI/TipWrapper';
 
 export default function NewEntityExtractionSetting({
@@ -21,6 +27,12 @@ export default function NewEntityExtractionSetting({
   settingView,
   onContinue,
   closeEnhanceGraphSchemaDialog,
+  combinedPatterns,
+  setCombinedPatterns,
+  combinedNodes,
+  setCombinedNodes,
+  combinedRels,
+  setCombinedRels,
 }: {
   view: 'Dialog' | 'Tabs';
   open?: boolean;
@@ -31,35 +43,30 @@ export default function NewEntityExtractionSetting({
   settingView: 'contentView' | 'headerView';
   onContinue?: () => void;
   closeEnhanceGraphSchemaDialog?: () => void;
+  combinedPatterns: string[];
+  setCombinedPatterns: Dispatch<SetStateAction<string[]>>;
+  combinedNodes: OptionType[];
+  setCombinedNodes: Dispatch<SetStateAction<OptionType[]>>;
+  combinedRels: OptionType[];
+  setCombinedRels: Dispatch<SetStateAction<OptionType[]>>;
 }) {
   const {
-    selectedRels,
-    selectedNodes,
-    allPatterns,
     setSelectedRels,
     setSelectedNodes,
     userDefinedPattern,
     setUserDefinedPattern,
-    userDefinedNodes,
     setUserDefinedNodes,
-    userDefinedRels,
     setUserDefinedRels,
     setAllPatterns,
     dbPattern,
     setDbPattern,
-    dbNodes,
     setDbNodes,
-    dbRels,
     setDbRels,
-    schemaValNodes,
     setSchemaValNodes,
-    schemaValRels,
     setSchemaValRels,
     schemaTextPattern,
     setSchemaTextPattern,
-    preDefinedNodes,
     setPreDefinedNodes,
-    preDefinedRels,
     setPreDefinedRels,
     preDefinedPattern,
     setPreDefinedPattern,
@@ -72,34 +79,9 @@ export default function NewEntityExtractionSetting({
   const [selectedType, setType] = useState<OptionType | null>(null);
   const [selectedTarget, setTarget] = useState<OptionType | null>(null);
   const [highlightPattern, setHighlightedPattern] = useState<string | null>(null);
-  const [combinedPatterns, setCombinedPatterns] = useState<string[]>([]);
-  const [combinedNodes, setCombinedNodes] = useState<OptionType[]>([]);
-  const [combinedRels, setCombinedRels] = useState<OptionType[]>([]);
+
   const [isSchemaMenuOpen, setIsSchemaMenuOpen] = useState<boolean>(false);
   const schemaBtnRef = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    const patterns = Array.from(
-      new Set([...userDefinedPattern, ...preDefinedPattern, ...dbPattern, ...schemaTextPattern])
-    );
-    const nodesVal = Array.from(new Set([...userDefinedNodes, ...preDefinedNodes, ...dbNodes, ...schemaValNodes]));
-    const relsVal = Array.from(new Set([...userDefinedRels, ...preDefinedRels, ...dbRels, ...schemaValRels]));
-    setCombinedPatterns(patterns);
-    setCombinedNodes(nodesVal);
-    setCombinedRels(relsVal);
-  }, [
-    userDefinedPattern,
-    preDefinedPattern,
-    dbPattern,
-    schemaTextPattern,
-    userDefinedNodes,
-    preDefinedNodes,
-    dbNodes,
-    schemaValNodes,
-    userDefinedRels,
-    preDefinedRels,
-    dbRels,
-    schemaValRels,
-  ]);
 
   useEffect(() => {
     if (userDefinedPattern.length > 0) {
@@ -110,14 +92,6 @@ export default function NewEntityExtractionSetting({
       }, 100);
     }
   }, [userDefinedPattern]);
-
-  useEffect(() => {
-    if (allPatterns.length) {
-      setCombinedNodes(selectedNodes as OptionType[]);
-      setCombinedPatterns(allPatterns);
-      setCombinedRels(selectedRels as OptionType[]);
-    }
-  }, [allPatterns, selectedNodes, selectedRels]);
 
   const handleFinalClear = () => {
     // overall
@@ -143,18 +117,10 @@ export default function NewEntityExtractionSetting({
     setCombinedPatterns([]);
     setCombinedNodes([]);
     setCombinedRels([]);
+    setTupleOptions([]);
     updateLocalStorage(userCredentials!, 'selectedNodeLabels', []);
     updateLocalStorage(userCredentials!, 'selectedRelationshipLabels', []);
     updateLocalStorage(userCredentials!, 'selectedPattern', []);
-    updateLocalStorage(userCredentials!, 'preDefinedNodeLabels', []);
-    updateLocalStorage(userCredentials!, 'preDefinedRelationshipLabels', []);
-    updateLocalStorage(userCredentials!, 'preDefinedPatterns', []);
-    updateLocalStorage(userCredentials!, 'textNodeLabels', []);
-    updateLocalStorage(userCredentials!, 'textRelationLabels', []);
-    updateLocalStorage(userCredentials!, 'textPatterns', []);
-    updateLocalStorage(userCredentials!, 'dbNodeLabels', []);
-    updateLocalStorage(userCredentials!, 'dbRelationLabels', []);
-    updateLocalStorage(userCredentials!, 'dbPatterns', []);
     showNormalToast(`Successfully Removed the Schema settings`);
   };
 
@@ -186,40 +152,85 @@ export default function NewEntityExtractionSetting({
     setTarget(target as OptionType);
   };
 
-  const handleAddPattern = () => {
+  const handleAddPattern = (tupleOptionsValue: TupleType[]) => {
     if (selectedSource && selectedType && selectedTarget) {
       const patternValue = `${selectedSource.value} -[:${selectedType.value}]-> ${selectedTarget.value}`;
       const relValue = `${selectedSource.value},${selectedType.value},${selectedTarget.value}`;
       const relationshipOption: TupleType = {
         value: relValue,
         label: patternValue,
-        source: selectedSource.value || '',
-        target: selectedTarget.value || '',
-        type: selectedType.value || '',
+        source: selectedSource.value,
+        target: selectedTarget.value,
+        type: selectedType.value,
       };
-      setUserDefinedPattern((prev: string[]) => {
-        const alreadyExists = prev.includes(patternValue);
-        if (!alreadyExists) {
-          const updatedPattern = [patternValue, ...prev];
-          return updatedPattern;
+      setUserDefinedPattern((prev) => (prev.includes(patternValue) ? prev : [patternValue, ...prev]));
+      setCombinedPatterns((prev) => (prev.includes(patternValue) ? prev : [patternValue, ...prev]));
+      const alreadyExists = tupleOptionsValue.some((tuple) => tuple.value === relValue);
+      if (!alreadyExists) {
+        const updatedTuples = [relationshipOption];
+        const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(updatedTuples);
+        setUserDefinedNodes((prev: OptionType[]) => {
+          const combined = [...prev, ...nodeLabelOptions];
+          return deduplicateNodeByValue(combined);
+        });
+        setUserDefinedRels((prev: OptionType[]) => {
+          const combined = [...prev, ...relationshipTypeOptions];
+          return deduplicateByRelationshipTypeOnly(combined);
+        });
+        setCombinedNodes((prev: OptionType[]) => {
+          const combined = [...prev, ...nodeLabelOptions];
+          return deduplicateNodeByValue(combined);
+        });
+        setCombinedRels((prev: OptionType[]) => {
+          const combined = [...prev, ...relationshipTypeOptions];
+          return deduplicateByRelationshipTypeOnly(combined);
+        });
+        setTupleOptions((prev) => [...updatedTuples, ...prev]);
+      } else {
+        if (tupleOptions.length === 0 && tupleOptionsValue.length > 0) {
+          setTupleOptions(tupleOptionsValue);
         }
-        return prev;
-      });
-      setTupleOptions((prev: TupleType[]) => {
-        const alreadyExists = prev.some((tuple) => tuple.value === relValue);
-        if (!alreadyExists) {
-          const updatedTupples = [relationshipOption, ...prev];
-          const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(updatedTupples);
-          setUserDefinedNodes(nodeLabelOptions);
-          setUserDefinedRels(relationshipTypeOptions);
-          return updatedTupples;
-        }
-        return prev;
-      });
+        showNormalToast('Pattern Already Exists');
+      }
       setSource(null);
       setType(null);
       setTarget(null);
     }
+  };
+  const updateStore = (
+    patterns: string[],
+    patternToRemove: string,
+    setPatterns: React.Dispatch<React.SetStateAction<string[]>>,
+    setNodes: React.Dispatch<React.SetStateAction<OptionType[]>>,
+    setRels: React.Dispatch<React.SetStateAction<OptionType[]>>
+  ) => {
+    const updatedPatterns = patterns.filter((p) => p !== patternToRemove);
+    if (updatedPatterns.length === 0) {
+      setPatterns([]);
+      setNodes([]);
+      setRels([]);
+      return;
+    }
+    const updatedTuples: TupleType[] = updatedPatterns
+      .map((item) => {
+        const parts = item.match(/(.*?) -\[:(.*?)\]-> (.*)/);
+        if (!parts) {
+          return null;
+        }
+        const [src, rel, tgt] = parts.slice(1).map((s) => s.trim());
+        return {
+          value: `${src},${rel},${tgt}`,
+          label: `${src} -[:${rel}]-> ${tgt}`,
+          source: src,
+          target: tgt,
+          type: rel,
+        };
+      })
+      .filter(Boolean) as TupleType[];
+    const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(updatedTuples);
+    setPatterns(updatedPatterns);
+    setNodes(nodeLabelOptions);
+    setRels(relationshipTypeOptions);
   };
 
   const handleRemovePattern = (patternToRemove: string) => {
@@ -228,51 +239,18 @@ export default function NewEntityExtractionSetting({
       return;
     }
     const [, source, type, target] = match.map((s) => s.trim());
-    const updateStore = (
-      patterns: string[],
-      setPatterns: React.Dispatch<React.SetStateAction<string[]>>,
-      setNodes: React.Dispatch<React.SetStateAction<OptionType[]>>,
-      setRels: React.Dispatch<React.SetStateAction<OptionType[]>>
-    ) => {
-      const updatedPatterns = patterns.filter((p) => p !== patternToRemove);
-      if (updatedPatterns.length === 0) {
-        setPatterns([]);
-        setNodes([]);
-        setRels([]);
-        return;
-      }
-      const updatedTuples: TupleType[] = updatedPatterns
-        .map((item) => {
-          const parts = item.match(/(.*?) -\[:(.*?)\]-> (.*)/);
-          if (!parts) {
-            return null;
-          }
-          const [src, rel, tgt] = parts.slice(1).map((s) => s.trim());
-          return {
-            value: `${src},${rel},${tgt}`,
-            label: `${src} -[:${rel}]-> ${tgt}`,
-            source: src,
-            target: tgt,
-            type: rel,
-          };
-        })
-        .filter(Boolean) as TupleType[];
-      const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(updatedTuples);
-      setPatterns(updatedPatterns);
-      setNodes(nodeLabelOptions);
-      setRels(relationshipTypeOptions);
-    };
+
     if (userDefinedPattern.includes(patternToRemove)) {
-      updateStore(userDefinedPattern, setUserDefinedPattern, setUserDefinedNodes, setUserDefinedRels);
+      updateStore(userDefinedPattern, patternToRemove, setUserDefinedPattern, setUserDefinedNodes, setUserDefinedRels);
     }
     if (preDefinedPattern.includes(patternToRemove)) {
-      updateStore(preDefinedPattern, setPreDefinedPattern, setPreDefinedNodes, setPreDefinedRels);
+      updateStore(preDefinedPattern, patternToRemove, setPreDefinedPattern, setPreDefinedNodes, setPreDefinedRels);
     }
     if (dbPattern.includes(patternToRemove)) {
-      updateStore(dbPattern, setDbPattern, setDbNodes, setDbRels);
+      updateStore(dbPattern, patternToRemove, setDbPattern, setDbNodes, setDbRels);
     }
     if (schemaTextPattern.includes(patternToRemove)) {
-      updateStore(schemaTextPattern, setSchemaTextPattern, setSchemaValNodes, setSchemaValRels);
+      updateStore(schemaTextPattern, patternToRemove, setSchemaTextPattern, setSchemaValNodes, setSchemaValRels);
     }
     setCombinedPatterns((prev) => prev.filter((p) => p !== patternToRemove));
     setCombinedNodes((prev) => prev.filter((n) => n.value !== source && n.value !== target));
@@ -328,7 +306,13 @@ export default function NewEntityExtractionSetting({
           selectedType={selectedType}
           selectedTarget={selectedTarget}
           onPatternChange={handlePatternChange}
-          onAddPattern={handleAddPattern}
+          onAddPattern={() =>
+            handleAddPattern(
+              tupleOptions.length > 0
+                ? tupleOptions
+                : combinedPatterns.map((pattern) => parseRelationshipString(pattern))
+            )
+          }
           selectedTupleOptions={tupleOptions}
         ></GraphPattern>
         <PatternContainer

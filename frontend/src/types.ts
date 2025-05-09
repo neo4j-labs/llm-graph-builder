@@ -159,6 +159,12 @@ export interface ContentProps {
   setOpenConnection: Dispatch<SetStateAction<connectionState>>;
   showDisconnectButton: boolean;
   connectionStatus: boolean;
+  combinedPatterns: string[];
+  setCombinedPatterns: Dispatch<SetStateAction<string[]>>;
+  combinedNodes: OptionType[];
+  setCombinedNodes: Dispatch<SetStateAction<OptionType[]>>;
+  combinedRels: OptionType[];
+  setCombinedRels: Dispatch<SetStateAction<OptionType[]>>;
 }
 
 export interface FileTableProps {
@@ -259,7 +265,7 @@ export type ChatbotProps = {
   isChatOnly?: boolean;
   isDeleteChatLoading: boolean;
 };
-export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> { }
+export interface WikipediaModalTypes extends Omit<S3ModalProps, ''> {}
 
 export interface GraphViewModalProps {
   open: boolean;
@@ -400,15 +406,15 @@ export interface commonserverresponse {
   message?: string | orphanTotalNodes;
   file_name?: string;
   data?:
-  | OptionType
-  | OptionType[]
-  | string
-  | string[]
-  | uploadData
-  | orphanNodeProps[]
-  | dupNodes[]
-  | { pageitems: chunkdata[]; total_pages: number }
-  | { triplets: string[] };
+    | OptionType
+    | OptionType[]
+    | string
+    | string[]
+    | uploadData
+    | orphanNodeProps[]
+    | dupNodes[]
+    | { pageitems: chunkdata[]; total_pages: number }
+    | { triplets: string[] };
 }
 export interface dupNodeProps {
   id: string;
@@ -497,20 +503,20 @@ export interface chatInfoMessage extends Partial<Messages> {
   relationships: ExtendedRelationship[];
   chunks: Chunk[];
   metricDetails:
-  | {
-    [key: string]: number | string;
-  }
-  | undefined;
+    | {
+        [key: string]: number | string;
+      }
+    | undefined;
   metricError: string;
   infoEntities: Entity[];
   communities: Community[];
   infoLoading: boolean;
   metricsLoading: boolean;
   activeChatmodes:
-  | {
-    [key: string]: ResponseMode;
-  }
-  | undefined;
+    | {
+        [key: string]: ResponseMode;
+      }
+    | undefined;
   multiModelMetrics: multimodelmetric[];
   saveInfoEntitites: (entities: Entity[]) => void;
   saveNodes: (chatNodes: ExtendedNode[]) => void;
@@ -906,28 +912,28 @@ export interface FileContextType {
   selectedSchemas: readonly OptionType[];
   setSelectedSchemas: Dispatch<SetStateAction<readonly OptionType[]>>;
   // user defined schema
-  userDefinedNodes: OptionType[] | OptionType[];
+  userDefinedNodes: OptionType[];
   setUserDefinedNodes: Dispatch<SetStateAction<OptionType[] | OptionType[]>>;
-  userDefinedRels: OptionType[] | OptionType[];
+  userDefinedRels: OptionType[];
   setUserDefinedRels: Dispatch<SetStateAction<OptionType[] | OptionType[]>>;
   userDefinedPattern: string[];
   setUserDefinedPattern: Dispatch<SetStateAction<string[]>>;
   // Load Existing schema from db
   schemaLoadDialog: schemaLoadDialogType;
   setSchemaLoadDialog: React.Dispatch<React.SetStateAction<schemaLoadDialogType>>;
-  dbNodes: OptionType[] | OptionType[];
-  setDbNodes: Dispatch<SetStateAction<OptionType[] | OptionType[]>>;
-  dbRels: OptionType[] | OptionType[];
-  setDbRels: Dispatch<SetStateAction<OptionType[] | OptionType[]>>;
+  dbNodes: OptionType[];
+  setDbNodes: Dispatch<SetStateAction<OptionType[]>>;
+  dbRels: OptionType[];
+  setDbRels: Dispatch<SetStateAction<OptionType[]>>;
   dbPattern: string[];
   setDbPattern: Dispatch<SetStateAction<string[]>>;
   // Predefined schema
   predefinedSchemaDialog: predefinedSchemaDialogType;
   setPredefinedSchemaDialog: React.Dispatch<React.SetStateAction<predefinedSchemaDialogType>>;
-  preDefinedNodes: OptionType[] | OptionType[];
-  setPreDefinedNodes: Dispatch<SetStateAction<OptionType[] | OptionType[]>>;
-  preDefinedRels: OptionType[] | OptionType[];
-  setPreDefinedRels: Dispatch<SetStateAction<OptionType[] | OptionType[]>>;
+  preDefinedNodes: OptionType[];
+  setPreDefinedNodes: Dispatch<SetStateAction<OptionType[]>>;
+  preDefinedRels: OptionType[];
+  setPreDefinedRels: Dispatch<SetStateAction<OptionType[]>>;
   preDefinedPattern: string[];
   setPreDefinedPattern: Dispatch<SetStateAction<string[]>>;
   selectedPreDefOption: OptionType | null;
@@ -935,12 +941,20 @@ export interface FileContextType {
   // schema from text
   showTextFromSchemaDialog: showTextFromSchemaDialogType;
   setShowTextFromSchemaDialog: React.Dispatch<React.SetStateAction<showTextFromSchemaDialogType>>;
-  schemaValNodes: OptionType[] | OptionType[];
-  setSchemaValNodes: Dispatch<SetStateAction<OptionType[] | OptionType[]>>;
-  schemaValRels: OptionType[] | OptionType[];
-  setSchemaValRels: Dispatch<SetStateAction<OptionType[] | OptionType[]>>;
+  schemaValNodes: OptionType[];
+  setSchemaValNodes: Dispatch<SetStateAction<OptionType[]>>;
+  schemaValRels: OptionType[];
+  setSchemaValRels: Dispatch<SetStateAction<OptionType[]>>;
   schemaTextPattern: string[];
   setSchemaTextPattern: Dispatch<SetStateAction<string[]>>;
+
+  // source, type,target options
+  sourceOptions: OptionType[];
+  setSourceOptions: Dispatch<SetStateAction<OptionType[]>>;
+  typeOptions: OptionType[];
+  setTypeOptions: Dispatch<SetStateAction<OptionType[]>>;
+  targetOptions: OptionType[];
+  setTargetOptions: Dispatch<SetStateAction<OptionType[]>>;
 }
 export declare type Side = 'top' | 'right' | 'bottom' | 'left';
 
@@ -1036,7 +1050,7 @@ export type TupleCreationProps = {
   onPatternChange: (
     source: OptionType | OptionType[] | null,
     type: OptionType | OptionType[] | null,
-    target: OptionType | OptionType[] |null
+    target: OptionType | OptionType[] | null
   ) => void;
   onAddPattern: () => void;
   selectedTupleOptions: readonly OptionType[];
@@ -1059,8 +1073,8 @@ export interface SchemaViewModalProps {
   nodeValues?: ExtendedNode[] | OptionType[];
   relationshipValues?: ExtendedRelationship[] | string[] | OptionType[];
   selectedRows?: CustomFile[] | undefined;
-  schemaLoading?:boolean;
-  view?: string
+  schemaLoading?: boolean;
+  view?: string;
 }
 
 export type UserDefinedGraphSchema = {

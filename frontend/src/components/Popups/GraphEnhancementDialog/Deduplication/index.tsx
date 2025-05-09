@@ -12,16 +12,7 @@ import {
   Row,
   getSortedRowModel,
 } from '@tanstack/react-table';
-import {
-  Checkbox,
-  DataGrid,
-  DataGridComponents,
-  Flex,
-  Tag,
-  TextLink,
-  Typography,
-  useMediaQuery,
-} from '@neo4j-ndl/react';
+import { Checkbox, DataGrid, DataGridComponents, Flex, Tag, Typography, useMediaQuery, Button } from '@neo4j-ndl/react';
 import Legend from '../../../UI/Legend';
 import { DocumentIconOutline } from '@neo4j-ndl/react/icons';
 import { calcWordColor } from '@neo4j-devtools/word-color';
@@ -155,15 +146,16 @@ export default function DeduplicationTab() {
         cell: (info) => {
           return (
             <div className='textellipsis'>
-              <TextLink
+              <Button
                 className='cursor-pointer!'
+                fill='text'
+                onClick={() => handleDuplicateNodeClick(info.row.id, 'chatInfoView')}
                 htmlAttributes={{
-                  onClick: () => handleDuplicateNodeClick(info.row.id, 'chatInfoView'),
                   title: info.getValue(),
                 }}
               >
                 {info.getValue()}
-              </TextLink>
+              </Button>
             </div>
           );
         },
@@ -264,8 +256,8 @@ export default function DeduplicationTab() {
   const selectedFilesCheck = mergeAPIloading
     ? 'Merging...'
     : table.getSelectedRowModel().rows.length
-    ? `Merge Duplicate Nodes (${table.getSelectedRowModel().rows.length})`
-    : 'Select Node(s) to Merge';
+      ? `Merge Duplicate Nodes (${table.getSelectedRowModel().rows.length})`
+      : 'Select Node(s) to Merge';
   return (
     <>
       <div>
@@ -333,12 +325,12 @@ export default function DeduplicationTab() {
               isLoading
                 ? 'Fetching Duplicate Nodes'
                 : !isLoading && !duplicateNodes.length
-                ? 'No Nodes Found'
-                : !table.getSelectedRowModel().rows.length
-                ? 'No Nodes Selected'
-                : mergeAPIloading
-                ? 'Merging'
-                : `Merge Selected Nodes (${table.getSelectedRowModel().rows.length})`
+                  ? 'No Nodes Found'
+                  : !table.getSelectedRowModel().rows.length
+                    ? 'No Nodes Selected'
+                    : mergeAPIloading
+                      ? 'Merging'
+                      : `Merge Selected Nodes (${table.getSelectedRowModel().rows.length})`
             }
             label='Merge Duplicate Node Button'
             disabled={!table.getSelectedRowModel().rows.length}

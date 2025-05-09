@@ -63,6 +63,12 @@ const Content: React.FC<ContentProps> = ({
   setOpenConnection,
   showDisconnectButton,
   connectionStatus,
+  combinedPatterns,
+  setCombinedPatterns,
+  combinedNodes,
+  setCombinedNodes,
+  combinedRels,
+  setCombinedRels,
 }) => {
   const { breakpoints } = tokens;
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
@@ -596,6 +602,9 @@ const Content: React.FC<ContentProps> = ({
     localStorage.removeItem('selectedChunks_to_combine');
     setSelectedChunks_to_combine(chunksToCombine);
     localStorage.removeItem('instructions');
+    localStorage.removeItem('selectedNodeLabels');
+    localStorage.removeItem('selectedRelationshipLabels');
+    localStorage.removeItem('selectedPattern');
     setAdditionalInstructions('');
     setMessages([
       {
@@ -891,7 +900,16 @@ const Content: React.FC<ContentProps> = ({
         ></ChunkPopUp>
       )}
       {showEnhancementDialog && (
-        <GraphEnhancementDialog open={showEnhancementDialog} onClose={toggleEnhancementDialog}></GraphEnhancementDialog>
+        <GraphEnhancementDialog
+          open={showEnhancementDialog}
+          onClose={toggleEnhancementDialog}
+          combinedPatterns={combinedPatterns}
+          setCombinedPatterns={setCombinedPatterns}
+          combinedNodes={combinedNodes}
+          setCombinedNodes={setCombinedNodes}
+          combinedRels={combinedRels}
+          setCombinedRels={setCombinedRels}
+        ></GraphEnhancementDialog>
       )}
       <GraphViewModal
         inspectedName={inspectedName}

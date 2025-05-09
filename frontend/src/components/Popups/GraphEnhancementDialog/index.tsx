@@ -1,6 +1,6 @@
 import { Dialog, Tabs, Typography, Flex, useMediaQuery } from '@neo4j-ndl/react';
 import graphenhancement from '../../../assets/images/graph-enhancements.svg';
-import { useState } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 import DeletePopUpForOrphanNodes from './DeleteTabForOrphanNodes';
 import deleteOrphanAPI from '../../../services/DeleteOrphanNodes';
 import NewEntityExtractionSetting from './EnitityExtraction/NewEntityExtractionSetting';
@@ -9,19 +9,33 @@ import DeduplicationTab from './Deduplication';
 import { tokens } from '@neo4j-ndl/base';
 import PostProcessingCheckList from './PostProcessingCheckList';
 import AdditionalInstructionsText from './AdditionalInstructions';
-import { updateLocalStorage } from '../../../utils/Utils';
-import { useCredentials } from '../../../context/UserCredentials';
+import { OptionType } from '../../../types';
 
-export default function GraphEnhancementDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+export default function GraphEnhancementDialog({
+  open,
+  onClose,
+  combinedPatterns,
+  setCombinedPatterns,
+  combinedNodes,
+  setCombinedNodes,
+  combinedRels,
+  setCombinedRels,
+}: {
+  open: boolean;
+  onClose: () => void;
+  combinedPatterns: string[];
+  setCombinedPatterns: Dispatch<SetStateAction<string[]>>;
+  combinedNodes: OptionType[];
+  setCombinedNodes: Dispatch<SetStateAction<OptionType[]>>;
+  combinedRels: OptionType[];
+  setCombinedRels: Dispatch<SetStateAction<OptionType[]>>;
+}) {
   const { breakpoints } = tokens;
   const [orphanDeleteAPIloading, setorphanDeleteAPIloading] = useState<boolean>(false);
   const {
     setShowTextFromSchemaDialog,
     setSchemaLoadDialog,
     setPredefinedSchemaDialog,
-    setSelectedNodes,
-    setAllPatterns,
-    setSelectedRels,
     setUserDefinedPattern,
     setUserDefinedNodes,
     setUserDefinedRels,
@@ -35,9 +49,9 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
     setPreDefinedRels,
     setPreDefinedPattern,
     setSelectedPreDefOption,
+    allPatterns,
   } = useFileContext();
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
-  const { userCredentials } = useCredentials();
 
   const orphanNodesDeleteHandler = async (selectedEntities: string[]) => {
     try {
@@ -51,10 +65,10 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
   };
 
   const handleOnclose = () => {
-    // overall
-    setSelectedNodes([]);
-    setSelectedRels([]);
-    setAllPatterns([]);
+    if (allPatterns.length > 0) {
+      onClose();
+      return;
+    }
     // User
     setUserDefinedPattern([]);
     setUserDefinedNodes([]);
@@ -71,11 +85,8 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
     setPreDefinedNodes([]);
     setPreDefinedRels([]);
     setPreDefinedPattern([]);
+    setCombinedPatterns([]);
     setSelectedPreDefOption(null);
-
-    updateLocalStorage(userCredentials!, 'selectedNodeLabels', []);
-    updateLocalStorage(userCredentials!, 'selectedRelationshipLabels', []);
-    updateLocalStorage(userCredentials!, 'selectedPattern', []);
     onClose();
   };
 
@@ -103,6 +114,7 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
                 objectFit: 'contain',
               }}
               loading='lazy'
+              alt='graph-enhancement-options-logo'
             />
             <div className='flex flex-col'>
               <Typography variant={isTablet ? 'h5' : 'h2'}>Graph Enhancements</Typography>
@@ -175,6 +187,12 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
               }}
               closeEnhanceGraphSchemaDialog={onClose}
               settingView='headerView'
+              combinedPatterns={combinedPatterns}
+              setCombinedPatterns={setCombinedPatterns}
+              combinedNodes={combinedNodes}
+              setCombinedNodes={setCombinedNodes}
+              combinedRels={combinedRels}
+              setCombinedRels={setCombinedRels}
             />
           </div>
         </Tabs.TabPanel>

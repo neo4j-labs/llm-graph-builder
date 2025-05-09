@@ -40,6 +40,7 @@ const ChunkPopUp = ({
             src={chunklogo}
             style={{ width: isTablet ? 100 : 140, height: isTablet ? 100 : 140, marginRight: 10 }}
             loading='lazy'
+            alt='chunks-logo'
           />
           <div className='flex flex-col'>
             <Typography variant='h2'>Text Chunks</Typography>

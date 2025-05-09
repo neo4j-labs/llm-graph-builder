@@ -42,7 +42,13 @@ const SourcesInfo: FC<SourcesProps> = ({ loading, mode, chunks, sources }) => {
                     {s.fileSource === 'local file' ? (
                       <DocumentTextIconOutline className='n-size-token-7 mr-2' />
                     ) : (
-                      <img src={getLogo(themeUtils.colorMode)[s.fileSource]} width={20} height={20} className='mr-2' />
+                      <img
+                        src={getLogo(themeUtils.colorMode)[s.fileSource]}
+                        width={20}
+                        height={20}
+                        className='mr-2'
+                        alt='source-logo'
+                      />
                     )}
                     <Typography
                       variant='body-medium'
@@ -91,7 +97,7 @@ const SourcesInfo: FC<SourcesProps> = ({ loading, mode, chunks, sources }) => {
                     {youtubeLinkValidation(link) && (
                       <>
                         <div className='flex! flex-row justiy-between items-center'>
-                          <img src={youtubelogo} width={20} height={20} className='mr-2' />
+                          <img src={youtubelogo} width={20} height={20} className='mr-2' alt='youtube-source-logo' />
                           <TextLink href={link} type='external' target='_blank'>
                             <HoverableLink url={link}>
                               <Typography
