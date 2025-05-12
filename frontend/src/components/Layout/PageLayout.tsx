@@ -28,7 +28,6 @@ const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
 const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
 const GenericModal = lazy(() => import('../WebSources/GenericSourceModal'));
 const ConnectionModal = lazy(() => import('../Popups/ConnectionModal/ConnectionModal'));
-
 const spotlightsforunauthenticated = [
   {
     target: 'loginbutton',
@@ -92,7 +91,6 @@ const spotlightsforunauthenticated = [
     ),
   },
 ];
-
 const spotlights = [
   {
     target: 'connectbutton',
@@ -147,7 +145,6 @@ const spotlights = [
     ),
   },
 ];
-
 const PageLayout: React.FC = () => {
   const [openConnection, setOpenConnection] = useState<connectionState>({
     openPopUp: false,

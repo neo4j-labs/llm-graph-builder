@@ -737,7 +737,6 @@ export const generateGraphFromNodeAndRelVals = (
 ): UserDefinedGraphSchema => {
   const schemeVal: Scheme = {};
   const uniqueNodesMap = new Map<string, ExtendedNode>();
-  console.log('first rels', relVals);
   let nodeIdCounter = 0;
   nodeVals.forEach((node) => {
     const key = `${node.label}-${node.value}`;
@@ -792,7 +791,7 @@ export const generateGraphFromNodeAndRelVals = (
       type,
     });
   });
-  console.log('new rels', transformedRelationships);
+
   return {
     nodes: transformedNodes,
     relationships: transformedRelationships,
