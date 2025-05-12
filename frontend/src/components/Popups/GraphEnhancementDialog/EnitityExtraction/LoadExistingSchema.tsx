@@ -2,18 +2,38 @@ import { useEffect, useState } from 'react';
 import SchemaSelectionDialog from '../../../UI/SchemaSelectionPopup';
 import { getNodeLabelsAndRelTypes } from '../../../../services/GetNodeLabelsRelTypes';
 import { OptionType, TupleType } from '../../../../types';
-import { extractOptions } from '../../../../utils/Utils';
+import { extractOptions, updateSourceTargetTypeOptions } from '../../../../utils/Utils';
 import { useFileContext } from '../../../../context/UsersFiles';
 import SchemaViz from '../../../../components/Graph/SchemaViz';
 
-interface LoadExistingSchemaDialogProps {
+interface LoadDBSchemaDialogProps {
   open: boolean;
   onClose: () => void;
-  onApply: (patterns: string[], nodeLabels: OptionType[], relationshipLabels: OptionType[], view: string) => void;
+  onApply: (
+    patterns: string[],
+    nodeLabels: OptionType[],
+    relationshipLabels: OptionType[],
+    updatedSource: OptionType[],
+    updatedTarget: OptionType[],
+    updatedType: OptionType[]
+  ) => void;
 }
-const LoadExistingSchemaDialog = ({ open, onClose, onApply }: LoadExistingSchemaDialogProps) => {
+const LoadDBSchemaDialog = ({ open, onClose, onApply }: LoadDBSchemaDialogProps) => {
   const [loading, setLoading] = useState<boolean>(false);
-  const { setDbPattern, dbPattern, dbNodes, setDbNodes, dbRels, setDbRels } = useFileContext();
+  const {
+    dbPattern,
+    setDbPattern,
+    dbNodes,
+    setDbNodes,
+    dbRels,
+    setDbRels,
+    sourceOptions,
+    setSourceOptions,
+    targetOptions,
+    setTargetOptions,
+    typeOptions,
+    setTypeOptions,
+  } = useFileContext();
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [viewPoint, setViewPoint] = useState<string>('');
 
@@ -89,8 +109,17 @@ const LoadExistingSchemaDialog = ({ open, onClose, onApply }: LoadExistingSchema
     setViewPoint('showSchemaView');
   };
 
-  const handleDBApply = () => {
-    onApply(dbPattern, dbNodes, dbRels, 'db');
+  const handleDBCheck = async () => {
+    const [newSourceOptions, newTargetOptions, newTypeOptions] = await updateSourceTargetTypeOptions({
+      patterns: dbPattern.map((label) => ({ label, value: label })),
+      currentSourceOptions: sourceOptions,
+      currentTargetOptions: targetOptions,
+      currentTypeOptions: typeOptions,
+      setSourceOptions,
+      setTargetOptions,
+      setTypeOptions,
+    });
+    onApply(dbPattern, dbNodes, dbRels, newSourceOptions, newTargetOptions, newTypeOptions);
     onClose();
   };
 
@@ -109,7 +138,7 @@ const LoadExistingSchemaDialog = ({ open, onClose, onApply }: LoadExistingSchema
         handleRemove={handleRemovePattern}
         handleSchemaView={handleSchemaView}
         loading={loading}
-        onApply={handleDBApply}
+        onApply={handleDBCheck}
         onCancel={handleCancel}
         nodes={dbNodes}
         rels={dbRels}
@@ -127,4 +156,4 @@ const LoadExistingSchemaDialog = ({ open, onClose, onApply }: LoadExistingSchema
   );
 };
 
-export default LoadExistingSchemaDialog;
+export default LoadDBSchemaDialog;

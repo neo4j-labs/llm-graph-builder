@@ -14,19 +14,20 @@ import useSpeechSynthesis from '../../hooks/useSpeech';
 import FallBackDialog from '../UI/FallBackDialog';
 import { envConnectionAPI } from '../../services/ConnectAPI';
 import { healthStatus } from '../../services/HealthStatus';
-import { useNavigate } from 'react-router';
 import { useAuth0 } from '@auth0/auth0-react';
 import { showErrorToast } from '../../utils/Toasts';
-import { APP_SOURCES } from '../../utils/Constants';
+import { APP_SOURCES, LOCAL_KEYS } from '../../utils/Constants';
 import { createDefaultFormData } from '../../API/Index';
-import LoadExistingSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/LoadExistingSchema';
+import LoadDBSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/LoadExistingSchema';
 import PredefinedSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/PredefinedSchemaDialog';
+import { SKIP_AUTH } from '../../utils/Constants';
+import { useNavigate } from 'react-router';
+import { deduplicateByRelationshipTypeOnly, deduplicateNodeByValue } from '../../utils/Utils';
 
 const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
 const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
 const GenericModal = lazy(() => import('../WebSources/GenericSourceModal'));
 const ConnectionModal = lazy(() => import('../Popups/ConnectionModal/ConnectionModal'));
-import { SKIP_AUTH } from '../../utils/Constants';
 const spotlightsforunauthenticated = [
   {
     target: 'loginbutton',
@@ -152,6 +153,14 @@ const PageLayout: React.FC = () => {
     chunksExistsWithDifferentDimension: false,
   });
   const isLargeDesktop = useMediaQuery(`(min-width:1440px )`);
+  const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(false);
+  const [isRightExpanded, setIsRightExpanded] = useState<boolean>(false);
+  const [showChatBot, setShowChatBot] = useState<boolean>(false);
+  const [showDrawerChatbot, setShowDrawerChatbot] = useState<boolean>(true);
+  const [showEnhancementDialog, toggleEnhancementDialog] = useReducer((s) => !s, false);
+  const [shows3Modal, toggleS3Modal] = useReducer((s) => !s, false);
+  const [showGCSModal, toggleGCSModal] = useReducer((s) => !s, false);
+  const [showGenericModal, toggleGenericModal] = useReducer((s) => !s, false);
   const {
     connectionStatus,
     setIsReadOnlyUser,
@@ -164,47 +173,6 @@ const PageLayout: React.FC = () => {
     showDisconnectButton,
     setIsGCSActive,
   } = useCredentials();
-  const [isLeftExpanded, setIsLeftExpanded] = useState<boolean>(Boolean(isLargeDesktop));
-  const [isRightExpanded, setIsRightExpanded] = useState<boolean>(Boolean(isLargeDesktop));
-  const [showChatBot, setShowChatBot] = useState<boolean>(false);
-  const [showDrawerChatbot, setShowDrawerChatbot] = useState<boolean>(true);
-  const [showEnhancementDialog, toggleEnhancementDialog] = useReducer((s) => !s, false);
-  const [shows3Modal, toggleS3Modal] = useReducer((s) => !s, false);
-  const [showGCSModal, toggleGCSModal] = useReducer((s) => {
-    return !s;
-  }, false);
-  const [showGenericModal, toggleGenericModal] = useReducer((s) => !s, false);
-  const { user, isAuthenticated } = useAuth0();
-
-  const navigate = useNavigate();
-
-  const toggleLeftDrawer = useCallback(() => {
-    if (isLargeDesktop) {
-      setIsLeftExpanded(!isLeftExpanded);
-    } else {
-      setIsLeftExpanded(false);
-    }
-  }, [isLargeDesktop]);
-  const toggleRightDrawer = useCallback(() => {
-    if (isLargeDesktop) {
-      setIsRightExpanded(!isRightExpanded);
-    } else {
-      setIsRightExpanded(false);
-    }
-  }, [isLargeDesktop]);
-  const isYoutubeOnly = useMemo(
-    () => APP_SOURCES.includes('youtube') && !APP_SOURCES.includes('wiki') && !APP_SOURCES.includes('web'),
-    []
-  );
-  const isWikipediaOnly = useMemo(
-    () => APP_SOURCES.includes('wiki') && !APP_SOURCES.includes('youtube') && !APP_SOURCES.includes('web'),
-    []
-  );
-  const isWebOnly = useMemo(
-    () => APP_SOURCES.includes('web') && !APP_SOURCES.includes('youtube') && !APP_SOURCES.includes('wiki'),
-    []
-  );
-  const { messages, setClearHistoryData, clearHistoryData, setMessages, setIsDeleteChatLoading } = useMessageContext();
   const {
     setShowTextFromSchemaDialog,
     showTextFromSchemaDialog,
@@ -222,12 +190,41 @@ const PageLayout: React.FC = () => {
     setPreDefinedNodes,
     setPreDefinedRels,
     setPreDefinedPattern,
+    allPatterns,
+    selectedNodes,
+    selectedRels,
   } = useFileContext();
+  const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth0();
   const { cancel } = useSpeechSynthesis();
   const { setActiveSpotlight } = useSpotlightContext();
-  const isFirstTimeUser = useMemo(() => {
-    return localStorage.getItem('neo4j.connection') === null;
-  }, []);
+  const isYoutubeOnly = useMemo(
+    () => APP_SOURCES.includes('youtube') && !APP_SOURCES.includes('wiki') && !APP_SOURCES.includes('web'),
+    []
+  );
+  const isWikipediaOnly = useMemo(
+    () => APP_SOURCES.includes('wiki') && !APP_SOURCES.includes('youtube') && !APP_SOURCES.includes('web'),
+    []
+  );
+  const isWebOnly = useMemo(
+    () => APP_SOURCES.includes('web') && !APP_SOURCES.includes('youtube') && !APP_SOURCES.includes('wiki'),
+    []
+  );
+  const { messages, setClearHistoryData, clearHistoryData, setMessages, setIsDeleteChatLoading } = useMessageContext();
+  const isFirstTimeUser = useMemo(() => localStorage.getItem('neo4j.connection') === null, []);
+
+  const [combinedPatternsVal, setCombinedPatternsVal] = useState<string[]>([]);
+  const [combinedNodesVal, setCombinedNodesVal] = useState<OptionType[]>([]);
+  const [combinedRelsVal, setCombinedRelsVal] = useState<OptionType[]>([]);
+
+  useEffect(() => {
+    if (allPatterns.length > 0 && selectedNodes.length > 0 && selectedRels.length > 0) {
+      setCombinedPatternsVal(allPatterns);
+      setCombinedNodesVal(selectedNodes as OptionType[]);
+      setCombinedRelsVal(selectedRels as OptionType[]);
+    }
+  }, [allPatterns, selectedNodes, selectedRels]);
+
   useEffect(() => {
     async function initializeConnection() {
       // Fetch backend health status
@@ -271,7 +268,7 @@ const PageLayout: React.FC = () => {
               uri: credentials.uri,
               database: credentials.database,
               userName: credentials.userName,
-              password: atob(credentials.password),
+              password: atob(credentials?.password),
               email: credentials.email ?? '',
             });
             setIsGCSActive(credentials.isGCSActive);
@@ -303,7 +300,22 @@ const PageLayout: React.FC = () => {
     if ((isAuthenticated || SKIP_AUTH) && isFirstTimeUser) {
       setActiveSpotlight('connectbutton');
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isFirstTimeUser]);
+
+  const toggleLeftDrawer = useCallback(() => {
+    if (isLargeDesktop) {
+      setIsLeftExpanded((old) => !old);
+    } else {
+      setIsLeftExpanded(false);
+    }
+  }, [isLargeDesktop]);
+  const toggleRightDrawer = useCallback(() => {
+    if (isLargeDesktop) {
+      setIsRightExpanded((prev) => !prev);
+    } else {
+      setIsRightExpanded(false);
+    }
+  }, [isLargeDesktop]);
 
   const deleteOnClick = useCallback(async () => {
     try {
@@ -337,47 +349,135 @@ const PageLayout: React.FC = () => {
     }
   }, []);
 
-  const handleApplyPatternsFromText = useCallback((newPatterns: string[], nodes: OptionType[], rels: OptionType[]) => {
-    setSchemaTextPattern((prevPatterns: string[]) => {
-      const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
-      return uniquePatterns;
-    });
-    setShowTextFromSchemaDialog({
-      triggeredFrom: 'schematextApply',
-      show: true,
-    });
-    setSchemaValNodes(nodes);
-    setSchemaValRels(rels);
-    setSchemaView('text');
+  const handleApplyPatternsFromText = useCallback(
+    (
+      newPatterns: string[],
+      nodes: OptionType[],
+      rels: OptionType[],
+      updatedSource: OptionType[],
+      updatedTarget: OptionType[],
+      updatedType: OptionType[]
+    ) => {
+      setSchemaTextPattern((prevPatterns: string[]) => {
+        const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
+        return uniquePatterns;
+      });
+      setCombinedPatternsVal((prevPatterns: string[]) => {
+        const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
+        return uniquePatterns;
+      });
+      setShowTextFromSchemaDialog({
+        triggeredFrom: 'schematextApply',
+        show: true,
+      });
+      setSchemaValNodes(nodes);
+      setCombinedNodesVal((prevNodes: OptionType[]) => {
+        const combined = [...nodes, ...prevNodes];
+        return deduplicateNodeByValue(combined);
+      });
+      setSchemaValRels(rels);
+      setCombinedRelsVal((prevRels: OptionType[]) => {
+        const combined = [...rels, ...prevRels];
+        return deduplicateByRelationshipTypeOnly(combined);
+      });
+      setSchemaView('text');
+      localStorage.setItem(LOCAL_KEYS.source, JSON.stringify(updatedSource));
+      localStorage.setItem(LOCAL_KEYS.type, JSON.stringify(updatedType));
+      localStorage.setItem(LOCAL_KEYS.target, JSON.stringify(updatedTarget));
+    },
+    []
+  );
+
+  const handleDbApply = useCallback(
+    (
+      newPatterns: string[],
+      nodes: OptionType[],
+      rels: OptionType[],
+      updatedSource: OptionType[],
+      updatedTarget: OptionType[],
+      updatedType: OptionType[]
+    ) => {
+      setDbPattern((prevPatterns: string[]) => {
+        const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
+        return uniquePatterns;
+      });
+      setCombinedPatternsVal((prevPatterns: string[]) => {
+        const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
+        return uniquePatterns;
+      });
+      setSchemaLoadDialog({
+        triggeredFrom: 'loadExistingSchemaApply',
+        show: true,
+      });
+      setSchemaView('db');
+      setDbNodes(nodes);
+      setCombinedNodesVal((prevNodes: OptionType[]) => {
+        const combined = [...nodes, ...prevNodes];
+        return deduplicateNodeByValue(combined);
+      });
+      setDbRels(rels);
+      setCombinedRelsVal((prevRels: OptionType[]) => {
+        const combined = [...rels, ...prevRels];
+        return deduplicateByRelationshipTypeOnly(combined);
+      });
+      localStorage.setItem(LOCAL_KEYS.source, JSON.stringify(updatedSource));
+      localStorage.setItem(LOCAL_KEYS.type, JSON.stringify(updatedType));
+      localStorage.setItem(LOCAL_KEYS.target, JSON.stringify(updatedTarget));
+    },
+    []
+  );
+  const handlePredinedApply = useCallback(
+    (
+      newPatterns: string[],
+      nodes: OptionType[],
+      rels: OptionType[],
+      updatedSource: OptionType[],
+      updatedTarget: OptionType[],
+      updatedType: OptionType[]
+    ) => {
+      setPreDefinedPattern((prevPatterns: string[]) => {
+        const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
+        return uniquePatterns;
+      });
+      setCombinedPatternsVal((prevPatterns: string[]) => {
+        const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
+        return uniquePatterns;
+      });
+      setPredefinedSchemaDialog({
+        triggeredFrom: 'predefinedSchemaApply',
+        show: true,
+      });
+      setSchemaView('preDefined');
+      setPreDefinedNodes(nodes);
+      setCombinedNodesVal((prevNodes: OptionType[]) => {
+        const combined = [...nodes, ...prevNodes];
+        return deduplicateNodeByValue(combined);
+      });
+      setPreDefinedRels(rels);
+      setCombinedRelsVal((prevRels: OptionType[]) => {
+        const combined = [...rels, ...prevRels];
+        return deduplicateByRelationshipTypeOnly(combined);
+      });
+      localStorage.setItem(LOCAL_KEYS.source, JSON.stringify(updatedSource));
+      localStorage.setItem(LOCAL_KEYS.type, JSON.stringify(updatedType));
+      localStorage.setItem(LOCAL_KEYS.target, JSON.stringify(updatedTarget));
+    },
+    []
+  );
+
+  const openPredefinedSchema = useCallback(() => {
+    setPredefinedSchemaDialog({ triggeredFrom: 'predefinedDialog', show: true });
   }, []);
 
-  const handleDbApply = useCallback((newPatterns: string[], nodes: OptionType[], rels: OptionType[]) => {
-    setDbPattern((prevPatterns: string[]) => {
-      const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
-      return uniquePatterns;
-    });
-    setSchemaLoadDialog({
-      triggeredFrom: 'loadExistingSchemaApply',
-      show: true,
-    });
-    setSchemaView('db');
-    setDbNodes(nodes);
-    setDbRels(rels);
+  const openLoadSchema = useCallback(() => {
+    setSchemaLoadDialog({ triggeredFrom: 'loadDialog', show: true });
   }, []);
 
-  const handlePredinedApply = useCallback((newPatterns: string[], nodes: OptionType[], rels: OptionType[]) => {
-    setPreDefinedPattern((prevPatterns: string[]) => {
-      const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
-      return uniquePatterns;
-    });
-    setPredefinedSchemaDialog({
-      triggeredFrom: 'predefinedSchemaApply',
-      show: true,
-    });
-    setSchemaView('preDefined');
-    setPreDefinedNodes(nodes);
-    setPreDefinedRels(rels);
+  const openTextSchema = useCallback(() => {
+    setShowTextFromSchemaDialog({ triggeredFrom: 'schemadialog', show: true });
   }, []);
+
+  const openChatBot = useCallback(() => setShowChatBot(true), []);
 
   return (
     <>
@@ -437,7 +537,7 @@ const PageLayout: React.FC = () => {
         }}
         onApply={handleApplyPatternsFromText}
       ></SchemaFromTextDialog>
-      <LoadExistingSchemaDialog
+      <LoadDBSchemaDialog
         open={schemaLoadDialog.show}
         onClose={() => {
           setSchemaLoadDialog({ triggeredFrom: '', show: false });
@@ -491,22 +591,22 @@ const PageLayout: React.FC = () => {
             />
           )}
           <Content
-            openChatBot={useCallback(() => setShowChatBot(true), [])}
+            openChatBot={openChatBot}
             showChatBot={showChatBot}
-            openTextSchema={useCallback(() => {
-              setShowTextFromSchemaDialog({ triggeredFrom: 'schemadialog', show: true });
-            }, [])}
-            openLoadSchema={useCallback(() => {
-              setSchemaLoadDialog({ triggeredFrom: 'loadDialog', show: true });
-            }, [])}
-            openPredefinedSchema={useCallback(() => {
-              setPredefinedSchemaDialog({ triggeredFrom: 'predefinedDialog', show: true });
-            }, [])}
+            openTextSchema={openTextSchema}
+            openLoadSchema={openLoadSchema}
+            openPredefinedSchema={openPredefinedSchema}
             showEnhancementDialog={showEnhancementDialog}
             toggleEnhancementDialog={toggleEnhancementDialog}
             setOpenConnection={setOpenConnection}
             showDisconnectButton={showDisconnectButton}
             connectionStatus={connectionStatus}
+            combinedPatterns={combinedPatternsVal}
+            setCombinedPatterns={setCombinedPatternsVal}
+            combinedNodes={combinedNodesVal}
+            setCombinedNodes={setCombinedNodesVal}
+            combinedRels={combinedRelsVal}
+            setCombinedRels={setCombinedRelsVal}
           />
           {isRightExpanded && (
             <DrawerChatbot
@@ -534,12 +634,17 @@ const PageLayout: React.FC = () => {
         </div>
       ) : (
         <>
-          <Suspense fallback={<FallBackDialog />}>
-            <GCSModal openGCSModal={toggleGCSModal} open={showGCSModal} hideModal={toggleGCSModal} />
-          </Suspense>
-          <Suspense fallback={<FallBackDialog />}>
-            <S3Modal hideModal={toggleS3Modal} open={shows3Modal} />
-          </Suspense>
+          {APP_SOURCES.includes('gcs') && (
+            <Suspense fallback={<FallBackDialog />}>
+              <GCSModal openGCSModal={toggleGCSModal} open={showGCSModal} hideModal={toggleGCSModal} />
+            </Suspense>
+          )}
+          {APP_SOURCES.includes('s3') && (
+            <Suspense fallback={<FallBackDialog />}>
+              <S3Modal hideModal={toggleS3Modal} open={shows3Modal} />
+            </Suspense>
+          )}
+
           <Suspense fallback={<FallBackDialog />}>
             <GenericModal
               isOnlyYoutube={isYoutubeOnly}
@@ -560,22 +665,22 @@ const PageLayout: React.FC = () => {
             />
 
             <Content
-              openChatBot={() => setShowChatBot(true)}
+              openChatBot={openChatBot}
               showChatBot={showChatBot}
-              openTextSchema={useCallback(() => {
-                setShowTextFromSchemaDialog({ triggeredFrom: 'schemaDialog', show: true });
-              }, [])}
-              openLoadSchema={useCallback(() => {
-                setShowTextFromSchemaDialog({ triggeredFrom: 'loadDialog', show: true });
-              }, [])}
-              openPredefinedSchema={useCallback(() => {
-                setPredefinedSchemaDialog({ triggeredFrom: 'prdefinedDialog', show: true });
-              }, [])}
+              openTextSchema={openTextSchema}
+              openLoadSchema={openLoadSchema}
+              openPredefinedSchema={openPredefinedSchema}
               showEnhancementDialog={showEnhancementDialog}
               toggleEnhancementDialog={toggleEnhancementDialog}
               setOpenConnection={setOpenConnection}
               showDisconnectButton={showDisconnectButton}
               connectionStatus={connectionStatus}
+              combinedPatterns={combinedPatternsVal}
+              setCombinedPatterns={setCombinedPatternsVal}
+              combinedNodes={combinedNodesVal}
+              setCombinedNodes={setCombinedNodesVal}
+              combinedRels={combinedRelsVal}
+              setCombinedRels={setCombinedRelsVal}
             />
             {isRightExpanded && (
               <DrawerChatbot

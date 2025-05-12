@@ -2,14 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Select } from '@neo4j-ndl/react';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
 import { OptionType, TupleCreationProps } from '../../../../types';
-import {
-  appLabels,
-  LOCAL_KEYS,
-  sourceOptions as initialSourceOptions,
-  targetOptions as initialTargetOptions,
-  typeOptions as initialTypeOptions,
-} from '../../../../utils/Constants';
-
+import { appLabels, LOCAL_KEYS } from '../../../../utils/Constants';
+import { useFileContext } from '../../../../context/UsersFiles';
+interface IErrorState {
+  showError: boolean;
+  errorMessage: string;
+}
 const GraphPattern: React.FC<TupleCreationProps> = ({
   selectedSource,
   selectedType,
@@ -17,13 +15,17 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
   onPatternChange,
   onAddPattern,
 }) => {
-  const [sourceOptions, setSourceOptions] = useState<OptionType[]>(initialSourceOptions);
-  const [typeOptions, setTypeOptions] = useState<OptionType[]>(initialTypeOptions);
-  const [targetOptions, setTargetOptions] = useState<OptionType[]>(initialTargetOptions);
+  const { sourceOptions, setSourceOptions, typeOptions, setTypeOptions, targetOptions, setTargetOptions } =
+    useFileContext();
   const [inputValues, setInputValues] = useState<{ source: string; type: string; target: string }>({
     source: '',
     type: '',
     target: '',
+  });
+  const [showWarning, setShowWarning] = useState<Record<'source' | 'type' | 'target', IErrorState>>({
+    source: { showError: false, errorMessage: '' },
+    type: { showError: false, errorMessage: '' },
+    target: { showError: false, errorMessage: '' },
   });
   const sourceRef = useRef<HTMLDivElement | null>(null);
 
@@ -43,30 +45,45 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
   }, []);
 
   const handleNewValue = (newValue: string, type: 'source' | 'type' | 'target') => {
+    const regex = /^[^,]*$/;
     if (!newValue.trim()) {
+      setShowWarning((old) => ({ ...old, [type]: { showError: true, errorMessage: 'Value Must Not Be Empty' } }));
       return;
     }
-    const newOption: OptionType = { value: newValue.trim(), label: newValue.trim() };
-    const checkUniqueValue = (list: OptionType[], value: OptionType) =>
-      (list.some((opt) => opt.value === value.value) ? list : [...list, value]);
-    switch (type) {
-      case 'source':
-        setSourceOptions((prev) => checkUniqueValue(prev, newOption));
-        onPatternChange(newOption, selectedType as OptionType, selectedTarget as OptionType);
-        break;
-      case 'type':
-        setTypeOptions((prev) => checkUniqueValue(prev, newOption));
-        onPatternChange(selectedSource as OptionType, newOption, selectedTarget as OptionType);
-        break;
-      case 'target':
-        setTargetOptions((prev) => checkUniqueValue(prev, newOption));
-        onPatternChange(selectedSource as OptionType, selectedType as OptionType, newOption);
-        break;
-      default:
-        console.log('wrong type added');
-        break;
+    if (!regex.test(newValue)) {
+      setShowWarning((old) => ({
+        ...old,
+        [type]: {
+          showError: true,
+          errorMessage: 'Please enter text without commas. Commas are not allowed in this field',
+        },
+      }));
+    } else {
+      setShowWarning((old) => ({ ...old, [type]: { showError: false, errorMessage: '' } }));
+      const newOption: OptionType = { value: newValue.trim(), label: newValue.trim() };
+      const checkUniqueValue = (list: OptionType[], value: OptionType) =>
+        (list.some((opt) => opt.value === value.value) ? list : [...list, value]);
+      switch (type) {
+        case 'source':
+          setSourceOptions((prev) => checkUniqueValue(prev, newOption));
+          setTargetOptions((prev) => checkUniqueValue(prev, newOption));
+          onPatternChange(newOption, selectedType as OptionType, selectedTarget as OptionType);
+          break;
+        case 'type':
+          setTypeOptions((prev) => checkUniqueValue(prev, newOption));
+          onPatternChange(selectedSource as OptionType, newOption, selectedTarget as OptionType);
+          break;
+        case 'target':
+          setTargetOptions((prev) => checkUniqueValue(prev, newOption));
+          setSourceOptions((prev) => checkUniqueValue(prev, newOption));
+          onPatternChange(selectedSource as OptionType, selectedType as OptionType, newOption);
+          break;
+        default:
+          console.log('wrong type added');
+          break;
+      }
+      setInputValues((prev) => ({ ...prev, [type]: '' }));
     }
-    setInputValues((prev) => ({ ...prev, [type]: '' }));
   };
 
   const handleInputChange = (newValue: string, type: 'source' | 'type' | 'target') => {
@@ -84,6 +101,20 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
     }, 100);
   };
 
+  const handleBlurPattern = (value: string, type: 'source' | 'type' | 'target') => {
+    const regex = /^[^,]*$/;
+    if (!regex.test(value)) {
+      setShowWarning((old) => ({
+        ...old,
+        [type]: {
+          showError: true,
+          errorMessage: 'Please enter text without commas. Commas are not allowed in this field',
+        },
+      }));
+    } else {
+      setShowWarning((old) => ({ ...old, [type]: { showError: false, errorMessage: '' } }));
+    }
+  };
   const isDisabled = !selectedSource?.value.length || !selectedTarget?.value.length || !selectedType?.value.length;
   return (
     <div className='bg-white rounded-lg shadow-md'>
@@ -95,6 +126,7 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
           <Select
             label='Select/Create Source'
             size='medium'
+            errorText={showWarning.source.showError ? showWarning.source.errorMessage : ''}
             selectProps={{
               isClearable: true,
               options: sourceOptions,
@@ -109,6 +141,9 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
               inputValue: inputValues.source,
               onInputChange: (newValue) => handleInputChange(newValue, 'source'),
               onCreateOption: (newOption) => handleNewValue(newOption, 'source'),
+              onBlur: (e) => {
+                handleBlurPattern(e.target.value, 'source');
+              },
             }}
             type='creatable'
           />
@@ -116,6 +151,7 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
         <Select
           label='Select/Create Type'
           size='medium'
+          errorText={showWarning.type.showError ? showWarning.type.errorMessage : ''}
           selectProps={{
             isClearable: true,
             options: typeOptions,
@@ -130,12 +166,16 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
             inputValue: inputValues.type,
             onInputChange: (newValue) => handleInputChange(newValue, 'type'),
             onCreateOption: (newOption) => handleNewValue(newOption, 'type'),
+            onBlur: (e) => {
+              handleBlurPattern(e.target.value, 'type');
+            },
           }}
           type='creatable'
           className='w-1/4'
         />
         <Select
           label='Select/Create Target'
+          errorText={showWarning.target.showError ? showWarning.target.errorMessage : ''}
           size='medium'
           selectProps={{
             isClearable: true,
@@ -151,6 +191,9 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
             inputValue: inputValues.target,
             onInputChange: (newValue) => handleInputChange(newValue, 'target'),
             onCreateOption: (newOption) => handleNewValue(newOption, 'target'),
+            onBlur: (e) => {
+              handleBlurPattern(e.target.value, 'target');
+            },
           }}
           type='creatable'
           className='w-1/4'

@@ -31,7 +31,7 @@ const SchemaViz: React.FunctionComponent<SchemaViewModalProps> = ({
   nodeValues,
   relationshipValues,
   schemaLoading,
-  view
+  view,
 }) => {
   const nvlRef = useRef<NVL>(null);
   const [nodes, setNodes] = useState<ExtendedNode[]>([]);
@@ -71,7 +71,7 @@ const SchemaViz: React.FunctionComponent<SchemaViewModalProps> = ({
   useEffect(() => {
     if (open) {
       if (view !== 'viz') {
-      setLoading(true);
+        setLoading(true);
         const { nodes, relationships, scheme } = userDefinedGraphSchema(
           (nodeValues as OptionType[]) ?? [],
           (relationshipValues as OptionType[]) ?? []
@@ -81,11 +81,12 @@ const SchemaViz: React.FunctionComponent<SchemaViewModalProps> = ({
         setRelationships(relationships);
         setNewScheme(scheme);
         setLoading(false);
-      }
-      else {
-        const { nodes, relationships, scheme } =
-          generateGraphFromNodeAndRelVals(nodeValues as any, relationshipValues as any);
-   
+      } else {
+        const { nodes, relationships, scheme } = generateGraphFromNodeAndRelVals(
+          nodeValues as any,
+          relationshipValues as any
+        );
+
         setNodes(nodes);
         setRelationships(relationships);
         setNewScheme(scheme);

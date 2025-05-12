@@ -582,7 +582,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
             </IconButtonWithToolTip>
             <IconButtonWithToolTip
               placement='left'
-              text='copy'
+              text={copyRow ? 'Copied' : 'Copy'}
               size='large'
               label='Copy Row'
               disabled={info.getValue() === 'Uploading'}

@@ -25,7 +25,6 @@ import { downloadClickHandler, getIsLoading } from '../../utils/Utils';
 import Profile from '../User/Profile';
 import { useAuth0 } from '@auth0/auth0-react';
 
-
 const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnection, showBackButton }) => {
   const { colorMode, toggleColorMode } = useContext(ThemeWrapperContext);
   const navigate = useNavigate();
@@ -88,7 +87,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
           aria-label='main navigation'
         >
           <section className='flex w-1/3 shrink-0 grow-0 items-center min-w-[200px]'>
-            <Typography variant='h6' as='a' href='#app-bar-with-responsive-menu'>
+            <Typography variant='h1'>
               <img
                 src={colorMode === 'dark' ? Neo4jLogoBW : Neo4jLogoColor}
                 className='h-8! min-h-8 min-w-8'

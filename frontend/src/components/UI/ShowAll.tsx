@@ -2,11 +2,8 @@ import { Button } from '@neo4j-ndl/react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 
-// import { ButtonGroup } from '../button-group/button-group';
-
 type ShowAllProps = {
   initiallyShown: number;
-  /* pass thunk to enable rendering only shown components */
   children: ((() => ReactNode) | ReactNode)[];
   ariaLabel?: string;
 };

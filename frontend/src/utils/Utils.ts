@@ -575,10 +575,13 @@ export const userDefinedGraphSchema = (nodes: OptionType[], relationships: Optio
     };
   });
 
-  const nodeMap: Record<string, string> = transformedNodes.reduce((acc, node) => {
-    acc[node.labels[0]] = node.id;
-    return acc;
-  }, {} as Record<string, string>);
+  const nodeMap: Record<string, string> = transformedNodes.reduce(
+    (acc, node) => {
+      acc[node.labels[0]] = node.id;
+      return acc;
+    },
+    {} as Record<string, string>
+  );
   const transformedRelationships: ExtendedRelationship[] = relationships
     .map((rel, index) => {
       const parts = rel.value.split(',');
@@ -693,8 +696,8 @@ export const extractGraphSchemaFromRawData = (
   nodes: RawNode[],
   relationships: RawRelationship[]
 ): {
-  nodes: OptionType[],
-  relationships: OptionType[]
+  nodes: OptionType[];
+  relationships: OptionType[];
 } => {
   const uniqueLabels = new Set<string>();
   const nodeList: OptionType[] = [];
@@ -724,7 +727,7 @@ export const extractGraphSchemaFromRawData = (
   }
   return {
     nodes: nodeList,
-    relationships: relList
+    relationships: relList,
   };
 };
 
@@ -734,7 +737,6 @@ export const generateGraphFromNodeAndRelVals = (
 ): UserDefinedGraphSchema => {
   const schemeVal: Scheme = {};
   const uniqueNodesMap = new Map<string, ExtendedNode>();
-  console.log('first rels', relVals)
   let nodeIdCounter = 0;
   nodeVals.forEach((node) => {
     const key = `${node.label}-${node.value}`;
@@ -789,10 +791,107 @@ export const generateGraphFromNodeAndRelVals = (
       type,
     });
   });
-  console.log('new rels', transformedRelationships);
+
   return {
     nodes: transformedNodes,
     relationships: transformedRelationships,
     scheme: schemeVal,
   };
+};
+export function parseRelationshipString(input: string): {
+  value: string;
+  label: string;
+  source: string;
+  target: string;
+  type: string;
+} {
+  const regex = /(\w+)\s+-\[:([\w_]+)]->\s+(\w+)/;
+  const match = input.match(regex);
+
+  if (!match) {
+    throw new Error(`Invalid relationship format: ${input}`);
+  }
+
+  const [_, source, type, target] = match;
+
+  return {
+    value: `${source},${type},${target}`,
+    label: input,
+    source,
+    target,
+    type,
+  };
+}
+
+interface UpdateOptionsParams {
+  patterns: { label: string; value: string }[];
+  currentSourceOptions: OptionType[];
+  currentTargetOptions: OptionType[];
+  currentTypeOptions: OptionType[];
+  setSourceOptions: React.Dispatch<React.SetStateAction<OptionType[]>>;
+  setTargetOptions: React.Dispatch<React.SetStateAction<OptionType[]>>;
+  setTypeOptions: React.Dispatch<React.SetStateAction<OptionType[]>>;
+}
+
+export const updateSourceTargetTypeOptions = async ({
+  patterns,
+  currentSourceOptions,
+  currentTargetOptions,
+  currentTypeOptions,
+  setSourceOptions,
+  setTargetOptions,
+  setTypeOptions,
+}: UpdateOptionsParams) => {
+  const newNodesSet = new Set<string>();
+  const newRelsSet = new Set<string>();
+  patterns.forEach(({ value }) => {
+    const match = value.match(/^(.+?) -\[:(.+?)\]-> (.+)$/);
+    if (match) {
+      const [, source, rel, target] = match.map((s) => s.trim());
+      newNodesSet.add(source);
+      newNodesSet.add(target);
+      newRelsSet.add(rel);
+    }
+  });
+
+  const appendNewValues = (current: OptionType[], newVal: Set<string>): OptionType[] => {
+    const existingLabels = new Set(current.map((item) => item.label));
+    const newItems: OptionType[] = [];
+    newVal.forEach((label) => {
+      if (!existingLabels.has(label)) {
+        newItems.push({ label, value: label });
+      }
+    });
+    return [...current, ...newItems];
+  };
+  const newSourceOptions = appendNewValues(currentSourceOptions, newNodesSet);
+  const newTargetOptions = appendNewValues(currentTargetOptions, newNodesSet);
+  const newTypeOptions = appendNewValues(currentTypeOptions, newRelsSet);
+  setSourceOptions(newSourceOptions);
+  setTargetOptions(newTargetOptions);
+  setTypeOptions(newTypeOptions);
+  return [newSourceOptions, newTargetOptions, newTypeOptions];
+};
+
+export const deduplicateNodeByValue = (arrays: { value: any }[]) => {
+  const map = new Map();
+  arrays.forEach((item: { value: any }) => {
+    if (!map.has(item.value)) {
+      map.set(item.value, item);
+    }
+  });
+  return Array.from(map.values());
+};
+
+export const deduplicateByRelationshipTypeOnly = (arrays: { value: string; label: string }[]) => {
+  const seen = new Set<string>();
+  const result: { value: string; label: string }[] = [];
+  arrays.forEach((item) => {
+    const [, type] = item.value.split(',');
+    if (!seen.has(type)) {
+      seen.add(type);
+      result.push(item);
+    }
+  });
+  return result;
 };

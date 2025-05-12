@@ -10,6 +10,7 @@ import { clearChatAPI } from '../../services/QnaAPI';
 import { ChatProps, connectionState, Messages, UserCredentials } from '../../types';
 import { getIsLoading } from '../../utils/Utils';
 import ThemeWrapper from '../../context/ThemeWrapper';
+import { SpotlightProvider } from '@neo4j-ndl/react';
 
 const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
   const { clearHistoryData, messages, setMessages, setClearHistoryData, setIsDeleteChatLoading, isDeleteChatLoading } =
@@ -160,11 +161,13 @@ const ChatOnlyComponent: React.FC = () => {
   return (
     <ThemeWrapper>
       <UserCredentialsWrapper>
-        <FileContextProvider>
-          <MessageContextWrapper>
-            <ChatContent chatMessages={chatMessages} />
-          </MessageContextWrapper>
-        </FileContextProvider>
+        <SpotlightProvider>
+          <FileContextProvider>
+            <MessageContextWrapper>
+              <ChatContent chatMessages={chatMessages} />
+            </MessageContextWrapper>
+          </FileContextProvider>
+        </SpotlightProvider>
       </UserCredentialsWrapper>
     </ThemeWrapper>
   );
