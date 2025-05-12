@@ -105,7 +105,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
     setCopyRow(true);
     setTimeout(() => {
       setCopyRow(false);
-    }, 5000);
+    }, 3000);
   };
   const columns = useMemo(
     () => [
@@ -593,7 +593,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                 handleCopy(copied);
               }}
             >
-              <ClipboardDocumentIconSolid className={`${copyRow} ? 'cursor-wait': 'cursor`} />
+              <ClipboardDocumentIconSolid className={`${copyRow ? 'cursor-progress!' : 'cursor'} `} />
             </IconButtonWithToolTip>
             <IconButtonWithToolTip
               onClick={() => {
@@ -616,7 +616,16 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
         footer: (info) => info.column.id,
       }),
     ],
-    [filesData.length, statusFilter, filetypeFilter, llmtypeFilter, fileSourceFilter, isReadOnlyUser, colorMode]
+    [
+      filesData.length,
+      statusFilter,
+      filetypeFilter,
+      llmtypeFilter,
+      fileSourceFilter,
+      isReadOnlyUser,
+      colorMode,
+      copyRow,
+    ]
   );
 
   const table = useReactTable({
