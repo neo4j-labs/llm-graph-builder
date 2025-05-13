@@ -1,6 +1,7 @@
 from langchain_neo4j import Neo4jGraph
 from langchain.docstore.document import Document
 from src.shared.common_fn import load_embedding_model,execute_graph_query
+from src.shared.common_fn import load_embedding_model,execute_graph_query
 import logging
 from typing import List
 import os
@@ -34,6 +35,7 @@ def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_docume
                     MERGE (c)-[:HAS_ENTITY]->(n)
                 """
         execute_graph_query(graph,unwind_query, params={"batch_data": batch_data})
+        execute_graph_query(graph,unwind_query, params={"batch_data": batch_data})
 
     
 def create_chunk_embeddings(graph, chunkId_chunkDoc_list, file_name):
@@ -59,6 +61,7 @@ def create_chunk_embeddings(graph, chunkId_chunkDoc_list, file_name):
         SET c.embedding = row.embeddings
         MERGE (c)-[:PART_OF]->(d)
     """       
+    execute_graph_query(graph,query_to_create_embedding, params={"fileName":file_name, "data":data_for_query})
     execute_graph_query(graph,query_to_create_embedding, params={"fileName":file_name, "data":data_for_query})
     
 def create_relation_between_chunks(graph, file_name, chunks: List[Document])->list:
@@ -128,6 +131,7 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
         MERGE (c)-[:PART_OF]->(d)
     """
     execute_graph_query(graph,query_to_create_chunk_and_PART_OF_relation, params={"batch_data": batch_data})
+    execute_graph_query(graph,query_to_create_chunk_and_PART_OF_relation, params={"batch_data": batch_data})
     
     query_to_create_FIRST_relation = """ 
         UNWIND $relationships AS relationship
@@ -136,6 +140,7 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
         FOREACH(r IN CASE WHEN relationship.type = 'FIRST_CHUNK' THEN [1] ELSE [] END |
                 MERGE (d)-[:FIRST_CHUNK]->(c))
         """
+    execute_graph_query(graph,query_to_create_FIRST_relation, params={"f_name": file_name, "relationships": relationships})
     execute_graph_query(graph,query_to_create_FIRST_relation, params={"f_name": file_name, "relationships": relationships})
     
     query_to_create_NEXT_CHUNK_relation = """ 
