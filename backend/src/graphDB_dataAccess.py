@@ -29,10 +29,10 @@ class graphDBdataAccess:
             if retry_condition is not None: 
                 retry_condition = None
                 self.graph.query("""MERGE(d:Document {fileName :$fName}) SET d.status = $status, d.errorMessage = $error_msg, d.retry_condition = $retry_condition""",
-                            {"fName":file_name, "status":job_status, "error_msg":exp_msg, "retry_condition":retry_condition})
+                            {"fName":file_name, "status":job_status, "error_msg":exp_msg, "retry_condition":retry_condition},session_params={"database":self.graph._database})
             else :    
                 self.graph.query("""MERGE(d:Document {fileName :$fName}) SET d.status = $status, d.errorMessage = $error_msg""",
-                            {"fName":file_name, "status":job_status, "error_msg":exp_msg})
+                            {"fName":file_name, "status":job_status, "error_msg":exp_msg},session_params={"database":self.graph._database})
         except Exception as e:
             error_message = str(e)
             logging.error(f"Error in updating document node status as failed: {error_message}")
@@ -66,7 +66,7 @@ class graphDBdataAccess:
                             "entityEntityRelCount":obj_source_node.entityEntityRelCount,
                             "communityNodeCount":obj_source_node.communityNodeCount,
                             "communityRelCount":obj_source_node.communityRelCount
-                            })
+                            },session_params={"database":self.graph._database})
         except Exception as e:
             error_message = str(e)
             logging.info(f"error_message = {error_message}")
@@ -118,7 +118,7 @@ class graphDBdataAccess:
             logging.info(f'Base Param value 1 : {param}')
             query = "MERGE(d:Document {fileName :$props.fileName}) SET d += $props"
             logging.info("Update source node properties")
-            self.graph.query(query,param)
+            self.graph.query(query,param,session_params={"database":self.graph._database})
         except Exception as e:
             error_message = str(e)
             self.update_exception_db(self,self.file_name,error_message)
@@ -139,7 +139,7 @@ class graphDBdataAccess:
         """
         logging.info("Get existing files list from graph")
         query = "MATCH(d:Document) WHERE d.fileName IS NOT NULL RETURN d ORDER BY d.updatedAt DESC"
-        result = self.graph.query(query)
+        result = self.graph.query(query,session_params={"database":self.graph._database})
         list_of_json_objects = [entry['d'] for entry in result]
         return list_of_json_objects
         
@@ -147,7 +147,7 @@ class graphDBdataAccess:
         """
         Update the graph node with SIMILAR relationship where embedding scrore match
         """
-        index = self.graph.query("""show indexes yield * where type = 'VECTOR' and name = 'vector'""")
+        index = self.graph.query("""show indexes yield * where type = 'VECTOR' and name = 'vector'""",session_params={"database":self.graph._database})
         # logging.info(f'show index vector: {index}')
         knn_min_score = os.environ.get('KNN_MIN_SCORE')
         if len(index) > 0:
@@ -158,14 +158,14 @@ class graphDBdataAccess:
                                     WHERE node <> c and score >= $score MERGE (c)-[rel:SIMILAR]-(node) SET rel.score = score
                                 """,
                                 {"score":float(knn_min_score)}
-                                )
+                                ,session_params={"database":self.graph._database})
         else:
             logging.info("Vector index does not exist, So KNN graph not update")
 
     def check_account_access(self, database):
         try:
             query_dbms_componenet = "call dbms.components() yield edition"
-            result_dbms_componenet = self.graph.query(query_dbms_componenet)
+            result_dbms_componenet = self.graph.query(query_dbms_componenet,session_params={"database":self.graph._database})
 
             if  result_dbms_componenet[0]["edition"] == "enterprise":
                 query = """
@@ -177,7 +177,7 @@ class graphDBdataAccess:
             
                 logging.info(f"Checking access for database: {database}")
 
-                result = self.graph.query(query, params={"database": database})
+                result = self.graph.query(query, params={"database": database},session_params={"database":self.graph._database})
                 read_access_count = result[0]["readAccessCount"] if result else 0
 
                 logging.info(f"Read access count: {read_access_count}")
@@ -202,7 +202,7 @@ class graphDBdataAccess:
             gds_procedure_count = """
             SHOW FUNCTIONS YIELD name WHERE name STARTS WITH 'gds.version' RETURN COUNT(*) AS totalGdsProcedures
             """
-            result = self.graph.query(gds_procedure_count)
+            result = self.graph.query(gds_procedure_count,session_params={"database":self.graph._database})
             total_gds_procedures = result[0]['totalGdsProcedures'] if result else 0
 
             if total_gds_procedures > 0:
@@ -231,11 +231,11 @@ class graphDBdataAccess:
         db_vector_dimension = self.graph.query("""SHOW INDEXES YIELD *
                                     WHERE type = 'VECTOR' AND name = 'vector'
                                     RETURN options.indexConfig['vector.dimensions'] AS vector_dimensions
-                                """)
+                                """,session_params={"database":self.graph._database})
         
         result_chunks = self.graph.query("""match (c:Chunk) return size(c.embedding) as embeddingSize, count(*) as chunks, 
                                                     count(c.embedding) as hasEmbedding
-                                """)
+                                """,session_params={"database":self.graph._database})
         
         embedding_model = os.getenv('EMBEDDING_MODEL')
         embeddings, application_dimension = load_embedding_model(embedding_model)
@@ -260,7 +260,7 @@ class graphDBdataAccess:
         retries = 0
         while retries < max_retries:
             try:
-                return self.graph.query(query, param)
+                return self.graph.query(query, param,session_params={"database":self.graph._database})
             except TransientError as e:
                 if "DeadlockDetected" in str(e):
                     retries += 1
@@ -473,8 +473,8 @@ class graphDBdataAccess:
         embeddings, dimension = load_embedding_model(embedding_model)
         
         if isVectorIndexExist == 'true':
-            self.graph.query("""drop index vector""")
-        # self.graph.query("""drop index vector""")
+            self.graph.query("""drop index vector""",session_params={"database":self.graph._database})
+        
         self.graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
                             OPTIONS {indexConfig: {
                             `vector.dimensions`: $dimensions,
@@ -483,7 +483,7 @@ class graphDBdataAccess:
                         """,
                         {
                             "dimensions" : dimension
-                        }
+                        },session_params={"database":self.graph._database}
                         )
         return "Drop and Re-Create vector index succesfully"
 
