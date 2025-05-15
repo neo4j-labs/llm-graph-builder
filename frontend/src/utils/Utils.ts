@@ -791,7 +791,6 @@ export const generateGraphFromNodeAndRelVals = (
       type,
     });
   });
-
   return {
     nodes: transformedNodes,
     relationships: transformedRelationships,

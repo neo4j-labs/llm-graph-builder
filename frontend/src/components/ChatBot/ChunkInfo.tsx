@@ -15,7 +15,6 @@ import { handleGraphNodeClick } from './chatInfo';
 import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
-
 const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
   const themeUtils = useContext(ThemeWrapperContext);
   const [neoNodes, setNeoNodes] = useState<any[]>([]);
