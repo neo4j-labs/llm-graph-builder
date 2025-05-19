@@ -234,3 +234,60 @@ def graph_schema_consolidation(graph):
         execute_graph_query(graph,query)
 
     return None
+
+def link_entities_with_context_and_physical_sync(graph):
+    """
+    Links entities from chunks with the overall context and synchronizes physical entities.
+    Example: Checks if entities like 'Rewe' and 'Supermarket' are physically identical (e.g., same address) and creates SAME_AS relationships.
+    """
+    # 1. Retrieve all entities from chunks
+    query = '''
+        MATCH (c:Chunk)-[:CONTAINS]->(e)
+        RETURN DISTINCT e.id AS entity_id, e.name AS name, e.type AS type, e.address AS address, elementId(e) AS eid
+    '''
+    entities = execute_graph_query(graph, query)
+    
+    # 2. Map potential duplicates by address
+    entity_map = {}
+    for ent in entities:
+        key = (ent.get('address') or '').strip().lower()
+        if key:
+            if key not in entity_map:
+                entity_map[key] = []
+            entity_map[key].append(ent)
+    
+    # 3. For each group with the same address, create SAME_AS relationships
+    for addr, ents in entity_map.items():
+        if len(ents) > 1:
+            for i in range(len(ents)):
+                for j in range(i+1, len(ents)):
+                    eid1 = ents[i]['eid']
+                    eid2 = ents[j]['eid']
+                    sameas_query = f"""
+                        MATCH (a), (b)
+                        WHERE elementId(a) = '{eid1}' AND elementId(b) = '{eid2}'
+                        MERGE (a)-[:SAME_AS]->(b)
+                    """
+                    execute_graph_query(graph, sameas_query)
+    # 4. Additional rule: If name and type are identical but address is missing, also link as SAME_AS
+    name_type_map = {}
+    for ent in entities:
+        if not (ent.get('address') or '').strip():
+            key = (ent.get('name', '').strip().lower(), ent.get('type', '').strip().lower())
+            if all(key):
+                if key not in name_type_map:
+                    name_type_map[key] = []
+                name_type_map[key].append(ent)
+    for key, ents in name_type_map.items():
+        if len(ents) > 1:
+            for i in range(len(ents)):
+                for j in range(i+1, len(ents)):
+                    eid1 = ents[i]['eid']
+                    eid2 = ents[j]['eid']
+                    sameas_query = f"""
+                        MATCH (a), (b)
+                        WHERE elementId(a) = '{eid1}' AND elementId(b) = '{eid2}'
+                        MERGE (a)-[:SAME_AS]->(b)
+                    """
+                    execute_graph_query(graph, sameas_query)
+    return True
