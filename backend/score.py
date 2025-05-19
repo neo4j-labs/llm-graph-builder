@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.main import *
 from src.QA_integration import *
 from src.shared.common_fn import *
+from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 import uvicorn
 import asyncio
 import base64
