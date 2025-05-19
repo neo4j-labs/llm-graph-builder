@@ -22,7 +22,8 @@ import LoadDBSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtracti
 import PredefinedSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/PredefinedSchemaDialog';
 import { SKIP_AUTH } from '../../utils/Constants';
 import { useNavigate } from 'react-router';
-import { deduplicateByRelationshipTypeOnly, deduplicateNodeByValue } from '../../utils/Utils';
+import { deduplicateByFullPattern, deduplicateNodeByValue } from '../../utils/Utils';
+
 
 const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
 const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
@@ -378,7 +379,7 @@ const PageLayout: React.FC = () => {
       setSchemaValRels(rels);
       setCombinedRelsVal((prevRels: OptionType[]) => {
         const combined = [...rels, ...prevRels];
-        return deduplicateByRelationshipTypeOnly(combined);
+        return deduplicateByFullPattern(combined);
       });
       setSchemaView('text');
       localStorage.setItem(LOCAL_KEYS.source, JSON.stringify(updatedSource));
@@ -418,7 +419,7 @@ const PageLayout: React.FC = () => {
       setDbRels(rels);
       setCombinedRelsVal((prevRels: OptionType[]) => {
         const combined = [...rels, ...prevRels];
-        return deduplicateByRelationshipTypeOnly(combined);
+        return deduplicateByFullPattern(combined);
       });
       localStorage.setItem(LOCAL_KEYS.source, JSON.stringify(updatedSource));
       localStorage.setItem(LOCAL_KEYS.type, JSON.stringify(updatedType));
@@ -456,7 +457,7 @@ const PageLayout: React.FC = () => {
       setPreDefinedRels(rels);
       setCombinedRelsVal((prevRels: OptionType[]) => {
         const combined = [...rels, ...prevRels];
-        return deduplicateByRelationshipTypeOnly(combined);
+        return deduplicateByFullPattern(combined);
       });
       localStorage.setItem(LOCAL_KEYS.source, JSON.stringify(updatedSource));
       localStorage.setItem(LOCAL_KEYS.type, JSON.stringify(updatedType));

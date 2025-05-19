@@ -791,7 +791,6 @@ export const generateGraphFromNodeAndRelVals = (
       type,
     });
   });
-
   return {
     nodes: transformedNodes,
     relationships: transformedRelationships,
@@ -883,13 +882,12 @@ export const deduplicateNodeByValue = (arrays: { value: any }[]) => {
   return Array.from(map.values());
 };
 
-export const deduplicateByRelationshipTypeOnly = (arrays: { value: string; label: string }[]) => {
+export const deduplicateByFullPattern = (arrays: { value: string; label: string }[]) => {
   const seen = new Set<string>();
   const result: { value: string; label: string }[] = [];
   arrays.forEach((item) => {
-    const [, type] = item.value.split(',');
-    if (!seen.has(type)) {
-      seen.add(type);
+    if (!seen.has(item.value)) {
+      seen.add(item.value);
       result.push(item);
     }
   });

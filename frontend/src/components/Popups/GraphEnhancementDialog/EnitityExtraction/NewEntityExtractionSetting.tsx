@@ -13,7 +13,7 @@ import {
   updateLocalStorage,
   extractOptions,
   parseRelationshipString,
-  deduplicateByRelationshipTypeOnly,
+  deduplicateByFullPattern,
   deduplicateNodeByValue,
 } from '../../../../utils/Utils';
 import TooltipWrapper from '../../../UI/TipWrapper';
@@ -175,7 +175,7 @@ export default function NewEntityExtractionSetting({
         });
         setUserDefinedRels((prev: OptionType[]) => {
           const combined = [...prev, ...relationshipTypeOptions];
-          return deduplicateByRelationshipTypeOnly(combined);
+          return deduplicateByFullPattern(combined);
         });
         setCombinedNodes((prev: OptionType[]) => {
           const combined = [...prev, ...nodeLabelOptions];
@@ -183,7 +183,7 @@ export default function NewEntityExtractionSetting({
         });
         setCombinedRels((prev: OptionType[]) => {
           const combined = [...prev, ...relationshipTypeOptions];
-          return deduplicateByRelationshipTypeOnly(combined);
+          return deduplicateByFullPattern(combined);
         });
         setTupleOptions((prev) => [...updatedTuples, ...prev]);
       } else {

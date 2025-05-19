@@ -799,6 +799,7 @@ export interface DatabaseStatusProps {
   isConnected: boolean;
   isGdsActive: boolean;
   uri?: string;
+  database?: string;
 }
 
 export type SourcesProps = {

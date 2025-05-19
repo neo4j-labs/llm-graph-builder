@@ -14,8 +14,9 @@ from langchain_community.chat_models import ChatOllama
 import boto3
 import google.auth
 from src.shared.constants import ADDITIONAL_INSTRUCTIONS
+from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 import re
-import json
+from typing import List
 
 def get_llm(model: str):
     """Retrieve the specified language model based on the model name."""
@@ -127,6 +128,14 @@ def get_llm(model: str):
     logging.info(f"Model created - Model Version: {model}")
     return llm, model_name
 
+def get_llm_model_name(llm):
+    """Extract name of llm model from llm object"""
+    for attr in ["model_name", "model", "model_id"]:
+        model_name = getattr(llm, attr, None)
+        if model_name:
+            return model_name.lower()
+    print("Could not determine model name; defaulting to empty string")
+    return ""
 
 def get_combined_chunks(chunkId_chunkDoc_list, chunks_to_combine):
     combined_chunk_document_list = []
@@ -181,8 +190,9 @@ async def get_graph_document_list(
             node_properties = ["description"]
             relationship_properties = ["description"]
         TOOL_SUPPORTED_MODELS = {"qwen3", "deepseek"} 
-        model_name = llm.model_name.lower() 
+        model_name = get_llm_model_name(llm)
         ignore_tool_usage = not any(pattern in model_name for pattern in TOOL_SUPPORTED_MODELS)
+        logging.info(f"Keeping ignore tool usage parameter as {ignore_tool_usage}")
         llm_transformer = LLMGraphTransformer(
             llm=llm,
             node_properties=node_properties,
@@ -200,21 +210,45 @@ async def get_graph_document_list(
     return graph_document_list
 
 async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship, chunks_to_combine, additional_instructions=None):
+   try:
+       llm, model_name = get_llm(model)
+       logging.info(f"Using model: {model_name}")
     
-    llm, model_name = get_llm(model)
-    combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list, chunks_to_combine)
+       combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list, chunks_to_combine)
+       logging.info(f"Combined {len(combined_chunk_document_list)} chunks")
     
-    allowedNodes = allowedNodes.split(',') if allowedNodes else []
+       allowed_nodes = [node.strip() for node in allowedNodes.split(',') if node.strip()]
+       logging.info(f"Allowed nodes: {allowed_nodes}")
+    
+       allowed_relationships = []
+       if allowedRelationship:
+           items = [item.strip() for item in allowedRelationship.split(',') if item.strip()]
+           if len(items) % 3 != 0:
+               raise LLMGraphBuilderException("allowedRelationship must be a multiple of 3 (source, relationship, target)")
+           for i in range(0, len(items), 3):
+               source, relation, target = items[i:i + 3]
+               if source not in allowed_nodes or target not in allowed_nodes:
+                   raise LLMGraphBuilderException(
+                       f"Invalid relationship ({source}, {relation}, {target}): "
+                       f"source or target not in allowedNodes"
+                   )
+               allowed_relationships.append((source, relation, target))
+           logging.info(f"Allowed relationships: {allowed_relationships}")
+       else:
+           logging.info("No allowed relationships provided")
 
-    if not allowedRelationship:
-        allowedRelationship = []
-    else:
-        items = allowedRelationship.split(',')
-        allowedRelationship = [tuple(items[i:i+3]) for i in range(0, len(items), 3)]
-    graph_document_list = await get_graph_document_list(
-        llm, combined_chunk_document_list, allowedNodes, allowedRelationship, additional_instructions
-    )
-    return graph_document_list
+       graph_document_list = await get_graph_document_list(
+           llm,
+           combined_chunk_document_list,
+           allowed_nodes,
+           allowed_relationships,
+           additional_instructions
+       )
+       logging.info(f"Generated {len(graph_document_list)} graph documents")
+       return graph_document_list
+   except Exception as e:
+       logging.error(f"Error in get_graph_from_llm: {e}", exc_info=True)
+       raise LLMGraphBuilderException(f"Error in getting graph from llm: {e}")
 
 def sanitize_additional_instruction(instruction: str) -> str:
    """
