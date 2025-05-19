@@ -8,6 +8,7 @@ import os
 import hashlib
 import time
 from langchain_neo4j import Neo4jVector
+import re
 
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 
@@ -16,14 +17,16 @@ EMBEDDING_FUNCTION , EMBEDDING_DIMENSION = load_embedding_model(EMBEDDING_MODEL)
 
 def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_documents_chunk_chunk_Id : list):
     batch_data = []
-    logging.info("Create HAS_ENTITY relationship between chunks and entities")
+    logging.info("Create HAS_ENTITY relationship between chunks and entities (with semantic normalization)")
     
     for graph_doc_chunk_id in graph_documents_chunk_chunk_Id:
         for node in graph_doc_chunk_id['graph_doc'].nodes:
+            # Use normalization and semantic linking
+            canonical_id = create_or_link_entity_node(graph, node.id, node.type)
             query_data={
                 'chunk_id': graph_doc_chunk_id['chunk_id'],
                 'node_type': node.type,
-                'node_id': node.id
+                'node_id': canonical_id
             }
             batch_data.append(query_data)
           
@@ -177,3 +180,42 @@ def create_chunk_vector_index(graph):
             logging.info("Vector index already exists, skipping creation.")
         else:
             raise
+
+def normalize_entity_name(name: str) -> str:
+    """Normalizes entity names (removes articles, lowercases, trims whitespace)."""
+    name = name.strip().lower()
+    # Remove German and English articles at the beginning
+    name = re.sub(r'^(der|die|das|the|ein|eine|a|an) ', '', name)
+    # Optional: singularization, synonym replacement etc. (placeholder)
+    return name
+
+
+def create_or_link_entity_node(graph: Neo4jGraph, entity_name: str, entity_type: str = "Entity"):
+    """
+    Searches for existing entities with normalized name. If found, creates a :DERIVATIVE_OF relationship.
+    If not found, creates a new node.
+    Returns the node ID of the canonical node.
+    """
+    norm_name = normalize_entity_name(entity_name)
+    # Search for existing node with normalized name
+    query = (
+        "MATCH (e:Entity) WHERE toLower(e.id) = $norm_name RETURN e LIMIT 1"
+    )
+    result = graph.query(query, {"norm_name": norm_name})
+    if result:
+        # Node exists, create DERIVATIVE_OF relationship if name differs
+        node_id = result[0]["e"].get("id")
+        if entity_name.strip().lower() != norm_name:
+            rel_query = (
+                "MATCH (orig:Entity {id: $orig_name}), (norm:Entity {id: $norm_name}) "
+                "MERGE (orig)-[:DERIVATIVE_OF]->(norm)"
+            )
+            graph.query(rel_query, {"orig_name": entity_name, "norm_name": norm_name})
+        return node_id
+    else:
+        # Node does not exist, create new one
+        create_query = (
+            "CREATE (e:Entity {id: $norm_name, original: $orig_name, type: $entity_type}) RETURN e.id AS id"
+        )
+        res = graph.query(create_query, {"norm_name": norm_name, "orig_name": entity_name, "entity_type": entity_type})
+        return res[0]["id"] if res else None
