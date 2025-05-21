@@ -3,18 +3,18 @@ from neo4j import GraphDatabase
 
 # Database configurations
 neo4j_configurations = [
-    {
-        'name': 'Neo4j Config 1',
-        'NEO4J_URI': 'neo4j+s://73b760b4.databases.neo4j.io',
-        'NEO4J_USERNAME': 'neo4j',
-        'NEO4J_PASSWORD': 'HqwAzfG83XwcEQ-mvEG4yNpcRTHMpsgZaYW3qIGJh2I'
-    },
     # {
-    #     'name': 'Neo4j Config 2',
-    #     'uri': 'bolt://another-host:7687',
-    #     'user': 'neo4j',
-    #     'password': 'password2'
-    # }
+    #     'name': 'Neo4j Config 1',
+    #     'NEO4J_URI': 'neo4j+s://73b760b4.databases.neo4j.io',
+    #     'NEO4J_USERNAME': 'neo4j',
+    #     'NEO4J_PASSWORD': 'HqwAzfG83XwcEQ-mvEG4yNpcRTHMpsgZaYW3qIGJh2I'
+    # },
+    {
+        'name': 'Neo4j Config 2',
+        'uri': 'bolt://localhost:7687',
+        'user': 'neo4j',
+        'password': 'test1234'
+    }
 ]
 
 # Function to create a Neo4j driver
