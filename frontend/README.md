@@ -14,7 +14,7 @@ ReactJS app for building an knowledge graph using [Neo4j Needle](https://www.neo
 ## Installation:
 ```shell
 npm install -g yarn
-yarn i
+yarn install
 yarn run dev
 ```
 
