@@ -44,7 +44,7 @@ export default class ErrorBoundary extends React.Component<any, any> {
                 : [
                     {
                       label: 'Documentation',
-                      href: 'https://github.com/neo4j-labs/llm-graph-builder',
+                      href: 'https://github.com/XIXUM/llm-graph-builder/blob/main/docs/project_docs.adoc',
                       target: '_blank',
                     },
                   ]
