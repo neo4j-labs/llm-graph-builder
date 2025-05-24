@@ -62,3 +62,7 @@ rouge_score==0.1.2
 langchain-neo4j==0.4.0
 pypandoc-binary==1.15
 chardet==5.2.0
+torch==2.7.0
+torchvision==0.22.0
+protobuf==5.29.4
+
