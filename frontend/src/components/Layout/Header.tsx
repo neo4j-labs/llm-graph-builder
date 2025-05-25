@@ -104,7 +104,9 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                 >
                   <IconButtonWithToolTip
                     text={tooltips.documentation}
-                    onClick={() => handleURLClick('https://neo4j.com/labs/genai-ecosystem/llm-graph-builder')}
+                    onClick={() =>
+                      handleURLClick('https://github.com/XIXUM/llm-graph-builder/blob/main/docs/project_docs.adoc')
+                    }
                     size='large'
                     clean
                     placement='left'
@@ -115,7 +117,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
 
                   <IconButtonWithToolTip
                     label={tooltips.github}
-                    onClick={() => handleURLClick('https://github.com/neo4j-labs/llm-graph-builder/issues')}
+                    onClick={() => handleURLClick('https://github.com/XIXUM/llm-graph-builder/issues')}
                     text={tooltips.github}
                     size='large'
                     clean
