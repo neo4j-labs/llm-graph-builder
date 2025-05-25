@@ -243,6 +243,7 @@
 
 .chatbot-bg-backdrop {
   background-image: url('./assets/images/imagebg.png');
+  position: absolute;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -251,8 +252,14 @@
   height: 100%;
   top: 0;
   left: 0;
-  z-index: 0;
+  z-index: -1;
   pointer-events: none;
+}
+
+.override-ndl-widget {
+  all: unset;
+  display: block;
+  background-color: transparent !important;
 }
 
 .ndl-dropzone .ndl-dropzone-header {
