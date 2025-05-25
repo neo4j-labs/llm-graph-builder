@@ -409,7 +409,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   }, []);
 
   return (
-    <div className='n-bg-palette-neutral-bg-weak chatbot-bg-backdrop flex! flex-col justify-between min-h-full max-h-full overflow-hidden relative'>
+    <div className='n-bg-palette-neutral-bg-weak flex! flex-col justify-between min-h-full max-h-full overflow-hidden relative chatbot-bg-backdrop'>
       {isDeleteChatLoading && (
         <div className='chatbot-deleteLoader'>
           <Loader title='Deleting...'></Loader>
@@ -420,7 +420,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           isChatOnly ? 'min-h-[calc(100dvh-114px)] max-h-[calc(100dvh-114px)]' : ''
         } `}
       >
-        <Widget className='n-bg-palette-neutral-bg-weak w-full' header='' isElevated={false}>
+        <Widget className='override-ndl-widget w-full' header='' isElevated={false}>
           <div className='flex! flex-col gap-4 gap-y-4'>
             {listMessages.map((chat, index) => {
               const messagechatModes = Object.keys(chat.modes);
