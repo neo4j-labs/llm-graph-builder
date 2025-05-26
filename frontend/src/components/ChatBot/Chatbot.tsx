@@ -14,6 +14,7 @@ import {
 } from '@neo4j-ndl/react';
 import { ArrowDownTrayIconOutline, XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import ChatBotAvatar from '../../assets/images/chatbot-ai.png';
+import UserAvatar from '../../assets/images/chatbot-user.png';
 import {
   ChatbotProps,
   Chunk,
@@ -452,6 +453,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                         hasStatus
                         name='KM'
                         size='large'
+                        source={UserAvatar}
                         status={connectionStatus ? 'online' : 'offline'}
                         shape='square'
                         type='image'
