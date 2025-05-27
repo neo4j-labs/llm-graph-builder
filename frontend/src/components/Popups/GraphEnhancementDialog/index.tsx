@@ -50,6 +50,7 @@ export default function GraphEnhancementDialog({
     setPreDefinedPattern,
     setSelectedPreDefOption,
     allPatterns,
+    setDataImporterSchemaDialog,
   } = useFileContext();
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
 
@@ -193,6 +194,9 @@ export default function GraphEnhancementDialog({
               setCombinedNodes={setCombinedNodes}
               combinedRels={combinedRels}
               setCombinedRels={setCombinedRels}
+              openDataImporterSchema={() => {
+                setDataImporterSchemaDialog({ triggeredFrom: 'enhancementtab', show: true });
+              }}
             />
           </div>
         </Tabs.TabPanel>
