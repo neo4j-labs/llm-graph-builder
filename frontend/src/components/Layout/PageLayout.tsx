@@ -523,7 +523,7 @@ const PageLayout: React.FC = () => {
   }, []);
 
   const openDataImporterSchema = useCallback(() => {
-    setShowTextFromSchemaDialog({ triggeredFrom: 'schemadialog', show: true });
+    setDataImporterSchemaDialog({ triggeredFrom: 'schemadialog', show: true });
   }, []);
 
   const openChatBot = useCallback(() => setShowChatBot(true), []);
