@@ -33,6 +33,7 @@ export default function NewEntityExtractionSetting({
   setCombinedNodes,
   combinedRels,
   setCombinedRels,
+  openDataImporterSchema,
 }: {
   view: 'Dialog' | 'Tabs';
   open?: boolean;
@@ -49,6 +50,7 @@ export default function NewEntityExtractionSetting({
   setCombinedNodes: Dispatch<SetStateAction<OptionType[]>>;
   combinedRels: OptionType[];
   setCombinedRels: Dispatch<SetStateAction<OptionType[]>>;
+  openDataImporterSchema: () => void;
 }) {
   const {
     setSelectedRels,
@@ -288,6 +290,16 @@ export default function NewEntityExtractionSetting({
     openLoadSchema();
   }, []);
 
+  const onDataImporterSchemaCLick: MouseEventHandler<HTMLButtonElement> = useCallback(async () => {
+    if (view === 'Dialog' && onClose != undefined) {
+      onClose();
+    }
+    if (view === 'Tabs' && closeEnhanceGraphSchemaDialog != undefined) {
+      closeEnhanceGraphSchemaDialog();
+    }
+    openDataImporterSchema();
+  }, []);
+
   return (
     <div>
       <Typography variant='body-medium'>
@@ -362,6 +374,14 @@ export default function NewEntityExtractionSetting({
                   </TooltipWrapper>
                 }
                 onClick={onSchemaFromTextCLick}
+              />
+              <Menu.Item
+                title={
+                  <TooltipWrapper hasButtonWrapper={true} placement='right' tooltip={tooltips.createSchema}>
+                    Data Importer JSON
+                  </TooltipWrapper>
+                }
+                onClick={onDataImporterSchemaCLick}
               />
             </Menu.Items>
           </Menu>

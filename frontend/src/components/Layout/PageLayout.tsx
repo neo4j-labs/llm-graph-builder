@@ -23,6 +23,7 @@ import PredefinedSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtr
 import { SKIP_AUTH } from '../../utils/Constants';
 import { useNavigate } from 'react-router';
 import { deduplicateByFullPattern, deduplicateNodeByValue } from '../../utils/Utils';
+import DataImporterSchemaDailog from '../Popups/GraphEnhancementDialog/EnitityExtraction/DataImporter';
 
 const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
 const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
@@ -193,6 +194,11 @@ const PageLayout: React.FC = () => {
     allPatterns,
     selectedNodes,
     selectedRels,
+    dataImporterSchemaDialog,
+    setDataImporterSchemaDialog,
+    setImporterPattern,
+    setImporterNodes,
+    setImporterRels,
   } = useFileContext();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth0();
@@ -465,6 +471,45 @@ const PageLayout: React.FC = () => {
     []
   );
 
+  const handleImporterApply = useCallback(
+    (
+      newPatterns: string[],
+      nodes: OptionType[],
+      rels: OptionType[],
+      updatedSource: OptionType[],
+      updatedTarget: OptionType[],
+      updatedType: OptionType[]
+    ) => {
+      setImporterPattern((prevPatterns: string[]) => {
+        const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
+        return uniquePatterns;
+      });
+      setCombinedPatternsVal((prevPatterns: string[]) => {
+        const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
+        return uniquePatterns;
+      });
+      setDataImporterSchemaDialog({
+        triggeredFrom: 'importerSchemaApply',
+        show: true,
+      });
+      setSchemaView('importer');
+      setImporterNodes(nodes);
+      setCombinedNodesVal((prevNodes: OptionType[]) => {
+        const combined = [...nodes, ...prevNodes];
+        return deduplicateNodeByValue(combined);
+      });
+      setImporterRels(rels);
+      setCombinedRelsVal((prevRels: OptionType[]) => {
+        const combined = [...rels, ...prevRels];
+        return deduplicateByFullPattern(combined);
+      });
+      localStorage.setItem(LOCAL_KEYS.source, JSON.stringify(updatedSource));
+      localStorage.setItem(LOCAL_KEYS.type, JSON.stringify(updatedType));
+      localStorage.setItem(LOCAL_KEYS.target, JSON.stringify(updatedTarget));
+    },
+    []
+  );
+
   const openPredefinedSchema = useCallback(() => {
     setPredefinedSchemaDialog({ triggeredFrom: 'predefinedDialog', show: true });
   }, []);
@@ -474,6 +519,10 @@ const PageLayout: React.FC = () => {
   }, []);
 
   const openTextSchema = useCallback(() => {
+    setShowTextFromSchemaDialog({ triggeredFrom: 'schemadialog', show: true });
+  }, []);
+
+  const openDataImporterSchema = useCallback(() => {
     setShowTextFromSchemaDialog({ triggeredFrom: 'schemadialog', show: true });
   }, []);
 
@@ -565,6 +614,20 @@ const PageLayout: React.FC = () => {
         }}
         onApply={handlePredinedApply}
       ></PredefinedSchemaDialog>
+      <DataImporterSchemaDailog
+        open={dataImporterSchemaDialog.show}
+        onClose={() => {
+          setDataImporterSchemaDialog({ triggeredFrom: '', show: false });
+          switch (dataImporterSchemaDialog.triggeredFrom) {
+            case 'enhancementtab':
+              toggleEnhancementDialog();
+              break;
+            default:
+              break;
+          }
+        }}
+        onApply={handleImporterApply}
+      ></DataImporterSchemaDailog>
       {isLargeDesktop ? (
         <div
           className={`layout-wrapper ${!isLeftExpanded ? 'drawerdropzoneclosed' : ''} ${
@@ -596,6 +659,7 @@ const PageLayout: React.FC = () => {
             openTextSchema={openTextSchema}
             openLoadSchema={openLoadSchema}
             openPredefinedSchema={openPredefinedSchema}
+            openDataImporterSchema={openDataImporterSchema}
             showEnhancementDialog={showEnhancementDialog}
             toggleEnhancementDialog={toggleEnhancementDialog}
             setOpenConnection={setOpenConnection}
@@ -670,6 +734,7 @@ const PageLayout: React.FC = () => {
               openTextSchema={openTextSchema}
               openLoadSchema={openLoadSchema}
               openPredefinedSchema={openPredefinedSchema}
+              openDataImporterSchema={openDataImporterSchema}
               showEnhancementDialog={showEnhancementDialog}
               toggleEnhancementDialog={toggleEnhancementDialog}
               setOpenConnection={setOpenConnection}

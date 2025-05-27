@@ -188,6 +188,7 @@ export const tooltips = {
   visualizeGraph: 'Visualize Graph Schema',
   additionalInstructions: 'Analyze instructions for schema',
   predinedSchema: 'Predefined Schema',
+  dataImporterJson: 'Data Importer JSON',
 };
 export const PRODMODLES = ['openai_gpt_4o', 'openai_gpt_4o_mini', 'diffbot', 'gemini_1.5_flash'];
 export const buttonCaptions = {
@@ -215,6 +216,7 @@ export const buttonCaptions = {
   provideAdditionalInstructions: 'Provide Additional Instructions for Entity Extractions',
   analyzeInstructions: 'Analyze Instructions',
   helpInstructions: 'Provide specific instructions for entity extraction, such as focusing on the key topics.',
+  importDropzoneSpan: 'JSON Documents',
 };
 
 export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
@@ -372,6 +374,7 @@ export const appLabels = {
   chunkingConfiguration: 'Select a Chunking Configuration',
   graphPatternTuple: 'Graph Pattern',
   selectedPatterns: 'Selected Patterns',
+  dataImporterSchema: 'Schema from Data Importer',
 };
 
 export const LLMDropdownLabel = {

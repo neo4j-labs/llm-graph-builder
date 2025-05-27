@@ -165,6 +165,7 @@ export interface ContentProps {
   setCombinedNodes: Dispatch<SetStateAction<OptionType[]>>;
   combinedRels: OptionType[];
   setCombinedRels: Dispatch<SetStateAction<OptionType[]>>;
+  openDataImporterSchema: () => void;
 }
 
 export interface FileTableProps {
@@ -870,6 +871,12 @@ export interface predefinedSchemaDialogType {
   onApply?: (selectedPattern: string[], nodes: OptionType[], rels: OptionType[]) => void;
 }
 
+export interface dataImporterSchemaDialogType {
+  triggeredFrom: string;
+  show: boolean;
+  onApply?: (selectedPattern: string[], nodes: OptionType[], rels: OptionType[]) => void;
+}
+
 export interface FileContextType {
   files: (File | null)[] | [];
   filesData: CustomFile[] | [];
@@ -956,6 +963,16 @@ export interface FileContextType {
   setTypeOptions: Dispatch<SetStateAction<OptionType[]>>;
   targetOptions: OptionType[];
   setTargetOptions: Dispatch<SetStateAction<OptionType[]>>;
+
+  // importer defined schema
+  dataImporterSchemaDialog: dataImporterSchemaDialogType;
+  setDataImporterSchemaDialog: React.Dispatch<React.SetStateAction<dataImporterSchemaDialogType>>;
+  importerNodes: OptionType[];
+  setImporterNodes: Dispatch<SetStateAction<OptionType[]>>;
+  importerRels: OptionType[];
+  setImporterRels: Dispatch<SetStateAction<OptionType[]>>;
+  importerPattern: string[];
+  setImporterPattern: Dispatch<SetStateAction<string[]>>;
 }
 export declare type Side = 'top' | 'right' | 'bottom' | 'left';
 

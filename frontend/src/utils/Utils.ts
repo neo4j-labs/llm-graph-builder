@@ -892,3 +892,7 @@ export const deduplicateByFullPattern = (arrays: { value: string; label: string 
   });
   return result;
 };
+
+export const importerValidation = (url: string) => {
+  return url.trim() !== '' && /^https:\/\/console-preview\.neo4j\.io\/tools\/import\/models(\/.*)?$/i.test(url);
+};

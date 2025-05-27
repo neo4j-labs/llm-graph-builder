@@ -7,6 +7,7 @@ import {
   showTextFromSchemaDialogType,
   schemaLoadDialogType,
   predefinedSchemaDialogType,
+  dataImporterSchemaDialogType,
 } from '../types';
 import {
   chatModeLables,
@@ -69,6 +70,11 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     show: false,
   });
 
+  const [dataImporterSchemaDialog, setDataImporterSchemaDialog] = useState<dataImporterSchemaDialogType>({
+    triggeredFrom: '',
+    show: false,
+  });
+
   const [postProcessingTasks, setPostProcessingTasks] = useState<string[]>([
     'materialize_text_chunk_similarities',
     'enable_hybrid_search_and_fulltext_search_in_bloom',
@@ -96,6 +102,11 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [sourceOptions, setSourceOptions] = useState<OptionType[]>(initialSourceOptions);
   const [typeOptions, setTypeOptions] = useState<OptionType[]>(initialTypeOptions);
   const [targetOptions, setTargetOptions] = useState<OptionType[]>(initialTargetOptions);
+
+  // Importer schema
+  const [importerNodes, setImporterNodes] = useState<OptionType[]>([]);
+  const [importerRels, setImporterRels] = useState<OptionType[]>([]);
+  const [importerPattern, setImporterPattern] = useState<string[]>([]);
 
   useEffect(() => {
     if (selectedNodeLabelstr != null) {
@@ -213,6 +224,14 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     setTypeOptions,
     targetOptions,
     setTargetOptions,
+    dataImporterSchemaDialog,
+    setDataImporterSchemaDialog,
+    importerNodes,
+    setImporterNodes,
+    importerRels,
+    setImporterRels,
+    importerPattern,
+    setImporterPattern,
   };
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };
