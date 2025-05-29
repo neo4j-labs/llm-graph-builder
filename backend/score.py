@@ -59,6 +59,7 @@ class MessageData(BaseModel):
     messages: List[Message]  # Wrap the messages array in an object    
     question: str
     filter_properties: Optional[Dict[str, Any]] = None
+    requireGrounding: bool = True
     # tools: List[str]
 
 logger = CustomLogger()
@@ -417,9 +418,11 @@ async def magic_trek_chat_bot(
     messages = messageData.messages
     question = messageData.question
     filter_properties = messageData.filter_properties
+    requireGrounding = messageData.requireGrounding if hasattr(messageData, 'requireGrounding') else True
     print(f'question = {question}')
     print(messages)
     print(len(messages))
+    logging.info(f"requireGrounding = {requireGrounding}")
     logging.info(f"IAN-TEST called at {datetime.now()}")
     qa_rag_start_time = time.time()
 
@@ -467,7 +470,8 @@ async def magic_trek_chat_bot(
             session_id=session_id,
             mode=mode,
             write_access=write_access,
-            filter_properties=filter_properties
+            filter_properties=filter_properties,
+            requireGrounding=requireGrounding
         )
 
         total_call_time = time.time() - qa_rag_start_time

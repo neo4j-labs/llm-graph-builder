@@ -231,13 +231,13 @@ def format_documents(documents, model):
     
     return "\n\n".join(formatted_docs), sources,entities,global_communities
 
-def process_documents(docs, question, messages, llm, model,chat_mode_settings):
+def process_documents(docs, question, messages, llm, model,chat_mode_settings, requireGrounding=True):
     start_time = time.time()
     
     try:
         formatted_docs, sources, entitydetails, communities = format_documents(docs, model)
-        
-        rag_chain = get_rag_chain(llm=llm)
+        logging.info(f"process_documents requireGrounding = {requireGrounding}")
+        rag_chain = get_rag_chain(llm=llm, system_template=CHAT_SYSTEM_TEMPLATE if requireGrounding else CHAT_SYSTEM_TEMPLATE_UNGROUNDED)
         
         ai_response = rag_chain.invoke({
             "messages": messages[:-1],
@@ -521,7 +521,7 @@ def extract_tool_calls(model, messages):
     return tools
 
 
-def process_chat_response(messages, history, question, model, graph, document_names, chat_mode_settings, extract_tools=False, filter_properties=None):
+def process_chat_response(messages, history, question, model, graph, document_names, chat_mode_settings, extract_tools=False, filter_properties=None, requireGrounding=True):
     try:
         llm, doc_retriever, model_version = setup_chat(model, graph, document_names, chat_mode_settings, filter_properties)
 
@@ -549,7 +549,7 @@ def process_chat_response(messages, history, question, model, graph, document_na
 
         if docs:
             logging.info("documents found, process_documents about to be called")
-            content, result, total_tokens, formatted_docs = process_documents(docs, question, messages, llm, model, chat_mode_settings)
+            content, result, total_tokens, formatted_docs = process_documents(docs, question, messages, llm, model, chat_mode_settings, requireGrounding)
         else:
             logging.info("No document clause running")
             content = "I couldn't find any relevant documents to answer your question."
@@ -791,7 +791,7 @@ def convert_messages_to_langchain(messages):
     
     return langchain_messages
 
-def MAGIC_TREK_QA_RAG(graph,model, messages, question, document_names, session_id, mode, write_access=True, filter_properties=None):
+def MAGIC_TREK_QA_RAG(graph,model, messages, question, document_names, session_id, mode, write_access=True, filter_properties=None, requireGrounding=True):
     logging.info(f"Chat Mode: {mode}")
     document_names = "[]"
 
@@ -849,7 +849,8 @@ def MAGIC_TREK_QA_RAG(graph,model, messages, question, document_names, session_i
                 document_names=document_names,
                 chat_mode_settings=chat_mode_settings,
                 extract_tools=True,
-                filter_properties=filter_properties
+                filter_properties=filter_properties,
+                requireGrounding=requireGrounding
             )
 
     # result["session_id"] = session_id

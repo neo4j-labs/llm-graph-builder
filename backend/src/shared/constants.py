@@ -305,7 +305,7 @@ Note: This system does not generate answers based solely on internal knowledge. 
 """
 
 ## this one below is MODIFIED by ian to take out the line saying don't use your knowledge base
-CHAT_SYSTEM_TEMPLATE_MODIFIED = """
+CHAT_SYSTEM_TEMPLATE_UNGROUNDED = """
 You are an AI-powered question-answering agent. Your task is to provide accurate and comprehensive responses to user queries based on the given context, chat history, and available resources.
 
 ### Response Guidelines:
@@ -341,7 +341,6 @@ AI Response: "PyCaret simplifies the process of building and deploying machine l
 User: "What can you tell me about the latest realtime trends in AI?"
 AI Response: "I don't have that information right now. Is there something else I can help with?"
 
-Note: This system does not generate answers based solely on internal knowledge. It answers from the information provided in the user's current and previous inputs, and from the context.
 """
 
 
