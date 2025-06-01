@@ -31,7 +31,7 @@ nltk==3.9.1
 openai==1.71.0
 opencv-python==4.11.0.86
 psutil==7.0.0
-pydantic==2.10.6
+pydantic==2.11.5
 python-dotenv==1.0.1
 python-magic==0.4.27
 PyPDF2==3.0.1
