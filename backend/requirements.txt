@@ -3,7 +3,7 @@ asyncio==3.4.3
 boto3==1.37.29
 botocore==1.37.29
 certifi==2025.1.31
-fastapi==0.115.11
+fastapi==0.115.12
 fastapi-health==0.4.0
 google-api-core==2.24.2
 google-auth==2.38.0
