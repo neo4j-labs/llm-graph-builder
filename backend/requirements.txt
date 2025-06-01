@@ -44,7 +44,7 @@ unstructured[all-docs]
 unstructured==0.17.2
 unstructured-client==0.32.3
 unstructured-inference==0.8.10
-urllib3==2.3.0
+urllib3==2.4.0
 uvicorn==0.34.0
 gunicorn==23.0.0
 wikipedia==1.4.0
