@@ -112,7 +112,7 @@ For development, you can run the backend and frontend independently.
    cd backend
    python -m venv envName
    source envName/bin/activate
-   pip install -r requirements.txt
+   pip install -r requirements.txt -c constraints.txt
    uvicorn score:app --reload
    ```
 
