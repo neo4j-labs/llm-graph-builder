@@ -8,7 +8,7 @@ from langchain_google_vertexai import HarmBlockThreshold, HarmCategory
 from langchain_experimental.graph_transformers.diffbot import DiffbotGraphTransformer
 from langchain_experimental.graph_transformers import LLMGraphTransformer
 from langchain_anthropic import ChatAnthropic
-from langchain_fireworks import ChatFireworks
+# from langchain_fireworks import ChatFireworks
 from langchain_aws import ChatBedrock
 from langchain_community.chat_models import ChatOllama
 import boto3
@@ -79,9 +79,9 @@ def get_llm(model: str):
                 api_key=api_key, model=model_name, temperature=0, timeout=None
             )
 
-        elif "fireworks" in model:
-            model_name, api_key = env_value.split(",")
-            llm = ChatFireworks(api_key=api_key, model=model_name)
+        # elif "fireworks" in model:
+        #     model_name, api_key = env_value.split(",")
+        #     llm = ChatFireworks(api_key=api_key, model=model_name)
 
         elif "groq" in model:
             model_name, base_url, api_key = env_value.split(",")

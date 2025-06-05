@@ -27,18 +27,11 @@ export const llms =
         'ollama_llama3',
         'groq_llama3_70b',
         'anthropic_claude_3_7_sonnet',
-        'fireworks_llama4_maverick',
-        'fireworks_llama4_scout',
-        'fireworks_qwen72b_instruct',
         'bedrock_claude_3_5_sonnet',
         'bedrock_nova_micro_v1',
         'bedrock_nova_lite_v1',
         'bedrock_nova_pro_v1',
-        'fireworks_deepseek_r1',
-        'fireworks_deepseek_v3',
         'llama4_maverick',
-        'fireworks_qwen3_30b',
-        'fireworks_qwen3_235b',
       ];
 
 export const supportedLLmsForRagas = [
@@ -55,13 +48,9 @@ export const supportedLLmsForRagas = [
   'azure_ai_gpt_4o',
   'groq_llama3_70b',
   'anthropic_claude_3_7_sonnet',
-  'fireworks_llama4_maverick',
-  'fireworks_llama4_scout',
   'bedrock_claude_3_5_sonnet',
   'openai_gpt_o3_mini',
   'llama4_maverick',
-  'fireworks_qwen3_30b',
-  'fireworks_qwen3_235b',
 ];
 export const supportedLLmsForGroundTruthMetrics = [
   'openai_gpt_4',
@@ -73,13 +62,9 @@ export const supportedLLmsForGroundTruthMetrics = [
   'azure_ai_gpt_4o',
   'groq_llama3_70b',
   'anthropic_claude_3_7_sonnet',
-  'fireworks_llama4_maverick',
-  'fireworks_llama4_scout',
   'bedrock_claude_3_5_sonnet',
   'openai_gpt_o3_mini',
   'llama4_maverick',
-  'fireworks_qwen3_30b',
-  'fireworks_qwen3_235b',
 ];
 export const prodllms =
   process.env.VITE_LLM_MODELS_PROD?.trim() != ''
