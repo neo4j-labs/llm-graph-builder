@@ -1,20 +1,20 @@
-import { CloudArrowUpIconSolid } from '@neo4j-ndl/react/icons';
+import { DocumentPlusIconSolid } from '@neo4j-ndl/react/icons';
 import { useDropzone } from 'react-dropzone';
 import { useFileContext } from '../../../context/UsersFiles';
 import { useEffect, useState } from 'react';
 import { useCredentials } from '../../../context/UserCredentials';
-import { CustomFile, CustomFileBase, UserCredentials } from '../../../types';
+import { CustomFile, CustomFileBase } from '../../../types';
 import { chunkSize } from '../../../utils/Constants';
 import { uploadAPI } from '../../../utils/FileAPI';
 import { v4 as uuidv4 } from 'uuid';
 import { LoadingSpinner } from '@neo4j-ndl/react';
-import { showErrorToast, showSuccessToast } from '../../../utils/toasts';
+import { showErrorToast, showSuccessToast } from '../../../utils/Toasts';
 
 export default function DropZoneForSmallLayouts() {
   const { filesData, setFilesData, model } = useFileContext();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isClicked, setIsClicked] = useState<boolean>(false);
-  const { userCredentials } = useCredentials();
+  const { userCredentials, connectionStatus, isReadOnlyUser } = useCredentials();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const uploadFileInChunks = (file: File) => {
@@ -48,14 +48,7 @@ export default function DropZoneForSmallLayouts() {
           })
         );
         try {
-          const apiResponse = await uploadAPI(
-            chunk,
-            userCredentials as UserCredentials,
-            model,
-            chunkNumber,
-            totalChunks,
-            file.name
-          );
+          const apiResponse = await uploadAPI(chunk, model, chunkNumber, totalChunks, file.name);
           if (apiResponse?.status === 'Failed') {
             throw new Error(`message:${apiResponse.data.message},fileName:${apiResponse.data.file_name}`);
           } else {
@@ -225,8 +218,8 @@ export default function DropZoneForSmallLayouts() {
   return (
     <>
       <div {...getRootProps({ className: 'dropzone' })}>
-        <input {...getInputProps()} aria-label='dropzone' />
-        {isLoading ? <LoadingSpinner size='medium' /> : <CloudArrowUpIconSolid className='n-size-token-7' />}
+        <input {...getInputProps()} aria-label='dropzone' disabled={isReadOnlyUser || !connectionStatus} />
+        {isLoading ? <LoadingSpinner size='medium' /> : <DocumentPlusIconSolid className='n-size-token-7' />}
       </div>
     </>
   );

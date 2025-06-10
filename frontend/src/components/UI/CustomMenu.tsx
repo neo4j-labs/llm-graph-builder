@@ -23,7 +23,7 @@ export default function CustomMenu({
     <Menu isOpen={open} anchorRef={anchorOrigin} className='custom-menu' isRoot={isRoot} onClose={closeHandler}>
       {items?.map((i) => (
         <Menu.Item
-          key={`${i.title}`}
+          key={i.id}
           title={i.title}
           onClick={i.onClick}
           isDisabled={i.disabledCondition}

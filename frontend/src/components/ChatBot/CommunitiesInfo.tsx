@@ -1,14 +1,13 @@
 import { LoadingSpinner, Flex, Typography, TextLink } from '@neo4j-ndl/react';
 import { FC, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { CommunitiesProps, UserCredentials } from '../../types';
+import { CommunitiesProps } from '../../types';
 import { chatModeLables } from '../../utils/Constants';
-import { useCredentials } from '../../context/UserCredentials';
 import GraphViewModal from '../Graph/GraphViewModal';
 import { handleGraphNodeClick } from './chatInfo';
-
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) => {
-  const { userCredentials } = useCredentials();
   const [neoNodes, setNeoNodes] = useState<any[]>([]);
   const [neoRels, setNeoRels] = useState<any[]>([]);
   const [openGraphView, setOpenGraphView] = useState(false);
@@ -17,7 +16,6 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) =
 
   const handleCommunityClick = (elementId: string, viewMode: string) => {
     handleGraphNodeClick(
-      userCredentials as UserCredentials,
       elementId,
       viewMode,
       setNeoNodes,
@@ -54,7 +52,11 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) =
                       <Typography variant='subheading-medium'>{community.score}</Typography>
                     </Flex>
                   )}
-                  <ReactMarkdown>{community.summary}</ReactMarkdown>
+                  <div className='prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none'>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw] as any}>
+                      {community.summary}
+                    </ReactMarkdown>
+                  </div>
                 </div>
               </li>
             ))}

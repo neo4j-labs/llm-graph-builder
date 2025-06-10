@@ -4,9 +4,13 @@ import { connectAPI } from '../../../services/ConnectAPI';
 import { useCredentials } from '../../../context/UserCredentials';
 import { useSearchParams } from 'react-router-dom';
 import { buttonCaptions } from '../../../utils/Constants';
-import { createVectorIndex } from '../../../services/vectorIndexCreation';
+import { createVectorIndex } from '../../../services/VectorIndexCreation';
 import { ConnectionModalProps, Message, UserCredentials } from '../../../types';
 import VectorIndexMisMatchAlert from './VectorIndexMisMatchAlert';
+import { useAuth0 } from '@auth0/auth0-react';
+import { createDefaultFormData } from '../../../API/Index';
+import { getNodeLabelsAndRelTypesFromText } from '../../../services/SchemaFromTextAPI';
+import { useFileContext } from '../../../context/UsersFiles';
 
 export default function ConnectionModal({
   open,
@@ -41,18 +45,27 @@ export default function ConnectionModal({
   const [username, setUsername] = useState<string>(initialusername ?? 'neo4j');
   const [password, setPassword] = useState<string>('');
   const [connectionMessage, setMessage] = useState<Message | null>({ type: 'unknown', content: '' });
-  const { setUserCredentials, userCredentials, setGdsActive, setIsReadOnlyUser, errorMessage, setIsGCSActive } =
-    useCredentials();
+  const { user } = useAuth0();
+  const {
+    setUserCredentials,
+    userCredentials,
+    setGdsActive,
+    setIsReadOnlyUser,
+    errorMessage,
+    setIsGCSActive,
+    setShowDisconnectButton,
+    // setChunksToBeProces,
+  } = useCredentials();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [userDbVectorIndex, setUserDbVectorIndex] = useState<number | undefined>(initialuserdbvectorindex ?? undefined);
   const [vectorIndexLoading, setVectorIndexLoading] = useState<boolean>(false);
+  const { model } = useFileContext();
   const connectRef = useRef<HTMLButtonElement>(null);
   const uriRef = useRef<HTMLInputElement>(null);
   const databaseRef = useRef<HTMLInputElement>(null);
   const userNameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
-
   useEffect(() => {
     if (searchParams.has('connectURL')) {
       const url = searchParams.get('connectURL');
@@ -70,7 +83,7 @@ export default function ConnectionModal({
       if (usercredential != null && Object.values(usercredential).length) {
         try {
           setVectorIndexLoading(true);
-          const response = await createVectorIndex(usercredential as UserCredentials, isNewVectorIndex);
+          const response = await createVectorIndex(isNewVectorIndex);
           setVectorIndexLoading(false);
           if (response.data.status === 'Failed') {
             throw new Error(response.data.error);
@@ -84,8 +97,8 @@ export default function ConnectionModal({
               'neo4j.connection',
               JSON.stringify({
                 uri: usercredential?.uri,
-                user: usercredential?.userName,
-                password: btoa(usercredential?.password),
+                userName: usercredential?.userName,
+                password: btoa(usercredential.password ?? ''),
                 database: usercredential?.database,
                 userDbVectorIndex: 384,
               })
@@ -126,7 +139,7 @@ export default function ConnectionModal({
 
   useEffect(() => {
     if (errorMessage) {
-      setMessage({ type: 'danger', content: errorMessage });
+      setMessage({ type: 'warning', content: errorMessage });
     }
   }, [errorMessage]);
 
@@ -203,13 +216,21 @@ export default function ConnectionModal({
     setIsLoading(false);
   };
 
-  const submitConnection = async () => {
+  const submitConnection = async (email: string) => {
     const connectionURI = `${protocol}://${URI}${URI.split(':')[1] ? '' : `:${port}`}`;
-    const credential = { uri: connectionURI, userName: username, password: password, database: database, port: port };
+    const credential = {
+      uri: connectionURI,
+      userName: username,
+      password: password,
+      database: database,
+      port: port,
+      email,
+    };
     setUserCredentials(credential);
+    createDefaultFormData(credential);
     setIsLoading(true);
     try {
-      const response = await connectAPI(connectionURI, username, password, database);
+      const response = await connectAPI();
       setIsLoading(false);
       if (response?.data?.status !== 'Success') {
         throw new Error(response.data.error);
@@ -217,6 +238,21 @@ export default function ConnectionModal({
         const isgdsActive = response.data.data.gds_status;
         const isReadOnlyUser = !response.data.data.write_access;
         const isGCSActive = response.data.data.gcs_file_cache === 'True';
+        const chunksTobeProcess = Number(response.data.data.chunk_to_be_created);
+        const existingRels = JSON.parse(localStorage.getItem('selectedRelationshipLabels') ?? 'null');
+        const existingNodes = JSON.parse(localStorage.getItem('selectedNodeLabels') ?? 'null');
+        const pattern = /^[^,]+,[^,]+,[^,]+$/;
+        if (existingRels && existingRels.selectedOptions.length) {
+          if (!pattern.test(existingRels.selectedOptions[0].value)) {
+            const response = await getNodeLabelsAndRelTypesFromText(
+              model,
+              JSON.stringify({ nodes: existingNodes.selectedOptions, rels: existingRels.selectedOptions }),
+              false,
+              true
+            );
+            console.log(response);
+          }
+        }
         setIsGCSActive(isGCSActive);
         setGdsActive(isgdsActive);
         setIsReadOnlyUser(isReadOnlyUser);
@@ -225,13 +261,16 @@ export default function ConnectionModal({
           'neo4j.connection',
           JSON.stringify({
             uri: connectionURI,
-            user: username,
+            userName: username,
             password: btoa(password),
             database: database,
             userDbVectorIndex,
             isgdsActive,
             isReadOnlyUser,
             isGCSActive,
+            chunksTobeProcess,
+            email: user?.email ?? '',
+            connection: 'connectAPI',
           })
         );
         setUserDbVectorIndex(response.data.data.db_vector_dimension);
@@ -241,6 +280,7 @@ export default function ConnectionModal({
           !response.data.data.chunks_exists
         ) {
           setConnectionStatus(true);
+          setShowDisconnectButton(true);
           setOpenConnection((prev) => ({ ...prev, openPopUp: false }));
           setMessage({
             type: 'success',
@@ -298,23 +338,24 @@ export default function ConnectionModal({
     setMessage({ type: 'unknown', content: '' });
   }, []);
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>, nextRef?: React.RefObject<HTMLInputElement>) => {
-    if (e.code === 'Enter') {
-      e.preventDefault();
-      // @ts-ignore
-      const { form } = e.target;
-      if (form) {
-        const index = Array.prototype.indexOf.call(form, e.target);
-        if (index + 1 < form.elements.length) {
-          form.elements[index + 1].focus();
+  const handleKeyPress =
+    (email: string) => (e: React.KeyboardEvent<HTMLInputElement>, nextRef?: React.RefObject<HTMLInputElement>) => {
+      if (e.code === 'Enter') {
+        e.preventDefault();
+        // @ts-ignore
+        const { form } = e.target;
+        if (form) {
+          const index = Array.prototype.indexOf.call(form, e.target);
+          if (index + 1 < form.elements.length) {
+            form.elements[index + 1].focus();
+          } else {
+            submitConnection(email);
+          }
         } else {
-          submitConnection();
+          nextRef?.current?.focus();
         }
-      } else {
-        nextRef?.current?.focus();
       }
-    }
-  };
+    };
 
   const isDisabled = useMemo(() => !username || !URI || !password, [username, URI, password]);
 
@@ -335,7 +376,7 @@ export default function ConnectionModal({
         <Dialog.Header htmlAttributes={{ id: 'form-dialog-title' }}>Connect to Neo4j</Dialog.Header>
         <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
           <Typography variant='body-medium' className='mb-4'>
-            <TextLink isExternalLink href='https://console.neo4j.io/'>
+            <TextLink type='external' href='https://console.neo4j.io/'>
               Don't have a Neo4j instance? Start for free today
             </TextLink>
           </Typography>
@@ -401,7 +442,7 @@ export default function ConnectionModal({
                   id: 'url',
                   autoFocus: true,
                   onPaste: (e) => handleHostPasteChange(e),
-                  onKeyDown: (e) => handleKeyPress(e, databaseRef),
+                  onKeyDown: (e) => handleKeyPress(user?.email ?? '')(e, databaseRef),
                   'aria-label': 'Connection URI',
                 }}
                 value={URI}
@@ -417,7 +458,7 @@ export default function ConnectionModal({
               ref={databaseRef}
               htmlAttributes={{
                 id: 'database',
-                onKeyDown: handleKeyPress,
+                onKeyDown: handleKeyPress(user?.email ?? ''),
                 'aria-label': 'Database',
                 placeholder: 'neo4j',
               }}
@@ -435,7 +476,7 @@ export default function ConnectionModal({
                   ref={userNameRef}
                   htmlAttributes={{
                     id: 'username',
-                    onKeyDown: handleKeyPress,
+                    onKeyDown: handleKeyPress(user?.email ?? ''),
                     'aria-label': 'Username',
                     placeholder: 'neo4j',
                   }}
@@ -451,7 +492,7 @@ export default function ConnectionModal({
                   ref={passwordRef}
                   htmlAttributes={{
                     id: 'password',
-                    onKeyDown: handleKeyPress,
+                    onKeyDown: handleKeyPress(user?.email ?? ''),
                     type: 'password',
                     'aria-label': 'Password',
                     placeholder: 'password',
@@ -470,12 +511,12 @@ export default function ConnectionModal({
             <Button
               isLoading={isLoading}
               isDisabled={isDisabled}
-              onClick={() => submitConnection()}
+              onClick={() => submitConnection(user?.email ?? '')}
               ref={connectRef}
               onKeyDown={(e) => {
                 e.stopPropagation();
                 if (e.key === 'Enter') {
-                  submitConnection();
+                  submitConnection(user?.email ?? '');
                 }
               }}
             >

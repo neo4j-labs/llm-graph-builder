@@ -1,8 +1,7 @@
 import { TextInput } from '@neo4j-ndl/react';
 import React, { useState } from 'react';
-import { CustomFile, CustomFileBase, S3File, S3ModalProps, UserCredentials } from '../../../types';
+import { CustomFile, CustomFileBase, S3File, S3ModalProps } from '../../../types';
 import { urlScanAPI } from '../../../services/URLScan';
-import { useCredentials } from '../../../context/UserCredentials';
 import { validation } from '../../../utils/Utils';
 import { useFileContext } from '../../../context/UsersFiles';
 import { v4 as uuidv4 } from 'uuid';
@@ -15,9 +14,8 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [secretKey, setSecretKey] = useState<string>('');
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
   const [statusMessage, setStatusMessage] = useState<string>('');
-  const [isFocused, setisFocused] = useState<boolean>(false);
+  const [isFocused, setIsFocused] = useState<boolean>(false);
   const [isValid, setValid] = useState<boolean>(false);
-  const { userCredentials } = useCredentials();
   const { setFilesData, model, filesData } = useFileContext();
 
   const reset = () => {
@@ -25,7 +23,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     setAccessKey('');
     setSecretKey('');
     setValid(false);
-    setisFocused(false);
+    setIsFocused(false);
   };
 
   const submitHandler = async (url: string) => {
@@ -62,7 +60,6 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         setStatusMessage('Scanning...');
         const apiResponse = await urlScanAPI({
           urlParam: url.trim(),
-          userCredentials: userCredentials as UserCredentials,
           model: model,
           accessKey: accessKey.trim(),
           secretKey: secretKey.trim(),
@@ -174,7 +171,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
             isRequired={true}
             errorText={!isValid && isFocused && 'Please Fill The Valid URL'}
             onChange={(e) => {
-              setisFocused(true);
+              setIsFocused(true);
               setBucketUrl(e.target.value);
             }}
           />

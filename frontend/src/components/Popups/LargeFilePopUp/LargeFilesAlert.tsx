@@ -31,7 +31,7 @@ const LargeFilesAlert: FC<LargefilesProps> = ({ Files, handleToggle, checked }) 
   );
   return (
     <div className='n-bg-palette-neutral-bg-weak p-4'>
-      <div className='flex flex-row pb-6 items-center mb-2'>
+      <div className='flex! flex-row pb-6 items-center mb-2'>
         <img
           style={{ width: 95, height: 95, marginRight: 10, alignSelf: 'flex-start' }}
           src={BellImage}
@@ -65,7 +65,7 @@ const LargeFilesAlert: FC<LargefilesProps> = ({ Files, handleToggle, checked }) 
                     </ListItemIcon>
                     <ListItemAvatar>
                       {imageIcon[f.fileSource] ? (
-                        <img width={20} height={20} src={imageIcon[f.fileSource]}></img>
+                        <img width={20} height={20} src={imageIcon[f.fileSource]} alt='source-logo'></img>
                       ) : (
                         <DocumentTextIconOutline className='n-size-token-7 mr-2' />
                       )}
@@ -78,8 +78,8 @@ const LargeFilesAlert: FC<LargefilesProps> = ({ Files, handleToggle, checked }) 
                             {f.fileSource === 'local file' && minutes === 0 && typeof f.size === 'number'
                               ? `- ${seconds} Sec `
                               : f.fileSource === 'local file'
-                              ? `- ${minutes} Min`
-                              : ''}
+                                ? `- ${minutes} Min`
+                                : ''}
                           </span>
                           {typeof f.size === 'number' && f.size > chunkSize ? (
                             <span>

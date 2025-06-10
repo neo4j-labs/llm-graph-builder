@@ -3,7 +3,14 @@ import logging
 import time
 from langchain_neo4j import Neo4jGraph
 import os
-from src.shared.common_fn import load_embedding_model
+from src.graph_query import get_graphDB_driver
+from src.shared.common_fn import load_embedding_model,execute_graph_query
+from langchain_core.output_parsers import JsonOutputParser
+from langchain_core.prompts import ChatPromptTemplate
+from src.shared.constants import GRAPH_CLEANUP_PROMPT
+from src.llm import get_llm
+from src.graphDB_dataAccess import graphDBdataAccess
+import time 
 
 DROP_INDEX_QUERY = "DROP INDEX entities IF EXISTS;"
 LABELS_QUERY = "CALL db.labels()"
@@ -131,7 +138,7 @@ def create_vector_fulltext_indexes(uri, username, password, database):
     logging.info("Starting the process of creating full-text indexes.")
 
     try:
-        driver = GraphDatabase.driver(uri, auth=(username, password), database=database)
+        driver = get_graphDB_driver(uri, username, password,database)
         driver.verify_connectivity()
         logging.info("Database connectivity verified.")
     except Exception as e:
@@ -172,8 +179,8 @@ def fetch_entities_for_embedding(graph):
                 MATCH (e)
                 WHERE NOT (e:Chunk OR e:Document OR e:`__Community__`) AND e.embedding IS NULL AND e.id IS NOT NULL
                 RETURN elementId(e) AS elementId, e.id + " " + coalesce(e.description, "") AS text
-                """
-    result = graph.query(query)           
+                """ 
+    result = execute_graph_query(graph,query)        
     return [{"elementId": record["elementId"], "text": record["text"]} for record in result]
 
 def update_embeddings(rows, graph):
@@ -187,4 +194,43 @@ def update_embeddings(rows, graph):
       MATCH (e) WHERE elementId(e) = row.elementId
       CALL db.create.setNodeVectorProperty(e, "embedding", row.embedding)
       """  
-    return graph.query(query,params={'rows':rows})          
+    return execute_graph_query(graph,query,params={'rows':rows})          
+
+def graph_schema_consolidation(graph):
+    graphDb_data_Access = graphDBdataAccess(graph)
+    node_labels,relation_labels = graphDb_data_Access.get_nodelabels_relationships()
+    parser = JsonOutputParser()
+    prompt = ChatPromptTemplate(
+        messages=[("system", GRAPH_CLEANUP_PROMPT), ("human", "{input}")],
+        partial_variables={"format_instructions": parser.get_format_instructions()}
+    )
+    graph_cleanup_model = os.getenv("GRAPH_CLEANUP_MODEL", 'openai_gpt_4o')
+    llm, _ = get_llm(graph_cleanup_model)
+    chain = prompt | llm | parser
+
+    nodes_relations_input = {'nodes': node_labels, 'relationships': relation_labels}
+    mappings = chain.invoke({'input': nodes_relations_input})
+    node_mapping = {old: new for new, old_list in mappings['nodes'].items() for old in old_list if new != old}
+    relation_mapping = {old: new for new, old_list in mappings['relationships'].items() for old in old_list if new != old}
+
+    logging.info(f"Node Labels: Total = {len(node_labels)}, Reduced to = {len(set(node_mapping.values()))} (from {len(node_mapping)})")
+    logging.info(f"Relationship Types: Total = {len(relation_labels)}, Reduced to = {len(set(relation_mapping.values()))} (from {len(relation_mapping)})")
+
+    if node_mapping:
+        for old_label, new_label in node_mapping.items():
+            query = f"""
+                    MATCH (n:`{old_label}`)
+                    SET n:`{new_label}`
+                    REMOVE n:`{old_label}`
+                    """
+            execute_graph_query(graph,query)
+
+    for old_label, new_label in relation_mapping.items():
+        query = f"""
+                MATCH (n)-[r:`{old_label}`]->(m)
+                CREATE (n)-[r2:`{new_label}`]->(m)
+                DELETE r
+                """
+        execute_graph_query(graph,query)
+
+    return None

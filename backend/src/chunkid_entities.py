@@ -190,7 +190,7 @@ def get_entities_from_chunkids(uri, username, password, database ,nodedetails,en
         elif mode == CHAT_ENTITY_VECTOR_MODE:
 
             if "entitydetails" in nodedetails and nodedetails["entitydetails"]:
-                entity_ids = [item["id"] for item in nodedetails["entitydetails"]]
+                entity_ids = [item for item in nodedetails["entitydetails"]["entityids"]]
                 logging.info(f"chunkid_entities module: Starting for entity ids: {entity_ids}")
                 result = process_entityids(driver, entity_ids)
                 if "chunk_data" in result.keys():

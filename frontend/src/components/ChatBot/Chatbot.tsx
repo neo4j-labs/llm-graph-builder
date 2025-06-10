@@ -10,6 +10,7 @@ import {
   Flex,
   Box,
   TextLink,
+  SpotlightTarget,
 } from '@neo4j-ndl/react';
 import { ArrowDownTrayIconOutline, XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import ChatBotAvatar from '../../assets/images/chatbot-ai.png';
@@ -23,12 +24,10 @@ import {
   ExtendedRelationship,
   Messages,
   ResponseMode,
-  UserCredentials,
   metricstate,
   multimodelmetric,
   nodeDetailsProps,
 } from '../../types';
-import { useCredentials } from '../../context/UserCredentials';
 import { chatBotAPI } from '../../services/QnaAPI';
 import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../../context/UsersFiles';
@@ -42,6 +41,8 @@ import { downloadClickHandler, getDateTime } from '../../utils/Utils';
 import ChatModesSwitch from './ChatModesSwitch';
 import CommonActions from './CommonChatActions';
 import Loader from '../../utils/Loader';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 const InfoModal = lazy(() => import('./ChatInfoModal'));
 if (typeof window !== 'undefined') {
   if (!sessionStorage.getItem('session_id')) {
@@ -63,7 +64,6 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   } = props;
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState<boolean>(isLoading);
-  const { userCredentials } = useCredentials();
   const { model, chatModes, selectedRows, filesData } = useFileContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
@@ -215,7 +215,6 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     try {
       const apiCalls = chatModes.map((mode) =>
         chatBotAPI(
-          userCredentials as UserCredentials,
           inputMessage,
           sessionId,
           model,
@@ -410,26 +409,26 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   }, []);
 
   return (
-    <div className='n-bg-palette-neutral-bg-weak flex flex-col justify-between min-h-full max-h-full overflow-hidden relative'>
+    <div className='n-bg-palette-neutral-bg-weak flex! flex-col justify-between min-h-full max-h-full overflow-hidden relative'>
       {isDeleteChatLoading && (
         <div className='chatbot-deleteLoader'>
           <Loader title='Deleting...'></Loader>
         </div>
       )}
       <div
-        className={`flex overflow-y-auto pb-12 min-w-full pl-5 pr-5 chatBotContainer ${
+        className={`flex! overflow-y-auto pb-12 min-w-full pl-5 pr-5 chatBotContainer ${
           isChatOnly ? 'min-h-[calc(100dvh-114px)] max-h-[calc(100dvh-114px)]' : ''
         } `}
       >
         <Widget className='n-bg-palette-neutral-bg-weak w-full' header='' isElevated={false}>
-          <div className='flex flex-col gap-4 gap-y-4'>
+          <div className='flex! flex-col gap-4 gap-y-4'>
             {listMessages.map((chat, index) => {
               const messagechatModes = Object.keys(chat.modes);
               return (
                 <div
                   ref={messagesEndRef}
                   key={chat.id}
-                  className={clsx(`flex gap-2.5`, {
+                  className={clsx(`flex! gap-2.5`, {
                     'flex-row': chat.user === 'chatbot',
                     'flex-row-reverse': chat.user !== 'chatbot',
                   })}
@@ -440,7 +439,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                         className='-ml-4'
                         hasStatus
                         name='KM'
-                        size='x-large'
+                        size='large'
                         source={ChatBotAvatar}
                         status={connectionStatus ? 'online' : 'offline'}
                         shape='square'
@@ -451,7 +450,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                         className=''
                         hasStatus
                         name='KM'
-                        size='x-large'
+                        size='large'
                         status={connectionStatus ? 'online' : 'offline'}
                         shape='square'
                         type='image'
@@ -461,7 +460,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                   <Widget
                     header=''
                     isElevated={true}
-                    className={`p-4 self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${
+                    className={`p-3! self-start ${isFullScreen ? 'max-w-[55%]' : ''} ${
                       chat.user === 'chatbot' ? 'n-bg-palette-neutral-bg-strong' : 'n-bg-palette-primary-bg-weak'
                     }`}
                   >
@@ -470,9 +469,17 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                         chat.isLoading && index === listMessages.length - 1 && chat.user === 'chatbot' ? 'loader' : ''
                       }`}
                     >
-                      <ReactMarkdown className={!isFullScreen ? 'max-w-[250px]' : ''}>
-                        {chat.modes[chat.currentMode]?.message || ''}
-                      </ReactMarkdown>
+                      <div
+                        className={
+                          !isFullScreen
+                            ? 'max-w-[250px] prose prose-sm sm:prose lg:prose-lg xl:prose-xl'
+                            : 'prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none'
+                        }
+                      >
+                        <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw] as any}>
+                          {chat.modes[chat.currentMode]?.message || ''}
+                        </ReactMarkdown>
+                      </div>
                     </div>
                     <div>
                       <div>
@@ -549,8 +556,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           </div>
         </Widget>
       </div>
-      <div className='n-bg-palette-neutral-bg-weak flex gap-2.5 bottom-0 p-2.5 w-full'>
-        <form onSubmit={handleSubmit} className={`flex gap-2.5 w-full ${!isFullScreen ? 'justify-between' : ''}`}>
+      <div className='n-bg-palette-neutral-bg-weak flex! gap-2.5 bottom-0 p-2.5 w-full'>
+        <form onSubmit={handleSubmit} className={`flex! gap-2.5 w-full ${!isFullScreen ? 'justify-between' : ''}`}>
           <TextInput
             className={`n-bg-palette-neutral-bg-default flex-grow-7 ${
               isFullScreen ? 'w-[calc(100%-105px)]' : 'w-[70%]'
@@ -564,17 +571,19 @@ const Chatbot: FC<ChatbotProps> = (props) => {
               name: 'chatbot-input',
             }}
           />
-          <ButtonWithToolTip
-            label='Q&A Button'
-            placement='top'
-            text={`Ask a question.`}
-            type='submit'
-            disabled={loading || !connectionStatus}
-            size='medium'
-          >
-            {buttonCaptions.ask}{' '}
-            {selectedFileNames != undefined && selectedFileNames.length > 0 && `(${selectedFileNames.length})`}
-          </ButtonWithToolTip>
+          <SpotlightTarget id='chatbtn' hasPulse={true} indicatorVariant='border'>
+            <ButtonWithToolTip
+              label='Q&A Button'
+              placement='top'
+              text={`Ask a question.`}
+              type='submit'
+              disabled={loading || !connectionStatus}
+              size='medium'
+            >
+              {buttonCaptions.ask}{' '}
+              {selectedFileNames != undefined && selectedFileNames.length > 0 && `(${selectedFileNames.length})`}
+            </ButtonWithToolTip>
+          </SpotlightTarget>
         </form>
       </div>
       <Suspense fallback={<FallBackDialog />}>
@@ -616,7 +625,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
               }}
             >
               <ArrowDownTrayIconOutline className='n-size-token-7' />
-              <TextLink ref={downloadLinkRef} className='!hidden'>
+              <TextLink ref={downloadLinkRef} className='hidden!'>
                 ""
               </TextLink>
             </IconButton>

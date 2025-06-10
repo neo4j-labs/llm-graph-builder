@@ -1,47 +1,63 @@
 import logging
-import shutil
 from pathlib import Path
-from tempfile import NamedTemporaryFile
-# from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_community.document_loaders import UnstructuredFileLoader
 from langchain_core.documents import Document
+import chardet
+from langchain_core.document_loaders import BaseLoader
 
-# def get_documents_from_file_by_bytes(file):
-#     file_name = file.filename
-#     logging.info(f"get_documents_from_file called for filename = {file_name}")
-#     suffix = Path(file.filename).suffix
-#     with NamedTemporaryFile(delete=True, suffix=suffix) as tmp:
-#         shutil.copyfileobj(file.file, tmp)
-#         tmp_path = Path(tmp.name)
-#         loader = PyPDFLoader(str(tmp_path))
-#         pages = loader.load_and_split()
-#     return file_name, pages
-
+class ListLoader(BaseLoader):
+   """A wrapper to make a list of Documents compatible with BaseLoader."""
+   def __init__(self, documents):
+       self.documents = documents
+   def load(self):
+       return self.documents
+   
+def detect_encoding(file_path):
+   """Detects the file encoding to avoid UnicodeDecodeError."""
+   with open(file_path, 'rb') as f:
+       raw_data = f.read(4096)
+       result = chardet.detect(raw_data)
+       return result['encoding'] or "utf-8"
+   
 def load_document_content(file_path):
-    if Path(file_path).suffix.lower() == '.pdf':
-        return PyMuPDFLoader(file_path)
+    file_extension = Path(file_path).suffix.lower()
+    encoding_flag = False
+    if file_extension == '.pdf':
+        loader = PyMuPDFLoader(file_path)
+        return loader,encoding_flag
+    elif file_extension == ".txt":
+        encoding = detect_encoding(file_path)
+        logging.info(f"Detected encoding for {file_path}: {encoding}")
+        if encoding.lower() == "utf-8":
+            loader = UnstructuredFileLoader(file_path, mode="elements",autodetect_encoding=True)
+            return loader,encoding_flag
+        else:
+            with open(file_path, encoding=encoding, errors="replace") as f:
+               content = f.read()
+            loader = ListLoader([Document(page_content=content, metadata={"source": file_path})])
+            encoding_flag =  True
+            return loader,encoding_flag
     else:
-        return UnstructuredFileLoader(file_path, mode="elements",autodetect_encoding=True)
+        loader = UnstructuredFileLoader(file_path, mode="elements",autodetect_encoding=True)
+        return loader,encoding_flag
     
 def get_documents_from_file_by_path(file_path,file_name):
     file_path = Path(file_path)
-    if file_path.exists():
-        logging.info(f'file {file_name} processing')
-        # loader = PyPDFLoader(str(file_path))
-        file_extension = file_path.suffix.lower()
-        try:
-            loader = load_document_content(file_path)
-            if file_extension == ".pdf":
-                pages = loader.load()
-            else:
-                unstructured_pages = loader.load()   
-                pages= get_pages_with_page_numbers(unstructured_pages)      
-        except Exception as e:
-            raise Exception('Error while reading the file content or metadata')
-    else:
+    if not file_path.exists():
         logging.info(f'File {file_name} does not exist')
         raise Exception(f'File {file_name} does not exist')
+    logging.info(f'file {file_name} processing')
+    try:
+        loader, encoding_flag = load_document_content(file_path)
+        file_extension = file_path.suffix.lower()
+        if file_extension == ".pdf" or (file_extension == ".txt" and encoding_flag):
+            pages = loader.load()
+        else:
+            unstructured_pages = loader.load()
+            pages = get_pages_with_page_numbers(unstructured_pages)
+    except Exception as e:
+        raise Exception(f'Error while reading the file content or metadata, {e}')
     return file_name, pages , file_extension
 
 def get_pages_with_page_numbers(unstructured_pages):
@@ -58,14 +74,10 @@ def get_pages_with_page_numbers(unstructured_pages):
                 
             if page.metadata['page_number']>page_number:
                 page_number+=1
-                # if not metadata:
-                #     metadata = {'total_pages':unstructured_pages[-1].metadata['page_number']}
                 pages.append(Document(page_content = page_content))
                 page_content='' 
                 
             if page == unstructured_pages[-1]:
-                # if not metadata:
-                #     metadata = {'total_pages':unstructured_pages[-1].metadata['page_number']}
                 pages.append(Document(page_content = page_content))
                     
         elif page.metadata['category']=='PageBreak' and page!=unstructured_pages[0]:

@@ -10,6 +10,7 @@ import { clearChatAPI } from '../../services/QnaAPI';
 import { ChatProps, connectionState, Messages, UserCredentials } from '../../types';
 import { getIsLoading } from '../../utils/Utils';
 import ThemeWrapper from '../../context/ThemeWrapper';
+import { SpotlightProvider } from '@neo4j-ndl/react';
 
 const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
   const { clearHistoryData, messages, setMessages, setClearHistoryData, setIsDeleteChatLoading, isDeleteChatLoading } =
@@ -32,9 +33,17 @@ const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
     const encodedPassword = urlParams.get('password');
     const database = urlParams.get('database');
     const port = urlParams.get('port');
+    const email = urlParams.get('email');
     const openModal = urlParams.get('open') === 'true';
+    const connectionStatus = urlParams.get('connectionStatus') === 'true';
     if (openModal || !(uri && user && encodedPassword && database && port)) {
-      setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
+      if (connectionStatus) {
+        setShowBackButton();
+        setConnectionStatus(connectionStatus);
+        setMessages(chatMessages);
+      } else {
+        setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
+      }
     } else {
       const credentialsForAPI: UserCredentials = {
         uri,
@@ -42,6 +51,7 @@ const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
         password: atob(atob(encodedPassword)),
         database,
         port,
+        email: email ?? '',
       };
       setShowBackButton();
       setUserCredentials(credentialsForAPI);
@@ -73,9 +83,9 @@ const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
     try {
       setClearHistoryData(true);
       setIsDeleteChatLoading(true);
-      const credentials = JSON.parse(localStorage.getItem('neo4j.connection') || '{}') as UserCredentials;
+      // const credentials = JSON.parse(localStorage.getItem('neo4j.connection') || '{}') as UserCredentials;
       const sessionId = sessionStorage.getItem('session_id') || '';
-      const response = await clearChatAPI(credentials, sessionId);
+      const response = await clearChatAPI(sessionId);
       setIsDeleteChatLoading(false);
       if (response.data.status !== 'Success') {
         setClearHistoryData(false);
@@ -151,11 +161,13 @@ const ChatOnlyComponent: React.FC = () => {
   return (
     <ThemeWrapper>
       <UserCredentialsWrapper>
-        <FileContextProvider>
-          <MessageContextWrapper>
-            <ChatContent chatMessages={chatMessages} />
-          </MessageContextWrapper>
-        </FileContextProvider>
+        <SpotlightProvider>
+          <FileContextProvider>
+            <MessageContextWrapper>
+              <ChatContent chatMessages={chatMessages} />
+            </MessageContextWrapper>
+          </FileContextProvider>
+        </SpotlightProvider>
       </UserCredentialsWrapper>
     </ThemeWrapper>
   );

@@ -10,26 +10,20 @@ import {
   ArrowLeftIconOutline,
   ArrowDownTrayIconOutline,
 } from '@neo4j-ndl/react/icons';
-import { Button, TextLink, Typography } from '@neo4j-ndl/react';
-import { Dispatch, memo, SetStateAction, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { Button, SpotlightTarget, TextLink, Typography, useSpotlightContext } from '@neo4j-ndl/react';
+import { memo, useCallback, useContext, useEffect, useRef, useState, useMemo } from 'react';
 import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
-import { buttonCaptions, tooltips } from '../../utils/Constants';
-import { useFileContext } from '../../context/UsersFiles';
+import { buttonCaptions, SKIP_AUTH, tooltips } from '../../utils/Constants';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 import { useCredentials } from '../../context/UserCredentials';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { useMessageContext } from '../../context/UserMessages';
 import { RiChatSettingsLine } from 'react-icons/ri';
 import ChatModeToggle from '../ChatBot/ChatModeToggle';
-import { connectionState } from '../../types';
+import { HeaderProp } from '../../types';
 import { downloadClickHandler, getIsLoading } from '../../utils/Utils';
-
-interface HeaderProp {
-  chatOnly?: boolean;
-  deleteOnClick?: () => void;
-  setOpenConnection?: Dispatch<SetStateAction<connectionState>>;
-  showBackButton?: boolean;
-}
+import Profile from '../User/Profile';
+import { useAuth0 } from '@auth0/auth0-react';
 
 const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnection, showBackButton }) => {
   const { colorMode, toggleColorMode } = useContext(ThemeWrapperContext);
@@ -39,38 +33,46 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
     window.open(url, '_blank');
   }, []);
   const downloadLinkRef = useRef<HTMLAnchorElement>(null);
-  const { isSchema, setIsSchema } = useFileContext();
+  const { loginWithRedirect } = useAuth0();
+  const firstTourTarget = useRef<HTMLDivElement>(null);
   const { connectionStatus } = useCredentials();
   const chatAnchor = useRef<HTMLDivElement>(null);
-  const [showChatModeOption, setshowChatModeOption] = useState<boolean>(false);
+  const { pathname } = useLocation();
+  const [showChatModeOption, setShowChatModeOption] = useState<boolean>(false);
+  const { setIsOpen } = useSpotlightContext();
+  const isFirstTimeUser = useMemo(() => {
+    return localStorage.getItem('neo4j.connection') === null;
+  }, []);
   useEffect(() => {
-    setIsSchema(isSchema);
-  }, [isSchema]);
-
+    if (!connectionStatus && isFirstTimeUser) {
+      setIsOpen(true);
+    }
+  }, []);
   const openChatPopout = useCallback(() => {
     let session = localStorage.getItem('neo4j.connection');
     const isLoading = getIsLoading(messages);
     if (session) {
       const neo4jConnection = JSON.parse(session);
-      const { uri } = neo4jConnection;
-      const userName = neo4jConnection.user;
-      const { password } = neo4jConnection;
-      const { database } = neo4jConnection;
+      const { uri, userName, password, database } = neo4jConnection;
       const [, port] = uri.split(':');
       const encodedPassword = btoa(password);
       const chatUrl = `/chat-only?uri=${encodeURIComponent(
         uri
       )}&user=${userName}&password=${encodedPassword}&database=${database}&port=${port}&connectionStatus=${connectionStatus}`;
       navigate(chatUrl, { state: { messages, isLoading } });
+    } else if (connectionStatus) {
+      const chatUrl = `/chat-only?connectionStatus=${connectionStatus}`;
+      navigate(chatUrl, { state: { messages, isLoading } });
     } else {
       const chatUrl = `/chat-only?openModal=true`;
       window.open(chatUrl, '_blank');
     }
-  }, [messages]);
+  }, [messages, connectionStatus, navigate]);
 
   const onBackButtonClick = () => {
     navigate('/', { state: messages });
   };
+
   return (
     <>
       <div
@@ -84,11 +86,11 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
           id='navigation'
           aria-label='main navigation'
         >
-          <section className='flex w-1/3 shrink-0 grow-0 items-center grow min-w-[200px]'>
-            <Typography variant='h6' as='a' href='#app-bar-with-responsive-menu'>
+          <section className='flex w-1/3 shrink-0 grow-0 items-center min-w-[200px]'>
+            <Typography variant='h1'>
               <img
                 src={colorMode === 'dark' ? Neo4jLogoBW : Neo4jLogoColor}
-                className='h-8 min-h-8 min-w-8'
+                className='h-8! min-h-8 min-w-8'
                 alt='Neo4j Logo'
               />
             </Typography>
@@ -148,6 +150,19 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                   >
                     <ArrowTopRightOnSquareIconOutline />
                   </IconButtonWithToolTip>
+                  {!SKIP_AUTH && <Profile />}
+                  {pathname === '/readonly' &&
+                    (!connectionStatus ? (
+                      <SpotlightTarget id='loginbutton' hasPulse={true} indicatorVariant='border' ref={firstTourTarget}>
+                        <Button type='button' fill='outlined' onClick={() => loginWithRedirect()}>
+                          Login
+                        </Button>
+                      </SpotlightTarget>
+                    ) : (
+                      <Button type='button' fill='outlined' onClick={() => loginWithRedirect()}>
+                        Login
+                      </Button>
+                    ))}
                 </div>
               </div>
             </section>
@@ -203,7 +218,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                 <div ref={chatAnchor}>
                   <IconButtonWithToolTip
                     onClick={() => {
-                      setshowChatModeOption(true);
+                      setShowChatModeOption(true);
                     }}
                     clean
                     text='Chat mode'
@@ -233,7 +248,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                     <ArrowDownTrayIconOutline />
                   </IconButtonWithToolTip>
                   <>
-                    <TextLink ref={downloadLinkRef} className='!hidden'>
+                    <TextLink ref={downloadLinkRef} className='hidden!'>
                       ""
                     </TextLink>
                   </>
@@ -257,7 +272,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
       <ChatModeToggle
         closeHandler={(_, reason) => {
           if (reason.type === 'backdropClick') {
-            setshowChatModeOption(false);
+            setShowChatModeOption(false);
           }
         }}
         open={showChatModeOption}

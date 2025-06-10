@@ -1,15 +1,13 @@
 import { GraphLabel, LoadingSpinner, TextLink, Typography } from '@neo4j-ndl/react';
 import { FC, useMemo, useState } from 'react';
-import { EntitiesProps, GroupedEntity, UserCredentials } from '../../types';
+import { EntitiesProps, GroupedEntity } from '../../types';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import { graphLabels } from '../../utils/Constants';
 import { parseEntity } from '../../utils/Utils';
-import { useCredentials } from '../../context/UserCredentials';
 import GraphViewModal from '../Graph/GraphViewModal';
 import { handleGraphNodeClick } from './chatInfo';
 
 const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, infoEntities }) => {
-  const { userCredentials } = useCredentials();
   const [neoNodes, setNeoNodes] = useState<any[]>([]);
   const [neoRels, setNeoRels] = useState<any[]>([]);
   const [openGraphView, setOpenGraphView] = useState(false);
@@ -17,15 +15,18 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
   const [loadingGraphView, setLoadingGraphView] = useState(false);
 
   const groupedEntities = useMemo<{ [key: string]: GroupedEntity }>(() => {
-    const items = infoEntities.reduce((acc, entity) => {
-      const { label, text } = parseEntity(entity);
-      if (!acc[label]) {
-        const newColor = calcWordColor(label);
-        acc[label] = { texts: new Set(), color: newColor };
-      }
-      acc[label].texts.add(text);
-      return acc;
-    }, {} as Record<string, { texts: Set<string>; color: string }>);
+    const items = infoEntities.reduce(
+      (acc, entity) => {
+        const { label, text } = parseEntity(entity);
+        if (!acc[label]) {
+          const newColor = calcWordColor(label);
+          acc[label] = { texts: new Set(), color: newColor };
+        }
+        acc[label].texts.add(text);
+        return acc;
+      },
+      {} as Record<string, { texts: Set<string>; color: string }>
+    );
     return items;
   }, [infoEntities]);
   const labelCounts = useMemo(() => {
@@ -45,7 +46,6 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
 
   const handleEntityClick = (elementId: string, viewMode: string) => {
     handleGraphNodeClick(
-      userCredentials as UserCredentials,
       elementId,
       viewMode,
       setNeoNodes,

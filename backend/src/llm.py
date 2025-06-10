@@ -13,9 +13,15 @@ from langchain_aws import ChatBedrock
 from langchain_community.chat_models import ChatOllama
 import boto3
 import google.auth
+# added by ian
 from langchain_core.messages import AIMessage
-from typing import List, Dict, Optional
+from typing import Dict, Optional
 from openai import OpenAI
+#end of added by ian
+from src.shared.constants import ADDITIONAL_INSTRUCTIONS
+from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
+import re
+from typing import List
 
 # Added by ian
 from pydantic import BaseModel, Field
@@ -397,7 +403,12 @@ def get_llm(model: str, add_tools=False):
             )
         elif "openai" in model:
             model_name, api_key = env_value.split(",")
-            llm = ChatOpenAI(
+            if "o3-mini" in model:
+                llm= ChatOpenAI(
+                api_key=api_key,
+                model=model_name)
+            else:
+                llm = ChatOpenAI(
                 api_key=api_key,
                 model=model_name,
                 temperature=0,
@@ -452,9 +463,7 @@ def get_llm(model: str, add_tools=False):
             )
 
             llm = ChatBedrock(
-                client=bedrock_client,
-                model_id=model_name,
-                model_kwargs=dict(temperature=0),
+                client=bedrock_client,region_name=region_name, model_id=model_name, model_kwargs=dict(temperature=0)
             )
 
         elif "ollama" in model:
@@ -485,10 +494,16 @@ def get_llm(model: str, add_tools=False):
     logging.info(f"Model created - Model Version: {model}")
     return llm, model_name
 
+def get_llm_model_name(llm):
+    """Extract name of llm model from llm object"""
+    for attr in ["model_name", "model", "model_id"]:
+        model_name = getattr(llm, attr, None)
+        if model_name:
+            return model_name.lower()
+    print("Could not determine model name; defaulting to empty string")
+    return ""
 
-def get_combined_chunks(chunkId_chunkDoc_list):
-    chunks_to_combine = int(os.environ.get("NUMBER_OF_CHUNKS_TO_COMBINE"))
-    logging.info(f"Combining {chunks_to_combine} chunks before sending request to LLM")
+def get_combined_chunks(chunkId_chunkDoc_list, chunks_to_combine):
     combined_chunk_document_list = []
     combined_chunks_page_content = [
         "".join(
@@ -527,31 +542,32 @@ def get_chunk_id_as_doc_metadata(chunkId_chunkDoc_list):
 
 
 async def get_graph_document_list(
-    llm, combined_chunk_document_list, allowedNodes, allowedRelationship
+    llm, combined_chunk_document_list, allowedNodes, allowedRelationship, additional_instructions=None
 ):
-    futures = []
+    if additional_instructions:
+        additional_instructions = sanitize_additional_instruction(additional_instructions)
     graph_document_list = []
     if "diffbot_api_key" in dir(llm):
         llm_transformer = llm
     else:
-        if (
-            "get_name" in dir(llm)
-            and llm.get_name() != "ChatOenAI"
-            or llm.get_name() != "ChatVertexAI"
-            or llm.get_name() != "AzureChatOpenAI"
-        ):
+        if "get_name" in dir(llm) and llm.get_name() != "ChatOpenAI" or llm.get_name() != "ChatVertexAI" or llm.get_name() != "AzureChatOpenAI":
             node_properties = False
             relationship_properties = False
         else:
             node_properties = ["description"]
             relationship_properties = ["description"]
+        TOOL_SUPPORTED_MODELS = {"qwen3", "deepseek"} 
+        model_name = get_llm_model_name(llm)
+        ignore_tool_usage = not any(pattern in model_name for pattern in TOOL_SUPPORTED_MODELS)
+        logging.info(f"Keeping ignore tool usage parameter as {ignore_tool_usage}")
         llm_transformer = LLMGraphTransformer(
             llm=llm,
             node_properties=node_properties,
             relationship_properties=relationship_properties,
             allowed_nodes=allowedNodes,
             allowed_relationships=allowedRelationship,
-            ignore_tool_usage=True,
+            ignore_tool_usage=ignore_tool_usage,
+            additional_instructions=ADDITIONAL_INSTRUCTIONS+ (additional_instructions if additional_instructions else "")
         )
 
     if isinstance(llm, DiffbotGraphTransformer):
@@ -564,32 +580,67 @@ async def get_graph_document_list(
         )
     return graph_document_list
 
+async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship, chunks_to_combine, additional_instructions=None):
+   try:
+       llm, model_name = get_llm(model)
+       logging.info(f"Using model: {model_name}")
+    
+       combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list, chunks_to_combine)
+       logging.info(f"Combined {len(combined_chunk_document_list)} chunks")
+    
+       allowed_nodes = [node.strip() for node in allowedNodes.split(',') if node.strip()]
+       logging.info(f"Allowed nodes: {allowed_nodes}")
+    
+       allowed_relationships = []
+       if allowedRelationship:
+           items = [item.strip() for item in allowedRelationship.split(',') if item.strip()]
+           if len(items) % 3 != 0:
+               raise LLMGraphBuilderException("allowedRelationship must be a multiple of 3 (source, relationship, target)")
+           for i in range(0, len(items), 3):
+               source, relation, target = items[i:i + 3]
+               if source not in allowed_nodes or target not in allowed_nodes:
+                   raise LLMGraphBuilderException(
+                       f"Invalid relationship ({source}, {relation}, {target}): "
+                       f"source or target not in allowedNodes"
+                   )
+               allowed_relationships.append((source, relation, target))
+           logging.info(f"Allowed relationships: {allowed_relationships}")
+       else:
+           logging.info("No allowed relationships provided")
+       graph_document_list = await get_graph_document_list(
+           llm,
+           combined_chunk_document_list,
+           allowed_nodes,
+           allowed_relationships,
+           additional_instructions
+       )
+       logging.info(f"Generated {len(graph_document_list)} graph documents")
+       return graph_document_list
+   except Exception as e:
+       logging.error(f"Error in get_graph_from_llm: {e}", exc_info=True)
+       raise LLMGraphBuilderException(f"Error in getting graph from llm: {e}")
 
-async def get_graph_from_llm(
-    model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship
-):
-    try:
-        llm, model_name = get_llm(model)
-        combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list)
-
-        if allowedNodes is None or allowedNodes == "":
-            allowedNodes = []
-        else:
-            allowedNodes = allowedNodes.split(",")
-        if allowedRelationship is None or allowedRelationship == "":
-            allowedRelationship = []
-        else:
-            allowedRelationship = allowedRelationship.split(",")
-
-        graph_document_list = await get_graph_document_list(
-            llm, combined_chunk_document_list, allowedNodes, allowedRelationship
-        )
-        return graph_document_list
-    except Exception as e:
-        err = f"Error during extracting graph with llm: {e}"
-        logging.error(err)
-        raise
-
+def sanitize_additional_instruction(instruction: str) -> str:
+   """
+   Sanitizes additional instruction by:
+   - Replacing curly braces `{}` with `[]` to prevent variable interpretation.
+   - Removing potential injection patterns like `os.getenv()`, `eval()`, `exec()`.
+   - Stripping problematic special characters.
+   - Normalizing whitespace.
+   Args:
+       instruction (str): Raw additional instruction input.
+   Returns:
+       str: Sanitized instruction safe for LLM processing.
+   """
+   logging.info("Sanitizing additional instructions")
+   instruction = instruction.replace("{", "[").replace("}", "]")  # Convert `{}` to `[]` for safety
+   # Step 2: Block dangerous function calls
+   injection_patterns = [r"os\.getenv\(", r"eval\(", r"exec\(", r"subprocess\.", r"import os", r"import subprocess"]
+   for pattern in injection_patterns:
+       instruction = re.sub(pattern, "[BLOCKED]", instruction, flags=re.IGNORECASE)
+   # Step 4: Normalize spaces
+   instruction = re.sub(r'\s+', ' ', instruction).strip()
+   return instruction
 
 def create_chat_completion_sync(
     messages: List[Dict[str, str]],

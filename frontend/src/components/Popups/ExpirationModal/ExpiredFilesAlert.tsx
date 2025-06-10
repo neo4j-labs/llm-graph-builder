@@ -7,11 +7,12 @@ import BellImage from '../../../assets/images/Stopwatch-blue.svg';
 import AlertIcon from '../../Layout/AlertIcon';
 import { isExpired } from '../../../utils/Utils';
 import { EXPIRATION_DAYS } from '../../../utils/Constants';
+import { IconWithToolTip } from '../../UI/IconButtonToolTip';
 
 const ExpiredFilesAlert: FC<LargefilesProps> = ({ Files, handleToggle, checked }) => {
   return (
     <div className='n-bg-palette-neutral-bg-weak p-4'>
-      <div className='flex flex-row pb-6 items-center mb-2'>
+      <div className='flex! flex-row pb-6 items-center mb-2'>
         <img
           style={{ width: 95, height: 95, marginRight: 10, alignSelf: 'flex-start' }}
           src={BellImage}
@@ -31,14 +32,8 @@ const ExpiredFilesAlert: FC<LargefilesProps> = ({ Files, handleToggle, checked }
                     <ListItemIcon>
                       <Checkbox
                         ariaLabel='selection checkbox'
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            handleToggle(true, f.id);
-                          } else {
-                            handleToggle(false, f.id);
-                          }
-                        }}
-                        isChecked={checked.indexOf(f.id) !== -1}
+                        isChecked={checked.includes(f.id)}
+                        onChange={(e) => handleToggle(e.target.checked, f.id)}
                         htmlAttributes={{ tabIndex: -1 }}
                       />
                     </ListItemIcon>
@@ -53,7 +48,9 @@ const ExpiredFilesAlert: FC<LargefilesProps> = ({ Files, handleToggle, checked }
                           </span>
                           {f.createdAt != undefined && isExpired(f.createdAt) ? (
                             <span>
-                              <AlertIcon />
+                              <IconWithToolTip label={'expired'} text={'File has expired'} placement='top'>
+                                <AlertIcon />
+                              </IconWithToolTip>
                             </span>
                           ) : (
                             <></>

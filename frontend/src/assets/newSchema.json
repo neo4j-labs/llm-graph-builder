@@ -1,0 +1,167 @@
+[
+  {
+    "schema": "crime",
+    "triplet": [
+      "PhoneCall-CALLED->Phone",
+      "Phone-CALLER->PhoneCall",
+      "Person-CURRENT_ADDRESS->Location",
+      "Person-FAMILY_REL->Person",
+      "Person-HAS_EMAIL->Email",
+      "Person-HAS_PHONE->Phone",
+      "Location-HAS_POSTCODE->PostCode",
+      "Crime-INVESTIGATED_BY->Officer",
+      "Person-INVOLVED_IN->Crime",
+      "Person-KNOWS->Person",
+      "Person-KNOWS_LW->Person",
+      "Person-KNOWS_PHONE->Phone",
+      "Person-KNOWS_SN->Person",
+      "Location-LOCATION_IN_AREA->Area",
+      "Crime-OCCURRED_AT->Location",
+      "Person-PARTY_TO->Crime",
+      "PostCode-POSTCODE_IN_AREA->Area",
+      "Object-INVOLVED_IN->Crime",
+      "Vehicle-INVOLVED_IN->Crime"
+    ]
+  },
+  {
+    "schema": "flights",
+    "triplet": [
+      "Airport-HAS_ROUTE->Airport",
+      "Airport-IN_CITY->City",
+      "City-IN_COUNTRY->Country",
+      "Country-IN_REGION->Region",
+      "City-ON_CONTINENT->Continent",
+      "Country-ON_CONTINENT->Continent",
+      "Region-ON_CONTINENT->Continent"
+    ]
+  },
+  {
+    "schema": "healthcare",
+    "triplet": [
+      "Case-FALLS_UNDER->AgeGroup",
+      "Case-HAS_REACTION->Reaction",
+      "Case-RESULTED_IN->Outcome",
+      "Case-REPORTED_BY->ReportSource",
+      "Case-REGISTERED->Manufacturer",
+      "Drug-IS_PRIMARY_SUSPECT->Case",
+      "Drug-IS_SECONDARY_SUSPECT->Case",
+      "Drug-IS_CONCOMITANT->Case",
+      "Drug-IS_INTERACTING->Drug",
+      "Drug-PRESCRIBED->Therapy",
+      "Drug-RECEIVED->Manufacturer"
+    ]
+  },
+  {
+    "schema": "movies",
+    "triplet": ["Actor-ACTED_IN->Movie", "Director-DIRECTED->Movie", "Movie-IN_GENRE->Genre", "User-RATED->Movie"]
+  },
+  {
+    "schema": "network",
+    "triplet": [
+      "Application-CONNECTS->Network",
+      "Application-DEPENDS_ON->Service",
+      "Application-RUNS->Software",
+      "DataCenter-CONTAINS->Rack",
+      "DataCenter-CONTAINS->Zone",
+      "Egress-ROUTES->Network",
+      "Interface-CONNECTS->Router",
+      "Interface-CONNECTS->Switch",
+      "Machine-CONTAINS->Interface",
+      "Machine-RUNS->OS",
+      "Machine-RUNS->Process",
+      "Network-CONNECTS->Router",
+      "Network-CONNECTS->Switch",
+      "Network-EXPOSES->Port",
+      "OS-VERSION->Version",
+      "Port-EXPOSES->Service",
+      "Process-LISTENS->Port",
+      "Rack-CONTAINS->Machine",
+      "Rack-CONTAINS->Router",
+      "Rack-CONTAINS->Switch",
+      "Router-CONNECTS->Network",
+      "Router-CONNECTS->Switch",
+      "Service-DEPENDS_ON->Application",
+      "Service-EXPOSES->Port",
+      "Software-VERSION->Version",
+      "Switch-CONNECTS->Network",
+      "Switch-CONNECTS->Router",
+      "Type-HOLDS->Application",
+      "Type-HOLDS->Machine",
+      "Type-HOLDS->Service",
+      "Version-PREVIOUS->Version",
+      "Zone-CONTAINS->DataCenter"
+    ]
+  },
+  {
+    "schema": "payments",
+    "triplet": [
+      "Client-HAS_EMAIL->Email",
+      "Client-HAS_PHONE->Phone",
+      "Client-HAS_SSN->SSN",
+      "Transaction-NEXT->Transaction",
+      "Client-PERFORMED->Transaction",
+      "Transaction-SENT_TO->Merchant",
+      "Transaction-RECEIVED_FROM->Client",
+      "Transaction-RECEIVED_FROM->Bank",
+      "Transaction-SENT_TO->Bank",
+      "Transaction-SENT_TO->Client",
+      "Transaction-RECEIVED_FROM->Merchant",
+      "Transaction-SENT_TO->CashOut",
+      "Transaction-RECEIVED_FROM->CashIn",
+      "Transaction-SENT_TO->CashIn",
+      "Transaction-RECEIVED_FROM->CashOut",
+      "Transaction-SENT_TO->Debit",
+      "Transaction-RECEIVED_FROM->Debit",
+      "Transaction-SENT_TO->Transfer",
+      "Transaction-RECEIVED_FROM->Transfer"
+    ]
+  },
+  {
+    "schema": "retail",
+    "triplet": [
+      "Customer-ORDERS->Order",
+      "Order-PART_OF->Category",
+      "Product-PART_OF->Category",
+      "Customer-PURCHASED->Product",
+      "Supplier-SUPPLIES->Product"
+    ]
+  },
+  {
+    "schema": "reviews",
+    "triplet": [
+      "User-FRIENDS->User",
+      "Business-HAS_LABEL->Label",
+      "Business-HAS_PHOTO->Photo",
+      "Business-IN_CATEGORY->Category",
+      "Business-IN_CITY->City",
+      "User-REVIEWS->Business",
+      "Business-SIMILAR->Business",
+      "User-WROTE->Review",
+      "User-WROTE_TIP->Review"
+    ]
+  },
+  {
+    "schema": "social",
+    "triplet": [
+      "User-FOLLOWS->User",
+      "User-POSTS->Post",
+      "Post-CONTAINS->Link",
+      "Post-TAGS->Tag",
+      "Post-MENTIONS->User",
+      "User-REPLY_TO->Post",
+      "User-REPOST->Post"
+    ]
+  },
+  {
+    "schema": "stackoverflow",
+    "triplet": [
+      "User-ANSWERED->Question",
+      "User-POSTED->Question",
+      "User-POSTED->Answer",
+      "User-ACCEPTED->Answer",
+      "Question-SIMILAR->Question",
+      "Question-TAGGED->Tag",
+      "Answer-TAGGED->Tag"
+    ]
+  }
+]

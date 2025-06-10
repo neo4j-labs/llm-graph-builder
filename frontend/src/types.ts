@@ -47,10 +47,12 @@ export interface OptionType {
 }
 
 export type UserCredentials = {
-  uri: string;
-  userName: string;
-  password: string;
-  database: string;
+  uri?: string;
+  userName?: string;
+  password?: string;
+  database?: string;
+  email: string;
+  connection?: string;
 } & { [key: string]: any };
 
 export interface SourceNode extends Omit<CustomFileBase, 'relationshipsCount' | 'createdAt'> {
@@ -74,7 +76,6 @@ export type ExtractParams = Pick<CustomFile, 'wikiQuery' | 'model' | 'sourceUrl'
   file?: File;
   aws_access_key_id?: string | null;
   aws_secret_access_key?: string | null;
-  max_sources?: number;
   gcs_bucket_name?: string;
   gcs_bucket_folder?: string;
   gcs_blob_filename?: string;
@@ -84,6 +85,7 @@ export type ExtractParams = Pick<CustomFile, 'wikiQuery' | 'model' | 'sourceUrl'
   allowedRelationship?: string[];
   gcs_project_id?: string;
   retry_condition: string;
+  additional_instructions?: string;
 } & { [key: string]: any };
 
 export type UploadParams = {
@@ -109,6 +111,7 @@ export interface CustomAlertProps {
 export interface DataComponentProps {
   openModal: () => void;
   isLargeDesktop?: boolean;
+  isDisabled?: boolean;
 }
 
 export interface S3ModalProps {
@@ -149,13 +152,19 @@ export interface ContentProps {
   showChatBot: boolean;
   openChatBot: () => void;
   openTextSchema: () => void;
-  isSchema?: boolean;
-  setIsSchema: Dispatch<SetStateAction<boolean>>;
+  openLoadSchema: () => void;
+  openPredefinedSchema: () => void;
   showEnhancementDialog: boolean;
   toggleEnhancementDialog: () => void;
   setOpenConnection: Dispatch<SetStateAction<connectionState>>;
   showDisconnectButton: boolean;
   connectionStatus: boolean;
+  combinedPatterns: string[];
+  setCombinedPatterns: Dispatch<SetStateAction<string[]>>;
+  combinedNodes: OptionType[];
+  setCombinedNodes: Dispatch<SetStateAction<OptionType[]>>;
+  combinedRels: OptionType[];
+  setCombinedRels: Dispatch<SetStateAction<OptionType[]>>;
 }
 
 export interface FileTableProps {
@@ -204,6 +213,7 @@ export interface CommonButtonProps {
   className?: string;
   imgWidth?: number;
   imgeHeight?: number;
+  isDisabled?: boolean;
 }
 
 export interface Source {
@@ -337,7 +347,6 @@ export interface ServerResponse extends Partial<AxiosResponse> {
 }
 export interface ScanProps {
   urlParam?: string;
-  userCredentials: UserCredentials | null;
   model?: string;
   accessKey?: string;
   secretKey?: string;
@@ -397,12 +406,15 @@ export interface commonserverresponse {
   message?: string | orphanTotalNodes;
   file_name?: string;
   data?:
-    | labelsAndTypes
-    | labelsAndTypes[]
+    | OptionType
+    | OptionType[]
+    | string
+    | string[]
     | uploadData
     | orphanNodeProps[]
     | dupNodes[]
-    | { pageitems: chunkdata[]; total_pages: number };
+    | { pageitems: chunkdata[]; total_pages: number }
+    | { triplets: string[] };
 }
 export interface dupNodeProps {
   id: string;
@@ -426,11 +438,15 @@ export interface chunkdata {
   pagenumber: null | number;
 }
 export interface ScehmaFromText extends Partial<commonserverresponse> {
-  data: labelsAndTypes;
+  data: {
+    triplets: string[];
+  };
 }
 
 export interface ServerData extends Partial<commonserverresponse> {
-  data: labelsAndTypes[];
+  data: {
+    triplets: string[];
+  };
 }
 export interface duplicateNodesData extends Partial<commonserverresponse> {
   data: dupNodes[];
@@ -621,17 +637,19 @@ export interface SpeechArgs {
   volume?: number;
 }
 
-export interface SettingsModalProps {
-  open: boolean;
-  onClose: () => void;
-  openTextSchema: () => void;
-  onContinue?: () => void;
-  settingView: 'contentView' | 'headerView';
-  isSchema?: boolean;
-  setIsSchema: Dispatch<SetStateAction<boolean>>;
-  onClear?: () => void;
-}
+// export interface SettingsModalProps {
+//   open: boolean;
+//   onClose: () => void;
+//   openTextSchema: () => void;
+//   openLoadSchema: () => void;
+//   onContinue?: () => void;
+//   settingView: 'contentView' | 'headerView';
+//   isSchema?: boolean;
+//   setIsSchema: Dispatch<SetStateAction<boolean>>;
+//   onClear?: () => void;
+// }
 export interface Menuitems {
+  id: string;
   title: string | JSX.Element;
   onClick: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   disabledCondition: boolean;
@@ -760,6 +778,8 @@ export interface ContextProps {
   setShowDisconnectButton: Dispatch<SetStateAction<boolean>>;
   isGCSActive: boolean;
   setIsGCSActive: Dispatch<SetStateAction<boolean>>;
+  // chunksToBeProces: number;
+  // setChunksToBeProces: Dispatch<SetStateAction<number>>;
 }
 export interface MessageContextType {
   messages: Messages[] | [];
@@ -778,7 +798,8 @@ export interface GraphContextType {
 export interface DatabaseStatusProps {
   isConnected: boolean;
   isGdsActive: boolean;
-  uri: string | null;
+  uri?: string;
+  database?: string;
 }
 
 export type SourcesProps = {
@@ -834,7 +855,21 @@ export type entityProps = {
 export interface showTextFromSchemaDialogType {
   triggeredFrom: string;
   show: boolean;
+  onApply?: (selectedPattern: string[], nodes: OptionType[], rels: OptionType[]) => void;
 }
+
+export interface schemaLoadDialogType {
+  triggeredFrom: string;
+  show: boolean;
+  onApply?: (selectedPattern: string[], nodes: OptionType[], rels: OptionType[]) => void;
+}
+
+export interface predefinedSchemaDialogType {
+  triggeredFrom: string;
+  show: boolean;
+  onApply?: (selectedPattern: string[], nodes: OptionType[], rels: OptionType[]) => void;
+}
+
 export interface FileContextType {
   files: (File | null)[] | [];
   filesData: CustomFile[] | [];
@@ -844,30 +879,83 @@ export interface FileContextType {
   setModel: Dispatch<SetStateAction<string>>;
   graphType: string;
   setGraphType: Dispatch<SetStateAction<string>>;
-  selectedNodes: readonly OptionType[];
-  setSelectedNodes: Dispatch<SetStateAction<readonly OptionType[]>>;
-  selectedRels: readonly OptionType[];
-  setSelectedRels: Dispatch<SetStateAction<readonly OptionType[]>>;
+  selectedTokenChunkSize: number;
+  setSelectedTokenChunkSize: Dispatch<SetStateAction<number>>;
+  selectedChunk_overlap: number;
+  setSelectedChunk_overlap: Dispatch<SetStateAction<number>>;
+  selectedChunks_to_combine: number;
+  setSelectedChunks_to_combine: Dispatch<SetStateAction<number>>;
   rowSelection: Record<string, boolean>;
   setRowSelection: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   selectedRows: string[];
   setSelectedRows: React.Dispatch<React.SetStateAction<string[]>>;
-  selectedSchemas: readonly OptionType[];
-  setSelectedSchemas: Dispatch<SetStateAction<readonly OptionType[]>>;
   chatModes: string[];
   setchatModes: Dispatch<SetStateAction<string[]>>;
-  isSchema: boolean;
-  setIsSchema: React.Dispatch<React.SetStateAction<boolean>>;
-  showTextFromSchemaDialog: showTextFromSchemaDialogType;
-  setShowTextFromSchemaDialog: React.Dispatch<React.SetStateAction<showTextFromSchemaDialogType>>;
+  schemaView: string | string[];
+  setSchemaView: Dispatch<SetStateAction<string | string[]>>;
   postProcessingTasks: string[];
   setPostProcessingTasks: React.Dispatch<React.SetStateAction<string[]>>;
-  queue: Queue;
-  setQueue: Dispatch<SetStateAction<Queue>>;
+  queue: Queue<CustomFile>;
+  setQueue: Dispatch<SetStateAction<Queue<CustomFile>>>;
   processedCount: number;
   setProcessedCount: Dispatch<SetStateAction<number>>;
   postProcessingVal: boolean;
   setPostProcessingVal: Dispatch<SetStateAction<boolean>>;
+  additionalInstructions: string;
+  setAdditionalInstructions: Dispatch<SetStateAction<string>>;
+  // all nodes and all patterns
+  allPatterns: string[];
+  setAllPatterns: Dispatch<SetStateAction<string[]>>;
+  selectedNodes: readonly OptionType[] | OptionType[];
+  setSelectedNodes: Dispatch<SetStateAction<readonly OptionType[] | OptionType[]>>;
+  selectedRels: readonly OptionType[] | OptionType[];
+  setSelectedRels: Dispatch<SetStateAction<readonly OptionType[] | OptionType[]>>;
+  selectedSchemas: readonly OptionType[];
+  setSelectedSchemas: Dispatch<SetStateAction<readonly OptionType[]>>;
+  // user defined schema
+  userDefinedNodes: OptionType[];
+  setUserDefinedNodes: Dispatch<SetStateAction<OptionType[] | OptionType[]>>;
+  userDefinedRels: OptionType[];
+  setUserDefinedRels: Dispatch<SetStateAction<OptionType[] | OptionType[]>>;
+  userDefinedPattern: string[];
+  setUserDefinedPattern: Dispatch<SetStateAction<string[]>>;
+  // Load Existing schema from db
+  schemaLoadDialog: schemaLoadDialogType;
+  setSchemaLoadDialog: React.Dispatch<React.SetStateAction<schemaLoadDialogType>>;
+  dbNodes: OptionType[];
+  setDbNodes: Dispatch<SetStateAction<OptionType[]>>;
+  dbRels: OptionType[];
+  setDbRels: Dispatch<SetStateAction<OptionType[]>>;
+  dbPattern: string[];
+  setDbPattern: Dispatch<SetStateAction<string[]>>;
+  // Predefined schema
+  predefinedSchemaDialog: predefinedSchemaDialogType;
+  setPredefinedSchemaDialog: React.Dispatch<React.SetStateAction<predefinedSchemaDialogType>>;
+  preDefinedNodes: OptionType[];
+  setPreDefinedNodes: Dispatch<SetStateAction<OptionType[]>>;
+  preDefinedRels: OptionType[];
+  setPreDefinedRels: Dispatch<SetStateAction<OptionType[]>>;
+  preDefinedPattern: string[];
+  setPreDefinedPattern: Dispatch<SetStateAction<string[]>>;
+  selectedPreDefOption: OptionType | null;
+  setSelectedPreDefOption: Dispatch<SetStateAction<OptionType | null>>;
+  // schema from text
+  showTextFromSchemaDialog: showTextFromSchemaDialogType;
+  setShowTextFromSchemaDialog: React.Dispatch<React.SetStateAction<showTextFromSchemaDialogType>>;
+  schemaValNodes: OptionType[];
+  setSchemaValNodes: Dispatch<SetStateAction<OptionType[]>>;
+  schemaValRels: OptionType[];
+  setSchemaValRels: Dispatch<SetStateAction<OptionType[]>>;
+  schemaTextPattern: string[];
+  setSchemaTextPattern: Dispatch<SetStateAction<string[]>>;
+
+  // source, type,target options
+  sourceOptions: OptionType[];
+  setSourceOptions: Dispatch<SetStateAction<OptionType[]>>;
+  typeOptions: OptionType[];
+  setTypeOptions: Dispatch<SetStateAction<OptionType[]>>;
+  targetOptions: OptionType[];
+  setTargetOptions: Dispatch<SetStateAction<OptionType[]>>;
 }
 export declare type Side = 'top' | 'right' | 'bottom' | 'left';
 
@@ -889,10 +977,12 @@ export type BasicNode = {
   propertyTypes: Record<string, string>;
 };
 
+export type PropertyValue = string | number | boolean | [];
+
 export type GraphPropertiesTableProps = {
   propertiesWithTypes: {
     key: string;
-    value: string;
+    value: PropertyValue;
   }[];
 };
 
@@ -938,3 +1028,73 @@ export interface filedate {
   };
 }
 export type FileTableHandle = React.ElementRef<typeof FileTable>;
+
+export interface VisibilityProps {
+  isVisible: boolean;
+}
+export interface HeaderProp {
+  chatOnly?: boolean;
+  deleteOnClick?: () => void;
+  setOpenConnection?: Dispatch<SetStateAction<connectionState>>;
+  showBackButton?: boolean;
+}
+
+export type PatternOption = {
+  label: string;
+  value: string;
+};
+
+export type TupleCreationProps = {
+  selectedSource: OptionType | null;
+  selectedType: OptionType | null;
+  selectedTarget: OptionType | null;
+  onPatternChange: (
+    source: OptionType | OptionType[] | null,
+    type: OptionType | OptionType[] | null,
+    target: OptionType | OptionType[] | null
+  ) => void;
+  onAddPattern: () => void;
+  selectedTupleOptions: readonly OptionType[];
+};
+
+export interface TupleType {
+  value: string;
+  label: string;
+  source: string;
+  target: string;
+  type: string;
+  sourceType?: string;
+}
+
+export interface SchemaViewModalProps {
+  open: boolean;
+  inspectedName?: string;
+  setGraphViewOpen: Dispatch<SetStateAction<boolean>>;
+  viewPoint: string;
+  nodeValues?: ExtendedNode[] | OptionType[];
+  relationshipValues?: ExtendedRelationship[] | string[] | OptionType[];
+  selectedRows?: CustomFile[] | undefined;
+  schemaLoading?: boolean;
+  view?: string;
+}
+
+export type UserDefinedGraphSchema = {
+  nodes: ExtendedNode[];
+  relationships: ExtendedRelationship[];
+  scheme: Scheme;
+};
+
+export interface SchemaSelectionProps {
+  open: boolean;
+  onClose: () => void;
+  pattern: string[];
+  nodes: OptionType[];
+  rels: OptionType[];
+  handleRemove: (pattern: string) => void;
+  handleSchemaView: (view?: string) => void;
+  loading: boolean;
+  highlightPattern?: string;
+  onApply: () => void;
+  onCancel: () => void;
+  view?: string;
+}

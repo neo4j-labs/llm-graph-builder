@@ -13,7 +13,7 @@ function ConfirmationDialog({
   loading,
   extractHandler,
   selectedRows,
-  isLargeDocumentAlert = true,
+  isLargeDocumentAlert = false,
 }: {
   largeFiles: CustomFile[];
   open: boolean;
@@ -25,9 +25,9 @@ function ConfirmationDialog({
 }) {
   const { setSelectedRows, filesData, setRowSelection } = useFileContext();
   const [checked, setChecked] = useState<string[]>([...largeFiles.map((f) => f.id)]);
-  const handleToggle = (ischecked: boolean, id: string) => {
+  const handleToggle = (isChecked: boolean, id: string) => {
     const newChecked = [...checked];
-    if (ischecked) {
+    if (isChecked) {
       const file = filesData.find((f) => f.id === id);
       newChecked.push(id);
       setSelectedRows((prev) => {
@@ -92,7 +92,7 @@ function ConfirmationDialog({
           <ExpiredFilesAlert checked={checked} handleToggle={handleToggle} Files={largeFiles} />
         )}
       </Dialog.Content>
-      <Dialog.Actions className='!mt-3'>
+      <Dialog.Actions className='mt-3!'>
         <Button
           onClick={() => {
             if (selectedRows.length) {
@@ -111,7 +111,6 @@ function ConfirmationDialog({
             setChecked([]);
             onClose();
           }}
-          size='large'
           isDisabled={largeFiles.some(
             (f) => f.createdAt != undefined && checked.includes(f.id) && isExpired(f?.createdAt as Date)
           )}

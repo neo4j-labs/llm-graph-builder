@@ -173,7 +173,7 @@ google-cloud-cli-linux-x86_64.tar.gz
 newenv
 files
 
-
+# start of ian-added gitignore
 #terraform GITIGNORE
 
 # Local .terraform directories
@@ -197,3 +197,7 @@ crash.*.log
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+# end of ian-added gitignore
+
+startupbackend.sh
+startupfrontend.sh

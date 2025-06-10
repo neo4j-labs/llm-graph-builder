@@ -4,7 +4,7 @@ import { DatabaseStatusProps } from '../../types';
 import { connectionLabels } from '../../utils/Constants';
 import ScienceMoleculeIcon from '../UI/ScienceMolecule';
 
-const DatabaseStatusIcon: React.FC<DatabaseStatusProps> = ({ isConnected, isGdsActive, uri }) => {
+const DatabaseStatusIcon: React.FC<DatabaseStatusProps> = ({ isConnected, isGdsActive, uri, database = 'neo4j' }) => {
   const strokeColour = isConnected ? connectionLabels.greenStroke : connectionLabels.redStroke;
   const text = isGdsActive ? connectionLabels.graphDataScience : connectionLabels.graphDatabase;
   return (
@@ -18,7 +18,7 @@ const DatabaseStatusIcon: React.FC<DatabaseStatusProps> = ({ isConnected, isGdsA
           )}
         </span>
       </IconWithToolTip>
-      <span className='n-body-small ml-1'>{isConnected ? uri : connectionLabels.notConnected}</span>
+      <span className='n-body-small ml-1'>{isConnected ? `${uri} / ${database}` : connectionLabels.notConnected}</span>
     </div>
   );
 };

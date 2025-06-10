@@ -41,7 +41,7 @@ export const ResizePanelDetails = ({ children, open, onResizeStop }: ResizePanel
 };
 const Title = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className='ml-4 flex items-center' style={{ gridArea: 'title' }}>
+    <div className='ml-4 flex! items-center' style={{ gridArea: 'title' }}>
       {children}
     </div>
   );

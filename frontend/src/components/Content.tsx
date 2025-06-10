@@ -1,18 +1,19 @@
-import { useEffect, useState, useMemo, useRef, Suspense, useReducer, useCallback } from 'react';
+import { useEffect, useState, useMemo, useRef, Suspense, useReducer, useCallback, useContext } from 'react';
 import FileTable from './FileTable';
-import { Button, Typography, Flex, StatusIndicator, useMediaQuery } from '@neo4j-ndl/react';
+import {
+  Button,
+  Typography,
+  Flex,
+  StatusIndicator,
+  useMediaQuery,
+  Menu,
+  SpotlightTarget,
+  useSpotlightContext,
+} from '@neo4j-ndl/react';
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { extractAPI } from '../utils/FileAPI';
-import {
-  BannerAlertProps,
-  ContentProps,
-  CustomFile,
-  OptionType,
-  UserCredentials,
-  chunkdata,
-  FileTableHandle,
-} from '../types';
+import { BannerAlertProps, ContentProps, CustomFile, OptionType, chunkdata, FileTableHandle } from '../types';
 import deleteAPI from '../services/DeleteFiles';
 import { postProcessing } from '../services/PostProcessing';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
@@ -25,6 +26,9 @@ import {
   llms,
   RETRY_OPIONS,
   tooltips,
+  tokenchunkSize,
+  chunkOverlap,
+  chunksToCombine,
 } from '../utils/Constants';
 import ButtonWithToolTip from './UI/ButtonWithToolTip';
 import DropdownComponent from './Dropdown';
@@ -37,38 +41,45 @@ import { tokens } from '@neo4j-ndl/base';
 import axios from 'axios';
 import DatabaseStatusIcon from './UI/DatabaseStatusIcon';
 import RetryConfirmationDialog from './Popups/RetryConfirmation/Index';
-import retry from '../services/retry';
-import { showErrorToast, showNormalToast, showSuccessToast } from '../utils/toasts';
+import retry from '../services/Retry';
+import { showErrorToast, showNormalToast, showSuccessToast } from '../utils/Toasts';
 import { useMessageContext } from '../context/UserMessages';
 import PostProcessingToast from './Popups/GraphEnhancementDialog/PostProcessingCheckList/PostProcessingToast';
 import { getChunkText } from '../services/getChunkText';
 import ChunkPopUp from './Popups/ChunkPopUp';
 import { isExpired, isFileReadyToProcess } from '../utils/Utils';
+import { useHasSelections } from '../hooks/useHasSelections';
+import { ChevronUpIconOutline, ChevronDownIconOutline } from '@neo4j-ndl/react/icons';
+import { ThemeWrapperContext } from '../context/ThemeWrapper';
+import { useAuth0 } from '@auth0/auth0-react';
+import React from 'react';
 
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
 
 let afterFirstRender = false;
-
 const Content: React.FC<ContentProps> = ({
-  isSchema,
-  setIsSchema,
   showEnhancementDialog,
   toggleEnhancementDialog,
   setOpenConnection,
   showDisconnectButton,
   connectionStatus,
+  combinedPatterns,
+  setCombinedPatterns,
+  combinedNodes,
+  setCombinedNodes,
+  combinedRels,
+  setCombinedRels,
 }) => {
   const { breakpoints } = tokens;
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
-  // const [init, setInit] = useState<boolean>(false);
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [inspectedName, setInspectedName] = useState<string>('');
   const [documentName, setDocumentName] = useState<string>('');
+  const [showConfirmationModal, setShowConfirmationModal] = useState<boolean>(false);
+  const [showExpirationModal, setShowExpirationModal] = useState<boolean>(false);
+  const [extractLoading, setIsExtractLoading] = useState<boolean>(false);
   const { setUserCredentials, userCredentials, setConnectionStatus, isGdsActive, isReadOnlyUser, isGCSActive } =
     useCredentials();
-  const [showConfirmationModal, setshowConfirmationModal] = useState<boolean>(false);
-  const [showExpirationModal, setshowExpirationModal] = useState<boolean>(false);
-  const [extractLoading, setextractLoading] = useState<boolean>(false);
   const [retryFile, setRetryFile] = useState<string>('');
   const [retryLoading, setRetryLoading] = useState<boolean>(false);
   const [showRetryPopup, toggleRetryPopup] = useReducer((state) => !state, false);
@@ -77,34 +88,50 @@ const Content: React.FC<ContentProps> = ({
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [totalPageCount, setTotalPageCount] = useState<number | null>(null);
   const [textChunks, setTextChunks] = useState<chunkdata[]>([]);
-
+  const [isGraphBtnMenuOpen, setIsGraphBtnMenuOpen] = useState<boolean>(false);
+  const graphbtnRef = useRef<HTMLDivElement>(null);
+  const chunksTextAbortController = useRef<AbortController>();
+  const { colorMode } = useContext(ThemeWrapperContext);
+  const { isAuthenticated } = useAuth0();
+  const { setIsOpen } = useSpotlightContext();
   const [alertStateForRetry, setAlertStateForRetry] = useState<BannerAlertProps>({
     showAlert: false,
     alertType: 'neutral',
     alertMessage: '',
   });
-  const { setClearHistoryData } = useMessageContext();
+  const { setMessages } = useMessageContext();
   const {
     filesData,
     setFilesData,
     setModel,
     selectedNodes,
     selectedRels,
+    selectedTokenChunkSize,
+    selectedChunk_overlap,
+    selectedChunks_to_combine,
     setSelectedNodes,
+    setAllPatterns,
     setRowSelection,
     setSelectedRels,
+    setSelectedTokenChunkSize,
+    setSelectedChunk_overlap,
+    setSelectedChunks_to_combine,
     postProcessingTasks,
     queue,
     processedCount,
     setProcessedCount,
     setchatModes,
     model,
+    additionalInstructions,
+    setAdditionalInstructions,
   } = useFileContext();
-  const [viewPoint, setViewPoint] = useState<'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView'>(
-    'tableView'
-  );
-  const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
-  const [deleteLoading, setdeleteLoading] = useState<boolean>(false);
+  const [viewPoint, setViewPoint] = useState<
+    'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView' | 'showSchemaView'
+  >('tableView');
+  const [showDeletePopUp, setShowDeletePopUp] = useState<boolean>(false);
+  const [deleteLoading, setIsDeleteLoading] = useState<boolean>(false);
+
+  const hasSelections = useHasSelections(selectedNodes, selectedRels);
 
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
@@ -135,39 +162,53 @@ const Content: React.FC<ContentProps> = ({
     }
     if (processedCount === 1 && queue.isEmpty()) {
       (async () => {
-        showNormalToast(<PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} />);
+        showNormalToast(
+          <PostProcessingToast
+            isGdsActive={isGdsActive}
+            postProcessingTasks={postProcessingTasks}
+            isSchema={hasSelections}
+          />
+        );
         try {
           const payload = isGdsActive
-            ? postProcessingTasks
-            : postProcessingTasks.filter((task) => task !== 'enable_communities');
-          const response = await postProcessing(userCredentials as UserCredentials, payload);
-          if (response.data.status === 'Success') {
-            const communityfiles = response.data?.data;
-            if (Array.isArray(communityfiles) && communityfiles.length) {
-              communityfiles?.forEach((c: any) => {
-                setFilesData((prev) => {
-                  return prev.map((f) => {
-                    if (f.name === c.filename) {
-                      return {
-                        ...f,
-                        chunkNodeCount: c.chunkNodeCount ?? 0,
-                        entityNodeCount: c.entityNodeCount ?? 0,
-                        communityNodeCount: c.communityNodeCount ?? 0,
-                        chunkRelCount: c.chunkRelCount ?? 0,
-                        entityEntityRelCount: c.entityEntityRelCount ?? 0,
-                        communityRelCount: c.communityRelCount ?? 0,
-                        nodesCount: c.nodeCount,
-                        relationshipsCount: c.relationshipCount,
-                      };
-                    }
-                    return f;
+            ? hasSelections
+              ? postProcessingTasks.filter((task) => task !== 'graph_schema_consolidation')
+              : postProcessingTasks
+            : hasSelections
+              ? postProcessingTasks.filter(
+                  (task) => task !== 'graph_schema_consolidation' && task !== 'enable_communities'
+                )
+              : postProcessingTasks.filter((task) => task !== 'enable_communities');
+          if (payload.length) {
+            const response = await postProcessing(payload);
+            if (response.data.status === 'Success') {
+              const communityfiles = response.data?.data;
+              if (Array.isArray(communityfiles) && communityfiles.length) {
+                communityfiles?.forEach((c: any) => {
+                  setFilesData((prev) => {
+                    return prev.map((f) => {
+                      if (f.name === c.filename) {
+                        return {
+                          ...f,
+                          chunkNodeCount: c.chunkNodeCount ?? 0,
+                          entityNodeCount: c.entityNodeCount ?? 0,
+                          communityNodeCount: c.communityNodeCount ?? 0,
+                          chunkRelCount: c.chunkRelCount ?? 0,
+                          entityEntityRelCount: c.entityEntityRelCount ?? 0,
+                          communityRelCount: c.communityRelCount ?? 0,
+                          nodesCount: c.nodeCount,
+                          relationshipsCount: c.relationshipCount,
+                        };
+                      }
+                      return f;
+                    });
                   });
                 });
-              });
+              }
+              showSuccessToast('All Q&A functionality is available now.');
+            } else {
+              throw new Error(response.data.error);
             }
-            showSuccessToast('All Q&A functionality is available now.');
-          } else {
-            throw new Error(response.data.error);
           }
         } catch (error) {
           if (error instanceof Error) {
@@ -184,14 +225,14 @@ const Content: React.FC<ContentProps> = ({
     }
     afterFirstRender = true;
   }, [queue.items.length, userCredentials]);
-
+  const isFirstTimeUser = useMemo(() => {
+    return localStorage.getItem('neo4j.connection') === null;
+  }, []);
   useEffect(() => {
-    const storedSchema = localStorage.getItem('isSchema');
-    if (storedSchema !== null) {
-      setIsSchema(JSON.parse(storedSchema));
+    if (!isAuthenticated && !connectionStatus && isFirstTimeUser) {
+      setIsOpen(true);
     }
-  }, [isSchema]);
-
+  }, [connectionStatus, isAuthenticated, isFirstTimeUser]);
   const handleDropdownChange = (selectedOption: OptionType | null | void) => {
     if (selectedOption?.value) {
       setModel(selectedOption?.value);
@@ -202,40 +243,41 @@ const Content: React.FC<ContentProps> = ({
           ...curfile,
           model:
             curfile.status === 'New' || curfile.status === 'Ready to Reprocess'
-              ? selectedOption?.value ?? ''
+              ? (selectedOption?.value ?? '')
               : curfile.model,
         };
       });
     });
   };
   const getChunks = async (name: string, pageNo: number) => {
+    chunksTextAbortController.current = new AbortController();
     toggleChunksLoading();
-    const response = await getChunkText(userCredentials as UserCredentials, name, pageNo);
+    const response = await getChunkText(name, pageNo, chunksTextAbortController.current.signal);
     setTextChunks(response.data.data.pageitems);
     if (!totalPageCount) {
       setTotalPageCount(response.data.data.total_pages);
     }
     toggleChunksLoading();
   };
-  
+
   const extractData = async (uid: string, isselectedRows = false, filesTobeProcess: CustomFile[]) => {
     if (!isselectedRows) {
       const fileItem = filesData.find((f) => f.id == uid);
       if (fileItem) {
-        setextractLoading(true);
+        setIsExtractLoading(true);
         await extractHandler(fileItem, uid);
       }
     } else {
       const fileItem = filesTobeProcess.find((f) => f.id == uid);
       if (fileItem) {
-        setextractLoading(true);
+        setIsExtractLoading(true);
         await extractHandler(fileItem, uid);
       }
     }
   };
 
   const extractHandler = async (fileItem: CustomFile, uid: string) => {
-    queue.remove(fileItem.name as string);
+    queue.remove((item) => item.name === fileItem.name);
     try {
       setFilesData((prevfiles) =>
         prevfiles.map((curfile) => {
@@ -259,19 +301,11 @@ const Content: React.FC<ContentProps> = ({
       });
       if (fileItem.name != undefined && userCredentials != null) {
         const { name } = fileItem;
-        triggerStatusUpdateAPI(
-          name as string,
-          userCredentials?.uri,
-          userCredentials?.userName,
-          userCredentials?.password,
-          userCredentials?.database,
-          updateStatusForLargeFiles
-        );
+        triggerStatusUpdateAPI(name as string, userCredentials, updateStatusForLargeFiles);
       }
 
       const apiResponse = await extractAPI(
         fileItem.model,
-        userCredentials as UserCredentials,
         fileItem.fileSource,
         fileItem.retryOption ?? '',
         fileItem.sourceUrl,
@@ -282,15 +316,22 @@ const Content: React.FC<ContentProps> = ({
         fileItem.gcsBucketFolder ?? '',
         selectedNodes.map((l) => l.value),
         selectedRels.map((t) => t.value),
+        selectedTokenChunkSize,
+        selectedChunk_overlap,
+        selectedChunks_to_combine,
         fileItem.googleProjectId,
         fileItem.language,
-        fileItem.accessToken
+        fileItem.accessToken,
+        additionalInstructions
       );
-
       if (apiResponse?.status === 'Failed') {
         let errorobj = { error: apiResponse.error, message: apiResponse.message, fileName: apiResponse.file_name };
         throw new Error(JSON.stringify(errorobj));
       } else if (fileItem.size != undefined && fileItem.size < largeFileSize) {
+        if (apiResponse.data.message) {
+          const apiRes = apiResponse.data.message;
+          showSuccessToast(apiRes);
+        }
         setFilesData((prevfiles) => {
           return prevfiles.map((curfile) => {
             if (curfile.name == apiResponse?.data?.fileName) {
@@ -321,7 +362,7 @@ const Content: React.FC<ContentProps> = ({
               return prev + 1;
             });
             const { message, fileName } = error;
-            queue.remove(fileName);
+            queue.remove((item) => item.name === fileName);
             const errorMessage = error.message;
             showErrorToast(message);
             setFilesData((prevfiles) =>
@@ -370,10 +411,16 @@ const Content: React.FC<ContentProps> = ({
   };
 
   const addFilesToQueue = async (remainingFiles: CustomFile[]) => {
-    if (!remainingFiles.length) {
-      showNormalToast(<PostProcessingToast isGdsActive={isGdsActive} postProcessingTasks={postProcessingTasks} />);
+    if (!remainingFiles.length && postProcessingTasks.length) {
+      showNormalToast(
+        <PostProcessingToast
+          isGdsActive={isGdsActive}
+          postProcessingTasks={postProcessingTasks}
+          isSchema={hasSelections}
+        />
+      );
       try {
-        const response = await postProcessing(userCredentials as UserCredentials, postProcessingTasks);
+        const response = await postProcessing(postProcessingTasks);
         if (response.data.status === 'Success') {
           const communityfiles = response.data?.data;
           if (Array.isArray(communityfiles) && communityfiles.length) {
@@ -484,19 +531,19 @@ const Content: React.FC<ContentProps> = ({
         data = triggerBatchProcessing(filesTobeSchedule, filesTobeProcessed, true, true);
       }
       Promise.allSettled(data).then((_) => {
-        setextractLoading(false);
+        setIsExtractLoading(false);
       });
     } else if (queueFiles && !queue.isEmpty() && processingFilesCount < batchSize) {
       data = scheduleBatchWiseProcess(queue.items, true);
       Promise.allSettled(data).then((_) => {
-        setextractLoading(false);
+        setIsExtractLoading(false);
       });
     } else {
       addFilesToQueue(filesTobeProcessed as CustomFile[]);
     }
   };
 
-  const processWaitingFilesOnRefresh = () => {
+  const processWaitingFilesOnRefresh = useCallback(() => {
     let data = [];
     const processingFilesCount = filesData.filter((f) => f.status === 'Processing').length;
 
@@ -508,7 +555,7 @@ const Content: React.FC<ContentProps> = ({
         data = triggerBatchProcessing(queue.items, queue.items as CustomFile[], true, false);
       }
       Promise.allSettled(data).then((_) => {
-        setextractLoading(false);
+        setIsExtractLoading(false);
       });
     } else {
       const selectedNewFiles = childRef.current
@@ -516,17 +563,20 @@ const Content: React.FC<ContentProps> = ({
         .filter((f) => f.status === 'New' || f.status == 'Ready to Reprocess');
       addFilesToQueue(selectedNewFiles as CustomFile[]);
     }
-  };
+  }, [filesData, queue]);
 
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.VITE_BLOOM_URL;
-    const uriCoded = userCredentials?.uri.replace(/:\d+$/, '');
-    const connectURL = `${uriCoded?.split('//')[0]}//${userCredentials?.userName}@${uriCoded?.split('//')[1]}:${
-      userCredentials?.port ?? '7687'
-    }`;
-    const encodedURL = encodeURIComponent(connectURL);
-    const replacedUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
-    window.open(replacedUrl, '_blank');
+    let finalUrl = bloomUrl;
+    if (userCredentials?.database && userCredentials.uri && userCredentials.userName) {
+      const uriCoded = userCredentials.uri.replace(/:\d+$/, '');
+      const connectURL = `${uriCoded.split('//')[0]}//${userCredentials.userName}@${uriCoded.split('//')[1]}:${
+        userCredentials.port ?? '7687'
+      }`;
+      const encodedURL = encodeURIComponent(connectURL);
+      finalUrl = bloomUrl?.replace('{CONNECT_URL}', encodedURL);
+    }
+    window.open(finalUrl, '_blank');
   };
 
   const handleGraphView = () => {
@@ -536,41 +586,75 @@ const Content: React.FC<ContentProps> = ({
 
   const disconnect = () => {
     queue.clear();
+    const date = new Date();
     setProcessedCount(0);
     setConnectionStatus(false);
     localStorage.removeItem('password');
     localStorage.removeItem('selectedModel');
-    setUserCredentials({ uri: '', password: '', userName: '', database: '' });
+    setUserCredentials({ uri: '', password: '', userName: '', database: '', email: '' });
     setSelectedNodes([]);
     setSelectedRels([]);
-    setClearHistoryData(true);
+    setAllPatterns([]);
+    localStorage.removeItem('selectedTokenChunkSize');
+    setSelectedTokenChunkSize(tokenchunkSize);
+    localStorage.removeItem('selectedChunk_overlap');
+    setSelectedChunk_overlap(chunkOverlap);
+    localStorage.removeItem('selectedChunks_to_combine');
+    setSelectedChunks_to_combine(chunksToCombine);
+    localStorage.removeItem('instructions');
+    localStorage.removeItem('selectedNodeLabels');
+    localStorage.removeItem('selectedRelationshipLabels');
+    localStorage.removeItem('selectedPattern');
+    setAdditionalInstructions('');
+    setMessages([
+      {
+        datetime: `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`,
+        id: 2,
+        modes: {
+          'graph+vector+fulltext': {
+            message:
+              ' Welcome to the Neo4j Knowledge Graph Chat. You can ask questions related to documents which have been completely processed.',
+          },
+        },
+        user: 'chatbot',
+        currentMode: 'graph+vector+fulltext',
+      },
+    ]);
     setchatModes([chatModeLables['graph+vector+fulltext']]);
   };
 
   const retryHandler = async (filename: string, retryoption: string) => {
     try {
       setRetryLoading(true);
-      const response = await retry(userCredentials as UserCredentials, filename, retryoption);
+      const response = await retry(filename, retryoption);
       setRetryLoading(false);
       if (response.data.status === 'Failure') {
         throw new Error(response.data.error);
-      }
-      const isStartFromBegining = retryoption === RETRY_OPIONS[0] || retryoption === RETRY_OPIONS[1];
-      setFilesData((prev) => {
-        return prev.map((f) => {
-          return f.name === filename
-            ? {
-                ...f,
-                status: 'Ready to Reprocess',
-                processingProgress: isStartFromBegining ? 0 : f.processingProgress,
-                nodesCount: isStartFromBegining ? 0 : f.nodesCount,
-                relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
-              }
-            : f;
+      } else if (
+        response.data.status === 'Success' &&
+        response.data?.message != undefined &&
+        (response.data?.message as string).includes('Chunks are not created')
+      ) {
+        showNormalToast(response.data.message as string);
+        retryOnclose();
+      } else {
+        const isStartFromBegining = retryoption === RETRY_OPIONS[0] || retryoption === RETRY_OPIONS[1];
+        setFilesData((prev) => {
+          return prev.map((f) => {
+            return f.name === filename
+              ? {
+                  ...f,
+                  status: 'Ready to Reprocess',
+                  processingProgress: isStartFromBegining ? 0 : f.processingProgress,
+                  nodesCount: isStartFromBegining ? 0 : f.nodesCount,
+                  relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
+                }
+              : f;
+          });
         });
-      });
-      showSuccessToast(response.data.message as string);
-      retryOnclose();
+        showSuccessToast(response.data.message as string);
+        retryOnclose();
+      }
     } catch (error) {
       setRetryLoading(false);
       if (error instanceof Error) {
@@ -632,16 +716,12 @@ const Content: React.FC<ContentProps> = ({
 
   const handleDeleteFiles = async (deleteEntities: boolean) => {
     try {
-      setdeleteLoading(true);
-      const response = await deleteAPI(
-        userCredentials as UserCredentials,
-        childRef.current?.getSelectedRows() as CustomFile[],
-        deleteEntities
-      );
+      setIsDeleteLoading(true);
+      const response = await deleteAPI(childRef.current?.getSelectedRows() as CustomFile[], deleteEntities);
       queue.clear();
       setProcessedCount(0);
       setRowSelection({});
-      setdeleteLoading(false);
+      setIsDeleteLoading(false);
       if (response.data.status == 'Success') {
         showSuccessToast(response.data.message);
         const filenames = childRef.current?.getSelectedRows().map((str) => str.name);
@@ -655,9 +735,9 @@ const Content: React.FC<ContentProps> = ({
         let errorobj = { error: response.data.error, message: response.data.message };
         throw new Error(JSON.stringify(errorobj));
       }
-      setshowDeletePopUp(false);
+      setShowDeletePopUp(false);
     } catch (err) {
-      setdeleteLoading(false);
+      setIsDeleteLoading(false);
       if (err instanceof Error) {
         const error = JSON.parse(err.message);
         const { message } = error;
@@ -665,27 +745,27 @@ const Content: React.FC<ContentProps> = ({
         console.log(err);
       }
     }
-    setshowDeletePopUp(false);
+    setShowDeletePopUp(false);
   };
 
   const onClickHandler = () => {
     const selectedRows = childRef.current?.getSelectedRows();
     if (selectedRows?.length) {
       const expiredFilesExists = selectedRows.some(
-        (c) => isFileReadyToProcess(c, true) && isExpired(c?.createdAt as Date)
+        (c) => isFileReadyToProcess(c, true) && isExpired((c?.createdAt as Date) ?? new Date())
       );
       const largeFileExists = selectedRows.some(
         (c) => isFileReadyToProcess(c, true) && typeof c.size === 'number' && c.size > largeFileSize
       );
       if (expiredFilesExists) {
-        setshowConfirmationModal(true);
+        setShowExpirationModal(true);
       } else if (largeFileExists && isGCSActive) {
-        setshowExpirationModal(true);
+        setShowConfirmationModal(true);
       } else {
         handleGenerateGraph(selectedRows.filter((f) => isFileReadyToProcess(f, false)));
       }
     } else if (filesData.length) {
-      const expiredFileExists = filesData.some((c) => isFileReadyToProcess(c, true) && isExpired(c.createdAt as Date));
+      const expiredFileExists = filesData.some((c) => isFileReadyToProcess(c, true) && isExpired(c?.createdAt as Date));
       const largeFileExists = filesData.some(
         (c) => isFileReadyToProcess(c, true) && typeof c.size === 'number' && c.size > largeFileSize
       );
@@ -698,9 +778,9 @@ const Content: React.FC<ContentProps> = ({
       }, {});
       setRowSelection(stringified);
       if (largeFileExists) {
-        setshowConfirmationModal(true);
+        setShowConfirmationModal(true);
       } else if (expiredFileExists && isGCSActive) {
-        setshowExpirationModal(true);
+        setShowExpirationModal(true);
       } else {
         handleGenerateGraph(filesData.filter((f) => isFileReadyToProcess(f, false)));
       }
@@ -726,6 +806,11 @@ const Content: React.FC<ContentProps> = ({
     });
   }, []);
 
+  const handleSchemaView = () => {
+    setOpenGraphView(true);
+    setViewPoint('showSchemaView');
+  };
+
   return (
     <>
       <RetryConfirmationDialog
@@ -743,9 +828,10 @@ const Content: React.FC<ContentProps> = ({
             open={showConfirmationModal}
             largeFiles={filesForProcessing}
             extractHandler={handleGenerateGraph}
-            onClose={() => setshowConfirmationModal(false)}
+            onClose={() => setShowConfirmationModal(false)}
             loading={extractLoading}
             selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
+            isLargeDocumentAlert={true}
           ></ConfirmationDialog>
         </Suspense>
       )}
@@ -755,7 +841,33 @@ const Content: React.FC<ContentProps> = ({
             open={showExpirationModal}
             largeFiles={filesForProcessing}
             extractHandler={handleGenerateGraph}
-            onClose={() => setshowExpirationModal(false)}
+            onClose={() => setShowExpirationModal(false)}
+            loading={extractLoading}
+            selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
+            isLargeDocumentAlert={false}
+          ></ConfirmationDialog>
+        </Suspense>
+      )}
+      {showExpirationModal && filesForProcessing.length && (
+        <Suspense fallback={<FallBackDialog />}>
+          <ConfirmationDialog
+            open={showExpirationModal}
+            largeFiles={filesForProcessing}
+            extractHandler={handleGenerateGraph}
+            onClose={() => setShowExpirationModal(false)}
+            loading={extractLoading}
+            selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
+            isLargeDocumentAlert={false}
+          ></ConfirmationDialog>
+        </Suspense>
+      )}
+      {showExpirationModal && filesForProcessing.length && (
+        <Suspense fallback={<FallBackDialog />}>
+          <ConfirmationDialog
+            open={showExpirationModal}
+            largeFiles={filesForProcessing}
+            extractHandler={handleGenerateGraph}
+            onClose={() => setShowExpirationModal(false)}
             loading={extractLoading}
             selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
             isLargeDocumentAlert={false}
@@ -767,7 +879,7 @@ const Content: React.FC<ContentProps> = ({
           open={showDeletePopUp}
           no_of_files={selectedfileslength ?? 0}
           deleteHandler={(delentities: boolean) => handleDeleteFiles(delentities)}
-          deleteCloseHandler={() => setshowDeletePopUp(false)}
+          deleteCloseHandler={() => setShowDeletePopUp(false)}
           loading={deleteLoading}
           view='contentView'
         ></DeletePopUp>
@@ -775,7 +887,10 @@ const Content: React.FC<ContentProps> = ({
       {showChunkPopup && (
         <ChunkPopUp
           chunksLoading={chunksLoading}
-          onClose={() => toggleChunkPopup()}
+          onClose={() => {
+            chunksTextAbortController.current?.abort();
+            toggleChunkPopup();
+          }}
           showChunkPopup={showChunkPopup}
           chunks={textChunks}
           incrementPage={incrementPage}
@@ -785,7 +900,16 @@ const Content: React.FC<ContentProps> = ({
         ></ChunkPopUp>
       )}
       {showEnhancementDialog && (
-        <GraphEnhancementDialog open={showEnhancementDialog} onClose={toggleEnhancementDialog}></GraphEnhancementDialog>
+        <GraphEnhancementDialog
+          open={showEnhancementDialog}
+          onClose={toggleEnhancementDialog}
+          combinedPatterns={combinedPatterns}
+          setCombinedPatterns={setCombinedPatterns}
+          combinedNodes={combinedNodes}
+          setCombinedNodes={setCombinedNodes}
+          combinedRels={combinedRels}
+          setCombinedRels={setCombinedRels}
+        ></GraphEnhancementDialog>
       )}
       <GraphViewModal
         inspectedName={inspectedName}
@@ -808,25 +932,16 @@ const Content: React.FC<ContentProps> = ({
               <DatabaseStatusIcon
                 isConnected={connectionStatus}
                 isGdsActive={isGdsActive}
-                uri={userCredentials && userCredentials?.uri}
+                uri={userCredentials?.uri}
+                database={userCredentials?.database}
               />
-              <div className='pt-1 flex gap-1 items-center'>
+              <div className='pt-1 flex! gap-1 items-center'>
+                <div>{!hasSelections ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}</div>
                 <div>
-                  {!isSchema ? (
-                    <StatusIndicator type='danger' />
-                  ) : selectedNodes.length || selectedRels.length ? (
-                    <StatusIndicator type='success' />
-                  ) : (
-                    <StatusIndicator type='warning' />
-                  )}
-                </div>
-                <div>
-                  {isSchema ? (
+                  {hasSelections ? (
                     <span className='n-body-small'>
-                      {(!selectedNodes.length || !selectedNodes.length) && 'Empty'} Graph Schema configured
-                      {selectedNodes.length || selectedRels.length
-                        ? `(${selectedNodes.length} Labels + ${selectedRels.length} Rel Types)`
-                        : ''}
+                      {hasSelections} Graph Schema configured
+                      {hasSelections ? `(${selectedNodes.length} Labels + ${selectedRels.length} Rel Types)` : ''}
                     </span>
                   ) : (
                     <span className='n-body-small'>No Graph Schema configured</span>
@@ -835,12 +950,12 @@ const Content: React.FC<ContentProps> = ({
               </div>
             </Typography>
           </div>
-          <div>
+          <div className='enhancement-btn__wrapper'>
             <ButtonWithToolTip
               placement='top'
               text='Enhance graph quality'
               label='Graph Enhancemnet Settings'
-              className='mr-2.5'
+              className='mr-2!'
               onClick={toggleEnhancementDialog}
               disabled={!connectionStatus || isReadOnlyUser}
               size={isTablet ? 'small' : 'medium'}
@@ -848,13 +963,20 @@ const Content: React.FC<ContentProps> = ({
               Graph Enhancement
             </ButtonWithToolTip>
             {!connectionStatus ? (
-              <Button
-                size={isTablet ? 'small' : 'medium'}
-                className='mr-2.5'
-                onClick={() => setOpenConnection((prev) => ({ ...prev, openPopUp: true }))}
+              <SpotlightTarget
+                id='connectbutton'
+                hasPulse={true}
+                indicatorVariant='border'
+                className='n-bg-palette-primary-bg-strong hover:n-bg-palette-primary-hover-strong'
               >
-                {buttonCaptions.connectToNeo4j}
-              </Button>
+                <Button
+                  size={isTablet ? 'small' : 'medium'}
+                  className='mr-2!'
+                  onClick={() => setOpenConnection((prev) => ({ ...prev, openPopUp: true }))}
+                >
+                  {buttonCaptions.connectToNeo4j}
+                </Button>
+              </SpotlightTarget>
             ) : (
               showDisconnectButton && (
                 <Button size={isTablet ? 'small' : 'medium'} className='mr-2.5' onClick={disconnect}>
@@ -864,37 +986,38 @@ const Content: React.FC<ContentProps> = ({
             )}
           </div>
         </Flex>
+
         <FileTable
           connectionStatus={connectionStatus}
           setConnectionStatus={setConnectionStatus}
-          onInspect={(name) => {
+          onInspect={useCallback((name) => {
             setInspectedName(name);
             setOpenGraphView(true);
             setViewPoint('tableView');
-          }}
-          onRetry={(id) => {
+          }, [])}
+          onRetry={useCallback((id) => {
             setRetryFile(id);
             toggleRetryPopup();
-          }}
-          onChunkView={async (name) => {
-            setDocumentName(name);
-            if (name != documentName) {
-              toggleChunkPopup();
-              if (totalPageCount) {
-                setTotalPageCount(null);
+          }, [])}
+          onChunkView={useCallback(
+            async (name) => {
+              setDocumentName(name);
+              if (name != documentName) {
+                toggleChunkPopup();
+                if (totalPageCount) {
+                  setTotalPageCount(null);
+                }
+                setCurrentPage(1);
+                await getChunks(name, 1);
               }
-              setCurrentPage(1);
-              await getChunks(name, 1);
-            }
-          }}
+            },
+            [documentName, totalPageCount]
+          )}
           ref={childRef}
           handleGenerateGraph={processWaitingFilesOnRefresh}
         ></FileTable>
-        <Flex
-          className={`p-2.5  mt-1.5 absolute bottom-0 w-full`}
-          justifyContent='space-between'
-          flexDirection={isTablet ? 'column' : 'row'}
-        >
+
+        <Flex className={`p-2.5  mt-1.5 absolute bottom-0 w-full`} justifyContent='space-between' flexDirection={'row'}>
           <div>
             <DropdownComponent
               onSelect={handleDropdownChange}
@@ -906,46 +1029,26 @@ const Content: React.FC<ContentProps> = ({
             />
           </div>
           <Flex flexDirection='row' gap='4' className='self-end mb-2.5' flexWrap='wrap'>
-            <ButtonWithToolTip
-              text={tooltips.generateGraph}
-              placement='top'
-              label='generate graph'
-              onClick={onClickHandler}
-              disabled={disableCheck || isReadOnlyUser}
-              className='mr-0.5'
-              size={isTablet ? 'small' : 'medium'}
-            >
-              {buttonCaptions.generateGraph}{' '}
-              {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
-            </ButtonWithToolTip>
-            <ButtonWithToolTip
-              text={tooltips.showGraph}
-              placement='top'
-              onClick={handleGraphView}
-              disabled={showGraphCheck}
-              className='mr-0.5'
-              label='show graph'
-              size={isTablet ? 'small' : 'medium'}
-            >
-              {buttonCaptions.showPreviewGraph} {selectedfileslength && completedfileNo ? `(${completedfileNo})` : ''}
-            </ButtonWithToolTip>
-            <ButtonWithToolTip
-              text={tooltips.bloomGraph}
-              placement='top'
-              onClick={handleOpenGraphClick}
-              disabled={!filesData.some((f) => f?.status === 'Completed')}
-              className='ml-0.5'
-              label='Open Graph with Bloom'
-              size={isTablet ? 'small' : 'medium'}
-            >
-              {buttonCaptions.exploreGraphWithBloom}
-            </ButtonWithToolTip>
+            <SpotlightTarget id='generategraphbtn'>
+              <ButtonWithToolTip
+                text={tooltips.generateGraph}
+                placement='top'
+                label='generate graph'
+                onClick={onClickHandler}
+                disabled={disableCheck || isReadOnlyUser}
+                className='mr-0.5'
+                size={isTablet ? 'small' : 'medium'}
+              >
+                {buttonCaptions.generateGraph}{' '}
+                {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
+              </ButtonWithToolTip>
+            </SpotlightTarget>
             <ButtonWithToolTip
               text={
                 !selectedfileslength ? tooltips.deleteFile : `${selectedfileslength} ${tooltips.deleteSelectedFiles}`
               }
               placement='top'
-              onClick={() => setshowDeletePopUp(true)}
+              onClick={() => setShowDeletePopUp(true)}
               disabled={!selectedfileslength || isReadOnlyUser}
               className='ml-0.5'
               label='Delete Files'
@@ -954,6 +1057,56 @@ const Content: React.FC<ContentProps> = ({
               {buttonCaptions.deleteFiles}
               {selectedfileslength != undefined && selectedfileslength > 0 && `(${selectedfileslength})`}
             </ButtonWithToolTip>
+            <SpotlightTarget id='visualizegraphbtn'>
+              <Flex flexDirection='row' gap='0'>
+                <Button
+                  onClick={handleGraphView}
+                  isDisabled={showGraphCheck}
+                  className='px-0! flex! items-center justify-between gap-4 graphbtn'
+                  size={isTablet ? 'small' : 'medium'}
+                >
+                  <span className='mx-2'>
+                    {buttonCaptions.showPreviewGraph}{' '}
+                    {selectedfileslength && completedfileNo ? `(${completedfileNo})` : ''}
+                  </span>
+                </Button>
+                <div
+                  className={`ndl-icon-btn ndl-clean dropdownbtn ${colorMode === 'dark' ? 'darktheme' : ''} ${
+                    isTablet ? 'small' : 'medium'
+                  }`}
+                  onClick={(e) => {
+                    setIsGraphBtnMenuOpen((old) => !old);
+                    e.stopPropagation();
+                  }}
+                  ref={graphbtnRef}
+                >
+                  {!isGraphBtnMenuOpen ? (
+                    <ChevronUpIconOutline className='n-size-token-5' />
+                  ) : (
+                    <ChevronDownIconOutline className='n-size-token-' />
+                  )}
+                </div>
+              </Flex>
+            </SpotlightTarget>
+            <Menu
+              placement='top-end-bottom-end'
+              isOpen={isGraphBtnMenuOpen}
+              anchorRef={graphbtnRef}
+              onClose={() => setIsGraphBtnMenuOpen(false)}
+            >
+              <Menu.Items
+                htmlAttributes={{
+                  id: 'default-menu',
+                }}
+              >
+                <Menu.Item title='Graph Schema' onClick={handleSchemaView} isDisabled={!connectionStatus} />
+                <Menu.Item
+                  title='Explore Graph in Neo4j'
+                  onClick={handleOpenGraphClick}
+                  isDisabled={!filesData.some((f) => f?.status === 'Completed')}
+                />
+              </Menu.Items>
+            </Menu>
           </Flex>
         </Flex>
       </div>
@@ -961,4 +1114,4 @@ const Content: React.FC<ContentProps> = ({
   );
 };
 
-export default Content;
+export default React.memo(Content);

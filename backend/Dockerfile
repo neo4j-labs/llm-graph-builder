@@ -41,10 +41,10 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 648ACFD622F3D138
 ENV LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
 
 # Copy requirements file and install Python dependencies
-COPY requirements.txt /code/
+COPY requirements.txt constraints.txt /code/
 # --no-cache-dir --upgrade 
-RUN pip install -r requirements.txt 
-
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt -c constraints.txt
 # Copy application code
 COPY . /code
 

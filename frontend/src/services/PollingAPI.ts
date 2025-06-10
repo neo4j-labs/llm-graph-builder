@@ -1,32 +1,34 @@
-import { PollingAPI_Response, statusupdate } from '../types';
+import { PollingAPI_Response, statusupdate, UserCredentials } from '../types';
 import api from '../API/Index';
-
 export default async function subscribe(
   fileName: string,
-  uri: string,
-  username: string,
-  database: string,
-  password: string,
+  userCredentials: UserCredentials,
   datahandler: (i: statusupdate) => void,
   progressHandler: (i: statusupdate) => void
 ) {
-  let encodedstr = password ? btoa(password) : '';
-
   const MAX_POLLING_ATTEMPTS = 10;
   let pollingAttempts = 0;
   let delay = 1000;
-
+  // Build query parameters conditionally
+  const queryParams = new URLSearchParams();
+  if (userCredentials.uri) {
+    queryParams.append('url', userCredentials.uri);
+  }
+  if (userCredentials.userName) {
+    queryParams.append('userName', userCredentials.userName);
+  }
+  if (userCredentials.password) {
+    queryParams.append('password', btoa(userCredentials.password));
+  }
+  if (userCredentials.database) {
+    queryParams.append('database', userCredentials.database);
+  }
   while (pollingAttempts < MAX_POLLING_ATTEMPTS) {
-    let currentdelay = delay;
-    let response: PollingAPI_Response = await api.get(
-      `/document_status/${fileName}?url=${uri}&userName=${username}&password=${encodedstr}&database=${database}`
-    );
-
+    let currentDelay = delay;
+    const response: PollingAPI_Response = await api.get(`/document_status/${fileName}?${queryParams.toString()}`);
     if (response.data?.file_name?.status === 'Processing') {
       progressHandler(response.data);
-      await new Promise((resolve) => {
-        setTimeout(resolve, currentdelay);
-      });
+      await new Promise((resolve) => setTimeout(resolve, currentDelay));
       delay *= 2;
       pollingAttempts++;
     } else if (response.status !== 200) {
@@ -38,6 +40,5 @@ export default async function subscribe(
       return;
     }
   }
-
   throw new Error(`Polling for ${fileName} timed out after ${MAX_POLLING_ATTEMPTS} attempts.`);
 }

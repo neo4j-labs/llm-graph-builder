@@ -69,7 +69,7 @@ function RetryConfirmationDialog({
           })}
         </Flex>
         <Dialog.Actions>
-          <Dialog.Actions className='!mt-3'>
+          <Dialog.Actions className='mt-3!'>
             <ButtonWithToolTip
               placement='left'
               label='Retry action button'
@@ -81,7 +81,6 @@ function RetryConfirmationDialog({
               onClick={() => {
                 retryHandler(file?.name as string, file?.retryOption as string);
               }}
-              size='large'
             >
               Continue
             </ButtonWithToolTip>

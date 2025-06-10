@@ -1,6 +1,6 @@
-import { Checkbox, DataGrid, DataGridComponents, Flex, TextLink, Typography, useMediaQuery } from '@neo4j-ndl/react';
+import { Checkbox, DataGrid, DataGridComponents, Flex, Typography, useMediaQuery, Button } from '@neo4j-ndl/react';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { UserCredentials, orphanNodeProps } from '../../../../types';
+import { orphanNodeProps } from '../../../../types';
 import { getOrphanNodes } from '../../../../services/GetOrphanNodes';
 import { useCredentials } from '../../../../context/UserCredentials';
 import Legend from '../../../UI/Legend';
@@ -38,17 +38,17 @@ export default function DeletePopUpForOrphanNodes({
   const { userCredentials } = useCredentials();
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const tableRef = useRef(null);
-  const [showDeletePopUp, setshowDeletePopUp] = useState<boolean>(false);
+  const [showDeletePopUp, setShowDeletePopUp] = useState<boolean>(false);
   const [neoNodes, setNeoNodes] = useState<any[]>([]);
   const [neoRels, setNeoRels] = useState<any[]>([]);
   const [openGraphView, setOpenGraphView] = useState(false);
   const [viewPoint, setViewPoint] = useState('');
   const { colorMode } = useContext(ThemeWrapperContext);
-
+  const ref = useRef<AbortController>();
   const fetchOrphanNodes = useCallback(async () => {
     try {
       setLoading(true);
-      const apiresponse = await getOrphanNodes(userCredentials as UserCredentials);
+      const apiresponse = await getOrphanNodes(ref.current?.signal as AbortSignal);
       setLoading(false);
       if (apiresponse.data.data.length) {
         setOrphanNodes(apiresponse.data.data);
@@ -62,9 +62,10 @@ export default function DeletePopUpForOrphanNodes({
       setLoading(false);
       console.log(error);
     }
-  }, [userCredentials]);
+  }, []);
 
   useEffect(() => {
+    ref.current = new AbortController();
     if (userCredentials != null) {
       (async () => {
         await fetchOrphanNodes();
@@ -73,20 +74,13 @@ export default function DeletePopUpForOrphanNodes({
     return () => {
       setOrphanNodes([]);
       setTotalOrphanNodes(0);
+      ref?.current?.abort();
     };
   }, [userCredentials]);
   const columnHelper = createColumnHelper<orphanNodeProps>();
 
   const handleOrphanNodeClick = (elementId: string, viewMode: string) => {
-    handleGraphNodeClick(
-      userCredentials as UserCredentials,
-      elementId,
-      viewMode,
-      setNeoNodes,
-      setNeoRels,
-      setOpenGraphView,
-      setViewPoint
-    );
+    handleGraphNodeClick(elementId, viewMode, setNeoNodes, setNeoRels, setOpenGraphView, setViewPoint);
   };
 
   const columns = useMemo(
@@ -121,15 +115,16 @@ export default function DeletePopUpForOrphanNodes({
         cell: (info) => {
           return (
             <div className='textellipsis'>
-              <TextLink
-                className='!cursor-pointer !inline'
+              <Button
+                className='cursor-pointer! inline!'
+                fill='text'
+                onClick={() => handleOrphanNodeClick(info.row.id, 'chatInfoView')}
                 htmlAttributes={{
-                  onClick: () => handleOrphanNodeClick(info.row.id, 'chatInfoView'),
                   title: info.getValue() ? info.getValue() : info.row.id,
                 }}
               >
                 {info.getValue() ? info.getValue() : info.row.id}
-              </TextLink>
+              </Button>
             </div>
           );
         },
@@ -151,7 +146,7 @@ export default function DeletePopUpForOrphanNodes({
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor((row) => row.documents, {
-        id: 'Connnected Documents',
+        id: 'Connected Documents',
         cell: (info) => {
           return (
             <Flex className='textellipsis'>
@@ -214,7 +209,7 @@ export default function DeletePopUpForOrphanNodes({
       const eid: string = selectedRows[index];
       setOrphanNodes((prev) => prev.filter((node) => node.e.elementId != eid));
     }
-    setshowDeletePopUp(false);
+    setShowDeletePopUp(false);
     if (totalOrphanNodes) {
       await fetchOrphanNodes();
     }
@@ -228,7 +223,7 @@ export default function DeletePopUpForOrphanNodes({
             open={showDeletePopUp}
             no_of_files={table.getSelectedRowModel().rows.length ?? 0}
             deleteHandler={onDeleteHandler}
-            deleteCloseHandler={() => setshowDeletePopUp(false)}
+            deleteCloseHandler={() => setShowDeletePopUp(false)}
             loading={loading}
             view='settingsView'
           />
@@ -265,7 +260,7 @@ export default function DeletePopUpForOrphanNodes({
             headerStyle: 'clean',
           }}
           rootProps={{
-            className: 'max-h-[355px] !overflow-y-auto',
+            className: 'max-h-[355px] overflow-y-auto!',
           }}
           isLoading={isLoading}
           components={{
@@ -298,17 +293,16 @@ export default function DeletePopUpForOrphanNodes({
         />
         <Flex className='mt-3' flexDirection='row' justifyContent='flex-end'>
           <ButtonWithToolTip
-            onClick={() => setshowDeletePopUp(true)}
-            size='large'
+            onClick={() => setShowDeletePopUp(true)}
             loading={loading}
             text={
               isLoading
                 ? 'Fetching Orphan Nodes'
                 : !isLoading && !orphanNodes.length
-                ? 'No Nodes Found'
-                : !table.getSelectedRowModel().rows.length
-                ? 'No Nodes Selected'
-                : `Delete Selected Nodes (${table.getSelectedRowModel().rows.length})`
+                  ? 'No Nodes Found'
+                  : !table.getSelectedRowModel().rows.length
+                    ? 'No Nodes Selected'
+                    : `Delete Selected Nodes (${table.getSelectedRowModel().rows.length})`
             }
             label='Orphan Node deletion button'
             disabled={!table.getSelectedRowModel().rows.length}

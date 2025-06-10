@@ -11,6 +11,8 @@ export const IconButtonWithToolTip = ({
   placement = 'bottom',
   disabled = false,
   label,
+  loading = false,
+  className = '',
 }: {
   label: string;
   text: string | React.ReactNode;
@@ -21,12 +23,15 @@ export const IconButtonWithToolTip = ({
   grouped?: boolean;
   placement?: 'bottom' | 'top' | 'right' | 'left';
   disabled?: boolean;
+  loading?: boolean;
+  className?: string;
 }) => {
   const [isHovered, setIsHovered] = useState<boolean>(false);
   return (
     <Tooltip type='simple' placement={placement}>
       <Tooltip.Trigger hasButtonWrapper>
         <IconButton
+          className={className}
           ariaLabel={label}
           size={size}
           isClean={clean}
@@ -34,6 +39,7 @@ export const IconButtonWithToolTip = ({
           onClick={onClick}
           isDisabled={disabled}
           htmlAttributes={{ onMouseEnter: () => setIsHovered(true), onMouseLeave: () => setIsHovered(false) }}
+          isLoading={loading}
         >
           {children}
         </IconButton>

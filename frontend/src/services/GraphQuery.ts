@@ -1,17 +1,12 @@
-import { UserCredentials } from '../types';
 import api from '../API/Index';
 
 export const graphQueryAPI = async (
-  userCredentials: UserCredentials,
   query_type: string,
-  document_names: (string | undefined)[] | undefined
+  document_names: (string | undefined)[] | undefined,
+  signal: AbortSignal
 ) => {
   try {
     const formData = new FormData();
-    formData.append('uri', userCredentials?.uri ?? '');
-    formData.append('database', userCredentials?.database ?? '');
-    formData.append('userName', userCredentials?.userName ?? '');
-    formData.append('password', userCredentials?.password ?? '');
     formData.append('query_type', query_type ?? 'entities');
     formData.append('document_names', JSON.stringify(document_names));
 
@@ -19,21 +14,18 @@ export const graphQueryAPI = async (
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      signal,
     });
     return response;
   } catch (error) {
-    console.log('Error Posting the Question:', error);
+    console.log('Error getting the Nodes or Relationships:', error);
     throw error;
   }
 };
 
-export const getNeighbors = async (userCredentials: UserCredentials, elementId: string) => {
+export const getNeighbors = async (elementId: string) => {
   try {
     const formData = new FormData();
-    formData.append('uri', userCredentials?.uri ?? '');
-    formData.append('database', userCredentials?.database ?? '');
-    formData.append('userName', userCredentials?.userName ?? '');
-    formData.append('password', userCredentials?.password ?? '');
     formData.append('elementId', elementId);
 
     const response = await api.post(`/get_neighbours`, formData, {
@@ -43,7 +35,22 @@ export const getNeighbors = async (userCredentials: UserCredentials, elementId: 
     });
     return response;
   } catch (error) {
-    console.log('Error Posting the Question:', error);
+    console.log('Error getting the Neighbors:', error);
+    throw error;
+  }
+};
+
+export const getGraphSchema = async () => {
+  try {
+    const formData = new FormData();
+    const response = await api.post(`/schema_visualization`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response;
+  } catch (error) {
+    console.log('Error getting the Schema:', error);
     throw error;
   }
 };
