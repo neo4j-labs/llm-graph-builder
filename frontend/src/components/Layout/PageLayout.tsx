@@ -23,7 +23,7 @@ import PredefinedSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtr
 import { SKIP_AUTH } from '../../utils/Constants';
 import { useNavigate } from 'react-router';
 import { deduplicateByFullPattern, deduplicateNodeByValue } from '../../utils/Utils';
-import DataImporterSchemaDailog from '../Popups/GraphEnhancementDialog/EnitityExtraction/DataImporter';
+import DataImporterSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/DataImporter';
 
 const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
 const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
