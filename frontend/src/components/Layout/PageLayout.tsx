@@ -612,7 +612,7 @@ const PageLayout: React.FC = () => {
         }}
         onApply={handlePredinedApply}
       ></PredefinedSchemaDialog>
-      <DataImporterSchemaDailog
+      <DataImporterSchemaDialog
         open={dataImporterSchemaDialog.show}
         onClose={() => {
           setDataImporterSchemaDialog({ triggeredFrom: '', show: false });
@@ -625,7 +625,7 @@ const PageLayout: React.FC = () => {
           }
         }}
         onApply={handleImporterApply}
-      ></DataImporterSchemaDailog>
+      ></DataImporterSchemaDialog>
       {isLargeDesktop ? (
         <div
           className={`layout-wrapper ${!isLeftExpanded ? 'drawerdropzoneclosed' : ''} ${

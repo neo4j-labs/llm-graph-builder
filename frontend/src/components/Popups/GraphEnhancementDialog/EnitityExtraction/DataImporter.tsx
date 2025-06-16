@@ -21,7 +21,7 @@ interface DataImporterDialogProps {
   ) => void;
 }
 
-const DataImporterSchemaDailog = ({ open, onClose, onApply }: DataImporterDialogProps) => {
+const DataImporterSchemaDialog = ({ open, onClose, onApply }: DataImporterDialogProps) => {
   const {
     importerPattern,
     setImporterPattern,
@@ -176,4 +176,4 @@ const DataImporterSchemaDailog = ({ open, onClose, onApply }: DataImporterDialog
   );
 };
 
-export default DataImporterSchemaDailog;
+export default DataImporterSchemaDialog;
