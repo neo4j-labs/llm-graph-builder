@@ -16,7 +16,7 @@ import { envConnectionAPI } from '../../services/ConnectAPI';
 import { healthStatus } from '../../services/HealthStatus';
 import { useAuth0 } from '@auth0/auth0-react';
 import { showErrorToast } from '../../utils/Toasts';
-import { APP_SOURCES, LOCAL_KEYS } from '../../utils/Constants';
+import { APP_SOURCES } from '../../utils/Constants';
 import { createDefaultFormData } from '../../API/Index';
 import LoadDBSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/LoadExistingSchema';
 import PredefinedSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/PredefinedSchemaDialog';
@@ -187,7 +187,6 @@ const PageLayout: React.FC = () => {
     setSchemaValRels,
     setDbNodes,
     setDbRels,
-    setSchemaView,
     setPreDefinedNodes,
     setPreDefinedRels,
     setPreDefinedPattern,
@@ -199,6 +198,9 @@ const PageLayout: React.FC = () => {
     setImporterPattern,
     setImporterNodes,
     setImporterRels,
+    setSourceOptions,
+    setTargetOptions,
+    setTypeOptions,
   } = useFileContext();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth0();
@@ -386,10 +388,9 @@ const PageLayout: React.FC = () => {
         const combined = [...rels, ...prevRels];
         return deduplicateByFullPattern(combined);
       });
-      setSchemaView('text');
-      localStorage.setItem(LOCAL_KEYS.source, JSON.stringify(updatedSource));
-      localStorage.setItem(LOCAL_KEYS.type, JSON.stringify(updatedType));
-      localStorage.setItem(LOCAL_KEYS.target, JSON.stringify(updatedTarget));
+      setSourceOptions((prev) => [...prev, ...updatedSource]);
+      setTargetOptions((prev) => [...prev, ...updatedTarget]);
+      setTypeOptions((prev) => [...prev, ...updatedType]);
     },
     []
   );
@@ -415,7 +416,6 @@ const PageLayout: React.FC = () => {
         triggeredFrom: 'loadExistingSchemaApply',
         show: true,
       });
-      setSchemaView('db');
       setDbNodes(nodes);
       setCombinedNodesVal((prevNodes: OptionType[]) => {
         const combined = [...nodes, ...prevNodes];
@@ -426,9 +426,9 @@ const PageLayout: React.FC = () => {
         const combined = [...rels, ...prevRels];
         return deduplicateByFullPattern(combined);
       });
-      localStorage.setItem(LOCAL_KEYS.source, JSON.stringify(updatedSource));
-      localStorage.setItem(LOCAL_KEYS.type, JSON.stringify(updatedType));
-      localStorage.setItem(LOCAL_KEYS.target, JSON.stringify(updatedTarget));
+      setSourceOptions((prev) => [...prev, ...updatedSource]);
+      setTargetOptions((prev) => [...prev, ...updatedTarget]);
+      setTypeOptions((prev) => [...prev, ...updatedType]);
     },
     []
   );
@@ -453,7 +453,6 @@ const PageLayout: React.FC = () => {
         triggeredFrom: 'predefinedSchemaApply',
         show: true,
       });
-      setSchemaView('preDefined');
       setPreDefinedNodes(nodes);
       setCombinedNodesVal((prevNodes: OptionType[]) => {
         const combined = [...nodes, ...prevNodes];
@@ -464,9 +463,9 @@ const PageLayout: React.FC = () => {
         const combined = [...rels, ...prevRels];
         return deduplicateByFullPattern(combined);
       });
-      localStorage.setItem(LOCAL_KEYS.source, JSON.stringify(updatedSource));
-      localStorage.setItem(LOCAL_KEYS.type, JSON.stringify(updatedType));
-      localStorage.setItem(LOCAL_KEYS.target, JSON.stringify(updatedTarget));
+      setSourceOptions((prev) => [...prev, ...updatedSource]);
+      setTargetOptions((prev) => [...prev, ...updatedTarget]);
+      setTypeOptions((prev) => [...prev, ...updatedType]);
     },
     []
   );
@@ -492,7 +491,6 @@ const PageLayout: React.FC = () => {
         triggeredFrom: 'importerSchemaApply',
         show: true,
       });
-      setSchemaView('importer');
       setImporterNodes(nodes);
       setCombinedNodesVal((prevNodes: OptionType[]) => {
         const combined = [...nodes, ...prevNodes];
@@ -503,9 +501,9 @@ const PageLayout: React.FC = () => {
         const combined = [...rels, ...prevRels];
         return deduplicateByFullPattern(combined);
       });
-      localStorage.setItem(LOCAL_KEYS.source, JSON.stringify(updatedSource));
-      localStorage.setItem(LOCAL_KEYS.type, JSON.stringify(updatedType));
-      localStorage.setItem(LOCAL_KEYS.target, JSON.stringify(updatedTarget));
+      setSourceOptions((prev) => [...prev, ...updatedSource]);
+      setTargetOptions((prev) => [...prev, ...updatedTarget]);
+      setTypeOptions((prev) => [...prev, ...updatedType]);
     },
     []
   );

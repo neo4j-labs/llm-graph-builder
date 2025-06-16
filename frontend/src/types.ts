@@ -898,8 +898,6 @@ export interface FileContextType {
   setSelectedRows: React.Dispatch<React.SetStateAction<string[]>>;
   chatModes: string[];
   setchatModes: Dispatch<SetStateAction<string[]>>;
-  schemaView: string | string[];
-  setSchemaView: Dispatch<SetStateAction<string | string[]>>;
   postProcessingTasks: string[];
   setPostProcessingTasks: React.Dispatch<React.SetStateAction<string[]>>;
   queue: Queue<CustomFile>;
@@ -1114,4 +1112,5 @@ export interface SchemaSelectionProps {
   onApply: () => void;
   onCancel: () => void;
   view?: string;
+  message?: string;
 }
