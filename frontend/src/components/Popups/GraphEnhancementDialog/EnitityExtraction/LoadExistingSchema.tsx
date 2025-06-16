@@ -36,6 +36,7 @@ const LoadDBSchemaDialog = ({ open, onClose, onApply }: LoadDBSchemaDialogProps)
   } = useFileContext();
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [viewPoint, setViewPoint] = useState<string>('');
+  const [message, setMessage] = useState<string>('');
 
   useEffect(() => {
     if (open) {
@@ -48,6 +49,13 @@ const LoadDBSchemaDialog = ({ open, onClose, onApply }: LoadDBSchemaDialogProps)
     try {
       const response = await getNodeLabelsAndRelTypes();
       const schemaData: string[] = response.data.data.triplets;
+      if (!schemaData || schemaData.length === 0) {
+        setDbNodes([]);
+        setDbRels([]);
+        setDbPattern([]);
+        setMessage('No data found');
+        return;
+      }
       const schemaTuples: TupleType[] = schemaData
         .map((item: string) => {
           const matchResult = item.match(/^(.+?)-([A-Z_]+)->(.+)$/);
@@ -142,6 +150,7 @@ const LoadDBSchemaDialog = ({ open, onClose, onApply }: LoadDBSchemaDialogProps)
         onCancel={handleCancel}
         nodes={dbNodes}
         rels={dbRels}
+        message={message}
       />
       {openGraphView && (
         <SchemaViz

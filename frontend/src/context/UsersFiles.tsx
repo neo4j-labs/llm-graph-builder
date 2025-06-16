@@ -7,6 +7,7 @@ import {
   showTextFromSchemaDialogType,
   schemaLoadDialogType,
   predefinedSchemaDialogType,
+  dataImporterSchemaDialogType,
 } from '../types';
 import {
   chatModeLables,
@@ -16,9 +17,6 @@ import {
   chunkOverlap,
   chunksToCombine,
   tokenchunkSize,
-  sourceOptions as initialSourceOptions,
-  targetOptions as initialTargetOptions,
-  typeOptions as initialTypeOptions,
 } from '../utils/Constants';
 import { useCredentials } from './UserCredentials';
 import Queue from '../utils/Queue';
@@ -69,6 +67,11 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     show: false,
   });
 
+  const [dataImporterSchemaDialog, setDataImporterSchemaDialog] = useState<dataImporterSchemaDialogType>({
+    triggeredFrom: '',
+    show: false,
+  });
+
   const [postProcessingTasks, setPostProcessingTasks] = useState<string[]>([
     'materialize_text_chunk_similarities',
     'enable_hybrid_search_and_fulltext_search_in_bloom',
@@ -86,16 +89,20 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [schemaValRels, setSchemaValRels] = useState<OptionType[]>([]);
   const [dbNodes, setDbNodes] = useState<OptionType[]>([]);
   const [dbRels, setDbRels] = useState<OptionType[]>([]);
-  const [schemaView, setSchemaView] = useState<string | string[]>('');
   const [preDefinedNodes, setPreDefinedNodes] = useState<OptionType[]>([]);
   const [preDefinedRels, setPreDefinedRels] = useState<OptionType[]>([]);
   const [userDefinedNodes, setUserDefinedNodes] = useState<OptionType[]>([]);
   const [userDefinedRels, setUserDefinedRels] = useState<OptionType[]>([]);
   const [preDefinedPattern, setPreDefinedPattern] = useState<string[]>([]);
   const [selectedPreDefOption, setSelectedPreDefOption] = useState<OptionType | null>(null);
-  const [sourceOptions, setSourceOptions] = useState<OptionType[]>(initialSourceOptions);
-  const [typeOptions, setTypeOptions] = useState<OptionType[]>(initialTypeOptions);
-  const [targetOptions, setTargetOptions] = useState<OptionType[]>(initialTargetOptions);
+  const [sourceOptions, setSourceOptions] = useState<OptionType[]>([]);
+  const [typeOptions, setTypeOptions] = useState<OptionType[]>([]);
+  const [targetOptions, setTargetOptions] = useState<OptionType[]>([]);
+
+  // Importer schema
+  const [importerNodes, setImporterNodes] = useState<OptionType[]>([]);
+  const [importerRels, setImporterRels] = useState<OptionType[]>([]);
+  const [importerPattern, setImporterPattern] = useState<string[]>([]);
 
   useEffect(() => {
     if (selectedNodeLabelstr != null) {
@@ -104,16 +111,22 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
         setSelectedNodes(selectedNodeLabel.selectedOptions);
       }
     }
-    if (selectedPatternsStr != null) {
-      const selectedPatternLabel = JSON.parse(selectedPatternsStr);
-      if (userCredentials?.uri === selectedPatternLabel.db) {
-        setAllPatterns(selectedPatternLabel.selectedOptions);
+    if (selectedNodeRelsstr != null) {
+      const selectedNodeRels = JSON.parse(selectedNodeRelsstr);
+      if (userCredentials?.uri === selectedNodeRels.db) {
+        setSelectedRels(selectedNodeRels.selectedOptions);
       }
     }
     if (selectedNodeRelsstr != null) {
       const selectedNodeRels = JSON.parse(selectedNodeRelsstr);
       if (userCredentials?.uri === selectedNodeRels.db) {
-        setSelectedRels(selectedNodeRels.selectedOptions);
+        const rels = selectedNodeRels.selectedOptions;
+        setSelectedRels(rels);
+        const generatedPatterns = rels.map((rel: { value: string }) => {
+          const [source, type, target] = rel.value.split(',');
+          return `(${source})-[${type}]->(${target})`;
+        });
+        setAllPatterns(generatedPatterns);
       }
     }
     if (selectedTokenChunkSizeStr != null) {
@@ -197,8 +210,6 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     setPreDefinedRels,
     preDefinedPattern,
     setPreDefinedPattern,
-    schemaView,
-    setSchemaView,
     userDefinedNodes,
     setUserDefinedNodes,
     userDefinedRels,
@@ -213,6 +224,14 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     setTypeOptions,
     targetOptions,
     setTargetOptions,
+    dataImporterSchemaDialog,
+    setDataImporterSchemaDialog,
+    importerNodes,
+    setImporterNodes,
+    importerRels,
+    setImporterRels,
+    importerPattern,
+    setImporterPattern,
   };
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };
