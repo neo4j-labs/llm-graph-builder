@@ -867,12 +867,12 @@
     tinycolor2 "1.6.0"
     usehooks-ts "3.1.0"
 
-"@neo4j-nvl/base@0.3.7", "@neo4j-nvl/base@^0.3.6":
-  version "0.3.7"
-  resolved "https://registry.yarnpkg.com/@neo4j-nvl/base/-/base-0.3.7.tgz#0ec95c528324648bc55d50999e8f3c5c00a84aab"
-  integrity sha512-/3gKtk9eCAw3tW8p+uSs4HBkK9jn2KeDqbG6fM2a+QLgHGJNj0iMSbWpKJNJPN5VNrQ5asRx+MOKd8/OezTzvg==
+"@neo4j-nvl/base@0.3.8", "@neo4j-nvl/base@^0.3.6":
+  version "0.3.8"
+  resolved "https://registry.yarnpkg.com/@neo4j-nvl/base/-/base-0.3.8.tgz#ad9d6ddd7da692092a5e46a55cfcb5a4b99c9f9a"
+  integrity sha512-h+tVJtUoKxweSot+FTRypQ3oUGeR2BBoTDFMAIPKPlq7SegtHDRGbXunayelgBWAnOVUovWNN27HJHSZoZ1LwA==
   dependencies:
-    "@neo4j-nvl/layout-workers" "0.3.7"
+    "@neo4j-nvl/layout-workers" "0.3.8"
     "@segment/analytics-next" "^1.70.0"
     color-string "^1.9.1"
     d3-force "^3.0.0"
@@ -886,19 +886,19 @@
     tinycolor2 "1.6.0"
     uuid "^8.3.2"
 
-"@neo4j-nvl/interaction-handlers@0.3.7":
-  version "0.3.7"
-  resolved "https://registry.yarnpkg.com/@neo4j-nvl/interaction-handlers/-/interaction-handlers-0.3.7.tgz#22f4ae44c90884aa2e780d3af9bedeb531520212"
-  integrity sha512-U0Yh08R6ihn4b+pKIkLhMmSADSrrHwyR0N2/zP30N0ZRM59gZjpFbOpXYeKnwn+YWar3DHYKyCrb8xpqEtBaYg==
+"@neo4j-nvl/interaction-handlers@0.3.8":
+  version "0.3.8"
+  resolved "https://registry.yarnpkg.com/@neo4j-nvl/interaction-handlers/-/interaction-handlers-0.3.8.tgz#e7d03f322c59d6083b1b4881f6b7f8ab65f9dd58"
+  integrity sha512-hOhv7l6e/Kb7yv12HUbz1CtsFUML8w/ZW72e5PGeEpkZTEGIdNGJNPdY5cpl3oobNNUuPPx/9/kfd0TeZMEiNw==
   dependencies:
-    "@neo4j-nvl/base" "0.3.7"
+    "@neo4j-nvl/base" "0.3.8"
     concaveman "^1.2.1"
     lodash "4.17.21"
 
-"@neo4j-nvl/layout-workers@0.3.7":
-  version "0.3.7"
-  resolved "https://registry.yarnpkg.com/@neo4j-nvl/layout-workers/-/layout-workers-0.3.7.tgz#0bf534b376fa5630ef40c6bde5c5c369a35a0176"
-  integrity sha512-o+MY4BG9aNjTbDiqNOhWCgDTI9O5woKe361ub0YwWyr5bI9Hs8VjGuyjyxd+cqmRZQeSgogu+onkz2kritt3+w==
+"@neo4j-nvl/layout-workers@0.3.8":
+  version "0.3.8"
+  resolved "https://registry.yarnpkg.com/@neo4j-nvl/layout-workers/-/layout-workers-0.3.8.tgz#ff54d79ce74793264849b3cfaa343ed33af96c85"
+  integrity sha512-koLseX8Q8nlySTrsZu7EWpRM1AajUOPnwWF16e5MrStRT+CwV5cKipEHmFXbFg/uLycN7PY/72VOYAVG3dR72A==
   dependencies:
     "@neo4j-bloom/dagre" "^0.8.14"
     bin-pack "^1.0.2"
@@ -906,13 +906,13 @@
     cytoscape-cose-bilkent "^4.1.0"
     graphlib "^2.1.8"
 
-"@neo4j-nvl/react@^0.3.7":
-  version "0.3.7"
-  resolved "https://registry.yarnpkg.com/@neo4j-nvl/react/-/react-0.3.7.tgz#4d99dd8c7d5e6818c8d105c9119fbc931335fecc"
-  integrity sha512-HKwz7HySVloM58IzOcMsFY/uTeHHbtE4d36wU4n8pGCqZqR3MpHDDdOVVLqnDMMrW+H16A4/tZk8R6pI8Ztx7A==
+"@neo4j-nvl/react@^0.3.8":
+  version "0.3.8"
+  resolved "https://registry.yarnpkg.com/@neo4j-nvl/react/-/react-0.3.8.tgz#f4bad8956acb5eb9c1b7f2427f1b020264a8b75d"
+  integrity sha512-heplhpycpsq7c+xcjC9VjQDSJWmtf1TrkUt1E4G8xVd3zF7oQjKr38cXBWYWpO3mfqFn8CCLMvO+hXQ12/mpXA==
   dependencies:
-    "@neo4j-nvl/base" "0.3.7"
-    "@neo4j-nvl/interaction-handlers" "0.3.7"
+    "@neo4j-nvl/base" "0.3.8"
+    "@neo4j-nvl/interaction-handlers" "0.3.8"
     lodash "4.17.21"
     react "^18.2.0"
     react-dom "^18.2.0"
