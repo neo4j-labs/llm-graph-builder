@@ -244,13 +244,6 @@ export default function NewEntityExtractionSetting({
   };
 
   const handleRemovePattern = (patternToRemove: string) => {
-    const match = patternToRemove.match(/(.*?) -\[:(.*?)\]-> (.*)/);
-    let source = '';
-    let rel = '';
-    let target = '';
-    if (match) {
-      [source, rel, target] = match.slice(1).map((s) => s.trim());
-    }
     if (userDefinedPattern.includes(patternToRemove)) {
       updateStore(userDefinedPattern, patternToRemove, setUserDefinedPattern, setUserDefinedNodes, setUserDefinedRels);
     }

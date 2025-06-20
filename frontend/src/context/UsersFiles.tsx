@@ -27,7 +27,6 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const isProdEnv = process.env.VITE_ENV === 'PROD';
   const selectedNodeLabelstr = localStorage.getItem('selectedNodeLabels');
   const selectedNodeRelsstr = localStorage.getItem('selectedRelationshipLabels');
-  const selectedPatternsStr = localStorage.getItem('selectedPattern');
   const selectedTokenChunkSizeStr = localStorage.getItem('selectedTokenChunkSize');
   const selectedChunk_overlapStr = localStorage.getItem('selectedChunk_overlap');
   const selectedChunks_to_combineStr = localStorage.getItem('selectedChunks_to_combine');
