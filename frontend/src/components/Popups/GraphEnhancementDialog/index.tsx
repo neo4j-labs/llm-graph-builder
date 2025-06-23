@@ -50,6 +50,10 @@ export default function GraphEnhancementDialog({
     setPreDefinedPattern,
     setSelectedPreDefOption,
     allPatterns,
+    setDataImporterSchemaDialog,
+    setImporterNodes,
+    setImporterPattern,
+    setImporterRels,
   } = useFileContext();
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
 
@@ -85,7 +89,14 @@ export default function GraphEnhancementDialog({
     setPreDefinedNodes([]);
     setPreDefinedRels([]);
     setPreDefinedPattern([]);
+    // combined Nodes and rels
+    setCombinedNodes([]);
+    setCombinedRels([]);
     setCombinedPatterns([]);
+    // Data Importer
+    setImporterNodes([]);
+    setImporterPattern([]);
+    setImporterRels([]);
     setSelectedPreDefOption(null);
     onClose();
   };
@@ -193,6 +204,9 @@ export default function GraphEnhancementDialog({
               setCombinedNodes={setCombinedNodes}
               combinedRels={combinedRels}
               setCombinedRels={setCombinedRels}
+              openDataImporterSchema={() => {
+                setDataImporterSchemaDialog({ triggeredFrom: 'enhancementtab', show: true });
+              }}
             />
           </div>
         </Tabs.TabPanel>
