@@ -67,6 +67,7 @@ langchain-neo4j = "==0.4.0"
 pypandoc-binary = "==1.15"
 chardet = "==5.2.0"
 unstructured = "==0.17.2"
+contextgem = "==0.8.1"
 
 [dev-packages]
 
