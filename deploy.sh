@@ -16,7 +16,7 @@ echo "Using ECR_REPOSITORY $ECR_REPOSITORY"
 
 # 1. Build Docker images using Docker Compose
 echo "Building Docker images..."
-docker-compose build --no-cache
+docker-compose build --no-cache --progress=plain
 
 # 2. Authenticate Docker to AWS ECR
 echo "Authenticating to AWS ECR..."
@@ -32,6 +32,8 @@ for service in $(docker-compose config --services); do
     echo "Tagging image $IMAGE_NAME as $ECR_IMAGE..."
     docker tag $IMAGE_NAME $ECR_IMAGE
 done
+
+echo "Docker images build successfully!"
 
 # 4. Push Docker images to AWS ECR
 echo "Pushing Docker images to ECR..."
