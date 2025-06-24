@@ -26,11 +26,10 @@ export const llms =
         'azure_ai_gpt_4o',
         'ollama_llama3',
         'groq_llama3_70b',
-        'anthropic_claude_3_7_sonnet',
+        'anthropic_claude_4_sonnet',
         'fireworks_llama4_maverick',
         'fireworks_llama4_scout',
         'fireworks_qwen72b_instruct',
-        'bedrock_claude_3_5_sonnet',
         'bedrock_nova_micro_v1',
         'bedrock_nova_lite_v1',
         'bedrock_nova_pro_v1',
@@ -54,10 +53,9 @@ export const supportedLLmsForRagas = [
   'azure_ai_gpt_35',
   'azure_ai_gpt_4o',
   'groq_llama3_70b',
-  'anthropic_claude_3_7_sonnet',
+  'anthropic_claude_4_sonnet',
   'fireworks_llama4_maverick',
   'fireworks_llama4_scout',
-  'bedrock_claude_3_5_sonnet',
   'openai_gpt_o3_mini',
   'llama4_maverick',
   'fireworks_qwen3_30b',
@@ -72,10 +70,9 @@ export const supportedLLmsForGroundTruthMetrics = [
   'azure_ai_gpt_35',
   'azure_ai_gpt_4o',
   'groq_llama3_70b',
-  'anthropic_claude_3_7_sonnet',
+  'anthropic_claude_4_sonnet',
   'fireworks_llama4_maverick',
   'fireworks_llama4_scout',
-  'bedrock_claude_3_5_sonnet',
   'openai_gpt_o3_mini',
   'llama4_maverick',
   'fireworks_qwen3_30b',
@@ -188,6 +185,7 @@ export const tooltips = {
   visualizeGraph: 'Visualize Graph Schema',
   additionalInstructions: 'Analyze instructions for schema',
   predinedSchema: 'Predefined Schema',
+  dataImporterJson: 'Data Importer JSON',
 };
 export const PRODMODLES = ['openai_gpt_4o', 'openai_gpt_4o_mini', 'diffbot', 'gemini_1.5_flash'];
 export const buttonCaptions = {
@@ -215,6 +213,7 @@ export const buttonCaptions = {
   provideAdditionalInstructions: 'Provide Additional Instructions for Entity Extractions',
   analyzeInstructions: 'Analyze Instructions',
   helpInstructions: 'Provide specific instructions for entity extraction, such as focusing on the key topics.',
+  importDropzoneSpan: 'JSON Documents',
 };
 
 export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
@@ -372,6 +371,7 @@ export const appLabels = {
   chunkingConfiguration: 'Select a Chunking Configuration',
   graphPatternTuple: 'Graph Pattern',
   selectedPatterns: 'Selected Patterns',
+  dataImporterSchema: 'Schema from Data Importer',
 };
 
 export const LLMDropdownLabel = {
