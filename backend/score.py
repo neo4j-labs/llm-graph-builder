@@ -42,17 +42,17 @@ from starlette.requests import Request
 from dotenv import load_dotenv
 load_dotenv(override=True)
 
-# Get the absolute path to the .env file
-env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
-logging.info(f"Loading .env file from: {env_path}")
+# # Get the absolute path to the .env file
+# env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+# logging.info(f"Loading .env file from: {env_path}")
 
-# Debug: Print contents of .env file
-try:
-    with open(env_path, 'r') as f:
-        env_contents = f.read()
-        logging.info(f"\nContents of main .env file:\n{env_contents}")
-except Exception as e:
-    logging.error(f"Error reading .env file: {e}")
+# # Debug: Print contents of .env file
+# try:
+#     with open(env_path, 'r') as f:
+#         env_contents = f.read()
+#         logging.info(f"\nContents of main .env file:\n{env_contents}")
+# except Exception as e:
+#     logging.error(f"Error reading .env file: {e}")
 
 
 class Message(BaseModel):
@@ -70,17 +70,17 @@ logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
 MERGED_DIR = os.path.join(os.path.dirname(__file__), "merged_files")
 
-def printEnvKey(key):
-    if key in os.environ:
-        value = os.environ.get(key)
-        logging.info(f"{key} exists and has value: {value}")
-    else:
-        logging.info(f"{key} does NOT exist in environment variables")
+# def printEnvKey(key):
+#     if key in os.environ:
+#         value = os.environ.get(key)
+#         logging.info(f"{key} exists and has value: {value}")
+#     else:
+#         logging.info(f"{key} does NOT exist in environment variables")
 
-def printAllEnvVars():
-    logging.info("All environment variables:")
-    for key, value in os.environ.items():
-        logging.info(f"{key} = {value}")
+# def printAllEnvVars():
+#     logging.info("All environment variables:")
+#     for key, value in os.environ.items():
+#         logging.info(f"{key} = {value}")
 
 # printAllEnvVars()
 def sanitize_filename(filename):
@@ -481,28 +481,19 @@ async def magic_trek_chat_bot(
     logging.info(f"IAN-TEST called at {datetime.now()}")
     qa_rag_start_time = time.time()
 
-    # tyler notes:
-    #   add 'enterprise" as education level
-    #   test switching the model
-
-    ## added by ian
-    # mode = "graph_vector_fulltext" ## added by ian
-    mode = "graph_vector" ## changed by ian from graph_vector_fulltext to graph_vector april 1, 2025
-
-    # magic trek rag grade 6
-    # uri = "neo4j+s://939cd2a2.databases.neo4j.io"
-    # userName = "neo4j"
-    # password = "4SG1SUwI22yLo6DMNkRZe1ItvGp778LIEFpCE_aOEL0"
-    # database = "neo4j"
-    # trek-labs-rag-db-dev
-    uri = "neo4j+s://90ea8c8c.databases.neo4j.io"
-    userName = "neo4j"
-    password = "5MJ_WCRv7htDYH5XeQbQU1vVjuw9GC7F-bkPE8kKymk"
-    database = "neo4j"
-
     # model = "openai_gpt_3.5" # changed from this model by ian friday mar 21, 2025
     model = "openai_gpt_4o_mini" 
     # model = "gpt-4-turbo-preview"
+    mode = os.getenv('MAGIC_TREK_RAG_MODE') ## changed by ian from graph_vector_fulltext to graph_vector april 1, 2025
+    uri = os.getenv('MAGIC_TREK_NEO4J_URI')
+    # uri = "neo4j+s://bf80b146.databases.neo4j.io"
+    userName = os.getenv('MAGIC_TREK_NEO4J_USERNAME')
+    password = os.getenv('MAGIC_TREK_NEO4J_PASSWORD')
+    # password = "xE8XDsy7ZRMasKSj4sVN6lgbV9kGbI_MX5WSZ7quvxM"
+    database = os.getenv('MAGIC_TREK_NEO4J_DATABASE')
+
+    print(f"MAGIC_TREK_NEO4J_URI: {uri}")
+
     document_names=Form(None)
     session_id = "7f7fb2ac-d849-4569-9647-17d5f3a1615e"
     ## end of added by ian
