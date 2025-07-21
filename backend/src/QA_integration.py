@@ -293,6 +293,7 @@ def retrieve_documents(doc_retriever, messages):
         handler = CustomCallback()
         docs = doc_retriever.invoke({"messages": messages},{"callbacks":[handler]})
         transformed_question = handler.transformed_question
+        logging.info(f"transformed question {transformed_question}")
         if transformed_question:
             logging.info(f"Transformed question : {transformed_question}")
         doc_retrieval_time = time.time() - start_time
@@ -766,6 +767,7 @@ def create_neo4j_chat_message_history(graph, session_id, write_access=True):
         raise 
 
 def get_chat_mode_settings(mode,settings_map=CHAT_MODE_CONFIG_MAP):
+    logging.info(f"get_chat_mode_settings called with mode: {mode}")
     default_settings = settings_map[CHAT_DEFAULT_MODE]
     try:
         chat_mode_settings = settings_map.get(mode, default_settings)
@@ -800,7 +802,9 @@ def convert_messages_to_langchain(messages):
 
 def MAGIC_TREK_QA_RAG(graph,model, messages, question, document_names, session_id, mode, write_access=True, filter_properties=None, requireGrounding=True):
     logging.info(f"Chat Mode: {mode}")
-    document_names = "[]"
+    logging.info(f"document_names = {document_names}")
+    logging.info(f"document_names type: {type(document_names)}")
+    # document_names = "[]"
 
     logging.info(f"question = {question}")
     logging.info(f"filter_properties = {filter_properties}")
@@ -885,6 +889,7 @@ def QA_RAG(graph,model, question, document_names, session_id, mode, write_access
     else:
         chat_mode_settings = get_chat_mode_settings(mode=mode)
         document_names= list(map(str.strip, json.loads(document_names)))
+        logging.info(f"chat_mode_settings['document_filter'] = {chat_mode_settings['document_filter']}")
         if document_names and not chat_mode_settings["document_filter"]:
             result =  {
                 "session_id": "",  

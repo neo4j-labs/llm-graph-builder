@@ -64,6 +64,7 @@ class MessageData(BaseModel):
     question: str
     filter_properties: Optional[Dict[str, Any]] = None
     requireGrounding: bool = True
+    document_names: Optional[List[str]] = []
     # tools: List[str]
 
 logger = CustomLogger()
@@ -474,9 +475,12 @@ async def magic_trek_chat_bot(
     question = messageData.question
     filter_properties = messageData.filter_properties
     requireGrounding = messageData.requireGrounding if hasattr(messageData, 'requireGrounding') else True
+    document_names = messageData.document_names if hasattr(messageData, 'document_names') else []
+    document_names = json.dumps(document_names)
     print(f'question = {question}')
     print(messages)
     print(len(messages))
+    print(f"document_names = {document_names}")
     logging.info(f"requireGrounding = {requireGrounding}")
     logging.info(f"IAN-TEST called at {datetime.now()}")
     qa_rag_start_time = time.time()
@@ -493,8 +497,11 @@ async def magic_trek_chat_bot(
     database = os.getenv('MAGIC_TREK_NEO4J_DATABASE')
 
     print(f"MAGIC_TREK_NEO4J_URI: {uri}")
+    print(f"MAGIC_TREK_RAG_MODE: {mode}")
+    print(f"KNN_MIN_SCORE: {os.getenv('KNN_MIN_SCORE')}")
 
-    document_names=Form(None)
+    mode = "graph_vector"
+    # document_names= '["MM Disease State Overview_FGuide_March2025_scrubbed.txt"]'
     session_id = "7f7fb2ac-d849-4569-9647-17d5f3a1615e"
     ## end of added by ian
     try:
@@ -549,6 +556,7 @@ async def magic_trek_chat_bot(
 @app.post("/chat_bot")
 async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password=Form(None), database=Form(None),question=Form(None), document_names=Form(None),session_id=Form(None),mode=Form(None),email=Form(None)):
     logging.info(f"QA_RAG called at {datetime.now()}")
+    logging.info(f"document_names = {document_names}")
     qa_rag_start_time = time.time()
     try:
         if mode == "graph":

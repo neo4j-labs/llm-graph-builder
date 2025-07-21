@@ -326,10 +326,10 @@ async def processing_source(uri, userName, password, database, model, file_name,
 
   # Process document metadata
   # if pages and len(pages) > 0:
-  metadata_processor = create_metadata_processor()
-  # document_content = " ".join([page.page_content for page in pages])
-  metadata = metadata_processor.process_document(pages, file_name)
-  logging.info(f"Extracted metadata for {file_name}: {metadata}")
+  # metadata_processor = create_metadata_processor()
+  # # document_content = " ".join([page.page_content for page in pages])
+  # metadata = metadata_processor.process_document(pages, file_name)
+  # logging.info(f"Extracted metadata for {file_name}: {metadata}")
   # else:
   #     metadata = DocumentMetadata()
 
