@@ -586,6 +586,53 @@ async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password
     finally:
         gc.collect()
 
+@app.post("/chat_bot_grounding")
+async def chat_bot_grounding(
+    uri=Form(None),
+    model=Form(None),
+    userName=Form(None),
+    password=Form(None),
+    database=Form(None),
+    question=Form(None),
+    document_names=Form(None),
+    session_id=Form(None),
+    mode=Form(None),
+    email=Form(None),
+    requireGrounding: bool = Form(True)
+):
+    logging.info(f"QA_RAG (grounding) called at {datetime.now()}")
+    logging.info(f"document_names = {document_names}")
+    qa_rag_start_time = time.time()
+    try:
+        if mode == "graph":
+            graph = Neo4jGraph( url=uri,username=userName,password=password,database=database,sanitize = True, refresh_schema=True)
+        else:
+            graph = create_graph_database_connection(uri, userName, password, database)
+        
+        graph_DB_dataAccess = graphDBdataAccess(graph)
+        write_access = graph_DB_dataAccess.check_account_access(database=database)
+        # Select the system template based on requireGrounding (to be used inside QA_RAG or before calling it):
+        # system_template = CHAT_SYSTEM_TEMPLATE if requireGrounding else CHAT_SYSTEM_TEMPLATE_UNGROUNDED
+        result = await asyncio.to_thread(QA_RAG_GROUNDING,graph=graph,model=model,question=question,document_names=document_names,session_id=session_id,mode=mode,write_access=write_access,requireGrounding=requireGrounding)
+
+        total_call_time = time.time() - qa_rag_start_time
+        logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
+        result["info"]["response_time"] = round(total_call_time, 2)
+        
+        json_obj = {'api_name':'chat_bot_grounding','db_url':uri, 'userName':userName, 'database':database, 'question':question,'document_names':document_names,
+                             'session_id':session_id, 'mode':mode, 'requireGrounding': requireGrounding, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{total_call_time:.2f}','email':email}
+        logger.log_struct(json_obj, "INFO")
+        
+        return create_api_response('Success',data=result)
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to get chat response"
+        error_message = str(e)
+        logging.exception(f'Exception in chat bot grounding:{error_message}')
+        return create_api_response(job_status, message=message, error=error_message,data=mode)
+    finally:
+        gc.collect()
+
 @app.post("/chunk_entities")
 async def chunk_entities(uri=Form(None),userName=Form(None), password=Form(None), database=Form(None), nodedetails=Form(None),entities=Form(),mode=Form(),email=Form(None)):
     try:
