@@ -13,7 +13,7 @@
     "postinstall": "cd .. && husky frontend/.husky"
   },
   "dependencies": {
-    "@auth0/auth0-react": "^2.2.4",
+    "@auth0/auth0-react": "^2.4.0",
     "@emotion/styled": "^11.14.0",
     "@mui/material": "^5.15.10",
     "@mui/styled-engine": "^7.1.0",
