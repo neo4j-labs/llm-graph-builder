@@ -53,7 +53,7 @@ wrapt==1.17.2
 yarl==1.20.1
 youtube-transcript-api==1.1.0
 zipp==3.23.0
-sentence-transformers==4.1.0
+sentence-transformers==5.0.0
 google-cloud-logging==3.12.1
 pypandoc==1.15
 graphdatascience==1.15.1
