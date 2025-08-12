@@ -397,22 +397,37 @@ def initialize_neo4j_vector(graph, chat_mode_settings):
 
 def create_retriever(neo_db, document_names, chat_mode_settings,search_k, score_threshold,ef_ratio, filter_properties=None):
     if document_names and chat_mode_settings["document_filter"]:
+        # Combine filter_properties with fileName filter
+        base_filter = {'fileName': {'$in': document_names}}
+        if filter_properties:
+            base_filter.update(filter_properties)
+        
         retriever = neo_db.as_retriever(
             search_type="similarity_score_threshold",
             search_kwargs={
                 'top_k': search_k,
                 'effective_search_ratio': ef_ratio,
                 'score_threshold': score_threshold,
-                'filter': {'fileName': {'$in': document_names}}
+                'filter': base_filter
             }
         )
         logging.info(f"Successfully created retriever with search_k={search_k}, score_threshold={score_threshold} for documents {document_names}")
     else:
         # note from ian changed the way this is written slightly to match how the upstream team is doing it, passing filter_properties or None to search_kwargs literal.            
+
+        search_kwargs = {
+            'k': search_k, 
+            'score_threshold': score_threshold
+        }
+        if filter_properties is not None:
+            search_kwargs['filter'] = filter_properties
+
         retriever = neo_db.as_retriever(
             search_type="similarity_score_threshold",
-            search_kwargs={'top_k': search_k,'effective_search_ratio': ef_ratio, 'score_threshold': score_threshold, "filter_properties": filter_properties if filter_properties is not None else None }
+            # search_kwargs={'top_k': search_k,'effective_search_ratio': ef_ratio, 'score_threshold': score_threshold, "filter_properties": filter_properties if filter_properties is not None else None }
+            search_kwargs=search_kwargs
         )
+        print(f"search_kwargs = {search_kwargs}")
         logging.info(f"Successfully created retriever with search_k={search_k}, score_threshold={score_threshold}")
     return retriever
 

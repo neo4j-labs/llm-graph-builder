@@ -481,6 +481,7 @@ async def magic_trek_chat_bot(
     print(messages)
     print(len(messages))
     print(f"document_names = {document_names}")
+    print(f"filter_properties = {filter_properties}")
     logging.info(f"requireGrounding = {requireGrounding}")
     logging.info(f"IAN-TEST called at {datetime.now()}")
     qa_rag_start_time = time.time()
