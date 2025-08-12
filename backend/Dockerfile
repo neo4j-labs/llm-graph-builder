@@ -4,16 +4,16 @@ ENV PORT 8000
 EXPOSE 8000
 # ENV PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION python
 # Clean up apt cache and install keyring packages
-# RUN rm -rf /var/lib/apt/lists/* && \
-#     apt-get clean && \
-#     apt-get -o Acquire::AllowInsecureRepositories=true update && \
-#     apt-get install -y --no-install-recommends --no-install-suggests \
-#     debian-keyring \
-#     debian-archive-keyring \
-#     gnupg \
-#     ca-certificates && \
-#     apt-get clean && \
-#     rm -rf /var/lib/apt/lists/*
+RUN rm -rf /var/lib/apt/lists/* && \
+    apt-get clean && \
+    apt-get -o Acquire::AllowInsecureRepositories=true update && \
+    apt-get install -y --no-install-recommends --no-install-suggests \
+    debian-keyring \
+    debian-archive-keyring \
+    gnupg \
+    ca-certificates && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # Now update and install dependencies including build tools
 RUN apt-get update && \

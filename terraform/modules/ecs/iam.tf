@@ -4,7 +4,7 @@ data "aws_caller_identity" "current" {}
 # Define an IAM policy for CloudWatch logging with restricted permissions
 resource "aws_iam_policy" "cloudwatch_logging_policy" {
   name        = "CloudWatchLoggingPolicy-${var.environment}"
-  description = "Allows Render EC2 instances to write logs to app's ec2 CloudWatch log group"
+  description = "Allows EC2 instances to write logs to app's ec2 CloudWatch log group"
 
   policy = jsonencode({
     Version = "2012-10-17",

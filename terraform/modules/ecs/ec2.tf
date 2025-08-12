@@ -1,5 +1,5 @@
-
 resource "aws_instance" "ecs_instance" {
+  depends_on = [aws_ecs_cluster.graphbuilder_ecs_cluster, aws_iam_instance_profile.ecs_instance_profile]
 
   # right now this ami is arm64
   ami                         = var.ami_id        # Replace with a valid ECS-optimized AMI
