@@ -2,6 +2,13 @@
 locals {
   backend_task_name = "${var.project_name}-${var.environment}-backend"
 }
+
+# 1. Look up the latest image tag in ECR (we’ll use "latest")
+data "aws_ecr_image" "latest" {
+  repository_name = var.frontend_repository_name # your ECR repo name
+  image_tag       = "latest"
+}
+
 resource "aws_ecs_task_definition" "graphbuilder_task" {
   family       = "${var.project_name}-${var.environment}"
   network_mode = "bridge" # Use "awsvpc" if running in Fargate
@@ -34,8 +41,8 @@ resource "aws_ecs_task_definition" "graphbuilder_task" {
       # inside the container
       environment = [
         {
-          name  = "IAN_TEST_ENV_VAR"
-          value = "example-ian-test-value"
+          name  = "TEST_ENV_VAR"
+          value = "example-ft-test-value"
         }
       ]
       logConfiguration = {
@@ -50,7 +57,8 @@ resource "aws_ecs_task_definition" "graphbuilder_task" {
     },
     {
       name              = "${var.project_name}-${var.environment}-frontend"
-      image             = "${var.frontend_ecr_url}:latest"
+      # image             = "${var.frontend_ecr_url}:latest"
+      image             = "${var.frontend_ecr_url}@${data.aws_ecr_image.latest.image_digest}"
       memory            = 512 # Reduced from 4096MB
       cpu               = 512  # Reduced from 1024 CPU units
       memoryReservation = 512  # Soft limit to prevent memory contention
@@ -71,8 +79,8 @@ resource "aws_ecs_task_definition" "graphbuilder_task" {
       environment = [
         {
           name  = "VITE_BACKEND_API_URL"
-          value = "http://${aws_instance.ecs_instance.public_ip}:8000"
-          # value = "http://localhost:8000"
+          # value = "http://${aws_instance.ecs_instance.public_ip}:8000"
+          value = "http://localhost:8000"
         },
         {
           name  = "VITE_ENV"
