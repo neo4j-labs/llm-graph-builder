@@ -17,3 +17,13 @@ output "frontend_repository_arn" {
   value       = aws_ecr_repository.graphbuilder_frontend_docker_repo.arn
   description = "The ARN of the frontend ECR repository"
 }
+
+output "backend_repository_name" {
+  value       = aws_ecr_repository.graphbuilder_backend_docker_repo.name
+  description = "The name of the backend ECR repository"
+}
+
+output "frontend_repository_name" {
+  value       = aws_ecr_repository.graphbuilder_frontend_docker_repo.name
+  description = "The name of the frontend ECR repository"
+}

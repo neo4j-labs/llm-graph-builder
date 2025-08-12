@@ -54,6 +54,11 @@ variable "backend_ecr_arn" {
   description = "the ecr arn of the backend service"
 }
 
+variable "backend_repository_name" {
+  type        = string
+  description = "the name of the backend ecr repository"
+}
+
 variable "frontend_ecr_url" {
   type = string
   description = "the ecr url of the frontend service"
@@ -62,4 +67,9 @@ variable "frontend_ecr_url" {
 variable "frontend_ecr_arn" {
   type = string
   description = "the ecr arn of the frontend service"
+}
+
+variable "frontend_repository_name" {
+  type        = string
+  description = "the name of the frontend ecr repository"
 }
