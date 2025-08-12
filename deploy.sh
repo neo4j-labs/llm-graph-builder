@@ -2,10 +2,20 @@
 
 # Variables - Replace with your actual values
 
-AWS_REGION="us-east-1"
-AWS_ENV="dev"
-AWS_ACCOUNT_ID="288761770129" # 288 is graphbuilder-dev
+
+# uncomment htis for 'dev' (labs llm-graphbuilder)
+# AWS_REGION="us-east-1"
+# AWS_ENV="dev"
+# AWS_ACCOUNT_ID="288761770129" # 288 is graphbuilder-dev
+
+# uncomment this for 'metrix-demo-dev' (metrix-demo-dev)
+AWS_REGION="us-east-2"
+AWS_ENV="metrix-demo-dev"
+AWS_ACCOUNT_ID="860839672899"
+
 ECR_REPOSITORY="graphbuilder-docker-repo-$AWS_ENV"
+ENV_FILE="./${AWS_ENV}.env"
+echo "Using ENV_FILE $ENV_FILE"
 TAG="latest"  # You can change this if you need a specific tag
 
 folder_name=$(basename "$PWD")
@@ -14,9 +24,16 @@ echo "Using AWS_PROFILE $AWS_PROFILE"
 echo "Using AWS_ENV $AWS_ENV"
 echo "Using ECR_REPOSITORY $ECR_REPOSITORY"
 
-# 1. Build Docker images using Docker Compose
+# 1. Load environment variables from .env file
+echo "Loading environment variables from $ENV_FILE..."
+set -a  # automatically export all variables
+source $ENV_FILE
+set +a  # turn off automatic export
+
+# 2. Build Docker images using Docker Compose
 echo "Building Docker images..."
-docker-compose build --no-cache --progress=plain
+# docker-compose build --no-cache --progress=plain
+docker-compose build
 
 # 2. Authenticate Docker to AWS ECR
 echo "Authenticating to AWS ECR..."
