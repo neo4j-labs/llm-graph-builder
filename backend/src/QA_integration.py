@@ -912,3 +912,48 @@ def QA_RAG(graph,model, question, document_names, session_id, mode, write_access
     result["session_id"] = session_id
     
     return result
+
+def QA_RAG_GROUNDING(graph,model, question, document_names, session_id, mode, write_access=True, requireGrounding=True):
+    logging.info(f"Chat Mode: {mode}")
+
+    history = create_neo4j_chat_message_history(graph, session_id, write_access)
+    print(history)
+    messages = history.messages
+
+    print("message history")
+    print(messages)
+
+    user_question = HumanMessage(content=question)
+    messages.append(user_question)
+
+    tool_calls = extract_tool_calls(model, user_question)
+    logging.info(tool_calls)
+
+    if mode == CHAT_GRAPH_MODE:
+        result = process_graph_response(model, graph, question, messages, history)
+    else:
+        chat_mode_settings = get_chat_mode_settings(mode=mode)
+        document_names= list(map(str.strip, json.loads(document_names)))
+        logging.info(f"chat_mode_settings['document_filter'] = {chat_mode_settings['document_filter']}")
+        if document_names and not chat_mode_settings["document_filter"]:
+            result =  {
+                "session_id": "",  
+                "message": "Please deselect all documents in the table before using this chat mode",
+                "info": {
+                    "sources": [],
+                    "model": "",
+                    "nodedetails": [],
+                    "total_tokens": 0,
+                    "response_time": 0,
+                    "mode": chat_mode_settings["mode"],
+                    "entities": [],
+                    "metric_details": [],
+                },
+                "user": "chatbot"
+            }
+        else:
+            result = process_chat_response(messages,history, question, model, graph, document_names,chat_mode_settings, extract_tools=False, filter_properties={}, requireGrounding=requireGrounding)
+
+    result["session_id"] = session_id
+    
+    return result
