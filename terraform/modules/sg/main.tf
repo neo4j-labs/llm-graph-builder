@@ -92,7 +92,7 @@ resource "aws_security_group" "graphbuilder_sg" {
   }
 
   tags = {
-    name = "nexrender-server-sg-${var.env}"
+    name = "graphbuilder-sg-${var.env}"
   }
 }
 
