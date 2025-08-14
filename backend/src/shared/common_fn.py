@@ -26,8 +26,8 @@ MODEL_PATH = "./local_model"
 _lock = Lock()
 _embedding_instance = None
 
-def ensure_model_downloaded():
-   if os.path.exists(MODEL_PATH) and os.path.isdir(MODEL_PATH):
+def ensure_sentence_transformer_model_downloaded():
+   if os.path.isdir(MODEL_PATH):
        print("Model already downloaded at:", MODEL_PATH)
        return
    else:
@@ -38,7 +38,7 @@ def ensure_model_downloaded():
        model.save_pretrained(MODEL_PATH)
    print("Model downloaded and saved.")
 
-def get_local_sentence_transformer():
+def get_local_sentence_transformer_embedding():
    """
    Lazy, threadsafe singleton. Caller does not need to worry about
    import-time initialization or download race.
@@ -50,7 +50,7 @@ def get_local_sentence_transformer():
        if _embedding_instance is not None:
            return _embedding_instance
        # Ensure model is present before instantiating
-       ensure_model_downloaded()
+       ensure_sentence_transformer_model_downloaded()
        _embedding_instance = HuggingFaceEmbeddings(model_name=MODEL_PATH)
        print("Embedding model initialized.")
        return _embedding_instance
@@ -125,7 +125,7 @@ def load_embedding_model(embedding_model_name: str):
         logging.info(f"Embedding: Using bedrock titan Embeddings , Dimension:{dimension}")
     else:
         # embeddings = HuggingFaceEmbeddings(model_name="./local_model")
-        embeddings = get_local_sentence_transformer()
+        embeddings = get_local_sentence_transformer_embedding()
         dimension = 384
         logging.info(f"Embedding: Using Langchain HuggingFaceEmbeddings , Dimension:{dimension}")
     return embeddings, dimension
