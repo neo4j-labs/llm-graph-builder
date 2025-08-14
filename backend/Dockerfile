@@ -5,9 +5,6 @@ EXPOSE 8000
 # Install dependencies and clean up in one layer
 RUN apt-get update && \
    apt-get install -y --no-install-recommends \
-       transformers \
-       langchain \
-       sentence-transformers \
        libmagic1 \
        libgl1-mesa-glx \
        libreoffice \
@@ -17,13 +14,6 @@ RUN apt-get update && \
    apt-get clean && \
    rm -rf /var/lib/apt/lists/*
 
-RUN python -c "from transformers import AutoTokenizer, AutoModel; \
-   name='sentence-transformers/all-MiniLM-L6-v2'; \
-   tok=AutoTokenizer.from_pretrained(name); \
-   mod=AutoModel.from_pretrained(name); \
-   tok.save_pretrained('./local_model'); \
-   mod.save_pretrained('./local_model')"
-   
 # Set LD_LIBRARY_PATH
 ENV LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
 # Copy requirements file and install Python dependencies
@@ -31,6 +21,14 @@ COPY requirements.txt constraints.txt /code/
 # --no-cache-dir --upgrade 
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt -c constraints.txt
+
+RUN python -c "from transformers import AutoTokenizer, AutoModel; \
+   name='sentence-transformers/all-MiniLM-L6-v2'; \
+   tok=AutoTokenizer.from_pretrained(name); \
+   mod=AutoModel.from_pretrained(name); \
+   tok.save_pretrained('./local_model'); \
+   mod.save_pretrained('./local_model')"
+
 # Copy application code
 COPY . /code
 # Set command
