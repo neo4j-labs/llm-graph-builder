@@ -66,8 +66,9 @@ rouge-score = "==0.1.2"
 langchain-neo4j = "==0.4.0"
 pypandoc-binary = "==1.15"
 chardet = "==5.2.0"
-unstructured = "==0.17.2"
 contextgem = "==0.8.1"
+# we need to backpropagate this unstructured with doctypes to requirements.txt, right now it has unstructured[all-docs]
+unstructured = {extras = ["pptx", "md", "docx"], version = "*"} 
 
 [dev-packages]
 
