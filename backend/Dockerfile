@@ -6,7 +6,7 @@ EXPOSE 8000
 RUN apt-get update && \
    apt-get install -y --no-install-recommends \
        libmagic1 \
-       libgl1-mesa-glx \
+      #  libgl1-mesa-glx \
        libreoffice \
        cmake \
        poppler-utils \
@@ -28,6 +28,9 @@ RUN python -c "from transformers import AutoTokenizer, AutoModel; \
    mod=AutoModel.from_pretrained(name); \
    tok.save_pretrained('./local_model'); \
    mod.save_pretrained('./local_model')"
+
+RUN python -m nltk.downloader -d /usr/local/nltk_data punkt
+RUN python -m nltk.downloader -d /usr/local/nltk_data averaged_perceptron_tagger
 
 # Copy application code
 COPY . /code

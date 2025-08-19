@@ -46,8 +46,21 @@ def gcs_loader_func(file_path):
    return loader
 
 def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token=None):
-  nltk.download('punkt')
-  nltk.download('averaged_perceptron_tagger')
+
+nltk.data.path.append("/usr/local/nltk_data")
+nltk.data.path.append(os.path.expanduser("~/.nltk_data"))
+try:
+    nltk.data.find("tokenizers/punkt")
+except LookupError:
+  for resource in ["punkt", "averaged_perceptron_tagger"]:
+    try:
+        nltk.data.find(f"tokenizers/{resource}" if resource == "punkt" else f"taggers/{resource}")
+    except LookupError:
+        logging.info(f"Downloading NLTK resource: {resource}")
+        nltk.download(resource, download_dir=os.path.expanduser("~/.nltk_data"))
+        
+  logging.info("NLTK resources downloaded successfully.")
+  load_dotenv()
   if gcs_bucket_folder is not None and gcs_bucket_folder.strip()!="":
     if gcs_bucket_folder.endswith('/'):
       blob_name = gcs_bucket_folder+gcs_blob_filename
