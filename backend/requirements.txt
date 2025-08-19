@@ -58,7 +58,7 @@ google-cloud-logging==3.12.1
 pypandoc==1.15
 graphdatascience==1.15.1
 Secweb==1.18.1
-ragas==0.2.15
+ragas==0.3.1
 rouge_score==0.1.2
 langchain-neo4j==0.4.0
 pypandoc-binary==1.15
