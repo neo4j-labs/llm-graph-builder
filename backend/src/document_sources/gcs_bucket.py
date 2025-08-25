@@ -46,46 +46,58 @@ def gcs_loader_func(file_path):
    return loader
 
 def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token=None):
-  nltk.download('punkt')
-  nltk.download('averaged_perceptron_tagger')
-  if gcs_bucket_folder is not None and gcs_bucket_folder.strip()!="":
-    if gcs_bucket_folder.endswith('/'):
-      blob_name = gcs_bucket_folder+gcs_blob_filename
+
+  nltk.data.path.append("/usr/local/nltk_data")
+  nltk.data.path.append(os.path.expanduser("~/.nltk_data"))
+  try:
+      nltk.data.find("tokenizers/punkt")
+  except LookupError:
+    for resource in ["punkt", "averaged_perceptron_tagger"]:
+      try:
+          nltk.data.find(f"tokenizers/{resource}" if resource == "punkt" else f"taggers/{resource}")
+      except LookupError:
+          logging.info(f"Downloading NLTK resource: {resource}")
+          nltk.download(resource, download_dir=os.path.expanduser("~/.nltk_data"))
+          
+    logging.info("NLTK resources downloaded successfully.")
+    if gcs_bucket_folder is not None and gcs_bucket_folder.strip()!="":
+      if gcs_bucket_folder.endswith('/'):
+        blob_name = gcs_bucket_folder+gcs_blob_filename
+      else:
+        blob_name = gcs_bucket_folder+'/'+gcs_blob_filename 
     else:
-      blob_name = gcs_bucket_folder+'/'+gcs_blob_filename 
-  else:
-      blob_name = gcs_blob_filename  
-  
-  logging.info(f"GCS project_id : {gcs_project_id}")  
- 
-  if access_token is None:
-    storage_client = storage.Client(project=gcs_project_id)
-    bucket = storage_client.bucket(gcs_bucket_name)
-    blob = bucket.blob(blob_name) 
+        blob_name = gcs_blob_filename  
     
-    if blob.exists():
-        loader = GCSFileLoader(project_name=gcs_project_id, bucket=gcs_bucket_name, blob=blob_name, loader_func=gcs_loader_func)
-        pages = loader.load() 
-    else :
-      raise LLMGraphBuilderException('File does not exist, Please re-upload the file and try again.')
-  else:
-    creds= Credentials(access_token)
-    storage_client = storage.Client(project=gcs_project_id, credentials=creds)
+    logging.info(f"GCS project_id : {gcs_project_id}")  
   
-    bucket = storage_client.bucket(gcs_bucket_name)
-    blob = bucket.blob(blob_name) 
-    if blob.exists():
-      content = blob.download_as_bytes()
-      pdf_file = io.BytesIO(content)
-      pdf_reader = PdfReader(pdf_file)
-      # Extract text from all pages
-      text = ""
-      for page in pdf_reader.pages:
-            text += page.extract_text()
-      pages = [Document(page_content = text)]
+    if access_token is None:
+      storage_client = storage.Client(project=gcs_project_id)
+      bucket = storage_client.bucket(gcs_bucket_name)
+      blob = bucket.blob(blob_name) 
+      
+      if blob.exists():
+          loader = GCSFileLoader(project_name=gcs_project_id, bucket=gcs_bucket_name, blob=blob_name, loader_func=gcs_loader_func)
+          pages = loader.load() 
+      else :
+        raise LLMGraphBuilderException('File does not exist, Please re-upload the file and try again.')
     else:
-      raise LLMGraphBuilderException(f'File Not Found in GCS bucket - {gcs_bucket_name}')
-  return gcs_blob_filename, pages
+      creds= Credentials(access_token)
+      storage_client = storage.Client(project=gcs_project_id, credentials=creds)
+    
+      bucket = storage_client.bucket(gcs_bucket_name)
+      blob = bucket.blob(blob_name) 
+      if blob.exists():
+        content = blob.download_as_bytes()
+        pdf_file = io.BytesIO(content)
+        pdf_reader = PdfReader(pdf_file)
+        # Extract text from all pages
+        text = ""
+        for page in pdf_reader.pages:
+              text += page.extract_text()
+        pages = [Document(page_content = text)]
+      else:
+        raise LLMGraphBuilderException(f'File Not Found in GCS bucket - {gcs_bucket_name}')
+    return gcs_blob_filename, pages
 
 def upload_file_to_gcs(file_chunk, chunk_number, original_file_name, bucket_name, folder_name_sha1_hashed):
   try:

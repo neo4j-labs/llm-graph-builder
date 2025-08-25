@@ -38,6 +38,16 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
   });
   const sourceRef = useRef<HTMLDivElement | null>(null);
   const { userCredentials } = useCredentials();
+  const deduplicateOptions = (options: OptionType[]): OptionType[] => {
+    const seen = new Set<string>();
+    return options.filter((option) => {
+      if (seen.has(option.value)) {
+        return false;
+      }
+      seen.add(option.value);
+      return true;
+    });
+  };
 
   useEffect(() => {
     const isGlobalStateSet =
@@ -64,15 +74,51 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
             target: { value: targetVal, label: targetVal },
           };
         });
-        const savedSources: OptionType[] = Array.from(sourceSet).map((val) => ({ value: val, label: val }));
         const savedTypes: OptionType[] = Array.from(typeSet).map((val) => ({ value: val, label: val }));
-        const savedTargets: OptionType[] = Array.from(targetSet).map((val) => ({ value: val, label: val }));
+        const combinedSourceTarget = new Set([...sourceSet, ...targetSet]);
+        const combinedSourceTargetOptions: OptionType[] = Array.from(combinedSourceTarget).map((val) => ({
+          value: val,
+          label: val,
+        }));
+
         setSelectedRels(mappedRels);
-        setSourceOptions(savedSources);
+        setSourceOptions(combinedSourceTargetOptions);
         setTypeOptions(savedTypes);
-        setTargetOptions(savedTargets);
+        setTargetOptions(combinedSourceTargetOptions);
       }
     }
+  }, []);
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    timeoutId = setTimeout(() => {
+      if (sourceOptions.length > 0) {
+        const deduped = deduplicateOptions(sourceOptions);
+        if (deduped.length !== sourceOptions.length) {
+          setSourceOptions(deduped);
+        }
+      }
+
+      if (targetOptions.length > 0) {
+        const deduped = deduplicateOptions(targetOptions);
+        if (deduped.length !== targetOptions.length) {
+          setTargetOptions(deduped);
+        }
+      }
+
+      if (typeOptions.length > 0) {
+        const deduped = deduplicateOptions(typeOptions);
+        if (deduped.length !== typeOptions.length) {
+          setTypeOptions(deduped);
+        }
+      }
+    }, 1000);
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, []);
 
   const handleNewValue = (newValue: string, type: 'source' | 'type' | 'target') => {
@@ -92,8 +138,12 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
     } else {
       setShowWarning((old) => ({ ...old, [type]: { showError: false, errorMessage: '' } }));
       const newOption: OptionType = { value: newValue.trim(), label: newValue.trim() };
-      const checkUniqueValue = (list: OptionType[], value: OptionType) =>
-        (list.some((opt) => opt.value === value.value) ? list : [...list, value]);
+      const checkUniqueValue = (list: OptionType[], value: OptionType) => {
+        const exists = list.some((opt) => opt.value === value.value);
+        const updatedList = exists ? list : [...list, value];
+        return deduplicateOptions(updatedList);
+      };
+
       switch (type) {
         case 'source':
           setSourceOptions((prev) => checkUniqueValue(prev, newOption));
@@ -110,7 +160,7 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
           onPatternChange(selectedSource as OptionType, selectedType as OptionType, newOption);
           break;
         default:
-          console.log('wrong type added');
+          // Invalid type provided
           break;
       }
       setInputValues((prev) => ({ ...prev, [type]: '' }));
