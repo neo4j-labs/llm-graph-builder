@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+}
+
+body {
+  margin: 0;
+}
+
+.ndl-progress-bar-wrapper .ndl-header .ndl-heading::after {
+  animation: none !important;
+}

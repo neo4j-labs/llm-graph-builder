@@ -278,3 +278,291 @@ def visualize_schema(uri, userName, password, database):
    finally:
        if driver:
            driver.close()
+
+# Search and retreive nodes
+def search_nodes(uri, username, password, database, search_term, node_type="Person", max_results=50):
+    """
+    Searches for nodes across all documents in the database.
+    
+    Args:
+        uri (str): The URI for the Neo4j database.
+        username (str): The username for authentication.
+        password (str): The password for authentication.
+        database (str): The database name.
+        search_term (str): The search term to look for in node properties.
+        node_type (str): The type of node to search for (default: "Person").
+        max_results (int): Maximum number of results to return.
+    
+    Returns:
+        dict: Contains matching nodes with their properties.
+    """
+    try:
+        logging.info(f"Starting node search for term: '{search_term}' in node type: '{node_type}'")
+        driver = get_graphDB_driver(uri, username, password, database)
+        
+        search_query = f"""
+        MATCH (n:__Entity__)
+        WHERE '{node_type}' IN labels(n)
+          AND toLower(n.id) CONTAINS toLower($search_term)
+        RETURN n
+        LIMIT $max_results
+        """
+        
+        logging.info(f"Executing search query: {search_query}")
+        logging.info(f"Search parameters: search_term='{search_term}', node_type='{node_type}', max_results={max_results}")
+        
+        records, summary, keys = driver.execute_query(
+            search_query,
+            search_term=search_term,
+            max_results=max_results
+        )
+        
+        logging.info(f"Query executed successfully. Found {len(records)} records")
+        
+        matching_nodes = []
+        for record in records:
+            node = record["n"]
+            node_element = process_node(node)
+            matching_nodes.append(node_element)
+            logging.info(f"Processed node: {node_element}")
+        
+        logging.info(f"Found {len(matching_nodes)} matching nodes for search term: '{search_term}'")
+        return {
+            "search_term": search_term,
+            "node_type": node_type,
+            "total_results": len(matching_nodes),
+            "nodes": matching_nodes
+        }
+        
+    except Exception as e:
+        logging.error(f"An error occurred in search_nodes. Error: {str(e)}")
+        raise Exception(f"An error occurred in search_nodes. Please check the logs for more details.") from e
+    finally:
+        if driver:
+            driver.close()
+
+
+def get_subgraph_from_node(uri, username, password, database, node_id, depth=4, max_nodes=1000):
+    """
+    Extracts a subgraph starting from a specific node with configurable depth.
+    
+    Args:
+        uri (str): The URI for the Neo4j database.
+        username (str): The username for authentication.
+        password (str): The password for authentication.
+        database (str): The database name.
+        node_id (str): The element ID of the starting node.
+        depth (int): The maximum depth of the subgraph (default: 4).
+        max_nodes (int): Maximum number of nodes to include in the subgraph.
+    
+    Returns:
+        dict: Contains the subgraph nodes and relationships.
+    """
+    try:
+        logging.info(f"Extracting subgraph from node {node_id} with depth {depth}")
+        driver = get_graphDB_driver(uri, username, password, database)
+        
+        # Subgraph extraction query - using string formatting for depth since Neo4j doesn't allow parameters in MATCH patterns
+        subgraph_query = f"""
+        MATCH (startNode)
+        WHERE elementId(startNode) = $node_id
+        MATCH path = (startNode)-[*1..{depth}]-(connectedNode)
+        WITH startNode, collect(DISTINCT path) AS paths
+        UNWIND paths AS path
+        WITH startNode, path, nodes(path) AS pathNodes, relationships(path) AS pathRels
+        UNWIND pathNodes AS node
+        WITH startNode, path, pathRels, collect(DISTINCT node) AS allNodes
+        UNWIND pathRels AS rel
+        WITH startNode, allNodes, collect(DISTINCT rel) AS allRels
+        RETURN allNodes AS nodes, allRels AS relationships
+        LIMIT $max_nodes
+        """
+        
+        records, summary, keys = driver.execute_query(
+            subgraph_query,
+            node_id=node_id,
+            max_nodes=max_nodes
+        )
+        
+        if not records:
+            logging.warning(f"No subgraph found for node {node_id}")
+            return {"nodes": [], "relationships": []}
+        
+        # Process nodes and relationships
+        all_nodes = set()
+        all_relationships = set()
+        
+        for record in records:
+            # Process nodes
+            for node in record["nodes"]:
+                node_element = process_node(node)
+                all_nodes.add(json.dumps(node_element, sort_keys=True))
+            
+            # Process relationships
+            for rel in record["relationships"]:
+                rel_element = {
+                    "element_id": rel.element_id,
+                    "type": rel.type,
+                    "start_node_id": rel.start_node.element_id,
+                    "end_node_id": rel.end_node.element_id,
+                    "properties": {}
+                }
+                
+                for key in rel:
+                    if key in ["embedding", "text", "summary"]:
+                        continue
+                    value = rel.get(key)
+                    if isinstance(value, time.DateTime):
+                        rel_element["properties"][key] = value.isoformat()
+                    else:
+                        rel_element["properties"][key] = value
+                
+                all_relationships.add(json.dumps(rel_element, sort_keys=True))
+        
+        # Convert back to dictionaries
+        nodes = [json.loads(node_str) for node_str in all_nodes]
+        relationships = [json.loads(rel_str) for rel_str in all_relationships]
+        
+        logging.info(f"Extracted subgraph with {len(nodes)} nodes and {len(relationships)} relationships")
+        return {
+            "start_node_id": node_id,
+            "depth": depth,
+            "nodes": nodes,
+            "relationships": relationships
+        }
+        
+    except Exception as e:
+        logging.error(f"An error occurred in get_subgraph_from_node. Error: {str(e)}")
+        raise Exception(f"An error occurred in get_subgraph_from_node. Please check the logs for more details.") from e
+    finally:
+        if driver:
+            driver.close()
+
+
+def search_and_get_subgraph(uri, username, password, database, search_term, node_type="Person", depth=4, max_results=10):
+    """
+    Combines search and subgraph extraction in one operation.
+    
+    Args:
+        uri (str): The URI for the Neo4j database.
+        username (str): The username for authentication.
+        password (str): The password for authentication.
+        database (str): The database name.
+        search_term (str): The search term to look for.
+        node_type (str): The type of node to search for (default: "Person").
+        depth (int): The maximum depth of the subgraph (default: 4).
+        max_results (int): Maximum number of search results to process.
+    
+    Returns:
+        dict: Contains search results and their subgraphs.
+    """
+    try:
+        logging.info(f"Searching for '{search_term}' and extracting subgraphs")
+        
+        # First, search for matching nodes
+        search_results = search_nodes(uri, username, password, database, search_term, node_type, max_results)
+        
+        if not search_results["nodes"]:
+            return {
+                "search_term": search_term,
+                "node_type": node_type,
+                "total_results": 0,
+                "subgraphs": []
+            }
+        
+        # Then, extract subgraphs for each matching node
+        subgraphs = []
+        for node in search_results["nodes"][:max_results]:  # Limit to max_results
+            try:
+                subgraph = get_subgraph_from_node(
+                    uri, username, password, database, 
+                    node["element_id"], depth
+                )
+                subgraph["matching_node"] = node
+                subgraphs.append(subgraph)
+            except Exception as e:
+                logging.warning(f"Failed to extract subgraph for node {node['element_id']}: {str(e)}")
+                continue
+        
+        return {
+            "search_term": search_term,
+            "node_type": node_type,
+            "total_results": len(search_results["nodes"]),
+            "subgraphs": subgraphs
+        }
+        
+    except Exception as e:
+        logging.error(f"An error occurred in search_and_get_subgraph. Error: {str(e)}")
+        raise Exception(f"An error occurred in search_and_get_subgraph. Please check the logs for more details.") from e
+
+
+def diagnose_database_entities(uri, username, password, database):
+    """
+    Diagnostic function to check what entities exist in the database.
+    
+    Args:
+        uri (str): The URI for the Neo4j database.
+        username (str): The username for authentication.
+        password (str): The password for authentication.
+        database (str): The database name.
+    
+    Returns:
+        dict: Contains diagnostic information about entities in the database.
+    """
+    try:
+        logging.info("Starting database entity diagnosis...")
+        driver = get_graphDB_driver(uri, username, password, database)
+        
+        # Query to get all entity types and their counts based on labels
+        entity_types_query = """
+        MATCH (n:__Entity__)
+        UNWIND labels(n) AS label
+        WITH label
+        WHERE label <> '__Entity__'
+        RETURN label as entity_type, count(*) as count
+        ORDER BY count DESC
+        """
+        
+        # Query to get sample entities with their actual structure
+        sample_entities_query = """
+        MATCH (n:__Entity__)
+        RETURN labels(n) as labels, n.id as id, n.name as name, n.description as description, n.type as type
+        LIMIT 10
+        """
+        
+        # Query to get all labels in the database
+        labels_query = """
+        CALL db.labels() YIELD label
+        RETURN collect(label) as labels
+        """
+        
+        logging.info("Executing diagnostic queries...")
+        
+        # Get entity types and counts
+        entity_types_result = driver.execute_query(entity_types_query)
+        entity_types = [{"type": record["entity_type"], "count": record["count"]} for record in entity_types_result[0]]
+        
+        # Get sample entities
+        sample_entities_result = driver.execute_query(sample_entities_query)
+        sample_entities = [{"labels": record["labels"], "id": record["id"], "name": record["name"], "description": record["description"], "type": record["type"]} for record in sample_entities_result[0]]
+        
+        # Get all labels
+        labels_result = driver.execute_query(labels_query)
+        all_labels = labels_result[0][0]["labels"] if labels_result[0] else []
+        
+        logging.info(f"Diagnosis completed. Found {len(entity_types)} entity types")
+        
+        return {
+            "entity_types": entity_types,
+            "sample_entities": sample_entities,
+            "all_labels": all_labels,
+            "total_entity_types": len(entity_types),
+            "total_sample_entities": len(sample_entities)
+        }
+        
+    except Exception as e:
+        logging.error(f"An error occurred in diagnose_database_entities. Error: {str(e)}")
+        raise Exception(f"An error occurred in diagnose_database_entities. Please check the logs for more details.") from e
+    finally:
+        if driver:
+            driver.close()

@@ -1,5 +1,12 @@
-import { Banner, Dialog, Flex, IconButtonArray, LoadingSpinner, useDebounceValue } from '@neo4j-ndl/react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Banner,
+  Dialog,
+  Flex,
+  IconButtonArray,
+  LoadingSpinner,
+  useDebounceValue,
+} from "@neo4j-ndl/react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   BasicNode,
   BasicRelationship,
@@ -10,10 +17,10 @@ import {
   GraphViewModalProps,
   OptionType,
   Scheme,
-} from '../../types';
-import { InteractiveNvlWrapper } from '@neo4j-nvl/react';
-import NVL from '@neo4j-nvl/base';
-import type { Node, Relationship } from '@neo4j-nvl/base';
+} from "../../types";
+import { InteractiveNvlWrapper } from "@neo4j-nvl/react";
+import NVL from "@neo4j-nvl/base";
+import type { Node, Relationship } from "@neo4j-nvl/base";
 import {
   ArrowPathIconOutline,
   FitToScreenIcon,
@@ -21,20 +28,21 @@ import {
   MagnifyingGlassMinusIconOutline,
   MagnifyingGlassPlusIconOutline,
   ExploreIcon,
-} from '@neo4j-ndl/react/icons';
-import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
-import { filterData, getCheckboxConditions, graphTypeFromNodes, processGraphData } from '../../utils/Utils';
-import { useCredentials } from '../../context/UserCredentials';
-
-import { getGraphSchema, graphQueryAPI } from '../../services/GraphQuery';
-import { graphLabels, nvlOptions, queryMap } from '../../utils/Constants';
-import CheckboxSelection from './CheckboxSelection';
-
-import ResultOverview from './ResultOverview';
-import { ResizePanelDetails } from './ResizePanel';
-import GraphPropertiesPanel from './GraphPropertiesPanel';
-import SchemaViz from '../Graph/SchemaViz';
-import { extractGraphSchemaFromRawData } from '../../utils/Utils';
+} from "@neo4j-ndl/react/icons";
+import { IconButtonWithToolTip } from "../UI/IconButtonToolTip";
+import {
+  filterData,
+  getCheckboxConditions,
+  graphTypeFromNodes,
+  processGraphData,
+} from "../../utils/Utils";
+import { getGraphSchema, graphQueryAPI } from "../../services/GraphQuery";
+import { graphLabels, nvlOptions, queryMap } from "../../utils/Constants";
+import CheckboxSelection from "./CheckboxSelection";
+import ResultOverview from "./ResultOverview";
+import { ResizePanelDetails } from "./ResizePanel";
+import GraphPropertiesPanel from "./GraphPropertiesPanel";
+import { extractGraphSchemaFromRawData } from "../../utils/Utils";
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -51,31 +59,34 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [allNodes, setAllNodes] = useState<ExtendedNode[]>([]);
   const [allRelationships, setAllRelationships] = useState<Relationship[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [status, setStatus] = useState<'unknown' | 'success' | 'danger'>('unknown');
-  const [statusMessage, setStatusMessage] = useState<string>('');
-  const { userCredentials } = useCredentials();
+  const [status, setStatus] = useState<"unknown" | "success" | "danger">(
+    "unknown"
+  );
+  const [statusMessage, setStatusMessage] = useState<string>("");
   const [scheme, setScheme] = useState<Scheme>({});
   const [newScheme, setNewScheme] = useState<Scheme>({});
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery] = useDebounceValue(searchQuery, 300);
   const [graphType, setGraphType] = useState<GraphType[]>([]);
   const [disableRefresh, setDisableRefresh] = useState<boolean>(false);
-  const [selected, setSelected] = useState<{ type: EntityType; id: string } | undefined>(undefined);
+  const [selected, setSelected] = useState<
+    { type: EntityType; id: string } | undefined
+  >(undefined);
   const [mode, setMode] = useState<boolean>(false);
   const graphQueryAbortControllerRef = useRef<AbortController>();
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
   const [schemaNodes, setSchemaNodes] = useState<OptionType[]>([]);
   const [schemaRels, setSchemaRels] = useState<OptionType[]>([]);
-  const [viewCheck, setViewcheck] = useState<string>('enhancement');
+  const [viewCheck, setViewcheck] = useState<string>("enhancement");
 
   const graphQuery: string =
-    graphType.includes('DocumentChunk') && graphType.includes('Entities')
+    graphType.includes("DocumentChunk") && graphType.includes("Entities")
       ? queryMap.DocChunkEntities
-      : graphType.includes('DocumentChunk')
+      : graphType.includes("DocumentChunk")
         ? queryMap.DocChunks
-        : graphType.includes('Entities')
+        : graphType.includes("Entities")
           ? queryMap.Entities
-          : '';
+          : "";
 
   // fit graph to original position
   const handleZoomToFit = () => {
@@ -84,6 +95,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       {}
     );
   };
+
   // Unmounting the component
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -100,7 +112,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       setRelationship([]);
       setAllNodes([]);
       setAllRelationships([]);
-      setSearchQuery('');
+      setSearchQuery("");
       setSelected(undefined);
     };
   }, []);
@@ -132,7 +144,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       } else {
         nodeRelationshipData = await graphQueryAPI(
           graphQuery,
-          [inspectedName ?? ''],
+          [inspectedName ?? ""],
           graphQueryAbortControllerRef.current.signal
         );
       }
@@ -140,7 +152,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     } catch (error: any) {
       console.log(error);
     }
-  }, [viewPoint, selectedRows, graphQuery, inspectedName, userCredentials]);
+  }, [viewPoint, selectedRows, graphQuery, inspectedName]);
 
   // Api call to get the nodes and relations
   const graphApi = async (mode?: string) => {
@@ -151,10 +163,17 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         const nodeIds = new Set(neoNodes.map((node: any) => node.element_id));
         const neoRels = result.data.data.relationships
           .map((f: Relationship) => f)
-          .filter((rel: any) => nodeIds.has(rel.end_node_element_id) && nodeIds.has(rel.start_node_element_id));
-        const { finalNodes, finalRels, schemeVal } = processGraphData(neoNodes, neoRels);
+          .filter(
+            (rel: any) =>
+              nodeIds.has(rel.end_node_element_id) &&
+              nodeIds.has(rel.start_node_element_id)
+          );
+        const { finalNodes, finalRels, schemeVal } = processGraphData(
+          neoNodes,
+          neoRels
+        );
 
-        if (mode === 'refreshMode') {
+        if (mode === "refreshMode") {
           initGraph(graphType, finalNodes, finalRels, schemeVal);
         } else {
           setNode(finalNodes);
@@ -168,12 +187,14 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         setDisableRefresh(false);
       } else {
         setLoading(false);
-        setStatus('danger');
-        setStatusMessage(`No Nodes and Relations for the ${inspectedName} file`);
+        setStatus("danger");
+        setStatusMessage(
+          `No Nodes and Relations for the ${inspectedName} file`
+        );
       }
     } catch (error: any) {
       setLoading(false);
-      setStatus('danger');
+      setStatus("danger");
       setStatusMessage(error.message);
     }
   };
@@ -181,13 +202,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   useEffect(() => {
     if (open) {
       // Clear any stuck popups that might be covering the modal
-      document.querySelectorAll('.popup').forEach((el) => el.remove());
+      document.querySelectorAll(".popup").forEach((el) => el.remove());
       setLoading(true);
       setGraphType([]);
       if (viewPoint !== graphLabels.chatInfoView) {
         graphApi();
       } else {
-        const { finalNodes, finalRels, schemeVal } = processGraphData(nodeValues ?? [], relationshipValues ?? []);
+        const { finalNodes, finalRels, schemeVal } = processGraphData(
+          nodeValues ?? [],
+          relationshipValues ?? []
+        );
         setAllNodes(finalNodes);
         setAllRelationships(finalRels);
         setScheme(schemeVal);
@@ -208,13 +232,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const mouseEventCallbacks = useMemo(
     () => ({
       onNodeClick: (clickedNode: Node) => {
-        if (selected?.id !== clickedNode.id || selected?.type !== 'node') {
-          setSelected({ type: 'node', id: clickedNode.id });
+        if (selected?.id !== clickedNode.id || selected?.type !== "node") {
+          setSelected({ type: "node", id: clickedNode.id });
         }
       },
       onRelationshipClick: (clickedRelationship: Relationship) => {
-        if (selected?.id !== clickedRelationship.id || selected?.type !== 'relationship') {
-          setSelected({ type: 'relationship', id: clickedRelationship.id });
+        if (
+          selected?.id !== clickedRelationship.id ||
+          selected?.type !== "relationship"
+        ) {
+          setSelected({ type: "relationship", id: clickedRelationship.id });
         }
       },
       onCanvasClick: () => {
@@ -252,17 +279,19 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     if (selected === undefined) {
       return undefined;
     }
-    if (selected.type === 'node') {
+    if (selected.type === "node") {
       return node.find((nodeVal) => nodeVal.id === selected.id);
     }
-    return relationship.find((relationshipVal) => relationshipVal.id === selected.id);
+    return relationship.find(
+      (relationshipVal) => relationshipVal.id === selected.id
+    );
   }, [selected, relationship, node]);
 
   const handleSearch = useCallback(
     (value: string) => {
       const query = value.toLowerCase();
       const updatedNodes = node.map((nodeVal) => {
-        if (query === '') {
+        if (query === "") {
           return {
             ...nodeVal,
             selected: false,
@@ -271,7 +300,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         }
         const { id, properties, caption } = nodeVal;
         const propertiesMatch = properties?.id?.toLowerCase().includes(query);
-        const match = id.toLowerCase().includes(query) || propertiesMatch || caption?.toLowerCase().includes(query);
+        const match =
+          id.toLowerCase().includes(query) ||
+          propertiesMatch ||
+          caption?.toLowerCase().includes(query);
         return {
           ...nodeVal,
           selected: match,
@@ -294,7 +326,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   }
 
   const headerTitle =
-    viewPoint === graphLabels.showGraphView || viewPoint === graphLabels.chatInfoView
+    viewPoint === graphLabels.showGraphView ||
+    viewPoint === graphLabels.chatInfoView
       ? graphLabels.generateGraph
       : viewPoint === graphLabels.showSchemaView
         ? graphLabels.renderSchemaGraph
@@ -311,7 +344,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       newGraphSelected.splice(currentIndex, 1);
     }
     initGraph(newGraphSelected, allNodes, allRelationships, scheme);
-    setSearchQuery('');
+    setSearchQuery("");
     setGraphType(newGraphSelected);
     setSelected(undefined);
     if (nvlRef.current && nvlRef?.current?.getScale() > 1) {
@@ -328,12 +361,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     },
   };
 
-  // To handle the current zoom in function of graph
   const handleZoomIn = () => {
     nvlRef.current?.setZoom(nvlRef.current.getScale() * 1.3);
   };
 
-  // To handle the current zoom out function of graph
   const handleZoomOut = () => {
     nvlRef.current?.setZoom(nvlRef.current.getScale() * 0.7);
   };
@@ -342,16 +373,16 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const handleRefresh = () => {
     setDisableRefresh(true);
     setMode(true);
-    graphApi('refreshMode');
+    graphApi("refreshMode");
   };
 
   // when modal closes reset all states to default
   const onClose = () => {
     // Clear any stuck popups
-    document.querySelectorAll('.popup').forEach((el) => el.remove());
+    document.querySelectorAll(".popup").forEach((el) => el.remove());
     graphQueryAbortControllerRef?.current?.abort();
-    setStatus('unknown');
-    setStatusMessage('');
+    setStatus("unknown");
+    setStatusMessage("");
     setGraphViewOpen(false);
     setScheme({});
     setGraphType([]);
@@ -359,15 +390,18 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setRelationship([]);
     setAllNodes([]);
     setAllRelationships([]);
-    setSearchQuery('');
+    setSearchQuery("");
     setSelected(undefined);
   };
 
   const handleSchemaView = async (rawNodes: any[], rawRelationships: any[]) => {
-    const { nodes, relationships } = extractGraphSchemaFromRawData(rawNodes, rawRelationships);
+    const { nodes, relationships } = extractGraphSchemaFromRawData(
+      rawNodes,
+      rawRelationships
+    );
     setSchemaNodes(nodes as any);
     setSchemaRels(relationships as any);
-    setViewcheck('viz');
+    setViewcheck("viz");
     setOpenGraphView(true);
   };
 
@@ -375,28 +409,35 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     <>
       <Dialog
         modalProps={{
-          className: 'h-[90%]',
-          id: 'default-menu',
+          className: "h-[90%]",
+          id: "default-menu",
         }}
-        size='unset'
+        size="unset"
         isOpen={open}
         hasDisabledCloseButton={false}
         onClose={onClose}
         htmlAttributes={{
-          'aria-labelledby': 'form-dialog-title',
+          "aria-labelledby": "form-dialog-title",
         }}
       >
-        <Dialog.Header htmlAttributes={{ id: 'graph-title' }}>
+        <Dialog.Header htmlAttributes={{ id: "graph-title" }}>
           {headerTitle}
           {viewPoint !== graphLabels.chatInfoView && (
-            <div style={{ display: 'flex', alignItems: 'center' }}>
+            <div style={{ display: "flex", alignItems: "center" }}>
               <span>
-                <InformationCircleIconOutline className='n-size-token-6' />
+                <InformationCircleIconOutline className="n-size-token-6" />
               </span>
-              <span className='n-body-small ml-1'>{graphLabels.chunksInfo}</span>
+              <span className="n-body-small ml-1">
+                {graphLabels.chunksInfo}
+              </span>
             </div>
           )}
-          <Flex className='w-full' alignItems='center' flexDirection='row' justifyContent='space-between'>
+          <Flex
+            className="w-full"
+            alignItems="center"
+            flexDirection="row"
+            justifyContent="space-between"
+          >
             {checkBoxView && (
               <CheckboxSelection
                 graphType={graphType}
@@ -405,31 +446,50 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                 {...getCheckboxConditions(allNodes)}
               />
             )}
-            {/* <SchemaDropdown isDisabled={!selectedNodes.length || !selectedRels.length} onSchemaSelect={handleSchemaSelect} /> */}
           </Flex>
         </Dialog.Header>
-        <Dialog.Content className='flex flex-col n-gap-token-4 w-full grow overflow-auto border! border-palette-neutral-border-weak!'>
-          <div className='bg-white relative w-full h-full max-h-full border! border-palette-neutral-border-weak!'>
+        <Dialog.Content className="flex flex-col n-gap-token-4 w-full grow overflow-auto border! border-palette-neutral-border-weak!">
+          <div className="bg-white relative w-full h-full max-h-full border! border-palette-neutral-border-weak!">
             {loading ? (
-              <div className='my-40 flex! items-center justify-center'>
-                <LoadingSpinner size='large' />
+              <div className="my-40 flex! items-center justify-center">
+                <LoadingSpinner size="large" />
               </div>
-            ) : status !== 'unknown' ? (
-              <div className='my-40 flex! items-center justify-center'>
-                <Banner name='graph banner' description={statusMessage} type={status} usage='inline' />
+            ) : status !== "unknown" ? (
+              <div className="my-40 flex! items-center justify-center">
+                <Banner
+                  name="graph banner"
+                  description={statusMessage}
+                  type={status}
+                  usage="inline"
+                />
               </div>
-            ) : node.length === 0 && relationship.length === 0 && graphType.length !== 0 ? (
-              <div className='my-40 flex! items-center justify-center'>
-                <Banner name='graph banner' description={graphLabels.noNodesRels} type='danger' usage='inline' />
+            ) : node.length === 0 &&
+              relationship.length === 0 &&
+              graphType.length !== 0 ? (
+              <div className="my-40 flex! items-center justify-center">
+                <Banner
+                  name="graph banner"
+                  description={graphLabels.noNodesRels}
+                  type="danger"
+                  usage="inline"
+                />
               </div>
             ) : graphType.length === 0 && checkBoxView ? (
-              <div className='my-40 flex! items-center justify-center'>
-                <Banner name='graph banner' description={graphLabels.selectCheckbox} type='danger' usage='inline' />
+              <div className="my-40 flex! items-center justify-center">
+                <Banner
+                  name="graph banner"
+                  description={graphLabels.selectCheckbox}
+                  type="danger"
+                  usage="inline"
+                />
               </div>
             ) : (
               <>
-                <div className='flex' style={{ height: '100%' }}>
-                  <div className='bg-palette-neutral-bg-default relative' style={{ width: '100%', flex: '1' }}>
+                <div className="flex" style={{ height: "100%" }}>
+                  <div
+                    className="bg-palette-neutral-bg-default relative"
+                    style={{ width: "100%", flex: "1" }}
+                  >
                     <InteractiveNvlWrapper
                       nodes={node}
                       rels={relationship}
@@ -441,48 +501,68 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                       }}
                       nvlCallbacks={nvlCallbacks}
                     />
-                    <IconButtonArray orientation='vertical' isFloating={true} className='absolute top-4 right-4'>
+                    <IconButtonArray
+                      orientation="vertical"
+                      isFloating={true}
+                      className="absolute top-4 right-4"
+                    >
                       <IconButtonWithToolTip
-                        label='Schema View'
-                        text='Schema View'
+                        label="Schema View"
+                        text="Schema View"
                         onClick={() => handleSchemaView(node, relationship)}
-                        placement='left'
+                        placement="left"
                       >
-                        <ExploreIcon className='n-size-token-7' />
+                        <ExploreIcon className="n-size-token-7" />
                       </IconButtonWithToolTip>
                     </IconButtonArray>
-                    <IconButtonArray orientation='vertical' isFloating={true} className='absolute bottom-4 right-4'>
-                      {viewPoint !== 'chatInfoView' && (
+                    <IconButtonArray
+                      orientation="vertical"
+                      isFloating={true}
+                      className="absolute bottom-4 right-4"
+                    >
+                      {viewPoint !== "chatInfoView" && (
                         <IconButtonWithToolTip
-                          label='Refresh'
-                          text='Refresh graph'
+                          label="Refresh"
+                          text="Refresh graph"
                           onClick={handleRefresh}
-                          placement='left'
+                          placement="left"
                           disabled={disableRefresh}
                         >
-                          <ArrowPathIconOutline className='n-size-token-7' />
+                          <ArrowPathIconOutline className="n-size-token-7" />
                         </IconButtonWithToolTip>
                       )}
-                      <IconButtonWithToolTip label='Zoomin' text='Zoom in' onClick={handleZoomIn} placement='left'>
-                        <MagnifyingGlassPlusIconOutline className='n-size-token-7' />
-                      </IconButtonWithToolTip>
-                      <IconButtonWithToolTip label='Zoom out' text='Zoom out' onClick={handleZoomOut} placement='left'>
-                        <MagnifyingGlassMinusIconOutline className='n-size-token-7' />
+                      <IconButtonWithToolTip
+                        label="Zoomin"
+                        text="Zoom in"
+                        onClick={handleZoomIn}
+                        placement="left"
+                      >
+                        <MagnifyingGlassPlusIconOutline className="n-size-token-7" />
                       </IconButtonWithToolTip>
                       <IconButtonWithToolTip
-                        label='Zoom to fit'
-                        text='Zoom to fit'
-                        onClick={handleZoomToFit}
-                        placement='left'
+                        label="Zoom out"
+                        text="Zoom out"
+                        onClick={handleZoomOut}
+                        placement="left"
                       >
-                        <FitToScreenIcon className='n-size-token-7' />
+                        <MagnifyingGlassMinusIconOutline className="n-size-token-7" />
+                      </IconButtonWithToolTip>
+                      <IconButtonWithToolTip
+                        label="Zoom to fit"
+                        text="Zoom to fit"
+                        onClick={handleZoomToFit}
+                        placement="left"
+                      >
+                        <FitToScreenIcon className="n-size-token-7" />
                       </IconButtonWithToolTip>
                     </IconButtonArray>
                   </div>
                   <ResizePanelDetails open={true}>
                     {selectedItem !== undefined ? (
                       <GraphPropertiesPanel
-                        inspectedItem={selectedItem as BasicNode | BasicRelationship}
+                        inspectedItem={
+                          selectedItem as BasicNode | BasicRelationship
+                        }
                         newScheme={newScheme}
                       />
                     ) : (
@@ -503,16 +583,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           </div>
         </Dialog.Content>
       </Dialog>
-      {openGraphView && (
-        <SchemaViz
-          open={openGraphView}
-          setGraphViewOpen={setOpenGraphView}
-          viewPoint={viewPoint}
-          nodeValues={schemaNodes}
-          relationshipValues={schemaRels}
-          view={viewCheck}
-        />
-      )}
     </>
   );
 };

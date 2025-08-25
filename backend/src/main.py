@@ -23,7 +23,7 @@ from src.document_sources.youtube import *
 from src.shared.common_fn import *
 from src.make_relationships import *
 from src.document_sources.web_pages import *
-from src.graph_query import get_graphDB_driver
+from src.graph_query import get_graphDB_driver, search_nodes, get_subgraph_from_node, search_and_get_subgraph, diagnose_database_entities
 import re
 from langchain_community.document_loaders import WikipediaLoader, WebBaseLoader
 import warnings
@@ -766,3 +766,99 @@ def failed_file_process(uri,file_name, merged_file_path):
   else:
       logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
       delete_uploaded_local_file(merged_file_path,file_name)
+
+def search_nodes_api(uri, userName, password, database, search_term, node_type="Person", max_results=50):
+    """
+    API endpoint for searching nodes across all documents.
+    
+    Args:
+        uri (str): The URI for the Neo4j database.
+        userName (str): The username for authentication.
+        password (str): The password for authentication.
+        database (str): The database name.
+        search_term (str): The search term to look for.
+        node_type (str): The type of node to search for (default: "Person").
+        max_results (int): Maximum number of results to return.
+    
+    Returns:
+        dict: Contains matching nodes with their properties.
+    """
+    try:
+        logging.info(f"API: Searching for nodes with term '{search_term}' in type '{node_type}'")
+        result = search_nodes(uri, userName, password, database, search_term, node_type, max_results)
+        return result
+    except Exception as e:
+        logging.error(f"API: Error in search_nodes_api: {str(e)}")
+        raise Exception(f"Failed to search nodes: {str(e)}")
+
+
+def get_subgraph_api(uri, userName, password, database, node_id, depth=4, max_nodes=1000):
+    """
+    API endpoint for extracting subgraph from a specific node.
+    
+    Args:
+        uri (str): The URI for the Neo4j database.
+        userName (str): The username for authentication.
+        password (str): The password for authentication.
+        database (str): The database name.
+        node_id (str): The element ID of the starting node.
+        depth (int): The maximum depth of the subgraph (default: 4).
+        max_nodes (int): Maximum number of nodes to include in the subgraph.
+    
+    Returns:
+        dict: Contains the subgraph nodes and relationships.
+    """
+    try:
+        logging.info(f"API: Extracting subgraph from node {node_id} with depth {depth}")
+        result = get_subgraph_from_node(uri, userName, password, database, node_id, depth, max_nodes)
+        return result
+    except Exception as e:
+        logging.error(f"API: Error in get_subgraph_api: {str(e)}")
+        raise Exception(f"Failed to extract subgraph: {str(e)}")
+
+
+def search_and_get_subgraph_api(uri, userName, password, database, search_term, node_type="Person", depth=4, max_results=10):
+    """
+    API endpoint for combined search and subgraph extraction.
+    
+    Args:
+        uri (str): The URI for the Neo4j database.
+        userName (str): The username for authentication.
+        password (str): The password for authentication.
+        database (str): The database name.
+        search_term (str): The search term to look for.
+        node_type (str): The type of node to search for (default: "Person").
+        depth (int): The maximum depth of the subgraph (default: 4).
+        max_results (int): Maximum number of search results to process.
+    
+    Returns:
+        dict: Contains search results and their subgraphs.
+    """
+    try:
+        logging.info(f"API: Searching and extracting subgraphs for term '{search_term}'")
+        result = search_and_get_subgraph(uri, userName, password, database, search_term, node_type, depth, max_results)
+        return result
+    except Exception as e:
+        logging.error(f"API: Error in search_and_get_subgraph_api: {str(e)}")
+        raise Exception(f"Failed to search and extract subgraph: {str(e)}")
+
+def diagnose_database_entities_api(uri, userName, password, database):
+    """
+    API endpoint for diagnosing database entities.
+    
+    Args:
+        uri (str): The URI for the Neo4j database.
+        userName (str): The username for authentication.
+        password (str): The password for authentication.
+        database (str): The database name.
+    
+    Returns:
+        dict: Contains diagnostic information about entities in the database.
+    """
+    try:
+        logging.info(f"API: Diagnosing database entities")
+        result = diagnose_database_entities(uri, userName, password, database)
+        return result
+    except Exception as e:
+        logging.error(f"API: Error in diagnose_database_entities_api: {str(e)}")
+        raise Exception(f"Failed to diagnose database entities: {str(e)}")

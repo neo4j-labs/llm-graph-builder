@@ -29,7 +29,7 @@ import gc
 from Secweb.XContentTypeOptions import XContentTypeOptions
 from Secweb.XFrameOptions import XFrame
 from fastapi.middleware.gzip import GZipMiddleware
-from src.ragas_eval import *
+# from src.ragas_eval import *
 from starlette.types import ASGIApp, Receive, Scope, Send
 from langchain_neo4j import Neo4jGraph
 from starlette.middleware.sessions import SessionMiddleware
@@ -103,7 +103,7 @@ class CustomGZipMiddleware:
 app = FastAPI()
 app.add_middleware(XContentTypeOptions)
 app.add_middleware(XFrame, Option={'X-Frame-Options': 'DENY'})
-app.add_middleware(CustomGZipMiddleware, minimum_size=1000, compresslevel=5,paths=["/sources_list","/url/scan","/extract","/chat_bot","/chunk_entities","/get_neighbours","/graph_query","/schema","/populate_graph_schema","/get_unconnected_nodes_list","/get_duplicate_nodes","/fetch_chunktext","/schema_visualization"])
+app.add_middleware(CustomGZipMiddleware, minimum_size=1000, compresslevel=5,paths=["/sources_list","/url/scan","/extract","/chat_bot","/chunk_entities","/get_neighbours","/graph_query","/schema","/populate_graph_schema","/get_unconnected_nodes_list","/get_duplicate_nodes","/fetch_chunktext","/schema_visualization","/search_nodes","/get_subgraph","/search_and_get_subgraph","/diagnose_entities"])
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -1037,7 +1037,7 @@ async def backend_connection_configuration():
         password= os.getenv('NEO4J_PASSWORD')
         gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
         if all([uri, username, database, password]):
-            graph = Neo4jGraph()
+            graph = Neo4jGraph(url=uri, username=username, password=password, database=database)
             logging.info(f'login connection status of object: {graph}')
             if graph is not None:
                 graph_connection = True        
@@ -1089,6 +1089,201 @@ async def get_schema_visualization(uri=Form(None), userName=Form(None), password
         logging.info(message)
         logging.exception(f'Exception:{error_message}')
         return create_api_response("Failed", message=message, error=error_message)
+    finally:
+        gc.collect()
+
+@app.post("/search_nodes")
+async def search_nodes_endpoint(
+    uri=Form(None),
+    userName=Form(None),
+    password=Form(None),
+    database=Form(None),
+    search_term=Form(),
+    node_type=Form("Person"),
+    max_results=Form(50)
+):
+    """
+    Search for nodes across all documents in the database.
+    """
+    try:
+        start = time.time()
+        result = await asyncio.to_thread(
+            search_nodes_api,
+            uri=uri,
+            userName=userName,
+            password=password,
+            database=database,
+            search_term=search_term,
+            node_type=node_type,
+            max_results=int(max_results)
+        )
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {
+            'api_name': 'search_nodes',
+            'db_url': uri,
+            'userName': userName,
+            'database': database,
+            'search_term': search_term,
+            'node_type': node_type,
+            'max_results': max_results,
+            'total_results': result.get('total_results', 0),
+            'logging_time': formatted_time(datetime.now(timezone.utc)),
+            'elapsed_api_time': f'{elapsed_time:.2f}'
+        }
+        logger.log_struct(json_obj, "INFO")
+        return create_api_response('Success', data=result, message=f"Search completed in {elapsed_time:.2f}s")
+    except Exception as e:
+        message = "Unable to search nodes"
+        error_message = str(e)
+        logging.exception(f'Exception in search_nodes: {error_message}')
+        return create_api_response('Failed', message=message, error=error_message)
+    finally:
+        gc.collect()
+
+
+@app.post("/get_subgraph")
+async def get_subgraph_endpoint(
+    uri=Form(None),
+    userName=Form(None),
+    password=Form(None),
+    database=Form(None),
+    node_id=Form(),
+    depth=Form(4),
+    max_nodes=Form(1000)
+):
+    """
+    Extract a subgraph from a specific node with configurable depth.
+    """
+    try:
+        start = time.time()
+        result = await asyncio.to_thread(
+            get_subgraph_api,
+            uri=uri,
+            userName=userName,
+            password=password,
+            database=database,
+            node_id=node_id,
+            depth=int(depth),
+            max_nodes=int(max_nodes)
+        )
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {
+            'api_name': 'get_subgraph',
+            'db_url': uri,
+            'userName': userName,
+            'database': database,
+            'node_id': node_id,
+            'depth': depth,
+            'max_nodes': max_nodes,
+            'nodes_count': len(result.get('nodes', [])),
+            'relationships_count': len(result.get('relationships', [])),
+            'logging_time': formatted_time(datetime.now(timezone.utc)),
+            'elapsed_api_time': f'{elapsed_time:.2f}'
+        }
+        logger.log_struct(json_obj, "INFO")
+        return create_api_response('Success', data=result, message=f"Subgraph extracted in {elapsed_time:.2f}s")
+    except Exception as e:
+        message = "Unable to extract subgraph"
+        error_message = str(e)
+        logging.exception(f'Exception in get_subgraph: {error_message}')
+        return create_api_response('Failed', message=message, error=error_message)
+    finally:
+        gc.collect()
+
+
+@app.post("/search_and_get_subgraph")
+async def search_and_get_subgraph_endpoint(
+    uri=Form(None),
+    userName=Form(None),
+    password=Form(None),
+    database=Form(None),
+    search_term=Form(),
+    node_type=Form("Person"),
+    depth=Form(4),
+    max_results=Form(10)
+):
+    """
+    Search for nodes and extract their subgraphs in one operation.
+    """
+    try:
+        start = time.time()
+        result = await asyncio.to_thread(
+            search_and_get_subgraph_api,
+            uri=uri,
+            userName=userName,
+            password=password,
+            database=database,
+            search_term=search_term,
+            node_type=node_type,
+            depth=int(depth),
+            max_results=int(max_results)
+        )
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {
+            'api_name': 'search_and_get_subgraph',
+            'db_url': uri,
+            'userName': userName,
+            'database': database,
+            'search_term': search_term,
+            'node_type': node_type,
+            'depth': depth,
+            'max_results': max_results,
+            'total_results': result.get('total_results', 0),
+            'subgraphs_count': len(result.get('subgraphs', [])),
+            'logging_time': formatted_time(datetime.now(timezone.utc)),
+            'elapsed_api_time': f'{elapsed_time:.2f}'
+        }
+        logger.log_struct(json_obj, "INFO")
+        return create_api_response('Success', data=result, message=f"Search and subgraph extraction completed in {elapsed_time:.2f}s")
+    except Exception as e:
+        message = "Unable to search and extract subgraphs"
+        error_message = str(e)
+        logging.exception(f'Exception in search_and_get_subgraph: {error_message}')
+        return create_api_response('Failed', message=message, error=error_message)
+    finally:
+        gc.collect()
+
+@app.post("/diagnose_entities")
+async def diagnose_entities_endpoint(
+    uri=Form(None),
+    userName=Form(None),
+    password=Form(None),
+    database=Form(None)
+):
+    """
+    Diagnostic endpoint to check what entities exist in the database.
+    """
+    try:
+        start = time.time()
+        result = await asyncio.to_thread(
+            diagnose_database_entities_api,
+            uri=uri,
+            userName=userName,
+            password=password,
+            database=database
+        )
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {
+            'api_name': 'diagnose_entities',
+            'db_url': uri,
+            'userName': userName,
+            'database': database,
+            'total_entity_types': result.get('total_entity_types', 0),
+            'total_sample_entities': result.get('total_sample_entities', 0),
+            'logging_time': formatted_time(datetime.now(timezone.utc)),
+            'elapsed_api_time': f'{elapsed_time:.2f}'
+        }
+        logger.log_struct(json_obj, "INFO")
+        return create_api_response('Success', data=result, message=f"Diagnosis completed in {elapsed_time:.2f}s")
+    except Exception as e:
+        message = "Unable to diagnose database entities"
+        error_message = str(e)
+        logging.exception(f'Exception in diagnose_entities: {error_message}')
+        return create_api_response('Failed', message=message, error=error_message)
     finally:
         gc.collect()
 

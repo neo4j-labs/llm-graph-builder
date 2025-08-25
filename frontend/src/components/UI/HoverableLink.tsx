@@ -15,6 +15,20 @@ const HoverableLink: React.FC<HoverableLinkProps> = ({ url, children }) => {
     }
     return () => clearTimeout(timer);
   }, [hovering, url]);
+
+  // Add global click handler to close popup when clicking elsewhere
+  useEffect(() => {
+    const handleGlobalClick = () => {
+      setHovering(false);
+    };
+
+    if (hovering) {
+      document.addEventListener('click', handleGlobalClick);
+      return () => {
+        document.removeEventListener('click', handleGlobalClick);
+      };
+    }
+  }, [hovering]);
   const handleMouseEnter = (event: React.MouseEvent) => {
     setHovering(true);
     setMousePosition({ x: event.clientX, y: event.clientY });

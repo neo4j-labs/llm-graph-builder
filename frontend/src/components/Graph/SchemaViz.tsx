@@ -70,6 +70,8 @@ const SchemaViz: React.FunctionComponent<SchemaViewModalProps> = ({
 
   useEffect(() => {
     if (open) {
+      // Clear any stuck popups that might be covering the modal
+      document.querySelectorAll('.popup').forEach((el) => el.remove());
       if (view !== 'viz') {
         setLoading(true);
         const { nodes, relationships, scheme } = userDefinedGraphSchema(
@@ -171,6 +173,8 @@ const SchemaViz: React.FunctionComponent<SchemaViewModalProps> = ({
 
   // when modal closes reset all states to default
   const onClose = () => {
+    // Clear any stuck popups
+    document.querySelectorAll('.popup').forEach((el) => el.remove());
     graphQueryAbortControllerRef?.current?.abort();
     setStatus('unknown');
     setStatusMessage('');
