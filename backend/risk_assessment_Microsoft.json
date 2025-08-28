@@ -1,0 +1,81 @@
+{
+  "entityName": "Microsoft",
+  "entityType": "organization",
+  "riskAssessments": [
+    {
+      "indicator": "Foreign State Influence",
+      "weight": 80,
+      "score": 3,
+      "explanation": "No specific evidence of foreign state influence on Microsoft was found in the provided data. However, as a major multinational technology company, Microsoft operates in numerous jurisdictions, which could expose it to potential foreign state influence risks.",
+      "sources": [
+        "nil"
+      ],
+      "normalizedWeight": 0.32,
+      "weightedContribution": 0.96
+    },
+    {
+      "indicator": "Dual-Use Technology Exposure",
+      "weight": 70,
+      "score": 4,
+      "explanation": "Microsoft develops advanced technologies, including AI and cloud computing, which have potential dual-use applications. This increases the risk of misuse in sensitive contexts.",
+      "sources": [
+        "nil"
+      ],
+      "normalizedWeight": 0.28,
+      "weightedContribution": 1.12
+    },
+    {
+      "indicator": "Compliance with Canadian Research Security Policies",
+      "weight": 60,
+      "score": 2,
+      "explanation": "No evidence was found in the provided data regarding Microsoft's compliance with Canadian research security policies. As a global corporation, Microsoft likely has compliance frameworks, but specific alignment with Canadian policies is unclear.",
+      "sources": [
+        "nil"
+      ],
+      "normalizedWeight": 0.24,
+      "weightedContribution": 0.48
+    },
+    {
+      "indicator": "International Collaboration Patterns",
+      "weight": 50,
+      "score": 3,
+      "explanation": "Microsoft engages in extensive international collaborations, which could pose moderate risks depending on the nature of partnerships and jurisdictions involved. No specific evidence was found in the provided data.",
+      "sources": [
+        "nil"
+      ],
+      "normalizedWeight": 0.2,
+      "weightedContribution": 0.6
+    },
+    {
+      "indicator": "Funding Sources Transparency",
+      "weight": 40,
+      "score": 2,
+      "explanation": "No evidence was found in the provided data regarding transparency of Microsoft's funding sources. As a publicly traded company, Microsoft is subject to financial disclosure requirements, which likely mitigates this risk.",
+      "sources": [
+        "nil"
+      ],
+      "normalizedWeight": 0.16,
+      "weightedContribution": 0.32
+    }
+  ],
+  "calculation": {
+    "totalWeight": 300,
+    "overallScore": 3.48,
+    "thresholdsApplied": {
+      "red": "overallScore >= 4.0",
+      "yellow": "2.5 <= overallScore < 4.0",
+      "blue": "overallScore < 2.5"
+    }
+  },
+  "finalAssessment": {
+    "trafficLight": "Yellow",
+    "overallExplanation": "Microsoft presents moderate research-security risks due to its exposure to dual-use technologies and international collaborations. Limited evidence on compliance with Canadian policies and funding transparency further contributes to the assessment."
+  },
+  "analysis_metadata": {
+    "chunks_analyzed": 10,
+    "subgraph_nodes": 104,
+    "subgraph_relationships": 226,
+    "search_method": "unknown",
+    "best_match_score": 0.2669
+  }
+}

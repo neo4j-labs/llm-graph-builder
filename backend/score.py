@@ -2,6 +2,7 @@ from fastapi import FastAPI, File, UploadFile, Form, Request, HTTPException
 from fastapi_health import health
 from fastapi.middleware.cors import CORSMiddleware
 from src.main import *
+from src.main import analyze_risk_api
 from src.QA_integration import *
 from src.shared.common_fn import *
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
@@ -1100,10 +1101,12 @@ async def search_nodes_endpoint(
     database=Form(None),
     search_term=Form(),
     node_type=Form("Person"),
-    max_results=Form(50)
+    max_results=Form(50),
+    prefer_vector=Form(True),
+    use_hybrid=Form(True)
 ):
     """
-    Search for nodes across all documents in the database.
+    Search for nodes across all documents in the database with hybrid vector and fuzzy text search support.
     """
     try:
         start = time.time()
@@ -1115,7 +1118,9 @@ async def search_nodes_endpoint(
             database=database,
             search_term=search_term,
             node_type=node_type,
-            max_results=int(max_results)
+            max_results=int(max_results),
+            prefer_vector=str(prefer_vector).lower() == 'true',
+            use_hybrid=str(use_hybrid).lower() == 'true'
         )
         end = time.time()
         elapsed_time = end - start
@@ -1127,7 +1132,12 @@ async def search_nodes_endpoint(
             'search_term': search_term,
             'node_type': node_type,
             'max_results': max_results,
+            'prefer_vector': prefer_vector,
+            'use_hybrid': use_hybrid,
             'total_results': result.get('total_results', 0),
+            'search_method': result.get('search_method', 'unknown'),
+            'vector_available': result.get('search_metadata', {}).get('vector_available', False),
+            'embedding_coverage': result.get('search_metadata', {}).get('embedding_coverage', 0),
             'logging_time': formatted_time(datetime.now(timezone.utc)),
             'elapsed_api_time': f'{elapsed_time:.2f}'
         }
@@ -1202,7 +1212,8 @@ async def search_and_get_subgraph_endpoint(
     search_term=Form(),
     node_type=Form("Person"),
     depth=Form(4),
-    max_results=Form(10)
+    max_results=Form(10),
+    extract_best_match_only=Form(True)
 ):
     """
     Search for nodes and extract their subgraphs in one operation.
@@ -1218,7 +1229,8 @@ async def search_and_get_subgraph_endpoint(
             search_term=search_term,
             node_type=node_type,
             depth=int(depth),
-            max_results=int(max_results)
+            max_results=int(max_results),
+            extract_best_match_only=str(extract_best_match_only).lower() == 'true'
         )
         end = time.time()
         elapsed_time = end - start
@@ -1231,8 +1243,11 @@ async def search_and_get_subgraph_endpoint(
             'node_type': node_type,
             'depth': depth,
             'max_results': max_results,
+            'extract_best_match_only': extract_best_match_only,
             'total_results': result.get('total_results', 0),
             'subgraphs_count': len(result.get('subgraphs', [])),
+            'best_match': result.get('best_match', {}).get('node_name', 'None'),
+            'best_match_score': result.get('best_match', {}).get('score', 'N/A'),
             'logging_time': formatted_time(datetime.now(timezone.utc)),
             'elapsed_api_time': f'{elapsed_time:.2f}'
         }
@@ -1283,6 +1298,72 @@ async def diagnose_entities_endpoint(
         message = "Unable to diagnose database entities"
         error_message = str(e)
         logging.exception(f'Exception in diagnose_entities: {error_message}')
+        return create_api_response('Failed', message=message, error=error_message)
+    finally:
+        gc.collect()
+
+@app.post("/analyze_risk")
+async def analyze_risk_endpoint(
+    uri=Form(None),
+    userName=Form(None),
+    password=Form(None),
+    database=Form(None),
+    entity_name=Form(),
+    entity_type=Form(),
+    risk_indicators=Form(),  # JSON string of risk indicators
+    depth=Form(4),
+    max_results=Form(10)
+):
+    """
+    Analyze research security risk of an entity based on graph data.
+    """
+    try:
+        start = time.time()
+        
+        # Parse risk indicators JSON
+        try:
+            risk_indicators_dict = json.loads(risk_indicators)
+        except json.JSONDecodeError as e:
+            return create_api_response('Failed', message="Invalid risk indicators JSON format", error=str(e))
+        
+        result = await asyncio.to_thread(
+            analyze_risk_api,
+            uri=uri,
+            userName=userName,
+            password=password,
+            database=database,
+            entity_name=entity_name,
+            entity_type=entity_type,
+            risk_indicators=risk_indicators_dict,
+            depth=int(depth),
+            max_results=int(max_results)
+        )
+        
+        end = time.time()
+        elapsed_time = end - start
+        
+        json_obj = {
+            'api_name': 'analyze_risk',
+            'db_url': uri,
+            'userName': userName,
+            'database': database,
+            'entity_name': entity_name,
+            'entity_type': entity_type,
+            'depth': depth,
+            'max_results': max_results,
+            'chunks_analyzed': result.get('analysis_metadata', {}).get('chunks_analyzed', 0),
+            'subgraph_nodes': result.get('analysis_metadata', {}).get('subgraph_nodes', 0),
+            'overall_score': result.get('calculation', {}).get('overallScore', 'N/A'),
+            'traffic_light': result.get('finalAssessment', {}).get('trafficLight', 'N/A'),
+            'logging_time': formatted_time(datetime.now(timezone.utc)),
+            'elapsed_api_time': f'{elapsed_time:.2f}'
+        }
+        logger.log_struct(json_obj, "INFO")
+        return create_api_response('Success', data=result, message=f"Risk analysis completed in {elapsed_time:.2f}s")
+    except Exception as e:
+        message = "Unable to analyze risk"
+        error_message = str(e)
+        logging.exception(f'Exception in analyze_risk: {error_message}')
         return create_api_response('Failed', message=message, error=error_message)
     finally:
         gc.collect()

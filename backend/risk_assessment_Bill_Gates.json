@@ -1,0 +1,82 @@
+{
+  "entityName": "Bill Gates",
+  "entityType": "individual",
+  "riskAssessments": [
+    {
+      "indicator": "Foreign State Influence",
+      "weight": 80,
+      "score": 2,
+      "explanation": "No evidence was found in the provided context to suggest significant foreign state influence on Bill Gates. His work is primarily focused on philanthropy and technology, with no direct ties to foreign state actors mentioned.",
+      "sources": [
+        "nil"
+      ],
+      "normalizedWeight": 0.32,
+      "weightedContribution": 0.64
+    },
+    {
+      "indicator": "Dual-Use Technology Exposure",
+      "weight": 70,
+      "score": 3,
+      "explanation": "As a co-founder of Microsoft, Bill Gates has been involved in the development of technologies that could have dual-use potential. However, his current focus on philanthropy reduces the likelihood of active exposure to dual-use technology risks.",
+      "sources": [
+        "Chunk 1",
+        "Chunk 2"
+      ],
+      "normalizedWeight": 0.28,
+      "weightedContribution": 0.84
+    },
+    {
+      "indicator": "Compliance with Canadian Research Security Policies",
+      "weight": 60,
+      "score": 2,
+      "explanation": "No evidence was found in the provided context to suggest non-compliance with Canadian research security policies. Gates' philanthropic work and technology contributions do not appear to directly intersect with Canadian research security frameworks.",
+      "sources": [
+        "nil"
+      ],
+      "normalizedWeight": 0.24,
+      "weightedContribution": 0.48
+    },
+    {
+      "indicator": "International Collaboration Patterns",
+      "weight": 50,
+      "score": 3,
+      "explanation": "Bill Gates is known for extensive international collaboration through the Bill & Melinda Gates Foundation, particularly in health and education. While these collaborations are generally transparent, they could pose moderate risks depending on the partners involved.",
+      "sources": [
+        "Chunk 3"
+      ],
+      "normalizedWeight": 0.2,
+      "weightedContribution": 0.6
+    },
+    {
+      "indicator": "Funding Sources Transparency",
+      "weight": 40,
+      "score": 2,
+      "explanation": "The Bill & Melinda Gates Foundation is known for its transparency in funding sources. No evidence was found to suggest a lack of transparency in Gates' funding activities.",
+      "sources": [
+        "Chunk 3"
+      ],
+      "normalizedWeight": 0.16,
+      "weightedContribution": 0.32
+    }
+  ],
+  "calculation": {
+    "totalWeight": 300,
+    "overallScore": 2.88,
+    "thresholdsApplied": {
+      "red": "overallScore >= 4.0",
+      "yellow": "2.5 <= overallScore < 4.0",
+      "blue": "overallScore < 2.5"
+    }
+  },
+  "finalAssessment": {
+    "trafficLight": "Yellow",
+    "overallExplanation": "Bill Gates presents a moderate research-security risk primarily due to his historical involvement in dual-use technology and extensive international collaborations. However, his current focus on philanthropy and transparency in funding reduces the overall risk."
+  },
+  "analysis_metadata": {
+    "chunks_analyzed": 10,
+    "subgraph_nodes": 139,
+    "subgraph_relationships": 276,
+    "search_method": "unknown",
+    "best_match_score": 0.9
+  }
+}

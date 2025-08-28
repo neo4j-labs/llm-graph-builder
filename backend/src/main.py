@@ -767,9 +767,9 @@ def failed_file_process(uri,file_name, merged_file_path):
       logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
       delete_uploaded_local_file(merged_file_path,file_name)
 
-def search_nodes_api(uri, userName, password, database, search_term, node_type="Person", max_results=50):
+def search_nodes_api(uri, userName, password, database, search_term, node_type="Person", max_results=50, prefer_vector=True, use_hybrid=True):
     """
-    API endpoint for searching nodes across all documents.
+    API endpoint for searching nodes across all documents with hybrid vector and fuzzy text search support.
     
     Args:
         uri (str): The URI for the Neo4j database.
@@ -779,13 +779,15 @@ def search_nodes_api(uri, userName, password, database, search_term, node_type="
         search_term (str): The search term to look for.
         node_type (str): The type of node to search for (default: "Person").
         max_results (int): Maximum number of results to return.
+        prefer_vector (bool): Whether to prefer vector search over text search when available.
+        use_hybrid (bool): Whether to use hybrid search combining vector and fuzzy text.
     
     Returns:
-        dict: Contains matching nodes with their properties.
+        dict: Contains matching nodes with their properties and search method info.
     """
     try:
-        logging.info(f"API: Searching for nodes with term '{search_term}' in type '{node_type}'")
-        result = search_nodes(uri, userName, password, database, search_term, node_type, max_results)
+        logging.info(f"API: Searching for nodes with term '{search_term}' in type '{node_type}' (prefer_vector={prefer_vector}, hybrid={use_hybrid})")
+        result = search_nodes(uri, userName, password, database, search_term, node_type, max_results, prefer_vector, use_hybrid)
         return result
     except Exception as e:
         logging.error(f"API: Error in search_nodes_api: {str(e)}")
@@ -817,7 +819,7 @@ def get_subgraph_api(uri, userName, password, database, node_id, depth=4, max_no
         raise Exception(f"Failed to extract subgraph: {str(e)}")
 
 
-def search_and_get_subgraph_api(uri, userName, password, database, search_term, node_type="Person", depth=4, max_results=10):
+def search_and_get_subgraph_api(uri, userName, password, database, search_term, node_type="Person", depth=4, max_results=10, extract_best_match_only=True):
     """
     API endpoint for combined search and subgraph extraction.
     
@@ -830,13 +832,14 @@ def search_and_get_subgraph_api(uri, userName, password, database, search_term, 
         node_type (str): The type of node to search for (default: "Person").
         depth (int): The maximum depth of the subgraph (default: 4).
         max_results (int): Maximum number of search results to process.
+        extract_best_match_only (bool): Whether to extract subgraph only for the best match (default: True).
     
     Returns:
         dict: Contains search results and their subgraphs.
     """
     try:
-        logging.info(f"API: Searching and extracting subgraphs for term '{search_term}'")
-        result = search_and_get_subgraph(uri, userName, password, database, search_term, node_type, depth, max_results)
+        logging.info(f"API: Searching and extracting subgraphs for term '{search_term}' (extract_best_match_only={extract_best_match_only})")
+        result = search_and_get_subgraph(uri, userName, password, database, search_term, node_type, depth, max_results, extract_best_match_only)
         return result
     except Exception as e:
         logging.error(f"API: Error in search_and_get_subgraph_api: {str(e)}")
@@ -862,3 +865,43 @@ def diagnose_database_entities_api(uri, userName, password, database):
     except Exception as e:
         logging.error(f"API: Error in diagnose_database_entities_api: {str(e)}")
         raise Exception(f"Failed to diagnose database entities: {str(e)}")
+
+def analyze_risk_api(uri, userName, password, database, entity_name, entity_type, risk_indicators, depth=4, max_results=10):
+    """
+    API endpoint for analyzing research security risk of an entity.
+    
+    Args:
+        uri (str): The URI for the Neo4j database.
+        userName (str): The username for authentication.
+        password (str): The password for authentication.
+        database (str): The database name.
+        entity_name (str): Name of the entity to assess.
+        entity_type (str): Type of entity (individual or organization).
+        risk_indicators (dict): Dictionary of risk indicators and their weights.
+        depth (int): Depth for subgraph extraction (default: 4).
+        max_results (int): Maximum number of search results to consider (default: 10).
+    
+    Returns:
+        dict: Complete risk assessment result.
+    """
+    try:
+        logging.info(f"API: Analyzing risk for entity '{entity_name}' ({entity_type})")
+        
+        # Import here to avoid circular imports
+        from src.risk_assessment import analyze_risk
+        
+        result = analyze_risk(
+            uri=uri,
+            username=userName,
+            password=password,
+            database=database,
+            entity_name=entity_name,
+            entity_type=entity_type,
+            risk_indicators=risk_indicators,
+            depth=depth,
+            max_results=max_results
+        )
+        return result
+    except Exception as e:
+        logging.error(f"API: Error in analyze_risk_api: {str(e)}")
+        raise Exception(f"Failed to analyze risk: {str(e)}")

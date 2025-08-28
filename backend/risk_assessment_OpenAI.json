@@ -1,0 +1,81 @@
+{
+  "entityName": "OpenAI",
+  "entityType": "organization",
+  "riskAssessments": [
+    {
+      "indicator": "Foreign State Influence",
+      "weight": 80,
+      "score": 3,
+      "explanation": "No direct evidence of foreign state influence was found in the provided data. However, given the global nature of AI research and potential geopolitical interests, a moderate risk score is assigned conservatively.",
+      "sources": [
+        "nil"
+      ],
+      "normalizedWeight": 0.32,
+      "weightedContribution": 0.96
+    },
+    {
+      "indicator": "Dual-Use Technology Exposure",
+      "weight": 70,
+      "score": 4,
+      "explanation": "AI technologies, including those developed by OpenAI, have significant dual-use potential, such as applications in both civilian and military contexts. This increases the risk of misuse or unintended consequences.",
+      "sources": [
+        "nil"
+      ],
+      "normalizedWeight": 0.28,
+      "weightedContribution": 1.12
+    },
+    {
+      "indicator": "Compliance with Canadian Research Security Policies",
+      "weight": 60,
+      "score": 2,
+      "explanation": "No evidence was found regarding OpenAI's compliance with Canadian research security policies. However, as a U.S.-based organization, it is likely subject to U.S. regulations, which may not fully align with Canadian policies.",
+      "sources": [
+        "nil"
+      ],
+      "normalizedWeight": 0.24,
+      "weightedContribution": 0.48
+    },
+    {
+      "indicator": "International Collaboration Patterns",
+      "weight": 50,
+      "score": 3,
+      "explanation": "OpenAI collaborates internationally, which can introduce risks related to intellectual property and security. However, no specific evidence of problematic collaborations was found in the provided data.",
+      "sources": [
+        "nil"
+      ],
+      "normalizedWeight": 0.2,
+      "weightedContribution": 0.6
+    },
+    {
+      "indicator": "Funding Sources Transparency",
+      "weight": 40,
+      "score": 2,
+      "explanation": "No evidence was found regarding the transparency of OpenAI's funding sources. A conservative score is assigned due to the lack of information.",
+      "sources": [
+        "nil"
+      ],
+      "normalizedWeight": 0.16,
+      "weightedContribution": 0.32
+    }
+  ],
+  "calculation": {
+    "totalWeight": 300,
+    "overallScore": 3.48,
+    "thresholdsApplied": {
+      "red": "overallScore >= 4.0",
+      "yellow": "2.5 <= overallScore < 4.0",
+      "blue": "overallScore < 2.5"
+    }
+  },
+  "finalAssessment": {
+    "trafficLight": "Yellow",
+    "overallExplanation": "The overall risk assessment for OpenAI is moderate, primarily due to the dual-use nature of its technology and potential risks associated with international collaboration and compliance with Canadian policies."
+  },
+  "analysis_metadata": {
+    "chunks_analyzed": 10,
+    "subgraph_nodes": 104,
+    "subgraph_relationships": 226,
+    "search_method": "unknown",
+    "best_match_score": 0.2617
+  }
+}
