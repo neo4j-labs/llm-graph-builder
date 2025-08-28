@@ -5,6 +5,7 @@ import { MagnifyingGlassIconOutline } from "@neo4j-ndl/react/icons";
 interface SearchPanelProps {
   onSearch: (searchParams: SearchParams) => void;
   onClear: () => void;
+  onAnalyzeRisk: (entityName: string, entityType: string) => void;
   loading: boolean;
   connectionForm: {
     uri: string;
@@ -24,6 +25,7 @@ export interface SearchParams {
 const SearchPanel: React.FC<SearchPanelProps> = ({
   onSearch,
   onClear,
+  onAnalyzeRisk,
   loading,
   connectionForm,
 }) => {
@@ -68,6 +70,12 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       handleSearch();
+    }
+  };
+
+  const handleAnalyzeRisk = () => {
+    if (searchParams.search_term.trim()) {
+      onAnalyzeRisk(searchParams.search_term, searchParams.node_type);
     }
   };
 
@@ -173,11 +181,20 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
           <Button
             onClick={handleSearch}
             disabled={isSearchDisabled}
-            loading={loading}
+            loading={loading ? "true" : undefined}
             className="flex-1"
           >
             <MagnifyingGlassIconOutline className="w-4 h-4 mr-2" />
             Search & Extract Subgraph
+          </Button>
+          <Button
+            onClick={handleAnalyzeRisk}
+            disabled={isSearchDisabled}
+            loading={loading ? "true" : undefined}
+            variant="primary"
+            className="flex-1"
+          >
+            🔍 Analyze Risk
           </Button>
           <Button
             onClick={onClear}

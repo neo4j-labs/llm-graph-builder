@@ -368,3 +368,70 @@ export const searchAndGetSubgraphAPI = async (
     }
   }
 };
+
+export const analyzeRiskAPI = async (
+  entity_name: string,
+  entity_type: string,
+  risk_indicators: Record<string, number>,
+  depth: number = 4,
+  max_results: number = 10,
+  signal: AbortSignal,
+  connectionParams?: ConnectionParams
+) => {
+  try {
+    console.log("Making risk analysis API call with params:", {
+      entity_name,
+      entity_type,
+      risk_indicators,
+      depth,
+      max_results,
+      connectionParams: connectionParams
+        ? {
+            uri: connectionParams.uri,
+            userName: connectionParams.userName,
+            database: connectionParams.database,
+            password: "***", //hide pass
+          }
+        : "none",
+    });
+
+    const formData = new FormData();
+    formData.append("entity_name", entity_name);
+    formData.append("entity_type", entity_type);
+    formData.append("risk_indicators", JSON.stringify(risk_indicators));
+    formData.append("depth", depth.toString());
+    formData.append("max_results", max_results.toString());
+
+    if (connectionParams) {
+      formData.append("uri", connectionParams.uri);
+      formData.append("userName", connectionParams.userName);
+      formData.append("password", connectionParams.password);
+      formData.append("database", connectionParams.database);
+    }
+
+    const response = await api.post(`/analyze_risk`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      signal,
+    });
+    return response;
+  } catch (error: any) {
+    console.error("Error analyzing risk:", error);
+    if (error.code === "ECONNABORTED") {
+      throw new Error(
+        "Request timed out. The backend is taking too long to respond. Please check if your backend is running and try again."
+      );
+    } else if (error.response) {
+      throw new Error(
+        `Backend error: ${error.response.status} - ${error.response.data?.detail || error.response.statusText}`
+      );
+    } else if (error.request) {
+      throw new Error(
+        "No response from backend. Please check if your backend is running"
+      );
+    } else {
+      throw new Error(`Request failed: ${error.message}`);
+    }
+  }
+};
