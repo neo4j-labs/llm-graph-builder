@@ -111,7 +111,7 @@ Provide a conservative score with explanation that no evidence was found when ap
 
 def extract_chunks_from_subgraph(subgraph_data: Dict[str, Any]) -> List[Dict[str, Any]]:
     """
-    Extract relevant chunks from subgraph data.
+    Extract relevant chunks from subgraph data with enhanced URL extraction.
     
     Args:
         subgraph_data: Subgraph data from search_and_get_subgraph
@@ -125,7 +125,7 @@ def extract_chunks_from_subgraph(subgraph_data: Dict[str, Any]) -> List[Dict[str
     try:
         logging.info(f"Extracting chunks from subgraph data: {len(subgraph_data.get('subgraphs', []))} subgraphs")
         
-        # First pass: collect document information
+        # First pass: collect document information from subgraph
         for subgraph in subgraph_data.get('subgraphs', []):
             for node in subgraph.get('nodes', []):
                 node_labels = node.get('labels', [])
@@ -249,6 +249,99 @@ def extract_chunks_from_subgraph(subgraph_data: Dict[str, Any]) -> List[Dict[str
     except Exception as e:
         logging.error(f"Error extracting chunks from subgraph: {str(e)}")
         return []
+
+def enhance_chunks_with_urls(uri: str, username: str, password: str, database: str, 
+                            chunks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Enhance chunks with URL information by querying the database for Document URLs.
+    
+    Args:
+        uri: Neo4j database URI
+        username: Database username
+        password: Database password
+        database: Database name
+        chunks: List of chunks to enhance
+        
+    Returns:
+        Enhanced chunks with URL information
+    """
+    try:
+        from src.shared.common_fn import create_graph_database_connection, execute_graph_query
+        
+        # Connect to database
+        graph = create_graph_database_connection(uri, username, password, database)
+        
+        # Get unique file names from chunks
+        file_names = set()
+        for chunk in chunks:
+            if chunk.get('document_name'):
+                file_names.add(chunk['document_name'])
+            elif 'fileName' in chunk.get('source', ''):
+                # Extract fileName from source like "Document: Bill_Gates"
+                source = chunk['source']
+                if source.startswith('Document: '):
+                    file_names.add(source.replace('Document: ', ''))
+        
+        # Query database for Document URLs
+        if file_names:
+            placeholders = ', '.join([f"'{name}'" for name in file_names])
+            url_query = f"""
+            MATCH (d:Document)
+            WHERE d.fileName IN [{placeholders}]
+            RETURN d.fileName as fileName, d.url as url, d.fileSource as fileSource
+            """
+            
+            url_results = execute_graph_query(graph, url_query)
+            
+            # Create mapping of fileName to URL
+            url_mapping = {}
+            for result in url_results:
+                if result.get('url'):
+                    url_mapping[result['fileName']] = {
+                        'url': result['url'],
+                        'fileSource': result.get('fileSource', '')
+                    }
+            
+            # Enhance chunks with URLs
+            enhanced_chunks = []
+            for chunk in chunks:
+                enhanced_chunk = chunk.copy()
+                
+                # Try to find URL for this chunk
+                chunk_url = None
+                
+                # 1. Check if chunk already has a URL
+                if chunk.get('source', '').startswith('http'):
+                    chunk_url = chunk['source']
+                
+                # 2. Try to get URL from document name
+                elif chunk.get('document_name') and chunk['document_name'] in url_mapping:
+                    chunk_url = url_mapping[chunk['document_name']]['url']
+                
+                # 3. Try to extract fileName from source and look up URL
+                elif chunk.get('source', '').startswith('Document: '):
+                    doc_name = chunk['source'].replace('Document: ', '')
+                    if doc_name in url_mapping:
+                        chunk_url = url_mapping[doc_name]['url']
+                
+                # Update chunk source with URL if found
+                if chunk_url:
+                    enhanced_chunk['source'] = chunk_url
+                    logging.info(f"Enhanced chunk with URL: {chunk_url}")
+                else:
+                    logging.info(f"Could not find URL for chunk: {chunk.get('source', 'Unknown')}")
+                
+                enhanced_chunks.append(enhanced_chunk)
+            
+            graph.close()
+            return enhanced_chunks
+        
+        graph.close()
+        return chunks
+        
+    except Exception as e:
+        logging.error(f"Error enhancing chunks with URLs: {str(e)}")
+        return chunks
 
 def extract_subgraph_info(subgraph_data: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -404,6 +497,10 @@ def analyze_risk(uri: str, username: str, password: str, database: str,
         # Step 2: Extract relevant chunks from subgraph
         chunks = extract_chunks_from_subgraph(subgraph_data)
         logging.info(f"Extracted {len(chunks)} relevant chunks for risk assessment")
+        
+        # Step 2.5: Enhance chunks with URLs from database
+        chunks = enhance_chunks_with_urls(uri, username, password, database, chunks)
+        logging.info(f"Enhanced {len(chunks)} chunks with URL information")
         
         # Step 3: Extract subgraph summary information
         subgraph_info = extract_subgraph_info(subgraph_data)
