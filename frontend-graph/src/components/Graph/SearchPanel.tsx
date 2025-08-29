@@ -5,7 +5,7 @@ import { MagnifyingGlassIconOutline } from "@neo4j-ndl/react/icons";
 interface SearchPanelProps {
   onSearch: (searchParams: SearchParams) => void;
   onClear: () => void;
-  onAnalyzeRisk: (entityName: string, entityType: string) => void;
+  onAnalyzeRisk: (entityName: string, entityType: string, depth: number, maxResults: number) => void;
   loading: boolean;
   connectionForm: {
     uri: string;
@@ -67,15 +67,11 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleSearch();
-    }
-  };
+
 
   const handleAnalyzeRisk = () => {
     if (searchParams.search_term.trim()) {
-      onAnalyzeRisk(searchParams.search_term, searchParams.node_type);
+      onAnalyzeRisk(searchParams.search_term, searchParams.node_type, searchParams.depth, searchParams.max_results);
     }
   };
 
@@ -95,15 +91,13 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
             Search Term
           </label>
           <TextInput
-            type="text"
             value={searchParams.search_term}
             onChange={(e) =>
               setSearchParams({ ...searchParams, search_term: e.target.value })
             }
-            onKeyPress={handleKeyPress}
             placeholder="Enter search term (e.g., person name, organization)"
             className="w-full"
-            disabled={loading}
+            isDisabled={loading}
           />
         </div>
 
@@ -180,8 +174,8 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
         <div className="flex space-x-3 pt-2">
           <Button
             onClick={handleSearch}
-            disabled={isSearchDisabled}
-            loading={loading ? "true" : undefined}
+            isDisabled={isSearchDisabled}
+            isLoading={loading}
             className="flex-1"
           >
             <MagnifyingGlassIconOutline className="w-4 h-4 mr-2" />
@@ -189,17 +183,15 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
           </Button>
           <Button
             onClick={handleAnalyzeRisk}
-            disabled={isSearchDisabled}
-            loading={loading ? "true" : undefined}
-            variant="primary"
+            isDisabled={isSearchDisabled}
+            isLoading={loading}
             className="flex-1"
           >
             🔍 Analyze Risk
           </Button>
           <Button
             onClick={onClear}
-            disabled={loading}
-            variant="secondary"
+            isDisabled={loading}
             className="flex-1"
           >
             Clear

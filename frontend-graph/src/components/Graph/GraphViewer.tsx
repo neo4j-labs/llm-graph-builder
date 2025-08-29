@@ -213,12 +213,12 @@ const GraphViewer: React.FC = () => {
     setError(null);
   };
 
-  const handleAnalyzeRisk = async (entityName: string, entityType: string) => {
+  const handleAnalyzeRisk = async (entityName: string, entityType: string, depth: number, maxResults: number) => {
     setRiskLoading(true);
     setError(null);
 
     try {
-      console.log("Starting risk analysis...", { entityName, entityType });
+      console.log("Starting risk analysis...", { entityName, entityType, depth, maxResults });
 
       // Create an AbortController for the API call
       const abortController = new AbortController();
@@ -241,13 +241,13 @@ const GraphViewer: React.FC = () => {
         "Research Data Security": 30,
       };
 
-      // Perform risk analysis
+      // Perform risk analysis with depth and max_results from search panel
       const response = await analyzeRiskAPI(
         entityName,
         entityType,
         riskIndicators,
-        4, // depth
-        10, // max_results
+        depth, // depth from search panel
+        maxResults, // max_results from search panel
         abortController.signal,
         connectionForm
       );
