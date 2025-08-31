@@ -7,6 +7,7 @@ __pycache__/
 # C extensions
 *.so
 /backend/graph
+/nrcmvp/
 # Distribution / packaging
 .Python
 build/
