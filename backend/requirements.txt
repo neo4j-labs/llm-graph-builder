@@ -21,7 +21,7 @@ langchain-core==0.3.65
 langchain-experimental==0.3.4
 langchain-google-vertexai==2.0.25
 langchain-groq==0.3.2
-langchain-openai==0.3.23
+langchain-openai==0.3.32
 langchain-text-splitters==0.3.8
 langchain-huggingface==0.3.0
 langdetect==1.0.9
