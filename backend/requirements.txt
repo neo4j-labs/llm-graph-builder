@@ -33,7 +33,7 @@ openai==1.86.0
 opencv-python==4.11.0.86
 psutil==7.0.0
 pydantic==2.11.7
-python-dotenv==1.1.0
+python-dotenv==1.0.0
 python-magic==0.4.27
 PyPDF2==3.0.1
 PyMuPDF==1.26.1
@@ -63,3 +63,5 @@ rouge_score==0.1.2
 langchain-neo4j==0.4.0
 pypandoc-binary==1.15
 chardet==5.2.0
+psycopg2-binary==2.9.9
+alembic==1.13.1

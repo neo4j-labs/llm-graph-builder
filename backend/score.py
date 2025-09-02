@@ -299,6 +299,35 @@ async def extract_knowledge_graph_from_file(
         logger.log_struct(result, "INFO")
         result.update(uri_latency)
         logging.info(f"extraction completed in {extract_api_time:.2f} seconds for file name {file_name}")
+        
+        # 🚀 AUTOMATIC SUBGRAPH MONITORING - Trigger after successful document processing
+        try:
+            logging.info(f"Triggering automatic subgraph monitoring after document processing: {file_name}")
+            
+            # Import and use SubgraphMonitor
+            from src.subgraph_monitor import SubgraphMonitor
+            subgraph_monitor = SubgraphMonitor()
+            
+            # Monitor all entities for subgraph changes
+            monitoring_result = await subgraph_monitor.monitor_all_entities(
+                neo4j_uri=uri,
+                neo4j_username=userName,
+                neo4j_password=password,
+                neo4j_database=database
+            )
+            
+            if monitoring_result.get("changes_detected", 0) > 0:
+                logging.info(f"🚨 Subgraph changes detected: {monitoring_result['changes_detected']} entities with changes")
+                # Store monitoring result for potential alert generation
+                result['subgraph_monitoring'] = monitoring_result
+            else:
+                logging.info(f"✅ No subgraph changes detected for monitored entities")
+                
+        except Exception as e:
+            logging.warning(f"Subgraph monitoring failed after document processing: {str(e)}")
+            # Don't fail the main extraction if monitoring fails
+            result['subgraph_monitoring_error'] = str(e)
+        
         return create_api_response('Success', data=result, file_source= source_type)
     except LLMGraphBuilderException as e:
         error_message = str(e)
@@ -402,6 +431,35 @@ async def post_processing(uri=Form(None), userName=Form(None), password=Form(Non
         
         end = time.time()
         elapsed_time = end - start
+        
+        # 🚀 AUTOMATIC SUBGRAPH MONITORING - Trigger after post-processing completion
+        try:
+            logging.info(f"Triggering automatic subgraph monitoring after post-processing tasks")
+            
+            # Import and use SubgraphMonitor
+            from src.subgraph_monitor import SubgraphMonitor
+            subgraph_monitor = SubgraphMonitor()
+            
+            # Monitor all entities for subgraph changes
+            monitoring_result = await subgraph_monitor.monitor_all_entities(
+                neo4j_uri=uri,
+                neo4j_username=userName,
+                neo4j_password=password,
+                neo4j_database=database
+            )
+            
+            if monitoring_result.get("changes_detected", 0) > 0:
+                logging.info(f"🚨 Post-processing subgraph changes detected: {monitoring_result['changes_detected']} entities with changes")
+                # Add monitoring result to response
+                count_response.append({"subgraph_monitoring": monitoring_result})
+            else:
+                logging.info(f"✅ No subgraph changes detected after post-processing")
+                
+        except Exception as e:
+            logging.warning(f"Post-processing subgraph monitoring failed: {str(e)}")
+            # Don't fail the main post-processing if monitoring fails
+            count_response.append({"subgraph_monitoring_error": str(e)})
+        
         json_obj = {'api_name': api_name, 'db_url': uri, 'userName':userName, 'database':database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
         logger.log_struct(json_obj)
         return create_api_response('Success', data=count_response, message='All tasks completed successfully')
@@ -1461,6 +1519,378 @@ async def risk_monitor(
         return create_api_response(job_status, message=message, error=error_message, data=mode)
     finally:
         gc.collect()
+
+@app.post("/monitoring/check_entities")
+async def check_monitored_entities(
+    monitored_entities=Form("[]"),  # JSON string of entity names to monitor
+    model=Form("openai_gpt_4o"),
+    uri=Form(None),  # Neo4j connection URI
+    userName=Form(None),  # Neo4j username
+    password=Form(None),  # Neo4j password
+    database=Form(None)  # Neo4j database
+):
+    """
+    Enhanced risk monitoring: Check if risk has increased for monitored entities.
+    This endpoint analyzes sub-graphs and generates LLM-based alerts.
+    Called after each document upload/URL scan.
+    """
+    logging.info(f"Enhanced monitoring check called at {datetime.now()}")
+    monitoring_start_time = time.time()
+    
+    try:
+        # Parse monitored entities
+        try:
+            monitored_entities_list = json.loads(monitored_entities) if monitored_entities else []
+        except json.JSONDecodeError as e:
+            return create_api_response('Failed', message="Invalid JSON format in monitored_entities", error=str(e))
+        
+        # Validate inputs
+        if not monitored_entities_list:
+            return create_api_response('Failed', message="No monitored entities provided", error="monitored_entities parameter is empty")
+        
+        # Import and use MonitoringServicePG
+        from src.monitoring_service_pg import MonitoringServicePG
+        monitoring_service = MonitoringServicePG()
+        
+        # Setup Neo4j connection for sub-graph analysis
+        graph_connection = None
+        if uri and userName and password and database:
+            try:
+                from src.shared.common_fn import create_graph_database_connection
+                graph_connection = create_graph_database_connection(uri, userName, password, database)
+                logging.info(f"Neo4j connection established for enhanced monitoring")
+            except Exception as e:
+                logging.warning(f"Failed to establish Neo4j connection: {e}. Using basic monitoring.")
+        
+        # Check for risk changes with enhanced monitoring
+        result = await monitoring_service.check_entity_risk_changes(monitored_entities_list, model, graph_connection)
+        
+        # Performance tracking
+        total_call_time = time.time() - monitoring_start_time
+        logging.info(f"Monitoring check response time: {total_call_time:.2f} seconds")
+        
+        # Add timing info to result
+        if isinstance(result, dict):
+            result["processing_time"] = round(total_call_time, 2)
+        
+        # Structured logging
+        monitoring_type = "enhanced" if graph_connection else "basic"
+        json_obj = {
+            'api_name': 'monitoring_check_entities',
+            'monitoring_type': monitoring_type,
+            'monitored_entities_count': len(monitored_entities_list),
+            'model': model,
+            'neo4j_connected': graph_connection is not None,
+            'logging_time': formatted_time(datetime.now(timezone.utc)), 
+            'elapsed_api_time': f'{total_call_time:.2f}'
+        }
+        logger.log_struct(json_obj, "INFO")
+        
+        return create_api_response('Success', data=result)
+        
+    except Exception as e:
+        job_status = "Failed"
+        message = "Unable to check monitored entities"
+        error_message = str(e)
+        logging.exception(f'Exception in check_monitored_entities: {error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        gc.collect()
+
+@app.post("/monitoring/subgraph_monitor")
+async def subgraph_monitor_entities(
+    uri=Form(None),  # Neo4j connection URI
+    userName=Form(None),  # Neo4j username
+    password=Form(None),  # Neo4j password
+    database=Form(None)  # Neo4j database
+):
+    """
+    Automatic subgraph monitoring: Check all monitored entities for subgraph changes.
+    This endpoint is designed to be called after each document upload/processing.
+    """
+    logging.info(f"Subgraph monitoring called at {datetime.now()}")
+    monitoring_start_time = time.time()
+    
+    try:
+        # Import and use SubgraphMonitor
+        from src.subgraph_monitor import SubgraphMonitor
+        subgraph_monitor = SubgraphMonitor()
+        
+        # Validate Neo4j connection parameters
+        if not all([uri, userName, password, database]):
+            return create_api_response('Failed', message="Neo4j connection parameters required", error="uri, userName, password, and database must be provided")
+        
+        # Monitor all entities for subgraph changes
+        result = await subgraph_monitor.monitor_all_entities(
+            neo4j_uri=uri,
+            neo4j_username=userName,
+            neo4j_password=password,
+            neo4j_database=database
+        )
+        
+        # Performance tracking
+        total_call_time = time.time() - monitoring_start_time
+        logging.info(f"Subgraph monitoring response time: {total_call_time:.2f} seconds")
+        
+        # Add timing info to result
+        if isinstance(result, dict):
+            result["processing_time"] = round(total_call_time, 2)
+        
+        # Structured logging
+        json_obj = {
+            'api_name': 'subgraph_monitor_entities',
+            'neo4j_connected': True,
+            'logging_time': formatted_time(datetime.now(timezone.utc)), 
+            'elapsed_api_time': f'{total_call_time:.2f}'
+        }
+        logger.log_struct(json_obj, "INFO")
+        
+        return create_api_response('Success', data=result)
+        
+    except Exception as e:
+        job_status = "Failed"
+        message = "Unable to perform subgraph monitoring"
+        error_message = str(e)
+        logging.exception(f'Exception in subgraph_monitor_entities: {error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        gc.collect()
+
+@app.post("/monitoring/store_entities")
+async def store_monitored_entities(
+    entities=Form()  # JSON string of entities to store
+):
+    """
+    Store monitored entities in PostgreSQL database.
+    This allows the system to persist monitoring configuration.
+    """
+    logging.info(f"Store monitored entities called at {datetime.now()}")
+    store_start_time = time.time()
+    
+    try:
+        # Parse entities JSON
+        try:
+            entities_list = json.loads(entities) if entities else []
+        except json.JSONDecodeError as e:
+            return create_api_response('Failed', message="Invalid JSON format in entities", error=str(e))
+        
+        # Validate inputs
+        if not entities_list:
+            return create_api_response('Failed', message="No entities provided", error="entities parameter is empty")
+        
+        # Import and use MonitoringServicePG
+        from src.monitoring_service_pg import MonitoringServicePG
+        monitoring_service = MonitoringServicePG()
+        
+        # Initialize schema
+        monitoring_service.initialize_monitoring_schema()
+        
+        # Store each entity
+        stored_entities = []
+        for entity_data in entities_list:
+            try:
+                entity_id = monitoring_service.store_monitored_entity(entity_data)
+                stored_entities.append({
+                    "original": entity_data,
+                    "stored_id": entity_id,
+                    "status": "success"
+                })
+            except Exception as e:
+                stored_entities.append({
+                    "original": entity_data,
+                    "stored_id": None,
+                    "status": "failed",
+                    "error": str(e)
+                })
+        
+        # Performance tracking
+        total_call_time = time.time() - store_start_time
+        logging.info(f"Store entities response time: {total_call_time:.2f} seconds")
+        
+        # Structured logging
+        json_obj = {
+            'api_name': 'store_monitored_entities',
+            'monitored_entities_count': len(entities_list),
+            'successful_stores': len([e for e in stored_entities if e['status'] == 'success']),
+            'failed_stores': len([e for e in stored_entities if e['status'] == 'failed']),
+            'logging_time': formatted_time(datetime.now(timezone.utc)), 
+            'elapsed_api_time': f'{total_call_time:.2f}'
+        }
+        logger.log_struct(json_obj, "INFO")
+        
+        return create_api_response('Success', data={
+            "entities_stored": len(stored_entities),
+            "successful": len([e for e in stored_entities if e['status'] == 'success']),
+            "failed": len([e for e in stored_entities if e['status'] == 'failed']),
+            "results": stored_entities,
+            "processing_time": round(total_call_time, 2)
+        })
+        
+    except Exception as e:
+        job_status = "Failed"
+        message = "Unable to store monitored entities"
+        error_message = str(e)
+        logging.exception(f'Exception in store_monitored_entities: {error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        gc.collect()
+
+@app.get("/monitoring/entities")
+async def get_monitored_entities():
+    """
+    Retrieve all monitored entities from PostgreSQL database.
+    """
+    logging.info(f"Get monitored entities called at {datetime.now()}")
+    
+    try:
+        # Import and use MonitoringServicePG
+        from src.monitoring_service_pg import MonitoringServicePG
+        monitoring_service = MonitoringServicePG()
+        
+        # Get entities from database
+        entities = monitoring_service.get_monitored_entities_from_db()
+        
+        return create_api_response('Success', data=entities)
+        
+    except Exception as e:
+        job_status = "Failed"
+        message = "Unable to retrieve monitored entities"
+        error_message = str(e)
+        logging.exception(f'Exception in get_monitored_entities: {error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+
+@app.get("/monitoring/alerts")
+async def get_monitoring_alerts():
+    """
+    Get all monitoring alerts from PostgreSQL database.
+    """
+    logging.info(f"Get monitoring alerts called at {datetime.now()}")
+    
+    try:
+        # Import and use MonitoringServicePG
+        from src.monitoring_service_pg import MonitoringServicePG
+        monitoring_service = MonitoringServicePG()
+        
+        # Get alerts from database
+        alerts = monitoring_service.get_monitoring_alerts()
+        
+        return create_api_response('Success', data=alerts)
+        
+    except Exception as e:
+        job_status = "Failed"
+        message = "Unable to get monitoring alerts"
+        error_message = str(e)
+        logging.exception(f'Exception in get_monitoring_alerts: {error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+
+@app.post("/monitoring/alerts/{alert_id}/acknowledge")
+async def acknowledge_monitoring_alert(
+    alert_id: str
+):
+    """
+    Acknowledge a monitoring alert, marking it as inactive.
+    """
+    logging.info(f"Acknowledge monitoring alert called at {datetime.now()}")
+    
+    try:
+        # Import and use MonitoringServicePG
+        from src.monitoring_service_pg import MonitoringServicePG
+        monitoring_service = MonitoringServicePG()
+        
+        # Acknowledge alert in database
+        success = monitoring_service.acknowledge_alert(int(alert_id))
+        
+        if success:
+            return create_api_response('Success', data={"message": f"Alert {alert_id} acknowledged successfully"})
+        else:
+            return create_api_response('Failed', message="Alert not found or could not be acknowledged")
+        
+    except Exception as e:
+        job_status = "Failed"
+        message = "Unable to acknowledge monitoring alert"
+        error_message = str(e)
+        logging.exception(f'Exception in acknowledge_monitoring_alert: {error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+
+@app.get("/monitoring/entities/{entity_id}/subgraph")
+async def get_entity_subgraph(
+    entity_id: str,
+    uri=Form(None),  # Neo4j connection URI
+    userName=Form(None),  # Neo4j username
+    password=Form(None),  # Neo4j password
+    database=Form(None)  # Neo4j database
+):
+    """
+    Get subgraph information for a specific monitored entity.
+    """
+    logging.info(f"Get entity subgraph called at {datetime.now()}")
+    
+    try:
+        # Import and use SubgraphMonitor
+        from src.subgraph_monitor import SubgraphMonitor
+        subgraph_monitor = SubgraphMonitor()
+        
+        # Get entity details first
+        from src.monitoring_service_pg import MonitoringServicePG
+        monitoring_service = MonitoringServicePG()
+        entity = monitoring_service.get_monitored_entity_by_id(int(entity_id))
+        
+        if not entity:
+            return create_api_response('Failed', message="Entity not found", error=f"Entity with ID {entity_id} not found")
+        
+        # Validate Neo4j connection parameters
+        if not all([uri, userName, password, database]):
+            return create_api_response('Failed', message="Neo4j connection parameters required", error="uri, userName, password, and database must be provided")
+        
+        # Extract subgraph for the entity
+        from src.shared.common_fn import create_graph_database_connection
+        graph_connection = create_graph_database_connection(uri, userName, password, database)
+        
+        subgraph_data = subgraph_monitor.extract_entity_subgraph(entity["name"], graph_connection)
+        
+        if subgraph_data:
+            return create_api_response('Success', data={
+                "entity": entity,
+                "subgraph": subgraph_data
+            })
+        else:
+            return create_api_response('Failed', message="Could not extract subgraph", error="No subgraph data found for entity")
+        
+    except Exception as e:
+        job_status = "Failed"
+        message = "Unable to get entity subgraph"
+        error_message = str(e)
+        logging.exception(f'Exception in get_entity_subgraph: {error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+
+@app.delete("/monitoring/entities/{entity_id}")
+async def remove_monitored_entity(
+    entity_id: str
+):
+    """
+    Remove a monitored entity from PostgreSQL database.
+    """
+    logging.info(f"Remove monitored entity called at {datetime.now()}")
+    
+    try:
+        # Import and use MonitoringServicePG
+        from src.monitoring_service_pg import MonitoringServicePG
+        monitoring_service = MonitoringServicePG()
+        
+        # Remove entity from database
+        success = monitoring_service.remove_monitored_entity(entity_id)
+        
+        if success:
+            return create_api_response('Success', data={"message": f"Entity {entity_id} removed successfully"})
+        else:
+            return create_api_response('Failed', message="Entity not found or could not be removed")
+        
+    except Exception as e:
+        job_status = "Failed"
+        message = "Unable to remove monitored entity"
+        error_message = str(e)
+        logging.exception(f'Exception in remove_monitored_entity: {error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
 
 if __name__ == "__main__":
     uvicorn.run(app)
