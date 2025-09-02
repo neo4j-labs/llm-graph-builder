@@ -19,6 +19,7 @@ from src.post_processing import create_vector_fulltext_indexes, create_entity_em
 from sse_starlette.sse import EventSourceResponse
 from src.communities import create_communities
 from src.neighbours import get_neighbour_nodes
+from src.risk_monitor import perform_risk_monitoring
 import json
 from typing import List, Optional
 from google.oauth2.credentials import Credentials
@@ -1365,6 +1366,99 @@ async def analyze_risk_endpoint(
         error_message = str(e)
         logging.exception(f'Exception in analyze_risk: {error_message}')
         return create_api_response('Failed', message=message, error=error_message)
+    finally:
+        gc.collect()
+
+@app.post("/risk_monitor")
+async def risk_monitor(
+    uri=Form("neo4j+s://9379df68.databases.neo4j.io:7687"),
+    userName=Form("neo4j"), 
+    password=Form(None), 
+    database=Form("neo4j"),
+    document_name=Form("Abiy Ahmed"),           # Document to monitor
+    monitored_names=Form("[\"Abiy Ahmed\"]"),         # JSON string of names to monitor
+    risk_indicators=Form("[\"Dual-Use Technology Exposure\", \"Direct connections with foreign military entities\"]"),         # JSON string of risk indicators
+    risk_threshold=Form(0.7),          # Risk score threshold
+    model=Form("openai_gpt_4.1"),               # LLM model to use
+    mode=Form("graph_vector_fulltext"),
+    email=Form(None)
+):
+    """
+    Monitor a document for specific names and risk indicators.
+    Returns information for creating risk alerts if any are detected.
+    """
+    logging.info(f"Risk monitoring called at {datetime.now()}")
+    risk_monitor_start_time = time.time()
+    
+    try:
+        # Parse JSON inputs
+        try:
+            monitored_names_list = json.loads(monitored_names) if monitored_names else []
+            risk_indicators_list = json.loads(risk_indicators) if risk_indicators else []
+        except json.JSONDecodeError as e:
+            return create_api_response('Failed', message="Invalid JSON format in monitored_names or risk_indicators", error=str(e))
+        
+        # Validate inputs
+        if not document_name:
+            return create_api_response('Failed', message="Document name is required", error="Missing document_name parameter")
+        
+        if not monitored_names_list and not risk_indicators_list:
+            return create_api_response('Failed', message="At least one of monitored_names or risk_indicators must be provided", error="Both parameters are empty")
+        
+        # Database connection setup
+        if mode == "graph":
+            graph = Neo4jGraph(url=uri, username=userName, password=password, database=database, sanitize=True, refresh_schema=True)
+        else:
+            graph = create_graph_database_connection(uri, userName, password, database)
+        
+        # Access control
+        graph_DB_dataAccess = graphDBdataAccess(graph)
+        write_access = graph_DB_dataAccess.check_account_access(database=database)
+        
+        # Core risk monitoring
+        result = await asyncio.to_thread(
+            perform_risk_monitoring,
+            graph=graph,
+            document_name=document_name,
+            monitored_names=monitored_names_list,
+            risk_indicators=risk_indicators_list,
+            risk_threshold=float(risk_threshold),
+            model=model,
+            mode=mode,
+            write_access=write_access
+        )
+        
+        # Performance tracking
+        total_call_time = time.time() - risk_monitor_start_time
+        logging.info(f"Total Response time is {total_call_time:.2f} seconds")
+        result["info"]["response_time"] = round(total_call_time, 2)
+        
+        # Structured logging
+        json_obj = {
+            'api_name': 'risk_monitor',
+            'db_url': uri, 
+            'userName': userName, 
+            'database': database, 
+            'document_name': document_name,
+            'monitored_names_count': len(monitored_names_list),
+            'risk_indicators_count': len(risk_indicators_list),
+            'risk_threshold': risk_threshold,
+            'model': model,
+            'mode': mode, 
+            'logging_time': formatted_time(datetime.now(timezone.utc)), 
+            'elapsed_api_time': f'{total_call_time:.2f}',
+            'email': email
+        }
+        logger.log_struct(json_obj, "INFO")
+        
+        return create_api_response('Success', data=result)
+        
+    except Exception as e:
+        job_status = "Failed"
+        message = "Unable to perform risk monitoring"
+        error_message = str(e)
+        logging.exception(f'Exception in risk_monitor: {error_message}')
+        return create_api_response(job_status, message=message, error=error_message, data=mode)
     finally:
         gc.collect()
 
