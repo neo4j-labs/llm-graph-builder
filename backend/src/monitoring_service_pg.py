@@ -186,7 +186,7 @@ class MonitoringServicePG:
                 datetime.now()
             )
             
-            result = self.db.execute_query(query, params)
+            result = self.db.execute_insert_returning(query, params)
             if result:
                 assessment_id = result[0]["id"]
                 self.logger.info(f"Stored risk assessment for entity {entity_id}: {assessment_id}")

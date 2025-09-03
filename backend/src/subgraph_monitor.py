@@ -21,40 +21,121 @@ class SubgraphMonitor:
         Extract subgraph for a specific entity using Cypher query
         """
         try:
-            # Cypher query to extract subgraph information
-            query = """
-            MATCH (e:__Entity__ {id: $entity_name})
-            OPTIONAL MATCH (e)-[r]-(related)
-            WITH e, collect(DISTINCT related) as nodes, collect(DISTINCT r) as relationships
-            RETURN 
-                size(nodes) as node_count, 
-                size(relationships) as relationship_count,
-                e.id as entity_id,
-                e.description as entity_description
-            """
-            
-            result = graph_connection.run(query, entity_name=entity_name)
-            record = result.single()
-            
-            if record:
-                subgraph_data = {
-                    "entity_name": entity_name,
-                    "node_count": record["node_count"],
-                    "relationship_count": record["relationship_count"],
-                    "entity_id": record["entity_id"],
-                    "entity_description": record["entity_description"],
-                    "timestamp": datetime.now()
+            # First, try to find the entity with different possible labels and properties
+            queries = [
+                # Try __Entity__ label with id property (exact match)
+                {
+                    "query": """
+                    MATCH (e:__Entity__ {id: $entity_name})
+                    OPTIONAL MATCH (e)-[r]-(related)
+                    WITH e, collect(DISTINCT related) as nodes, collect(DISTINCT r) as relationships
+                    RETURN 
+                        size(nodes) as node_count, 
+                        size(relationships) as relationship_count,
+                        e.id as entity_id,
+                        e.description as entity_description
+                    """,
+                    "params": {"entity_name": entity_name}
+                },
+                # Try __Entity__ label with name property (exact match)
+                {
+                    "query": """
+                    MATCH (e:__Entity__ {name: $entity_name})
+                    OPTIONAL MATCH (e)-[r]-(related)
+                    WITH e, collect(DISTINCT related) as nodes, collect(DISTINCT r) as relationships
+                    RETURN 
+                        size(nodes) as node_count, 
+                        size(relationships) as relationship_count,
+                        e.id as entity_id,
+                        e.description as entity_description
+                    """,
+                    "params": {"entity_name": entity_name}
+                },
+                # Try __Entity__ label with partial name match
+                {
+                    "query": """
+                    MATCH (e:__Entity__)
+                    WHERE e.id CONTAINS $entity_name OR e.name CONTAINS $entity_name OR e.description CONTAINS $entity_name
+                    OPTIONAL MATCH (e)-[r]-(related)
+                    WITH e, collect(DISTINCT related) as nodes, collect(DISTINCT r) as relationships
+                    RETURN 
+                        size(nodes) as node_count, 
+                        size(relationships) as relationship_count,
+                        e.id as entity_id,
+                        e.description as entity_description
+                    LIMIT 1
+                    """,
+                    "params": {"entity_name": entity_name}
+                },
+                # Try Entity label (without underscores) with various properties
+                {
+                    "query": """
+                    MATCH (e:Entity)
+                    WHERE e.id = $entity_name OR e.name = $entity_name OR e.description CONTAINS $entity_name
+                    OPTIONAL MATCH (e)-[r]-(related)
+                    WITH e, collect(DISTINCT related) as nodes, collect(DISTINCT r) as relationships
+                    RETURN 
+                        size(nodes) as node_count, 
+                        size(relationships) as relationship_count,
+                        e.id as entity_id,
+                        e.description as entity_description
+                    LIMIT 1
+                    """,
+                    "params": {"entity_name": entity_name}
+                },
+                # Try searching by any label with any property containing the name
+                {
+                    "query": """
+                    MATCH (e)
+                    WHERE e.id CONTAINS $entity_name OR e.name CONTAINS $entity_name OR e.description CONTAINS $entity_name
+                    OPTIONAL MATCH (e)-[r]-(related)
+                    WITH e, collect(DISTINCT related) as nodes, collect(DISTINCT r) as relationships
+                    RETURN 
+                        size(nodes) as node_count, 
+                        size(relationships) as relationship_count,
+                        e.id as entity_id,
+                        e.description as entity_description
+                    LIMIT 1
+                    """,
+                    "params": {"entity_name": entity_name}
                 }
-                
-                # Generate subgraph signature for change detection
-                signature_data = f"{entity_name}:{record['node_count']}:{record['relationship_count']}"
-                subgraph_data["subgraph_signature"] = hashlib.md5(signature_data.encode()).hexdigest()
-                
-                self.logger.info(f"Extracted subgraph for {entity_name}: {record['node_count']} nodes, {record['relationship_count']} relationships")
-                return subgraph_data
-            else:
-                self.logger.warning(f"No subgraph found for entity: {entity_name}")
-                return None
+            ]
+            
+            for i, query_info in enumerate(queries):
+                try:
+                    self.logger.info(f"Trying query {i+1} for entity: {entity_name}")
+                    self.logger.debug(f"Query: {query_info['query']}")
+                    self.logger.debug(f"Params: {query_info['params']}")
+                    
+                    result = graph_connection.query(query_info["query"], query_info["params"])
+                    
+                    if result and len(result) > 0:
+                        record = result[0]
+                        subgraph_data = {
+                            "entity_name": entity_name,
+                            "node_count": record["node_count"],
+                            "relationship_count": record["relationship_count"],
+                            "entity_id": record["entity_id"],
+                            "entity_description": record["entity_description"],
+                            "timestamp": datetime.now()
+                        }
+                        
+                        # Generate subgraph signature for change detection
+                        signature_data = f"{entity_name}:{record['node_count']}:{record['relationship_count']}"
+                        subgraph_data["subgraph_signature"] = hashlib.md5(signature_data.encode()).hexdigest()
+                        
+                        self.logger.info(f"Extracted subgraph for {entity_name} using query {i+1}: {record['node_count']} nodes, {record['relationship_count']} relationships")
+                        return subgraph_data
+                    else:
+                        self.logger.debug(f"Query {i+1} returned no results for {entity_name}")
+                        
+                except Exception as e:
+                    self.logger.debug(f"Query {i+1} failed for {entity_name}: {str(e)}")
+                    continue
+            
+            # If all queries failed, log a warning
+            self.logger.warning(f"No subgraph found for entity: {entity_name} after trying all query variations")
+            return None
                 
         except Exception as e:
             self.logger.error(f"Error extracting subgraph for {entity_name}: {str(e)}")
@@ -105,20 +186,22 @@ class SubgraphMonitor:
                 entity_id
             )
             
-            result = self.db.execute_command(query, params)
-            return result > 0
+            self.db.execute_query(query, params)
+            self.logger.info(f"Updated subgraph for entity {entity_id}")
+            return True
             
         except Exception as e:
-            self.logger.error(f"Error updating entity subgraph: {str(e)}")
+            self.logger.error(f"Error updating subgraph for entity {entity_id}: {str(e)}")
             return False
     
     def store_subgraph_snapshot(self, entity_id: int, subgraph_data: Dict[str, Any]) -> bool:
         """
-        Store subgraph snapshot for historical tracking
+        Store a snapshot of the subgraph for historical tracking
         """
         try:
             query = """
-            INSERT INTO subgraph_snapshots (entity_id, node_count, relationship_count, subgraph_signature, timestamp)
+            INSERT INTO subgraph_snapshots (entity_id, node_count, relationship_count, 
+                                          subgraph_signature, timestamp)
             VALUES (%s, %s, %s, %s, %s)
             """
             
@@ -130,8 +213,8 @@ class SubgraphMonitor:
                 subgraph_data["timestamp"]
             )
             
-            result = self.db.execute_command(query, params)
-            return result > 0
+            self.db.execute_query(query, params)
+            return True
             
         except Exception as e:
             self.logger.error(f"Error storing subgraph snapshot: {str(e)}")
@@ -142,67 +225,110 @@ class SubgraphMonitor:
         Check if entity's subgraph has changed significantly
         """
         try:
-            # If no previous subgraph data, consider it as a new entity
-            if not entity.get("last_subgraph_nodes") or not entity.get("last_subgraph_relationships"):
-                return True, {
-                    "change_type": "new_entity",
-                    "previous_nodes": 0,
-                    "current_nodes": current_subgraph["node_count"],
-                    "previous_relationships": 0,
-                    "current_relationships": current_subgraph["relationship_count"],
-                    "node_change": current_subgraph["node_count"],
-                    "relationship_change": current_subgraph["relationship_count"]
-                }
+            if not entity.get("subgraph_signature"):
+                # First time monitoring this entity
+                return True, {"type": "initial_monitoring", "details": "First subgraph snapshot"}
             
-            # Calculate changes
-            node_change = abs(current_subgraph["node_count"] - entity["last_subgraph_nodes"])
-            relationship_change = abs(current_subgraph["relationship_count"] - entity["last_subgraph_relationships"])
-            
-            # Check if signature changed (structural change)
-            signature_changed = entity.get("subgraph_signature") != current_subgraph["subgraph_signature"]
-            
-            # Define thresholds for significant changes
-            significant_node_change = node_change > 2
-            significant_relationship_change = relationship_change > 3
-            
-            has_changed = significant_node_change or significant_relationship_change or signature_changed
-            
-            change_details = {
-                "change_type": "subgraph_change" if has_changed else "no_change",
-                "previous_nodes": entity["last_subgraph_nodes"],
-                "current_nodes": current_subgraph["node_count"],
-                "previous_relationships": entity["last_subgraph_relationships"],
-                "current_relationships": current_subgraph["relationship_count"],
-                "node_change": node_change,
-                "relationship_change": relationship_change,
-                "signature_changed": signature_changed,
-                "significant_change": has_changed
-            }
-            
-            if has_changed:
-                self.logger.info(f"Subgraph change detected for {entity['name']}: "
+            # Check if signature changed
+            if entity["subgraph_signature"] != current_subgraph["subgraph_signature"]:
+                change_details = {
+                    "type": "subgraph_change",
+                    "details": (f"Subgraph signature changed. "
                                f"Nodes: {entity['last_subgraph_nodes']} → {current_subgraph['node_count']} "
                                f"Relationships: {entity['last_subgraph_relationships']} → {current_subgraph['relationship_count']}")
+                }
+                
+                # Check if change is significant (more than 10% change)
+                if entity.get("last_subgraph_nodes") and entity.get("last_subgraph_relationships"):
+                    node_change = abs(current_subgraph["node_count"] - entity["last_subgraph_nodes"])
+                    rel_change = abs(current_subgraph["relationship_count"] - entity["last_subgraph_relationships"])
+                    
+                    if node_change > entity["last_subgraph_nodes"] * 0.1 or rel_change > entity["last_subgraph_relationships"] * 0.1:
+                        change_details["significance"] = "high"
+                        change_details["details"] += " (Significant change detected)"
+                    else:
+                        change_details["significance"] = "low"
+                
+                return True, change_details
             
-            return has_changed, change_details
+            return False, {}
             
         except Exception as e:
             self.logger.error(f"Error checking subgraph changes: {str(e)}")
             return False, {}
     
-    async def monitor_all_entities(self, neo4j_uri: str = None, neo4j_username: str = None, 
-                                  neo4j_password: str = None, neo4j_database: str = None) -> Dict[str, Any]:
+    async def _trigger_risk_assessment(self, entity: Dict[str, Any], current_subgraph: Dict[str, Any], 
+                                     graph_connection, model: str = "openai_gpt_4o") -> Dict[str, Any]:
         """
-        Monitor all active entities for subgraph changes
+        Trigger risk assessment when subgraph changes are detected
         """
         try:
-            self.logger.info("Starting subgraph monitoring for all entities")
+            from src.monitoring_service_pg import MonitoringServicePG
+            
+            monitoring_service = MonitoringServicePG()
+            
+            # Get current risk assessment
+            current_risk = await monitoring_service._get_entity_subgraph(graph_connection, entity["name"])
+            
+            # Get previous risk assessment
+            previous_assessment = monitoring_service.get_latest_risk_assessment(entity["id"])
+            
+            # Analyze risk changes
+            risk_analysis = await monitoring_service._analyze_entity_risk_changes(
+                entity, current_risk, previous_assessment, model
+            )
+            
+            # Store new risk assessment
+            if risk_analysis["current_risk_score"] is not None:
+                assessment_data = {
+                    "risk_score": risk_analysis["current_risk_score"],
+                    "risk_level": risk_analysis["risk_level"],
+                    "connections_count": risk_analysis["connections_count"],
+                    "risk_indicators": risk_analysis["risk_indicators"]
+                }
+                monitoring_service.store_risk_assessment(
+                    entity["id"],
+                    assessment_data
+                )
+            
+            # Generate alert if risk increased
+            if risk_analysis["risk_increased"]:
+                alert_message = await monitoring_service._generate_llm_alert(
+                    entity, risk_analysis, current_risk, model
+                )
+                
+                if alert_message:
+                    alert_id = monitoring_service.create_alert(
+                        entity["id"],
+                        risk_analysis["alert_severity"],
+                        alert_message
+                    )
+                    self.logger.info(f"Generated alert {alert_id} for {entity['name']} due to subgraph changes")
+                    
+                    # Add alert info to risk analysis
+                    risk_analysis["alert_id"] = alert_id
+                    risk_analysis["alert_message"] = alert_message
+            
+            return risk_analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error triggering risk assessment for {entity['name']}: {str(e)}")
+            return {"error": str(e), "risk_increased": False}
+    
+    async def monitor_all_entities(self, neo4j_uri: str = None, neo4j_username: str = None, 
+                                  neo4j_password: str = None, neo4j_database: str = None,
+                                  model: str = "openai_gpt_4o") -> Dict[str, Any]:
+        """
+        Monitor all active entities for subgraph changes and trigger risk assessment
+        """
+        try:
+            self.logger.info("Starting enhanced subgraph monitoring with risk assessment for all entities")
             
             # Get monitored entities
             entities = self.get_monitored_entities()
             if not entities:
                 self.logger.info("No active monitored entities found")
-                return {"entities_checked": 0, "changes_detected": 0, "results": []}
+                return {"entities_checked": 0, "changes_detected": 0, "alerts_generated": 0, "results": []}
             
             # Establish Neo4j connection
             graph_connection = None
@@ -211,7 +337,7 @@ class SubgraphMonitor:
                     graph_connection = create_graph_database_connection(
                         neo4j_uri, neo4j_username, neo4j_password, neo4j_database
                     )
-                    self.logger.info("Neo4j connection established for subgraph monitoring")
+                    self.logger.info("Neo4j connection established for enhanced subgraph monitoring")
                 except Exception as e:
                     self.logger.error(f"Failed to establish Neo4j connection: {e}")
                     return {"error": "Neo4j connection failed", "entities_checked": 0}
@@ -221,6 +347,7 @@ class SubgraphMonitor:
             
             results = []
             changes_detected = 0
+            alerts_generated = 0
             
             for entity in entities:
                 try:
@@ -238,6 +365,17 @@ class SubgraphMonitor:
                     # Update entity's current subgraph info
                     self.update_entity_subgraph(entity["id"], current_subgraph)
                     
+                    # Trigger risk assessment if changes detected
+                    risk_assessment = None
+                    if has_changed:
+                        self.logger.info(f"Subgraph changes detected for {entity['name']}, triggering risk assessment")
+                        risk_assessment = await self._trigger_risk_assessment(
+                            entity, current_subgraph, graph_connection, model
+                        )
+                        
+                        if risk_assessment and risk_assessment.get("risk_increased"):
+                            alerts_generated += 1
+                    
                     # Prepare result
                     result = {
                         "entity_id": entity["id"],
@@ -249,7 +387,8 @@ class SubgraphMonitor:
                             "nodes": entity.get("last_subgraph_nodes", 0),
                             "relationships": entity.get("last_subgraph_relationships", 0),
                             "timestamp": entity.get("last_subgraph_timestamp")
-                        }
+                        },
+                        "risk_assessment": risk_assessment
                     }
                     
                     results.append(result)
@@ -270,13 +409,14 @@ class SubgraphMonitor:
             monitoring_result = {
                 "entities_checked": len(entities),
                 "changes_detected": changes_detected,
+                "alerts_generated": alerts_generated,
                 "timestamp": datetime.now().isoformat(),
                 "results": results
             }
             
-            self.logger.info(f"Subgraph monitoring completed: {changes_detected} changes detected out of {len(entities)} entities")
+            self.logger.info(f"Enhanced subgraph monitoring completed: {changes_detected} changes detected, {alerts_generated} alerts generated out of {len(entities)} entities")
             return monitoring_result
             
         except Exception as e:
-            self.logger.error(f"Error in subgraph monitoring: {str(e)}")
+            self.logger.error(f"Error in enhanced subgraph monitoring: {str(e)}")
             return {"error": str(e), "entities_checked": 0}

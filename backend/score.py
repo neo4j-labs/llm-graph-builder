@@ -308,12 +308,13 @@ async def extract_knowledge_graph_from_file(
             from src.subgraph_monitor import SubgraphMonitor
             subgraph_monitor = SubgraphMonitor()
             
-            # Monitor all entities for subgraph changes
+            # Monitor all entities for subgraph changes with risk assessment
             monitoring_result = await subgraph_monitor.monitor_all_entities(
                 neo4j_uri=uri,
                 neo4j_username=userName,
                 neo4j_password=password,
-                neo4j_database=database
+                neo4j_database=database,
+                model=model  # Pass the model for LLM-based risk assessment
             )
             
             if monitoring_result.get("changes_detected", 0) > 0:
@@ -445,7 +446,8 @@ async def post_processing(uri=Form(None), userName=Form(None), password=Form(Non
                 neo4j_uri=uri,
                 neo4j_username=userName,
                 neo4j_password=password,
-                neo4j_database=database
+                neo4j_database=database,
+                model="openai_gpt_4o"  # Default model for post-processing monitoring
             )
             
             if monitoring_result.get("changes_detected", 0) > 0:
