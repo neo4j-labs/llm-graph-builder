@@ -70,7 +70,7 @@ class graphDBdataAccess:
         except Exception as e:
             error_message = str(e)
             logging.info(f"error_message = {error_message}")
-            self.update_exception_db(self, obj_source_node.file_name, error_message)
+            self.update_exception_db(obj_source_node.file_name, error_message)
             raise Exception(error_message)
         
     def update_source_node(self, obj_source_node:sourceNode):

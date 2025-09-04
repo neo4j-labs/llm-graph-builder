@@ -228,19 +228,24 @@ class MonitoringServicePG:
             self.logger.error(f"Error retrieving risk assessment for entity {entity_id}: {str(e)}")
             return None
     
-    def create_alert(self, entity_id: int, severity: str, message: str) -> int:
-        """Create a new alert in PostgreSQL"""
+    def create_alert(self, entity_id: int, alert_data: Dict[str, Any]) -> int:
+        """Create a new alert in PostgreSQL with LLM alert structure"""
         try:
             query = """
-            INSERT INTO alerts (entity_id, severity, message, timestamp, is_active)
-            VALUES (%s, %s, %s, %s, %s)
+            INSERT INTO alerts (entity_id, type, score, description, evidence, indicator, name, context, timestamp, is_active)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
             """
             
             params = (
                 entity_id,
-                severity,
-                message,
+                alert_data.get("type", "HIGH_RISK"),
+                alert_data.get("score", 0.5),
+                alert_data.get("description", ""),
+                alert_data.get("evidence", ""),
+                alert_data.get("indicator", ""),
+                alert_data.get("name", ""),
+                alert_data.get("context", ""),
                 datetime.now(),
                 True
             )
@@ -248,7 +253,7 @@ class MonitoringServicePG:
             result = self.db.execute_insert_returning(query, params)
             if result:
                 alert_id = result[0]["id"]
-                self.logger.info(f"Created alert {alert_id} for entity {entity_id}: {severity}")
+                self.logger.info(f"Created alert {alert_id} for entity {entity_id}: {alert_data.get('type', 'HIGH_RISK')}")
                 return alert_id
             else:
                 raise Exception("Failed to create alert")

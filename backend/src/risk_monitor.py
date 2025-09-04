@@ -26,7 +26,7 @@ def validate_document_exists(graph, document_name: str) -> Optional[Dict[str, An
         query = """
         MATCH (d:Document)
         WHERE d.fileName = $document_name
-        OPTIONAL MATCH (c:DocumentChunk)-[:BELONGS_TO]->(d)
+        OPTIONAL MATCH (c:Chunk)-[:PART_OF]->(d)
         WITH d, count(c) AS chunk_count
         RETURN {
             exists: true,
@@ -55,7 +55,7 @@ def extract_document_chunks(graph, document_name: str) -> List[Dict[str, Any]]:
         # First, let's check if the document exists and has chunks
         debug_query = """
         MATCH (d:Document {fileName: $document_name})
-        OPTIONAL MATCH (c:DocumentChunk)-[:BELONGS_TO]->(d)
+        OPTIONAL MATCH (c:Chunk)-[:PART_OF]->(d)
         RETURN d.fileName AS doc_name, count(c) AS chunk_count
         """
         debug_result = graph.query(debug_query, {"document_name": document_name})
@@ -63,7 +63,7 @@ def extract_document_chunks(graph, document_name: str) -> List[Dict[str, Any]]:
         
         # Now get the actual chunks
         query = """
-        MATCH (c:DocumentChunk)-[:BELONGS_TO]->(d:Document)
+        MATCH (c:Chunk)-[:PART_OF]->(d:Document)
         WHERE d.fileName = $document_name
         RETURN {
             id: c.id,
@@ -80,7 +80,14 @@ def extract_document_chunks(graph, document_name: str) -> List[Dict[str, Any]]:
         if not result:
             logging.warning(f"No chunks found for document '{document_name}'. This usually means the document was uploaded but never processed.")
         
-        return [dict(chunk) for chunk in result]
+        # Extract the chunk data from the query result
+        chunks = []
+        for row in result:
+            chunk_data = row.get('chunk', {})
+            if chunk_data:
+                chunks.append(dict(chunk_data))
+        
+        return chunks
     except Exception as e:
         logging.error(f"Error extracting document chunks: {str(e)}")
         return []
@@ -90,13 +97,10 @@ def call_llm_for_analysis(prompt: str, model: str) -> Optional[str]:
     """Call LLM for analysis with error handling."""
     try:
         # Import here to avoid circular imports
-        from langchain_openai import ChatOpenAI
+        from .llm import get_llm
         
-        # Use your existing LLM integration
-        if model == "gpt-4":
-            llm = ChatOpenAI(model="gpt-4", temperature=0.1)
-        else:
-            llm = ChatOpenAI(model=model, temperature=0.1)
+        # Use the proper LLM configuration system
+        llm, model_name = get_llm(model)
         
         response = llm.invoke(prompt)
         return response.content
@@ -107,52 +111,40 @@ def call_llm_for_analysis(prompt: str, model: str) -> Optional[str]:
 
 def create_fallback_name_results(llm_response: str, monitored_names: List[str]) -> Dict[str, Any]:
     """Create fallback results if LLM response parsing fails."""
-    fallback_results = {
+    # Return empty results to avoid false positives
+    # The LLM should provide proper JSON responses, not fallback to text matching
+    return {
         "names_found": [],
         "occurrences": [],
         "context": {},
         "risk_indicators": {}
     }
-    
-    # Simple text-based fallback
-    for name in monitored_names:
-        if name.lower() in llm_response.lower():
-            fallback_results["names_found"].append({
-                "name": name,
-                "occurrences": [{"chunk": 1, "context": "Name found in document", "risk_score": 0.5}],
-                "overall_risk_score": 0.5
-            })
-    
-    return fallback_results
 
 
 def create_fallback_risk_results(llm_response: str, risk_indicators: List[str]) -> Dict[str, Any]:
     """Create fallback results if LLM response parsing fails."""
-    fallback_results = {
+    # Return empty results to avoid false positives
+    # The LLM should provide proper JSON responses, not fallback to text matching
+    return {
         "indicators_found": [],
         "risk_scores": {},
         "evidence": {},
         "severity_assessment": {}
     }
-    
-    # Simple text-based fallback
-    for indicator in risk_indicators:
-        if indicator.lower() in llm_response.lower():
-            fallback_results["indicators_found"].append({
-                "indicator": indicator,
-                "evidence": f"Indicator '{indicator}' mentioned in document",
-                "severity": "medium",
-                "risk_score": 0.6,
-                "impact": "Potential risk detected"
-            })
-    
-    return fallback_results
 
 
 def parse_name_monitoring_response(llm_response: str, monitored_names: List[str]) -> Dict[str, Any]:
     """Parse LLM response for name monitoring."""
     try:
-        parsed = json.loads(llm_response)
+        # Clean the response - remove markdown code blocks if present
+        cleaned_response = llm_response.strip()
+        if cleaned_response.startswith('```json'):
+            cleaned_response = cleaned_response[7:]  # Remove ```json
+        if cleaned_response.endswith('```'):
+            cleaned_response = cleaned_response[:-3]  # Remove ```
+        cleaned_response = cleaned_response.strip()
+        
+        parsed = json.loads(cleaned_response)
         return parsed
     except json.JSONDecodeError:
         logging.warning("Failed to parse LLM response as JSON, using fallback parsing")
@@ -162,7 +154,15 @@ def parse_name_monitoring_response(llm_response: str, monitored_names: List[str]
 def parse_risk_analysis_response(llm_response: str, risk_indicators: List[str]) -> Dict[str, Any]:
     """Parse LLM response for risk analysis."""
     try:
-        parsed = json.loads(llm_response)
+        # Clean the response - remove markdown code blocks if present
+        cleaned_response = llm_response.strip()
+        if cleaned_response.startswith('```json'):
+            cleaned_response = cleaned_response[7:]  # Remove ```json
+        if cleaned_response.endswith('```'):
+            cleaned_response = cleaned_response[:-3]  # Remove ```
+        cleaned_response = cleaned_response.strip()
+        
+        parsed = json.loads(cleaned_response)
         return parsed
     except json.JSONDecodeError:
         logging.warning("Failed to parse LLM response as JSON, using fallback parsing")
@@ -175,6 +175,11 @@ def monitor_names_in_document(document_chunks: List[Dict[str, Any]], monitored_n
     # Create LLM prompt for name monitoring
     document_content = "\n\n".join([f"Chunk {i+1}: {chunk['text']}" for i, chunk in enumerate(document_chunks)])
     
+    # Debug logging
+    logging.info(f"Document content length: {len(document_content)}")
+    logging.info(f"Document content preview: {document_content[:500]}...")
+    logging.info(f"Monitored names: {monitored_names}")
+    
     name_monitoring_prompt = RISK_MONITORING_PROMPTS["NAME_MONITORING"].format(
         monitored_names=", ".join(monitored_names),
         document_content=document_content
@@ -182,6 +187,9 @@ def monitor_names_in_document(document_chunks: List[Dict[str, Any]], monitored_n
     
     # Use LLM to analyze names
     llm_response = call_llm_for_analysis(name_monitoring_prompt, model)
+    
+    # Debug logging
+    logging.info(f"Name monitoring LLM response: {llm_response}")
     
     if not llm_response:
         # Fallback to simple text search
@@ -211,6 +219,9 @@ def analyze_risk_indicators(document_chunks: List[Dict[str, Any]], risk_indicato
     
     # Use LLM to analyze risk indicators
     llm_response = call_llm_for_analysis(risk_analysis_prompt, model)
+    
+    # Debug logging
+    logging.info(f"Risk analysis LLM response: {llm_response}")
     
     if not llm_response:
         # Fallback to simple text search
@@ -327,8 +338,7 @@ def perform_risk_monitoring(
     risk_indicators: List[str], 
     risk_threshold: float = 0.7, 
     model: str = "gpt-4", 
-    mode: str = None, 
-    write_access: bool = False
+    mode: str = None
 ) -> Dict[str, Any]:
     """
     Monitor a document for specific names and risk indicators.
@@ -386,7 +396,84 @@ def perform_risk_monitoring(
             risk_threshold
         )
         
-        # 6. Format results
+        # 6. Store risk assessments in PostgreSQL for entities found in document
+        stored_assessments = []
+        try:
+            from src.monitoring_service_pg import MonitoringServicePG
+            monitoring_service = MonitoringServicePG()
+            
+            # Store risk assessment for each monitored entity found in the document
+            for name_result in name_monitoring_results.get("names_found", []):
+                entity_name = name_result["name"]
+                entity_risk_score = name_result.get("overall_risk_score", 0.0)
+                
+                # Get entity from database
+                entity = monitoring_service.get_entity_by_name(entity_name)
+                if entity:
+                    # Store risk assessment
+                    assessment_data = {
+                        "risk_score": entity_risk_score,
+                        "risk_level": "HIGH" if entity_risk_score >= 0.7 else "MEDIUM" if entity_risk_score >= 0.3 else "LOW",
+                        "connections_count": 0,  # Could be enhanced to get actual connection count
+                        "risk_indicators": [indicator for occurrence in name_result.get("occurrences", []) for indicator in occurrence.get("risk_indicators", [])]
+                    }
+                    
+                    assessment_id = monitoring_service.store_risk_assessment(entity["id"], assessment_data)
+                    stored_assessments.append({
+                        "entity_name": entity_name,
+                        "entity_id": entity["id"],
+                        "assessment_id": assessment_id,
+                        "risk_score": entity_risk_score
+                    })
+                    
+                    # Create alert if risk exceeds threshold
+                    if entity_risk_score >= entity["risk_threshold"]:
+                        alert_message = f"High risk detected for {entity_name} in document {document_name}. Risk score: {entity_risk_score:.2f}"
+                        alert_data = {
+                            "type": "NAME_RISK",
+                            "score": entity_risk_score,
+                            "description": alert_message,
+                            "name": entity_name,
+                            "context": f"Risk detected in document: {document_name}"
+                        }
+                        alert_id = monitoring_service.create_alert(entity["id"], alert_data)
+                        logging.info(f"Created alert {alert_id} for entity {entity_name}")
+            
+            # Store all LLM-generated alerts in PostgreSQL
+            stored_alerts = []
+            for alert in risk_assessment.get("alerts", []):
+                try:
+                    # Get entity for the alert (if it's a name-based alert)
+                    entity = None
+                    if alert.get("type") == "NAME_RISK" and alert.get("name"):
+                        entity = monitoring_service.get_entity_by_name(alert["name"])
+                    elif alert.get("type") == "INDICATOR_RISK":
+                        # For indicator alerts, we might need to create a generic entity or associate with document
+                        # For now, we'll store without entity_id
+                        pass
+                    
+                    if entity:
+                        alert_id = monitoring_service.create_alert(entity["id"], alert)
+                        stored_alerts.append({
+                            "alert_id": alert_id,
+                            "type": alert.get("type"),
+                            "entity_name": alert.get("name", ""),
+                            "score": alert.get("score", 0.0)
+                        })
+                        logging.info(f"Stored LLM alert {alert_id} in PostgreSQL")
+                    else:
+                        logging.warning(f"Could not store alert - no entity found: {alert}")
+                        
+                except Exception as e:
+                    logging.error(f"Error storing alert: {str(e)}")
+            
+            logging.info(f"Stored {len(stored_assessments)} risk assessments and {len(stored_alerts)} alerts in PostgreSQL")
+            
+        except Exception as e:
+            logging.error(f"Error storing risk assessments: {str(e)}")
+            # Don't fail the entire process if storage fails
+        
+        # 7. Format results
         formatted_results = {
             "success": True,
             "document_name": document_name,
@@ -395,12 +482,15 @@ def perform_risk_monitoring(
                 "risk_indicators_checked": len(risk_indicators),
                 "risk_threshold": risk_threshold,
                 "total_risk_score": risk_assessment["overall_risk_score"],
-                "alert_required": risk_assessment["alert_required"]
+                "alert_required": risk_assessment["alert_required"],
+                "entities_found": len(name_monitoring_results.get("names_found", [])),
+                "assessments_stored": len(stored_assessments)
             },
             "name_monitoring": name_monitoring_results,
             "risk_analysis": risk_analysis_results,
             "risk_assessment": risk_assessment,
             "alerts": risk_assessment["alerts"],
+            "stored_assessments": stored_assessments,
             "info": {
                 "processing_time": 0,
                 "document_size": document_info.get("size", 0),

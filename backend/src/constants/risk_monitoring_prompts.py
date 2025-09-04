@@ -5,7 +5,9 @@ Contains LLM prompts and risk level definitions
 
 RISK_MONITORING_PROMPTS = {
     "NAME_MONITORING": """
-    You are a risk monitoring specialist. Analyze the following document content for the presence of these specific names: {monitored_names}
+    You are a risk monitoring specialist. Analyze ONLY the provided document content for the presence of these specific names: {monitored_names}
+    
+    IMPORTANT: Only report names that are EXPLICITLY mentioned in the document content below. Do NOT use external knowledge or make assumptions.
     
     Document Content:
     {document_content}
@@ -15,6 +17,8 @@ RISK_MONITORING_PROMPTS = {
     2. Context around each occurrence
     3. Any risk indicators associated with the name
     4. Risk score (0.0 to 1.0) based on context and associations
+    
+    If no names are found, return an empty names_found array.
     
     Respond in this JSON format:
     {{
@@ -36,7 +40,9 @@ RISK_MONITORING_PROMPTS = {
     """,
     
     "RISK_ANALYSIS": """
-    You are a risk assessment specialist. Analyze the following document content for these risk indicators: {risk_indicators}
+    You are a risk assessment specialist. Analyze ONLY the provided document content for these risk indicators: {risk_indicators}
+    
+    IMPORTANT: Only report risk indicators that are EXPLICITLY mentioned or clearly evident in the document content below. Do NOT use external knowledge or make assumptions.
     
     Document Content:
     {document_content}
@@ -46,6 +52,8 @@ RISK_MONITORING_PROMPTS = {
     2. Severity assessment
     3. Risk score (0.0 to 1.0)
     4. Potential impact
+    
+    If no risk indicators are found, return an empty indicators_found array.
     
     Respond in this JSON format:
     {{

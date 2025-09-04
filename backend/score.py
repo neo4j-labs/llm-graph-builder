@@ -1435,7 +1435,7 @@ async def risk_monitor(
     userName=Form("neo4j"), 
     password=Form(None), 
     database=Form("neo4j"),
-    document_name=Form("Abiy Ahmed"),           # Document to monitor
+    document_name=Form("[\"Abiy Ahmed\"]"),           # JSON string of documents to monitor
     monitored_names=Form("[\"Abiy Ahmed\"]"),         # JSON string of names to monitor
     risk_indicators=Form("[\"Dual-Use Technology Exposure\", \"Direct connections with foreign military entities\"]"),         # JSON string of risk indicators
     risk_threshold=Form(0.7),          # Risk score threshold
@@ -1451,16 +1451,25 @@ async def risk_monitor(
     risk_monitor_start_time = time.time()
     
     try:
-        # Parse JSON inputs
-        try:
-            monitored_names_list = json.loads(monitored_names) if monitored_names else []
-            risk_indicators_list = json.loads(risk_indicators) if risk_indicators else []
-        except json.JSONDecodeError as e:
-            return create_api_response('Failed', message="Invalid JSON format in monitored_names or risk_indicators", error=str(e))
+        # Helper function to parse JSON arrays or comma-separated strings
+        def parse_list_input(input_str):
+            if not input_str:
+                return []
+            try:
+                # Try to parse as JSON first
+                return json.loads(input_str)
+            except json.JSONDecodeError:
+                # If JSON parsing fails, treat as comma-separated string
+                return [item.strip() for item in input_str.split(',') if item.strip()]
+        
+        # Parse inputs (handles both JSON arrays and comma-separated strings)
+        document_names_list = parse_list_input(document_name)
+        monitored_names_list = parse_list_input(monitored_names)
+        risk_indicators_list = parse_list_input(risk_indicators)
         
         # Validate inputs
-        if not document_name:
-            return create_api_response('Failed', message="Document name is required", error="Missing document_name parameter")
+        if not document_names_list:
+            return create_api_response('Failed', message="Document names are required", error="Missing document_name parameter")
         
         if not monitored_names_list and not risk_indicators_list:
             return create_api_response('Failed', message="At least one of monitored_names or risk_indicators must be provided", error="Both parameters are empty")
@@ -1475,18 +1484,40 @@ async def risk_monitor(
         graph_DB_dataAccess = graphDBdataAccess(graph)
         write_access = graph_DB_dataAccess.check_account_access(database=database)
         
-        # Core risk monitoring
-        result = await asyncio.to_thread(
-            perform_risk_monitoring,
-            graph=graph,
-            document_name=document_name,
-            monitored_names=monitored_names_list,
-            risk_indicators=risk_indicators_list,
-            risk_threshold=float(risk_threshold),
-            model=model,
-            mode=mode,
-            write_access=write_access
-        )
+        # Core risk monitoring for multiple documents
+        all_results = []
+        for doc_name in document_names_list:
+            result = await asyncio.to_thread(
+                perform_risk_monitoring,
+                graph=graph,
+                document_name=doc_name,
+                monitored_names=monitored_names_list,
+                risk_indicators=risk_indicators_list,
+                risk_threshold=float(risk_threshold),
+                model=model,
+                mode=mode
+            )
+            all_results.append(result)
+        
+        # Combine results from all documents
+        combined_result = {
+            "success": True,
+            "documents_processed": len(document_names_list),
+            "document_results": all_results,
+            "overall_summary": {
+                "total_risk_score": max([r.get("risk_assessment", {}).get("overall_risk_score", 0) for r in all_results if r.get("success")]),
+                "any_alerts": any([r.get("risk_assessment", {}).get("alert_required", False) for r in all_results if r.get("success")]),
+                "documents_with_risks": len([r for r in all_results if r.get("success") and r.get("risk_assessment", {}).get("overall_risk_score", 0) > float(risk_threshold)])
+            },
+            "info": {
+                "processing_time": 0,
+                "document_size": 0,
+                "chunks_analyzed": sum([r.get("info", {}).get("chunks_analyzed", 0) for r in all_results if r.get("success")]),
+                "model_used": model,
+                "response_time": 0
+            }
+        }
+        result = combined_result
         
         # Performance tracking
         total_call_time = time.time() - risk_monitor_start_time
