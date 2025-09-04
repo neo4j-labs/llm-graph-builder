@@ -1499,30 +1499,35 @@ async def risk_monitor(
             )
             all_results.append(result)
         
-        # Combine results from all documents
+        # Combine results from all documents and format for frontend
+        all_alerts = []
+        entities_checked = 0
+        
+        for result in all_results:
+            if result.get("success"):
+                # Collect all alerts from all documents
+                all_alerts.extend(result.get("alerts", []))
+                
+                # Track entities checked (count unique entities from alerts)
+                unique_entities = set()
+                for alert in result.get("alerts", []):
+                    if alert.get("entity_name") and alert.get("entity_name") != "Unknown":
+                        unique_entities.add(alert.get("entity_name"))
+                entities_checked += len(unique_entities)
+        
+        # Format response to match frontend MonitoringResult interface
         combined_result = {
-            "success": True,
-            "documents_processed": len(document_names_list),
-            "document_results": all_results,
-            "overall_summary": {
-                "total_risk_score": max([r.get("risk_assessment", {}).get("overall_risk_score", 0) for r in all_results if r.get("success")]),
-                "any_alerts": any([r.get("risk_assessment", {}).get("alert_required", False) for r in all_results if r.get("success")]),
-                "documents_with_risks": len([r for r in all_results if r.get("success") and r.get("risk_assessment", {}).get("overall_risk_score", 0) > float(risk_threshold)])
-            },
-            "info": {
-                "processing_time": 0,
-                "document_size": 0,
-                "chunks_analyzed": sum([r.get("info", {}).get("chunks_analyzed", 0) for r in all_results if r.get("success")]),
-                "model_used": model,
-                "response_time": 0
-            }
+            "timestamp": datetime.now().isoformat(),
+            "entities_checked": entities_checked,
+            "alerts": all_alerts,
+            "processing_time": 0
         }
         result = combined_result
         
         # Performance tracking
         total_call_time = time.time() - risk_monitor_start_time
         logging.info(f"Total Response time is {total_call_time:.2f} seconds")
-        result["info"]["response_time"] = round(total_call_time, 2)
+        result["processing_time"] = round(total_call_time, 2)
         
         # Structured logging
         json_obj = {

@@ -4,84 +4,52 @@ Contains LLM prompts and risk level definitions
 """
 
 RISK_MONITORING_PROMPTS = {
-    "NAME_MONITORING": """
-    You are a risk monitoring specialist. Analyze ONLY the provided document content for the presence of these specific names: {monitored_names}
+    "ENTITY_RISK_ALERTS": """
+    You are a risk monitoring specialist. Analyze the document content for specific entities and risk indicators to generate alerts.
     
-    IMPORTANT: Only report names that are EXPLICITLY mentioned in the document content below. Do NOT use external knowledge or make assumptions.
+    MONITORED ENTITIES: {monitored_names}
+    RISK INDICATORS: {risk_indicators}
+    RISK THRESHOLD: {risk_threshold}
     
-    Document Content:
-    {document_content}
-    
-    For each name found, provide:
-    1. Exact occurrences and locations
-    2. Context around each occurrence
-    3. Any risk indicators associated with the name
-    4. Risk score (0.0 to 1.0) based on context and associations
-    
-    If no names are found, return an empty names_found array.
-    
-    Respond in this JSON format:
-    {{
-        "names_found": [
-            {{
-                "name": "John Doe",
-                "occurrences": [
-                    {{
-                        "chunk": 1,
-                        "context": "John Doe was mentioned in connection with...",
-                        "risk_indicators": ["financial", "regulatory"],
-                        "risk_score": 0.8
-                    }}
-                ],
-                "overall_risk_score": 0.8
-            }}
-        ]
-    }}
-    """,
-    
-    "RISK_ANALYSIS": """
-    You are a risk assessment specialist. Analyze ONLY the provided document content for these risk indicators: {risk_indicators}
-    
-    IMPORTANT: Only report risk indicators that are EXPLICITLY mentioned or clearly evident in the document content below. Do NOT use external knowledge or make assumptions.
+    IMPORTANT RULES:
+    1. Only generate alerts for entities that are EXPLICITLY mentioned in the document
+    2. Generate a SEPARATE alert for EACH risk indicator found for each entity
+    3. If you have 3 risk indicators and only 1 is found, generate 1 alert for that specific indicator
+    4. Each alert must be specific to an entity + risk indicator combination
+    5. If an entity is not mentioned in the document, do NOT generate any alerts for that entity
+    6. Risk score should be based on the severity of the specific risk indicator in relation to the entity
     
     Document Content:
     {document_content}
     
-    For each risk indicator found, provide:
-    1. Evidence and context
-    2. Severity assessment
-    3. Risk score (0.0 to 1.0)
-    4. Potential impact
-    
-    If no risk indicators are found, return an empty indicators_found array.
+    Generate alerts only for entities that:
+    - Are explicitly mentioned in the document
+    - Have associated risk indicators found in the document
+    - Have a risk score >= {risk_threshold}
     
     Respond in this JSON format:
     {{
-        "indicators_found": [
+        "alerts": [
             {{
-                "indicator": "financial_fraud",
-                "evidence": "Mention of suspicious financial transactions...",
-                "severity": "high",
-                "risk_score": 0.9,
-                "impact": "Potential financial loss and regulatory violations"
+                "entity_name": "John Doe",
+                "risk_indicator": "financial_fraud",
+                "title": "Financial Fraud Risk Alert for John Doe",
+                "description": "John Doe mentioned in connection with financial fraud activities involving [specific details from document]",
+                "risk_score": 0.8,
+                "evidence": "Specific text from document showing the risk"
+            }},
+            {{
+                "entity_name": "John Doe", 
+                "risk_indicator": "regulatory_violation",
+                "title": "Regulatory Violation Risk Alert for John Doe",
+                "description": "John Doe mentioned in connection with regulatory violations involving [specific details from document]",
+                "risk_score": 0.6,
+                "evidence": "Specific text from document showing the risk"
             }}
         ]
     }}
-    """,
     
-    "RISK_SUMMARY": """
-    You are a risk analyst. Based on the following monitoring results, provide a comprehensive risk assessment summary.
-    
-    Name Monitoring Results: {name_monitoring_results}
-    Risk Indicator Analysis: {risk_analysis_results}
-    
-    Provide:
-    1. Overall risk assessment
-    2. Key risk factors
-    3. Recommended actions
-    4. Priority level
-    
-    Respond in clear, actionable language suitable for risk management teams.
+    If no entities are found with risk indicators, return: {{"alerts": []}}
     """
 }
 

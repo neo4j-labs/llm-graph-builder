@@ -232,7 +232,7 @@ class MonitoringServicePG:
         """Create a new alert in PostgreSQL with LLM alert structure"""
         try:
             query = """
-            INSERT INTO alerts (entity_id, type, score, description, evidence, indicator, name, context, timestamp, is_active)
+            INSERT INTO alerts (entity_id, type, score, message, evidence, indicator, name, context, timestamp, is_active)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
             """
@@ -263,8 +263,9 @@ class MonitoringServicePG:
             raise e
     
     def get_entity_by_name(self, entity_name: str) -> Optional[Dict]:
-        """Get entity by name"""
+        """Get entity by name with fuzzy matching"""
         try:
+            # First try exact match
             query = """
             SELECT id, name, type, risk_threshold, category, status
             FROM monitored_entities
@@ -272,6 +273,18 @@ class MonitoringServicePG:
             """
             
             result = self.db.execute_query(query, (entity_name,))
+            
+            if result:
+                return result[0]
+            
+            # If no exact match, try case-insensitive partial matching
+            query = """
+            SELECT id, name, type, risk_threshold, category, status
+            FROM monitored_entities
+            WHERE LOWER(name) LIKE LOWER(%s)
+            """
+            
+            result = self.db.execute_query(query, (f"%{entity_name}%",))
             
             if result:
                 row = result[0]

@@ -331,6 +331,62 @@ def generate_risk_assessment(name_monitoring_results: Dict[str, Any], risk_analy
     }
 
 
+def generate_entity_risk_alerts(document_chunks: List[Dict[str, Any]], monitored_names: List[str], risk_indicators: List[str], risk_threshold: float, model: str) -> List[Dict[str, Any]]:
+    """Generate alerts for entities with risk indicators found in document."""
+    
+    # Create comprehensive LLM prompt for entity risk alerts
+    document_content = "\n\n".join([f"Chunk {i+1}: {chunk['text']}" for i, chunk in enumerate(document_chunks)])
+    
+    entity_risk_prompt = RISK_MONITORING_PROMPTS["ENTITY_RISK_ALERTS"].format(
+        monitored_names=", ".join(monitored_names),
+        risk_indicators=", ".join(risk_indicators),
+        risk_threshold=risk_threshold,
+        document_content=document_content
+    )
+    
+    # Use LLM to generate entity-based alerts
+    llm_response = call_llm_for_analysis(entity_risk_prompt, model)
+    
+    # Debug logging
+    logging.info(f"Entity risk alerts LLM response: {llm_response}")
+    
+    if not llm_response:
+        return []
+    
+    # Parse LLM response
+    try:
+        cleaned_response = llm_response.strip()
+        if cleaned_response.startswith('```json'):
+            cleaned_response = cleaned_response[7:]
+        if cleaned_response.endswith('```'):
+            cleaned_response = cleaned_response[:-3]
+        cleaned_response = cleaned_response.strip()
+        
+        parsed = json.loads(cleaned_response)
+        alerts = parsed.get("alerts", [])
+        
+        # Format alerts for frontend
+        formatted_alerts = []
+        for i, alert in enumerate(alerts):
+            formatted_alerts.append({
+                "id": f"alert_{i + 1}",
+                "title": alert.get("title", f"Risk Alert for {alert.get('entity_name', 'Unknown')}"),
+                "description": alert.get("description", ""),
+                "timestamp": datetime.now().isoformat(),
+                "risk_score": alert.get("risk_score", 0.0),
+                "is_active": True,
+                "entity_name": alert.get("entity_name", "Unknown"),
+                "evidence": alert.get("evidence", ""),
+                "risk_indicator": alert.get("risk_indicator", "")
+            })
+        
+        return formatted_alerts
+        
+    except json.JSONDecodeError:
+        logging.warning("Failed to parse entity risk alerts LLM response as JSON")
+        return []
+
+
 def perform_risk_monitoring(
     graph, 
     document_name: str, 
@@ -375,128 +431,20 @@ def perform_risk_monitoring(
                 "info": {"document_name": document_name}
             }
         
-        # 3. Perform name monitoring
-        name_monitoring_results = monitor_names_in_document(
-            document_chunks, 
-            monitored_names, 
+        # 3. Generate entity-based risk alerts
+        alerts = generate_entity_risk_alerts(
+            document_chunks,
+            monitored_names,
+            risk_indicators,
+            risk_threshold,
             model
         )
         
-        # 4. Perform risk indicator analysis
-        risk_analysis_results = analyze_risk_indicators(
-            document_chunks, 
-            risk_indicators, 
-            model
-        )
-        
-        # 5. Generate risk assessment
-        risk_assessment = generate_risk_assessment(
-            name_monitoring_results,
-            risk_analysis_results,
-            risk_threshold
-        )
-        
-        # 6. Store risk assessments in PostgreSQL for entities found in document
-        stored_assessments = []
-        try:
-            from src.monitoring_service_pg import MonitoringServicePG
-            monitoring_service = MonitoringServicePG()
-            
-            # Store risk assessment for each monitored entity found in the document
-            for name_result in name_monitoring_results.get("names_found", []):
-                entity_name = name_result["name"]
-                entity_risk_score = name_result.get("overall_risk_score", 0.0)
-                
-                # Get entity from database
-                entity = monitoring_service.get_entity_by_name(entity_name)
-                if entity:
-                    # Store risk assessment
-                    assessment_data = {
-                        "risk_score": entity_risk_score,
-                        "risk_level": "HIGH" if entity_risk_score >= 0.7 else "MEDIUM" if entity_risk_score >= 0.3 else "LOW",
-                        "connections_count": 0,  # Could be enhanced to get actual connection count
-                        "risk_indicators": [indicator for occurrence in name_result.get("occurrences", []) for indicator in occurrence.get("risk_indicators", [])]
-                    }
-                    
-                    assessment_id = monitoring_service.store_risk_assessment(entity["id"], assessment_data)
-                    stored_assessments.append({
-                        "entity_name": entity_name,
-                        "entity_id": entity["id"],
-                        "assessment_id": assessment_id,
-                        "risk_score": entity_risk_score
-                    })
-                    
-                    # Create alert if risk exceeds threshold
-                    if entity_risk_score >= entity["risk_threshold"]:
-                        alert_message = f"High risk detected for {entity_name} in document {document_name}. Risk score: {entity_risk_score:.2f}"
-                        alert_data = {
-                            "type": "NAME_RISK",
-                            "score": entity_risk_score,
-                            "description": alert_message,
-                            "name": entity_name,
-                            "context": f"Risk detected in document: {document_name}"
-                        }
-                        alert_id = monitoring_service.create_alert(entity["id"], alert_data)
-                        logging.info(f"Created alert {alert_id} for entity {entity_name}")
-            
-            # Store all LLM-generated alerts in PostgreSQL
-            stored_alerts = []
-            for alert in risk_assessment.get("alerts", []):
-                try:
-                    # Get entity for the alert (if it's a name-based alert)
-                    entity = None
-                    if alert.get("type") == "NAME_RISK" and alert.get("name"):
-                        entity = monitoring_service.get_entity_by_name(alert["name"])
-                    elif alert.get("type") == "INDICATOR_RISK":
-                        # For indicator alerts, we might need to create a generic entity or associate with document
-                        # For now, we'll store without entity_id
-                        pass
-                    
-                    if entity:
-                        alert_id = monitoring_service.create_alert(entity["id"], alert)
-                        stored_alerts.append({
-                            "alert_id": alert_id,
-                            "type": alert.get("type"),
-                            "entity_name": alert.get("name", ""),
-                            "score": alert.get("score", 0.0)
-                        })
-                        logging.info(f"Stored LLM alert {alert_id} in PostgreSQL")
-                    else:
-                        logging.warning(f"Could not store alert - no entity found: {alert}")
-                        
-                except Exception as e:
-                    logging.error(f"Error storing alert: {str(e)}")
-            
-            logging.info(f"Stored {len(stored_assessments)} risk assessments and {len(stored_alerts)} alerts in PostgreSQL")
-            
-        except Exception as e:
-            logging.error(f"Error storing risk assessments: {str(e)}")
-            # Don't fail the entire process if storage fails
-        
-        # 7. Format results
+        # 4. Format results for frontend (matching MonitoringResult interface)
         formatted_results = {
             "success": True,
             "document_name": document_name,
-            "monitoring_summary": {
-                "names_monitored": len(monitored_names),
-                "risk_indicators_checked": len(risk_indicators),
-                "risk_threshold": risk_threshold,
-                "total_risk_score": risk_assessment["overall_risk_score"],
-                "alert_required": risk_assessment["alert_required"],
-                "entities_found": len(name_monitoring_results.get("names_found", [])),
-                "assessments_stored": len(stored_assessments)
-            },
-            "name_monitoring": name_monitoring_results,
-            "risk_analysis": risk_analysis_results,
-            "risk_assessment": risk_assessment,
-            "alerts": risk_assessment["alerts"],
-            "stored_assessments": stored_assessments,
-            "info": {
-                "processing_time": 0,
-                "document_size": document_info.get("size", 0),
-                "chunks_analyzed": len(document_chunks),
-                "model_used": model
-            }
+            "alerts": alerts
         }
         
         return formatted_results
@@ -506,5 +454,6 @@ def perform_risk_monitoring(
         return {
             "success": False,
             "error": str(e),
-            "info": {"document_name": document_name}
+            "document_name": document_name,
+            "alerts": []
         }
