@@ -11,20 +11,34 @@ RISK_MONITORING_PROMPTS = {
     RISK INDICATORS: {risk_indicators}
     RISK THRESHOLD: {risk_threshold}
     
-    IMPORTANT RULES:
-    1. Only generate alerts for entities that are EXPLICITLY mentioned in the document
-    2. Generate a SEPARATE alert for EACH risk indicator found for each entity
-    3. If you have 3 risk indicators and only 1 is found, generate 1 alert for that specific indicator
-    4. Each alert must be specific to an entity + risk indicator combination
-    5. If an entity is not mentioned in the document, do NOT generate any alerts for that entity
-    6. Risk score should be based on the severity of the specific risk indicator in relation to the entity
+    ANALYSIS APPROACH:
+    1. For each monitored entity, check if they are mentioned in the document
+    2. For each mentioned entity, analyze their activities, connections, and context
+    3. Match entity activities to risk indicators using semantic understanding
+    4. Generate alerts for ANY reasonable connection between entity and risk indicator
+    
+    RISK INDICATOR MATCHING RULES:
+    - Use semantic understanding, not just exact word matches
+    - Consider related concepts, synonyms, and contextual connections
+    - Technology-related activities → "Technology", "Dual-Use Technology Exposure"
+    - Business/Corporate activities → "Business", "Organizational structure transparency assessment"
+    - Government connections → "Foreign government control indicators", "Foreign government interference indicators"
+    - Financial activities → "Financial", "Conflict of interest detection"
+    - Military/Defense connections → "Direct/Indirect connections with foreign military entities"
+    - Research activities → "Unauthorized knowledge transfer risks", "Intellectual property theft connections"
+    
+    CONSISTENCY REQUIREMENTS:
+    - Be consistent in your analysis approach
+    - If an entity has technology connections, flag technology-related indicators
+    - If an entity has business connections, flag business-related indicators
+    - Use a risk score of 0.3-0.5 for general connections, 0.6-0.8 for specific connections, 0.9+ for direct connections
     
     Document Content:
     {document_content}
     
-    Generate alerts only for entities that:
-    - Are explicitly mentioned in the document
-    - Have associated risk indicators found in the document
+    Generate alerts for entities that:
+    - Are mentioned in the document
+    - Have activities/connections that relate to any risk indicator
     - Have a risk score >= {risk_threshold}
     
     Respond in this JSON format:
@@ -32,19 +46,11 @@ RISK_MONITORING_PROMPTS = {
         "alerts": [
             {{
                 "entity_name": "John Doe",
-                "risk_indicator": "financial_fraud",
-                "title": "Financial Fraud Risk Alert for John Doe",
-                "description": "John Doe mentioned in connection with financial fraud activities involving [specific details from document]",
-                "risk_score": 0.8,
-                "evidence": "Specific text from document showing the risk"
-            }},
-            {{
-                "entity_name": "John Doe", 
-                "risk_indicator": "regulatory_violation",
-                "title": "Regulatory Violation Risk Alert for John Doe",
-                "description": "John Doe mentioned in connection with regulatory violations involving [specific details from document]",
-                "risk_score": 0.6,
-                "evidence": "Specific text from document showing the risk"
+                "risk_indicator": "Technology",
+                "title": "Technology Risk Alert for John Doe",
+                "description": "John Doe mentioned in connection with technology-related activities: [specific details from document]",
+                "risk_score": 0.7,
+                "evidence": "Specific text from document showing the connection"
             }}
         ]
     }}

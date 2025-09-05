@@ -360,10 +360,25 @@ def generate_entity_risk_alerts(document_chunks: List[Dict[str, Any]], monitored
     # Parse LLM response
     try:
         cleaned_response = llm_response.strip()
+        
+        # Handle markdown code blocks
         if cleaned_response.startswith('```json'):
             cleaned_response = cleaned_response[7:]
-        if cleaned_response.endswith('```'):
-            cleaned_response = cleaned_response[:-3]
+        if cleaned_response.startswith('```'):
+            cleaned_response = cleaned_response[3:]
+        
+        # Find the end of the JSON block (before any explanation)
+        json_end = cleaned_response.find('```')
+        if json_end != -1:
+            cleaned_response = cleaned_response[:json_end]
+        
+        # Also look for explanation markers
+        explanation_markers = ['### Explanation:', '## Explanation:', '# Explanation:', 'Explanation:']
+        for marker in explanation_markers:
+            explanation_start = cleaned_response.find(marker)
+            if explanation_start != -1:
+                cleaned_response = cleaned_response[:explanation_start]
+        
         cleaned_response = cleaned_response.strip()
         
         parsed = json.loads(cleaned_response)
