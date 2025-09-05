@@ -349,8 +349,12 @@ def generate_entity_risk_alerts(document_chunks: List[Dict[str, Any]], monitored
     
     # Debug logging
     logging.info(f"Entity risk alerts LLM response: {llm_response}")
+    logging.info(f"Document chunks count: {len(document_chunks)}")
+    logging.info(f"Monitored names: {monitored_names}")
+    logging.info(f"Risk indicators: {risk_indicators}")
     
     if not llm_response:
+        logging.warning("No LLM response received")
         return []
     
     # Parse LLM response
@@ -444,7 +448,13 @@ def perform_risk_monitoring(
         formatted_results = {
             "success": True,
             "document_name": document_name,
-            "alerts": alerts
+            "alerts": alerts,
+            "debug_info": {
+                "chunks_analyzed": len(document_chunks),
+                "monitored_names": monitored_names,
+                "risk_indicators": risk_indicators,
+                "alerts_generated": len(alerts)
+            }
         }
         
         return formatted_results

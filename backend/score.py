@@ -1429,6 +1429,39 @@ async def analyze_risk_endpoint(
     finally:
         gc.collect()
 
+@app.post("/list_documents")
+async def list_documents(
+    uri=Form("neo4j+s://9379df68.databases.neo4j.io:7687"),
+    userName=Form("neo4j"), 
+    password=Form(None), 
+    database=Form("neo4j")
+):
+    """List all available documents in the database for debugging."""
+    try:
+        # Database connection setup
+        graph = create_graph_database_connection(uri, userName, password, database)
+        
+        # Query all documents
+        query = """
+        MATCH (d:Document)
+        OPTIONAL MATCH (c:Chunk)-[:PART_OF]->(d)
+        WITH d, count(c) AS chunk_count
+        RETURN d.fileName AS filename, d.id AS id, d.size AS size, 
+               d.created_date AS created_date, chunk_count
+        ORDER BY d.created_date DESC
+        LIMIT 20
+        """
+        
+        result = graph.query(query, {})
+        return create_api_response('Success', data={
+            "documents": result,
+            "total_count": len(result)
+        })
+        
+    except Exception as e:
+        logging.error(f"Error listing documents: {str(e)}")
+        return create_api_response('Failed', message="Unable to list documents", error=str(e))
+
 @app.post("/risk_monitor")
 async def risk_monitor(
     uri=Form("neo4j+s://9379df68.databases.neo4j.io:7687"),
@@ -1497,6 +1530,7 @@ async def risk_monitor(
                 model=model,
                 mode=mode
             )
+            logging.info(f"Risk monitoring result for {doc_name}: {result}")
             all_results.append(result)
         
         # Combine results from all documents and format for frontend
