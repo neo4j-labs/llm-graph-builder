@@ -32,8 +32,8 @@ set +a  # turn off automatic export
 
 # 2. Build Docker images using Docker Compose
 echo "Building Docker images..."
-# docker-compose build --no-cache --progress=plain
-docker-compose build
+docker-compose build --no-cache --progress=plain
+# docker-compose build
 
 # 2. Authenticate Docker to AWS ECR
 echo "Authenticating to AWS ECR..."
