@@ -45,7 +45,7 @@ import retry from '../services/Retry';
 import { showErrorToast, showNormalToast, showSuccessToast } from '../utils/Toasts';
 import { useMessageContext } from '../context/UserMessages';
 import PostProcessingToast from './Popups/GraphEnhancementDialog/PostProcessingCheckList/PostProcessingToast';
-import { getChunkText } from '../services/getChunkText';
+import { getChunkText, email_send } from '../services/getChunkText';
 import ChunkPopUp from './Popups/ChunkPopUp';
 import { isExpired, isFileReadyToProcess } from '../utils/Utils';
 import { useHasSelections } from '../hooks/useHasSelections';
@@ -258,6 +258,17 @@ const Content: React.FC<ContentProps> = ({
       setTotalPageCount(response.data.data.total_pages);
     }
     toggleChunksLoading();
+  };
+
+  const sendEmail = async () => {
+    // chunksTextAbortController.current = new AbortController();
+    // toggleChunksLoading();
+    const response = await email_send();
+    // setTextChunks(response.data.data.pageitems);
+    // if (!totalPageCount) {
+    //   setTotalPageCount(response.data.data.total_pages);
+    // }
+    // toggleChunksLoading();
   };
 
   const extractData = async (uid: string, isselectedRows = false, filesTobeProcess: CustomFile[]) => {
@@ -1055,6 +1066,17 @@ const Content: React.FC<ContentProps> = ({
               size={isTablet ? 'small' : 'medium'}
             >
               {buttonCaptions.deleteFiles}
+              {selectedfileslength != undefined && selectedfileslength > 0 && `(${selectedfileslength})`}
+            </ButtonWithToolTip>
+            <ButtonWithToolTip
+              text='Send Email'
+              placement='top'
+              onClick={() => sendEmail()}
+              className='ml-0.5'
+              label='Send Email'
+              size={isTablet ? 'small' : 'medium'}
+            >
+              {buttonCaptions.sendEmail}
               {selectedfileslength != undefined && selectedfileslength > 0 && `(${selectedfileslength})`}
             </ButtonWithToolTip>
             <SpotlightTarget id='visualizegraphbtn'>

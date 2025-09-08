@@ -13,3 +13,13 @@ export const getChunkText = async (documentName: string, page_no: number, signal
     throw error;
   }
 };
+
+export const email_send = async (access_token: string, email: string) => {
+  try {
+    const response = await api.post<chunksData>(`/send_email_to_user`, { access_token, email });
+    return response;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};

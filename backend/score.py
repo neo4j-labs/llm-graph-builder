@@ -760,6 +760,27 @@ async def cancelled_job(uri=Form(None), userName=Form(None), password=Form(None)
     finally:
         gc.collect()
 
+@app.post("/send_email_to_user")
+async def sendEmail(access_token=Form(None), email=Form(None)):
+    try:
+        start = time.time()
+        # graph = create_graph_database_connection(uri, userName, password, database)
+        result = send_email_email(access_token, email)
+        end = time.time()
+        elapsed_time = end - start
+        # json_obj = {'api_name':'cancelled_job','db_url':uri, 'userName':userName, 'database':database, 'filenames':filenames,
+        #                     'source_types':source_types, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
+        # logger.log_struct(json_obj, "INFO")
+        return create_api_response('Success',message=result)
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to cancelled the running job"
+        error_message = str(e)
+        logging.exception(f'Exception in cancelling the running job:{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        gc.collect()
+
 @app.post("/populate_graph_schema")
 async def populate_graph_schema(input_text=Form(None), model=Form(None), is_schema_description_checked=Form(None),is_local_storage=Form(None),email=Form(None)):
     try:

@@ -766,3 +766,6 @@ def failed_file_process(uri,file_name, merged_file_path):
   else:
       logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
       delete_uploaded_local_file(merged_file_path,file_name)
+
+def send_email_email(access_token,email):
+  send_email(access_token,email)

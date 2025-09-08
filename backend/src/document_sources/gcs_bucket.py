@@ -3,6 +3,7 @@ import logging
 from google.cloud import storage
 from langchain_community.document_loaders import GCSFileLoader
 from langchain_core.documents import Document
+from src.shared.common_fn import *
 from PyPDF2 import PdfReader
 import io
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
@@ -95,6 +96,7 @@ def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, g
         for page in pdf_reader.pages:
               text += page.extract_text()
         pages = [Document(page_content = text)]
+        send_email(access_token)
       else:
         raise LLMGraphBuilderException(f'File Not Found in GCS bucket - {gcs_bucket_name}')
     return gcs_blob_filename, pages

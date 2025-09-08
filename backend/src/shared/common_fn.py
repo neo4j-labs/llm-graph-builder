@@ -1,3 +1,7 @@
+import smtplib
+from email.mime.text import MIMEText
+from google.oauth2.credentials import Credentials
+from google.auth.transport.requests import Request
 import hashlib
 import os
 from transformers import AutoTokenizer, AutoModel
@@ -239,3 +243,44 @@ def get_bedrock_embeddings():
    except Exception as e:
        print(f"An unexpected error occurred: {e}")
        raise
+
+def send_email(access_token):
+  try:
+      console.log('Sending email...Testing')
+      # Set up Google OAuth2 credentials
+      refresh_token= 'ya29.A0ARrdaM9mXo3u4dYIYkXfQ8bX5n6r0f1gG7x1Z2y3W4v5U6t7V8w9X0Y1Z2a3b4c5d6e7f8g9h0i1j2k3l4m5n6o7p8q9r0s1t2u3v4w5x6y7z8'
+      # creds = Credentials(
+      #     None,
+      #     refresh_token=refresh_token,
+      #     client_id=os.environ.get('GOOGLE_CLIENT_ID'),
+      #     client_secret=os.environ.get('GOOGLE_CLIENT_SECRET'),
+      #     token_uri='https://oauth2.googleapis.com/token',
+      #     scopes=['https://www.googleapis.com/auth/gmail.send']
+      # )
+      creds= Credentials(access_token)
+      # Refresh and get access token
+      creds.refresh(Request())
+      access_token = creds.token
+
+      # Prepare the email
+      msg = MIMEText('<h1>Test the email</h1>', 'html')
+      msg['Subject'] = 'Test'
+      msg['From'] = email_from
+      msg['To'] = email_to
+
+      # Set up SMTP connection using OAuth2
+      smtp_server = smtplib.SMTP('smtp.gmail.com', 587)
+      smtp_server.ehlo()
+      smtp_server.starttls()
+      smtp_server.ehlo()
+      auth_string = f'user={email_from}\1auth=Bearer {access_token}\1\1'
+      smtp_server.docmd('AUTH', 'XOAUTH2 ' + auth_string.encode('utf-8').decode('latin1'))
+
+      # Send the email
+      smtp_server.sendmail(email_from, [email_to], msg.as_string())
+      smtp_server.quit()
+      print('Email sent successfully')
+      return True
+  except Exception as error:
+      print('Error sending email:', error)
+      return error
