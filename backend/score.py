@@ -599,11 +599,23 @@ async def chat_bot_grounding(
     session_id=Form(None),
     mode=Form(None),
     email=Form(None),
-    requireGrounding: bool = Form(True)
+    requireGrounding: bool = Form(True),
+    filterProperties: str = Form(None)
 ):
     logging.info(f"QA_RAG (grounding) called at {datetime.now()}")
     logging.info(f"document_names = {document_names}")
+    logging.info(f"filterProperties = {filterProperties}")
     qa_rag_start_time = time.time()
+    
+    # Parse filterProperties JSON if provided
+    filter_properties = None
+    if filterProperties:
+        try:
+            filter_properties = json.loads(filterProperties)
+        except json.JSONDecodeError as e:
+            logging.warning(f"Invalid JSON in filterProperties: {e}")
+            filter_properties = None
+    
     try:
         if mode == "graph":
             graph = Neo4jGraph( url=uri,username=userName,password=password,database=database,sanitize = True, refresh_schema=True)
@@ -614,14 +626,14 @@ async def chat_bot_grounding(
         write_access = graph_DB_dataAccess.check_account_access(database=database)
         # Select the system template based on requireGrounding (to be used inside QA_RAG or before calling it):
         # system_template = CHAT_SYSTEM_TEMPLATE if requireGrounding else CHAT_SYSTEM_TEMPLATE_UNGROUNDED
-        result = await asyncio.to_thread(QA_RAG_GROUNDING,graph=graph,model=model,question=question,document_names=document_names,session_id=session_id,mode=mode,write_access=write_access,requireGrounding=requireGrounding)
+        result = await asyncio.to_thread(QA_RAG_GROUNDING,graph=graph,model=model,question=question,document_names=document_names,session_id=session_id,mode=mode,write_access=write_access,filter_properties=filter_properties,requireGrounding=requireGrounding)
 
         total_call_time = time.time() - qa_rag_start_time
         logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
         result["info"]["response_time"] = round(total_call_time, 2)
         
         json_obj = {'api_name':'chat_bot_grounding','db_url':uri, 'userName':userName, 'database':database, 'question':question,'document_names':document_names,
-                             'session_id':session_id, 'mode':mode, 'requireGrounding': requireGrounding, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{total_call_time:.2f}','email':email}
+                             'session_id':session_id, 'mode':mode, 'requireGrounding': requireGrounding, 'filterProperties': filterProperties, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{total_call_time:.2f}','email':email}
         logger.log_struct(json_obj, "INFO")
         
         return create_api_response('Success',data=result)

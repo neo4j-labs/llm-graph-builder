@@ -41,7 +41,7 @@ starlette==0.46.1
 sse-starlette==2.2.1
 starlette-session==0.4.3
 tqdm==4.67.1
-unstructured[all-docs]
+unstructured[all-docs] #in the pipfile we have unstructured[pdf,md,docx,pptx], need to reconcile these two
 unstructured==0.17.2
 unstructured-client==0.32.3
 unstructured-inference==0.8.10

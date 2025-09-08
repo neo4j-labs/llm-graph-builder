@@ -409,15 +409,23 @@ def create_retriever(neo_db, document_names, chat_mode_settings,search_k, score_
                 'effective_search_ratio': ef_ratio,
                 'score_threshold': score_threshold,
                 'filter': base_filter
-            }
+            },
         )
         logging.info(f"Successfully created retriever with search_k={search_k}, score_threshold={score_threshold} for documents {document_names}")
     else:
         # note from ian changed the way this is written slightly to match how the upstream team is doing it, passing filter_properties or None to search_kwargs literal.            
 
+        # search_kwargs = {
+        #     'k': search_k, 
+        #     'score_threshold': score_threshold,
+        #     "filter": {
+        #         "topics": { "$like": "topic_ENDOC"}
+        #     }
+        # }
         search_kwargs = {
             'k': search_k, 
-            'score_threshold': score_threshold
+            'score_threshold': score_threshold,
+            # "filter": filter_properties
         }
         if filter_properties is not None:
             search_kwargs['filter'] = filter_properties
@@ -428,16 +436,18 @@ def create_retriever(neo_db, document_names, chat_mode_settings,search_k, score_
             search_kwargs=search_kwargs
         )
         print(f"search_kwargs = {search_kwargs}")
-        logging.info(f"Successfully created retriever with search_k={search_k}, score_threshold={score_threshold}")
+        logging.info(f"Successfully created retriever with search_k={search_k}, score_threshold={score_threshold}, filter={filter_properties}")
     return retriever
 
-def get_neo4j_retriever(graph, document_names, chat_mode_settings, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD, filter_properties=None):
+def get_neo4j_retriever(graph, document_names, chat_mode_settings, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD, filter_properties=None):    
     try:
         neo_db = initialize_neo4j_vector(graph, chat_mode_settings)
         # document_names= list(map(str.strip, json.loads(document_names)))
         search_k = chat_mode_settings["top_k"]
         ef_ratio = int(os.getenv("EFFECTIVE_SEARCH_RATIO", "2")) if os.getenv("EFFECTIVE_SEARCH_RATIO", "2").isdigit() else 2
-        retriever = create_retriever(neo_db, document_names,chat_mode_settings, search_k, score_threshold,ef_ratio,filter_properties)
+        
+        # Use the parameter instead of hardcoded value
+        retriever = create_retriever(neo_db, document_names,chat_mode_settings, search_k, score_threshold,ef_ratio, filter_properties)
         return retriever
     except Exception as e:
         index_name = chat_mode_settings.get("index_name")
@@ -928,7 +938,7 @@ def QA_RAG(graph,model, question, document_names, session_id, mode, write_access
     
     return result
 
-def QA_RAG_GROUNDING(graph,model, question, document_names, session_id, mode, write_access=True, requireGrounding=True):
+def QA_RAG_GROUNDING(graph,model, question, document_names, session_id, mode, write_access=True, filter_properties=None, requireGrounding=True):
     logging.info(f"Chat Mode: {mode}")
 
     history = create_neo4j_chat_message_history(graph, session_id, write_access)
@@ -967,7 +977,7 @@ def QA_RAG_GROUNDING(graph,model, question, document_names, session_id, mode, wr
                 "user": "chatbot"
             }
         else:
-            result = process_chat_response(messages,history, question, model, graph, document_names,chat_mode_settings, extract_tools=False, filter_properties={}, requireGrounding=requireGrounding)
+            result = process_chat_response(messages,history, question, model, graph, document_names,chat_mode_settings, extract_tools=False, filter_properties=filter_properties, requireGrounding=requireGrounding)
 
     result["session_id"] = session_id
     

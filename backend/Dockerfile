@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.10-slim-bullseye
 WORKDIR /code
 ENV PORT 8000
 EXPOSE 8000
@@ -14,6 +14,12 @@ RUN rm -rf /var/lib/apt/lists/* && \
     ca-certificates && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+# Install system dependencies
+# this was added before pinned python:3.10-slim-bullseye, shouldn't need it anymore
+# RUN apt-get update && apt-get install -y --no-install-recommends \
+#     libgl1 \
+#     && rm -rf /var/lib/apt/lists/*
 
 # Now update and install dependencies including build tools
 RUN apt-get update && \
