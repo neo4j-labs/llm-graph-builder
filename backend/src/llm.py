@@ -403,7 +403,7 @@ def get_llm(model: str, add_tools=False):
             )
         elif "openai" in model:
             model_name, api_key = env_value.split(",")
-            if "o3-mini" in model:
+            if "o3-mini" in model or "gpt-5" in model_name:
                 llm= ChatOpenAI(
                 api_key=api_key,
                 model=model_name)
@@ -678,8 +678,11 @@ def create_chat_completion_sync(
         completion_params = {
             "model": model_name,
             "messages": messages,
-            "temperature": temperature,
+            # "temperature": temperature, # commented out so only add if not gpt-5
         }
+
+        if not "gpt-5" in model_name:
+            completion_params["temperature"] = temperature
 
         # Add tools if requested
         if add_tools:
