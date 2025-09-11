@@ -16,6 +16,7 @@ RISK_MONITORING_PROMPTS = {
     2. For each mentioned entity, analyze their activities, connections, and context
     3. Match entity activities to risk indicators using semantic understanding
     4. Generate alerts for ANY reasonable connection between entity and risk indicator
+    5. DO NOT skip any indicators - check ALL of them for each entity to be sure we make accurate alerts based on document content.
     
     RISK INDICATOR MATCHING RULES:
     - Use semantic understanding, not just exact word matches
@@ -40,6 +41,8 @@ RISK_MONITORING_PROMPTS = {
     - Are mentioned in the document
     - Have activities/connections that relate to any risk indicator
     - Have a risk score >= {risk_threshold}
+    
+    REMINDER: You must systematically check EVERY risk indicator for EVERY entity. Do not stop early!
     
     Respond in this JSON format:
     {{
