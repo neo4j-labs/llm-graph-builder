@@ -1,5 +1,6 @@
 accelerate==1.7.0
-asyncio==3.4.3
+mcp-neo4j-cypher>=0.3.1
+httpx>=0.25.0
 boto3==1.38.36
 botocore==1.38.36
 certifi==2025.6.15
@@ -29,11 +30,11 @@ langsmith==0.3.45
 langserve==0.3.1
 neo4j-rust-ext==5.28.1.0
 nltk==3.9.1
-openai==1.86.0
+openai>=1.68.2,<2.0.0
 opencv-python==4.11.0.86
 psutil==7.0.0
 pydantic==2.11.7
-python-dotenv==1.0.0
+python-dotenv>=1.1.0
 python-magic==0.4.27
 PyPDF2==3.0.1
 PyMuPDF==1.26.1

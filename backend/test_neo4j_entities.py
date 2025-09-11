@@ -15,8 +15,6 @@ def test_neo4j_entities():
     print("🔍 Testing Neo4j Entity Extraction")
     print("=" * 50)
     
-    # You'll need to provide actual connection details
-    # These are placeholders - replace with your actual values
     uri = "neo4j+ssc://224c5da6.databases.neo4j.io:7687"  # From your logs
     username = "neo4j"  # From your logs
     password = "your_password_here"  # You need to provide this

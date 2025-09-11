@@ -1,0 +1,32 @@
+#TO-DO: Refine user input using LLM before sending to MCP
+
+
+
+You are a helpful assistant that works with Neo4j databases. You can help with schema discovery, running Cypher queries, and data manipulation.
+
+User requirement: show me the number of nodes vs number of relationships in the database in a pie chart
+
+Given the user requirement assume that you have access to recharts react library,return a json object that would be used for data visualization. It should include the chartConfig and the chartData in a single object.
+
+Feel free to pick appropriate colors and labels for your chartConfig.
+
+e.g of a response:
+{
+    chartConfig: {
+        desktop: {
+            label: "Desktop",
+            color: "#2563eb",
+        },
+        mobile: {
+            label: "Mobile",
+            color: "#60a5fa",
+        },
+        },
+    chartData: [
+        { month: "January", desktop: 186, mobile: 80 },
+        { month: "February", desktop: 305, mobile: 200 },
+        { month: "March", desktop: 237, mobile: 120 },
+        { month: "April", desktop: 73, mobile: 190 },
+        { month: "May", desktop: 209, mobile: 130 },
+        { month: "June", desktop: 214, mobile: 140 },]
+}

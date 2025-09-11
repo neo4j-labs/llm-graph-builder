@@ -20,6 +20,7 @@ from sse_starlette.sse import EventSourceResponse
 from src.communities import create_communities
 from src.neighbours import get_neighbour_nodes
 from src.risk_monitor import perform_risk_monitoring
+from src.mcp_service import mcp_service
 import json
 from typing import List, Optional
 from google.oauth2.credentials import Credentials
@@ -1963,6 +1964,123 @@ async def remove_monitored_entity(
         error_message = str(e)
         logging.exception(f'Exception in remove_monitored_entity: {error_message}')
         return create_api_response(job_status, message=message, error=error_message)
+
+@app.post("/mcp/generate_chart")
+async def generate_chart_with_mcp(
+    query=Form(""),  # Natural language query
+    chart_type=Form("bar"),  # Chart type: bar, pie, line, area, scatter
+    uri=Form("neo4j+s://9379df68.databases.neo4j.io:7687"),
+    userName=Form("neo4j"), 
+    password=Form(None), 
+    database=Form("neo4j"),
+    model=Form("gpt-4")
+):
+    """
+    Generate charts from natural language queries using MCP Neo4j integration.
+    
+    Args:
+        query: Natural language description of what data to visualize
+        chart_type: Type of chart to generate (bar, pie, line, area, scatter)
+        uri: Neo4j connection URI
+        userName: Neo4j username
+        password: Neo4j password
+        database: Neo4j database name
+        model: OpenAI model to use
+    
+    Returns:
+        Chart data in format suitable for frontend visualization
+    """
+    logging.info(f"MCP chart generation called at {datetime.now()}")
+    chart_start_time = time.time()
+    
+    try:
+        # Validate required parameters
+        if not query.strip():
+            return create_api_response('Failed', message="Query is required", error="Missing query parameter")
+        
+        if not password:
+            return create_api_response('Failed', message="Neo4j password is required", error="Missing password parameter")
+        
+        # Get OpenAI API key from environment
+        openai_api_key = os.getenv("OPENAI_API_KEY")
+        if not openai_api_key:
+            return create_api_response('Failed', message="OpenAI API key is required in environment variables", error="Missing OPENAI_API_KEY environment variable")
+        
+        # Validate chart type
+        valid_chart_types = ["bar", "pie", "line", "area", "scatter", "column"]
+        if chart_type.lower() not in valid_chart_types:
+            return create_api_response('Failed', message=f"Invalid chart type. Must be one of: {', '.join(valid_chart_types)}", error="Invalid chart_type parameter")
+        
+        # Neo4j configuration
+        neo4j_config = {
+            "uri": uri,
+            "username": userName,
+            "password": password,
+            "database": database
+        }
+        
+        # Start MCP server if not already running
+        if not mcp_service.mcp_process or mcp_service.mcp_process.poll() is not None:
+            logging.info("Starting MCP server...")
+            if not await mcp_service.start_mcp_server(neo4j_config):
+                return create_api_response('Failed', message="Failed to start MCP server", error="MCP server startup failed")
+        
+        # Process the natural language query
+        logging.info(f"Processing query: {query}")
+        result = await mcp_service.process_natural_language_query(
+            query=query,
+            chart_type=chart_type.lower(),
+            openai_api_key=openai_api_key,
+            model=model
+        )
+        
+        if result["success"]:
+            chart_end_time = time.time()
+            processing_time = chart_end_time - chart_start_time
+            
+            # Format response for frontend
+            response_data = {
+                "chartData": result["chartData"],
+                "chartConfig": result["chartConfig"],
+                "chartType": result["chartType"],
+                "metadata": {
+                    "natural_language_query": result["natural_language_query"],
+                    "cypher_query": result["cypher_query"],
+                    "processing_time": round(processing_time, 2),
+                    "timestamp": datetime.now().isoformat(),
+                    "raw_data": result["raw_data"]
+                }
+            }
+            
+            return create_api_response(
+                'Success', 
+                message=f"Chart generated successfully in {processing_time:.2f} seconds",
+                data=response_data
+            )
+        else:
+            return create_api_response(
+                'Failed', 
+                message="Failed to generate chart",
+                error=result.get("error", "Unknown error occurred")
+            )
+        
+    except Exception as e:
+        job_status = "Failed"
+        message = "Unable to generate chart"
+        error_message = str(e)
+        logging.exception(f'Exception in generate_chart_with_mcp: {error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+
+@app.post("/mcp/stop_server")
+async def stop_mcp_server():
+    """
+    Stop the MCP Neo4j server.
+    """
+    try:
+        await mcp_service.stop_mcp_server()
+        return create_api_response('Success', message="MCP server stopped successfully")
+    except Exception as e:
+        return create_api_response('Failed', message="Failed to stop MCP server", error=str(e))
 
 if __name__ == "__main__":
     uvicorn.run(app)
