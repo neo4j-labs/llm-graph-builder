@@ -335,32 +335,61 @@ class MCPNeo4jService:
                     chart_artifact = self._generate_react_component(query, data, openai_api_key, model)
                     logger.info(f"Chart artifact result: {chart_artifact}")
                     
-                    return {
-                        "success": True,
-                        "natural_language_query": query,
-                        "cypher_query": cypher_query,
-                        "chartData": chart_artifact.get("chartData"),
-                        "chartConfig": chart_artifact.get("chartConfig"),
-                        "chartType": chart_artifact.get("chartType"),
-                        "raw_data": data
-                    }
+                    # Check if LLM generation was successful
+                    if chart_artifact and not chart_artifact.get("error"):
+                        return {
+                            "success": True,
+                            "natural_language_query": query,
+                            "cypher_query": cypher_query,
+                            "chartData": chart_artifact.get("chartData"),
+                            "chartConfig": chart_artifact.get("chartConfig"),
+                            "chartType": chart_artifact.get("chartType"),
+                            "raw_data": data
+                        }
+                    else:
+                        # LLM failed, try fallback chart generation
+                        logger.warning(f"LLM chart generation failed: {chart_artifact.get('error', 'Unknown error')}. Using fallback chart generation...")
+                        fallback_chart = self._create_fallback_chart_data(query, data)
+                        return {
+                            "success": True,
+                            "natural_language_query": query,
+                            "cypher_query": cypher_query,
+                            "chartData": fallback_chart.get("chartData"),
+                            "chartConfig": fallback_chart.get("chartConfig"),
+                            "chartType": fallback_chart.get("chartType"),
+                            "raw_data": data
+                        }
                 else:
-                    # Data contains errors, try fallback
-                    logger.warning(f"Query returned error data: {data}. Trying fallback...")
+                    # Query returned errors, try simpler fallback query
+                    logger.warning(f"Query returned error data: {data}. Trying simpler fallback query...")
                     fallback_query = "MATCH (n) RETURN labels(n)[0] as name, count(*) as count LIMIT 10"
                     fallback_result = await self.execute_cypher_query(fallback_query)
                     
                     if fallback_result["success"]:
+                        # Try LLM generation first with fallback data
                         chart_artifact = self._generate_react_component(query, fallback_result["data"], openai_api_key, model)
-                        return {
-                            "success": True,
-                            "natural_language_query": query,
-                            "cypher_query": f"{cypher_query} (fallback: {fallback_query})",
-                            "chartData": chart_artifact.get("chartData"),
-                            "chartConfig": chart_artifact.get("chartConfig"),
-                            "chartType": chart_artifact.get("chartType"),
-                            "raw_data": fallback_result["data"]
-                        }
+                        if chart_artifact and not chart_artifact.get("error"):
+                            return {
+                                "success": True,
+                                "natural_language_query": query,
+                                "cypher_query": f"{cypher_query} (fallback: {fallback_query})",
+                                "chartData": chart_artifact.get("chartData"),
+                                "chartConfig": chart_artifact.get("chartConfig"),
+                                "chartType": chart_artifact.get("chartType"),
+                                "raw_data": fallback_result["data"]
+                            }
+                        else:
+                            # Use fallback chart generation
+                            fallback_chart = self._create_fallback_chart_data(query, fallback_result["data"])
+                            return {
+                                "success": True,
+                                "natural_language_query": query,
+                                "cypher_query": f"{cypher_query} (fallback: {fallback_query})",
+                                "chartData": fallback_chart.get("chartData"),
+                                "chartConfig": fallback_chart.get("chartConfig"),
+                                "chartType": fallback_chart.get("chartType"),
+                                "raw_data": fallback_result["data"]
+                            }
                     else:
                         return {
                             "success": False,
@@ -417,22 +446,33 @@ class MCPNeo4jService:
             if not self.openai_client:
                 self.openai_client = openai.OpenAI(api_key=openai_api_key)
             
-            # Call OpenAI to generate structured chart data
-            response = self.openai_client.chat.completions.create(
-                model=model,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are a data visualization expert. Generate structured chart data and configuration in JSON format."
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                temperature=0.1,
-                max_tokens=1500
-            )
+            # Call OpenAI to generate structured chart data with retry logic
+            max_retries = 2
+            for attempt in range(max_retries):
+                try:
+                    response = self.openai_client.chat.completions.create(
+                        model=model,
+                        messages=[
+                            {
+                                "role": "system",
+                                "content": "You are a data visualization expert. Generate structured chart data and configuration in JSON format."
+                            },
+                            {
+                                "role": "user",
+                                "content": prompt
+                            }
+                        ],
+                        temperature=0.1,
+                        max_tokens=1500
+                    )
+                    break  # Success, exit retry loop
+                except Exception as e:
+                    if attempt == max_retries - 1:
+                        logger.error(f"OpenAI API call failed after {max_retries} attempts: {e}")
+                        return {"error": f"OpenAI API call failed: {str(e)}"}
+                    else:
+                        logger.warning(f"OpenAI API call attempt {attempt + 1} failed: {e}. Retrying...")
+                        continue
             
             # Extract the JSON response
             json_content = response.choices[0].message.content.strip()
@@ -462,8 +502,20 @@ class MCPNeo4jService:
                 if "chartData" not in chart_data or "chartConfig" not in chart_data:
                     raise ValueError("Missing required fields: chartData or chartConfig")
                 
+                # Debug: Check for list values in chartData
+                for i, item in enumerate(chart_data["chartData"]):
+                    if not isinstance(item, dict):
+                        logger.warning(f"chartData item {i} is not a dict: {item}")
+                        continue
+                    for key, value in item.items():
+                        if isinstance(value, list):
+                            logger.warning(f"chartData item {i} has list value for key '{key}': {value}")
+                
+                # Validate and ensure data format matches frontend expectations
+                validated_data = self._validate_chart_data(chart_data["chartData"], chart_data.get("type", "bar"))
+                
                 return {
-                    "chartData": chart_data["chartData"],
+                    "chartData": validated_data,
                     "chartConfig": chart_data["chartConfig"],
                     "chartType": chart_data.get("type", "bar")
                 }
@@ -499,29 +551,90 @@ class MCPNeo4jService:
             chart_config = {}
             colors = ["#2563eb", "#60a5fa", "#93c5fd", "#dbeafe", "#1e40af", "#1d4ed8"]
             
-            for i, item in enumerate(raw_data[:10]):  # Limit to 10 items
-                name = item.get("name") or item.get("NodeType") or item.get("RelationshipType") or f"Item {i+1}"
-                value = item.get("count") or item.get("Count") or item.get("value") or 0
+            for i, item in enumerate(raw_data[:20]):  # Increased limit for more data
+                # Try multiple possible name fields
+                name = (item.get("name") or item.get("NodeType") or item.get("RelationshipType") or 
+                       item.get("Category") or item.get("SourceType") or item.get("TargetType") or 
+                       item.get("Date") or item.get("Type") or f"Item {i+1}")
                 
+                # Try multiple possible value fields
+                value = (item.get("count") or item.get("Count") or item.get("value") or 
+                        item.get("Value") or item.get("Total") or item.get("Amount") or 0)
+                
+                # Ensure name is a string, not a list
+                if isinstance(name, list):
+                    name = str(name[0]) if name else f"Item {i+1}"
+                elif not isinstance(name, str):
+                    name = str(name) if name else f"Item {i+1}"
+                
+                # Ensure value is a number
+                if not isinstance(value, (int, float)):
+                    try:
+                        value = float(value) if value else 0
+                    except (ValueError, TypeError):
+                        value = 0
+                
+                # Ensure data format matches frontend expectations
                 chart_data.append({"name": name, "value": value})
                 chart_config[name] = {
                     "label": name,
                     "color": colors[i % len(colors)]
                 }
             
+            # Validate the generated data
+            validated_data = self._validate_chart_data(chart_data, chart_type)
+            
             return {
-                "chartData": chart_data,
+                "chartData": validated_data,
                 "chartConfig": chart_config,
                 "chartType": chart_type
             }
             
         except Exception as e:
             logger.error(f"Error creating fallback chart data: {e}")
+            logger.error(f"Raw data that caused error: {raw_data}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             return {
                 "chartData": [{"name": "Error", "value": 0}],
                 "chartConfig": {"Error": {"label": "Error", "color": "#ef4444"}},
                 "chartType": self._infer_chart_type_from_query(query)
             }
+    
+    def _validate_chart_data(self, data: List[Dict], chart_type: str) -> List[Dict]:
+        """Validate and ensure chart data matches frontend expectations"""
+        if not data or not isinstance(data, list):
+            return []
+        
+        validated_data = []
+        for item in data:
+            if not isinstance(item, dict):
+                continue
+                
+            # Ensure each item has the required structure for frontend
+            validated_item = {}
+            
+            # For pie charts, ensure name and value
+            if chart_type == "pie":
+                validated_item["name"] = str(item.get("name", item.get("NodeType", "Unknown")))
+                validated_item["value"] = float(item.get("value", item.get("Count", item.get("count", 0))))
+            
+            # For bar/line charts, preserve the structure but ensure proper types
+            else:
+                for key, value in item.items():
+                    if isinstance(value, (int, float)):
+                        validated_item[key] = float(value)
+                    elif isinstance(value, str):
+                        validated_item[key] = value
+                    elif isinstance(value, list):
+                        # Convert lists to strings for display
+                        validated_item[key] = str(value[0]) if value else ""
+                    else:
+                        validated_item[key] = str(value) if value is not None else ""
+            
+            validated_data.append(validated_item)
+        
+        return validated_data
     
     def _infer_chart_type_from_query(self, query: str) -> str:
         """Infer chart type from user query"""

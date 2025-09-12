@@ -22,13 +22,41 @@ Database Schema:
     return f"""{schema_text}User Question: {query}
 
 IMPORTANT RULES FOR CYPHER QUERIES:
-1. Use ONLY MATCH statements - no CREATE, DELETE, SET, REMOVE, etc.
-2. NO UNION or UNION ALL - use separate queries if needed
-3. Return data in format: NodeType, Count (for counts) or Name, Value (for values)
-4. Keep queries simple and focused on data retrieval
-5. Use LIMIT to avoid large result sets
+1. Use READ-ONLY operations (MATCH, RETURN, WITH, WHERE, ORDER BY, etc.)
+2. NO write operations (CREATE, DELETE, SET, REMOVE, MERGE, etc.)
+3. Return data in a format suitable for visualization
+4. Use appropriate LIMIT to balance performance and completeness
+5. Complex queries are allowed - use WITH, aggregation functions, and subqueries as needed
+6. For multiple data series, use UNION ALL to combine results
+7. Use meaningful column names that describe the data
 
-Based on the user's question, generate a simple MATCH query that will return data suitable for visualization.
+Based on the user's question, generate an appropriate Cypher query that will return data suitable for visualization.
+
+EXAMPLES OF FLEXIBLE QUERIES:
+
+Simple counts:
+MATCH (n) RETURN labels(n)[0] as NodeType, count(*) as Count ORDER BY Count DESC
+
+Complex aggregations:
+MATCH (n)-[r]->(m) 
+WITH type(r) as RelationshipType, count(r) as Count
+RETURN RelationshipType, Count ORDER BY Count DESC
+
+Multiple data series:
+MATCH (n:Person) RETURN 'Person' as Category, count(n) as Count
+UNION ALL
+MATCH (n:Organization) RETURN 'Organization' as Category, count(n) as Count
+
+Time-based analysis:
+MATCH (n) 
+WHERE n.created_at IS NOT NULL
+RETURN date(n.created_at) as Date, count(n) as Count
+ORDER BY Date
+
+Relationship analysis:
+MATCH (a)-[r]->(b)
+RETURN labels(a)[0] as SourceType, type(r) as RelationshipType, labels(b)[0] as TargetType, count(r) as Count
+ORDER BY Count DESC
 
 Return only the Cypher query, no explanations or markdown formatting."""
 
@@ -48,7 +76,12 @@ IMPORTANT: Analyze the user requirement to determine the most appropriate chart 
 
 Given the user requirement and the data below, return a JSON object that would be used for data visualization. It should include the chartConfig and the chartData in a single object. Feel free to pick appropriate colors and labels for your chartConfig.
 
-IMPORTANT: For single-series data (like counts by category), use the "name" and "value" format in chartData. For multi-series data, use the appropriate format shown in examples.
+IMPORTANT: 
+- For single-series data (like counts by category), use the "name" and "value" format in chartData
+- For multi-series data, use the appropriate format shown in examples
+- For time-series data, use "date" or "time" as the x-axis and numeric values for y-axis
+- For relationship data, include both source and target information
+- Use meaningful labels that clearly describe what the data represents
 
 DATA: {raw_data_json}
 
@@ -76,6 +109,19 @@ For bar charts (single series):
   "chartData": [
     {{ "name": "Desktop", "value": 186 }},
     {{ "name": "Mobile", "value": 80 }}
+  ],
+  "type": "bar"
+}}
+
+For bar charts (multi-series with categories):
+{{
+  "chartConfig": {{
+    "sales": {{ "label": "Sales", "color": "#2563eb" }},
+    "revenue": {{ "label": "Revenue", "color": "#60a5fa" }}
+  }},
+  "chartData": [
+    {{ "name": "Q1", "sales": 186, "revenue": 80 }},
+    {{ "name": "Q2", "sales": 305, "revenue": 200 }}
   ],
   "type": "bar"
 }}
