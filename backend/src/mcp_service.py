@@ -12,6 +12,7 @@ from typing import Dict, Any, List, Optional
 import openai
 from datetime import datetime
 from src.constants.chart_prompts import create_cypher_query_prompt, create_chart_formatting_prompt
+from src.mcp_config import get_mcp_config, get_server_url, should_start_local_process, get_timeout
 
 logger = logging.getLogger(__name__)
 
@@ -22,24 +23,29 @@ class MCPNeo4jService:
         """Initialize the MCP service"""
         self.mcp_process = None
         self.http_client = None
-        self.server_url = "http://localhost:8001/api/mcp/"
+        self.config = get_mcp_config()
+        self.server_url = get_server_url()
         self.openai_client = None
-        
+        logger.info(f"MCP Service initialized: {self.config.get_description()}")
+    
+    async def _init_http_client(self):
+        """Initialize HTTP client"""
+        if not self.http_client:
+            self.http_client = httpx.AsyncClient(timeout=get_timeout())
+            logger.info("HTTP client initialized")
+    
     async def start_mcp_server(self, neo4j_config: Dict[str, str]) -> bool:
-        """Start the MCP Neo4j server as a subprocess"""
+        """Start the MCP Neo4j server as a subprocess (only for local mode)"""
+        if not should_start_local_process():
+            logger.info("Using remote MCP server, skipping local process start")
+            # Initialize HTTP client for remote server
+            self.http_client = httpx.AsyncClient(timeout=get_timeout())
+            logger.info("HTTP client initialized for remote MCP server")
+            return True
+            
         try:
-            # Start the MCP server process with command line arguments
-            cmd = [
-                "mcp-neo4j-cypher",
-                "--transport", "http",
-                "--server-host", "127.0.0.1",
-                "--server-port", "8001",  # Use different port to avoid conflict with FastAPI backend
-                "--server-path", "/api/mcp/",
-                "--db-url", neo4j_config["uri"],
-                "--username", neo4j_config["username"],
-                "--password", neo4j_config["password"],
-                "--database", neo4j_config["database"]
-            ]
+            # Get command line arguments from config
+            cmd = self.config.get_local_server_args(neo4j_config)
             
             logger.info(f"Starting MCP server with command: {' '.join(cmd)}")
             
@@ -59,7 +65,7 @@ class MCPNeo4jService:
                 return False
             
             # Initialize HTTP client
-            self.http_client = httpx.AsyncClient(timeout=30.0)
+            self.http_client = httpx.AsyncClient(timeout=get_timeout())
             
             logger.info("MCP Neo4j server started successfully")
             return True
@@ -112,12 +118,15 @@ class MCPNeo4jService:
             if not self.http_client:
                 raise Exception("HTTP client not initialized")
             
+            # Use different tool names for local vs remote servers
+            tool_name = "read_neo4j_cypher" if self.config.use_local_process else "neo4j-mcp-read_neo4j_cypher"
+            
             mcp_request = {
                 "jsonrpc": "2.0",
                 "id": 1,
                 "method": "tools/call",
                 "params": {
-                    "name": "read_neo4j_cypher",
+                    "name": tool_name,
                     "arguments": {
                         "query": query
                     }
@@ -131,7 +140,7 @@ class MCPNeo4jService:
                     "Content-Type": "application/json",
                     "Accept": "application/json, text/event-stream"
                 },
-                timeout=30.0  # 30 second timeout
+                timeout=get_timeout()
             )
             
             if response.status_code == 200:
@@ -210,12 +219,15 @@ class MCPNeo4jService:
             if not self.http_client:
                 return {"success": False, "error": "HTTP client not initialized"}
             
+            # Use different tool names for local vs remote servers
+            tool_name = "get_neo4j_schema" if self.config.use_local_process else "neo4j-mcp-get_neo4j_schema"
+            
             mcp_request = {
                 "jsonrpc": "2.0",
                 "id": 2,
                 "method": "tools/call",
                 "params": {
-                    "name": "get_neo4j_schema",
+                    "name": tool_name,
                     "arguments": {}
                 }
             }

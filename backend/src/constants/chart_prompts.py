@@ -48,6 +48,8 @@ IMPORTANT: Analyze the user requirement to determine the most appropriate chart 
 
 Given the user requirement and the data below, return a JSON object that would be used for data visualization. It should include the chartConfig and the chartData in a single object. Feel free to pick appropriate colors and labels for your chartConfig.
 
+IMPORTANT: For single-series data (like counts by category), use the "name" and "value" format in chartData. For multi-series data, use the appropriate format shown in examples.
+
 DATA: {raw_data_json}
 
 Examples of responses:
@@ -65,7 +67,20 @@ For pie charts:
   "type": "pie"
 }}
 
-For bar charts:
+For bar charts (single series):
+{{
+  "chartConfig": {{
+    "Desktop": {{ "label": "Desktop", "color": "#2563eb" }},
+    "Mobile": {{ "label": "Mobile", "color": "#60a5fa" }}
+  }},
+  "chartData": [
+    {{ "name": "Desktop", "value": 186 }},
+    {{ "name": "Mobile", "value": 80 }}
+  ],
+  "type": "bar"
+}}
+
+For bar charts (multi-series):
 {{
   "chartConfig": {{
     "desktop": {{ "label": "Desktop", "color": "#2563eb" }},
