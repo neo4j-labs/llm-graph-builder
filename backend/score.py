@@ -1968,24 +1968,21 @@ async def remove_monitored_entity(
 @app.post("/mcp/generate_chart")
 async def generate_chart_with_mcp(
     query=Form(""),  # Natural language query
-    chart_type=Form("bar"),  # Chart type: bar, pie, line, area, scatter
-    uri=Form("neo4j+s://9379df68.databases.neo4j.io:7687"),
-    userName=Form("neo4j"), 
-    password=Form(None), 
-    database=Form("neo4j"),
-    model=Form("gpt-4")
+    uri=Form(None),  # Neo4j URI - will use env var if not provided
+    userName=Form(None),  # Neo4j username - will use env var if not provided
+    password=Form(None),  # Neo4j password - will use env var if not provided
+    database=Form(None),  # Neo4j database - will use env var if not provided
 ):
     """
     Generate charts from natural language queries using MCP Neo4j integration.
+    The LLM will infer the appropriate chart type based on the query.
     
     Args:
         query: Natural language description of what data to visualize
-        chart_type: Type of chart to generate (bar, pie, line, area, scatter)
         uri: Neo4j connection URI
         userName: Neo4j username
         password: Neo4j password
         database: Neo4j database name
-        model: OpenAI model to use
     
     Returns:
         Chart data in format suitable for frontend visualization
@@ -1998,18 +1995,27 @@ async def generate_chart_with_mcp(
         if not query.strip():
             return create_api_response('Failed', message="Query is required", error="Missing query parameter")
         
+        # Get Neo4j configuration from parameters or environment variables
+        if not uri:
+            uri = os.getenv("NEO4J_URI")
+        if not userName:
+            userName = os.getenv("NEO4J_USERNAME", "neo4j")
         if not password:
-            return create_api_response('Failed', message="Neo4j password is required", error="Missing password parameter")
+            password = os.getenv("NEO4J_PASSWORD")
+        if not database:
+            database = os.getenv("NEO4J_DATABASE", "neo4j")
+        
+        # Validate Neo4j configuration
+        if not uri:
+            return create_api_response('Failed', message="Neo4j URI is required", error="Missing uri parameter or NEO4J_URI environment variable")
+        if not password:
+            return create_api_response('Failed', message="Neo4j password is required", error="Missing password parameter or NEO4J_PASSWORD environment variable")
         
         # Get OpenAI API key from environment
         openai_api_key = os.getenv("OPENAI_API_KEY")
         if not openai_api_key:
-            return create_api_response('Failed', message="OpenAI API key is required in environment variables", error="Missing OPENAI_API_KEY environment variable")
+            return create_api_response('Failed', message="OpenAI API key is required", error="Missing OPENAI_API_KEY environment variable")
         
-        # Validate chart type
-        valid_chart_types = ["bar", "pie", "line", "area", "scatter", "column"]
-        if chart_type.lower() not in valid_chart_types:
-            return create_api_response('Failed', message=f"Invalid chart type. Must be one of: {', '.join(valid_chart_types)}", error="Invalid chart_type parameter")
         
         # Neo4j configuration
         neo4j_config = {
@@ -2029,27 +2035,18 @@ async def generate_chart_with_mcp(
         logging.info(f"Processing query: {query}")
         result = await mcp_service.process_natural_language_query(
             query=query,
-            chart_type=chart_type.lower(),
             openai_api_key=openai_api_key,
-            model=model
+            model="gpt-4"  # Use default model from environment
         )
         
         if result["success"]:
             chart_end_time = time.time()
             processing_time = chart_end_time - chart_start_time
             
-            # Format response for frontend
             response_data = {
                 "chartData": result["chartData"],
-                "chartConfig": result["chartConfig"],
-                "chartType": result["chartType"],
-                "metadata": {
-                    "natural_language_query": result["natural_language_query"],
-                    "cypher_query": result["cypher_query"],
-                    "processing_time": round(processing_time, 2),
-                    "timestamp": datetime.now().isoformat(),
-                    "raw_data": result["raw_data"]
-                }
+                "chartConfig": result["chartConfig"], 
+                "type": result.get("chartType", "bar")
             }
             
             return create_api_response(

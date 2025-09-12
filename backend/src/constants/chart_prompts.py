@@ -21,54 +21,74 @@ Database Schema:
     
     return f"""{schema_text}User Question: {query}
 
-Based on the user's question, generate a Cypher query that will return data suitable for visualization.
+IMPORTANT RULES FOR CYPHER QUERIES:
+1. Use ONLY MATCH statements - no CREATE, DELETE, SET, REMOVE, etc.
+2. NO UNION or UNION ALL - use separate queries if needed
+3. Return data in format: NodeType, Count (for counts) or Name, Value (for values)
+4. Keep queries simple and focused on data retrieval
+5. Use LIMIT to avoid large result sets
+
+Based on the user's question, generate a simple MATCH query that will return data suitable for visualization.
 
 Return only the Cypher query, no explanations or markdown formatting."""
 
-def create_chart_formatting_prompt(query: str, chart_type: str, raw_data: list) -> str:
-    """Create a prompt for formatting Neo4j data into chart-ready format with colors"""
+def create_chart_formatting_prompt(query: str, raw_data: list) -> str:
+    """Create a prompt for generating structured chart data and config"""
     import json
     raw_data_json = json.dumps(raw_data, indent=2)
     
-    return f"""Original Query: {query}
-Chart Type: {chart_type}
+    return f"""You are a helpful assistant that works with Neo4j databases. You can help with schema discovery, running Cypher queries, and data manipulation.
 
-Raw Neo4j Data:
-{raw_data_json}
+User requirement: {query}
 
-Based on the original query and the raw data above, format this data for {chart_type} chart visualization.
+IMPORTANT: Analyze the user requirement to determine the most appropriate chart type:
+- Use "pie" for: pie charts, pie chart, proportions, percentages, parts of a whole, distribution
+- Use "bar" for: bar charts, bar chart, comparisons, categories, rankings, counts
+- Use "line" for: line charts, line chart, trends, time series, changes over time, progression
 
-IMPORTANT: Generate bright, vibrant, and visually appealing colors for each data series. Use a diverse color palette with good contrast. Choose colors that are:
-- Bright and eye-catching
-- Visually distinct from each other
-- Complementary when possible
-- Professional yet vibrant
+Given the user requirement and the data below, return a JSON object that would be used for data visualization. It should include the chartConfig and the chartData in a single object. Feel free to pick appropriate colors and labels for your chartConfig.
 
-Return a JSON object with this structure:
+DATA: {raw_data_json}
+
+Examples of responses:
+
+For pie charts:
 {{
-    "chartData": [
-        {{
-            "name": "Data Point Name",
-            "value": 123
-        }}
-    ],
-    "chartConfig": {{
-        // Color configuration for each data series - USE DIFFERENT BRIGHT COLORS
-        "category_name": {{
-            "label": "Display Name",
-            "color": "#HEX_COLOR"  // Generate a bright, vibrant hex color
-        }}
-    }}
+  "chartConfig": {{
+    "Desktop": {{ "label": "Desktop", "color": "#2563eb" }},
+    "Mobile": {{ "label": "Mobile", "color": "#60a5fa" }}
+  }},
+  "chartData": [
+    {{ "name": "Desktop", "value": 186 }},
+    {{ "name": "Mobile", "value": 80 }}
+  ],
+  "type": "pie"
 }}
 
-IMPORTANT: Each item in chartData MUST have "name" and "value" fields exactly as shown above.
+For bar charts:
+{{
+  "chartConfig": {{
+    "desktop": {{ "label": "Desktop", "color": "#2563eb" }},
+    "mobile": {{ "label": "Mobile", "color": "#60a5fa" }}
+  }},
+  "chartData": [
+    {{ "month": "January", "desktop": 186, "mobile": 80 }},
+    {{ "month": "February", "desktop": 305, "mobile": 200 }}
+  ],
+  "type": "bar"
+}}
 
-Examples of good colors to inspire you (but generate your own unique colors):
-- Bright coral: #FF6B6B
-- Electric blue: #4ECDC4
-- Vibrant purple: #8B5CF6
-- Neon green: #10B981
-- Sunset orange: #F59E0B
-- Hot pink: #EC4899
+For line charts:
+{{
+  "chartConfig": {{
+    "sales": {{ "label": "Sales", "color": "#2563eb" }},
+    "revenue": {{ "label": "Revenue", "color": "#60a5fa" }}
+  }},
+  "chartData": [
+    {{ "month": "January", "sales": 186, "revenue": 80 }},
+    {{ "month": "February", "sales": 305, "revenue": 200 }}
+  ],
+  "type": "line"
+}}
 
-Return only the JSON object, no explanations or markdown formatting."""
+Return ONLY valid JSON with no explanations or markdown formatting. Use the actual data provided above and choose the most appropriate chart type based on the user requirement."""

@@ -15,16 +15,6 @@ from src.constants.chart_prompts import create_cypher_query_prompt, create_chart
 
 logger = logging.getLogger(__name__)
 
-# Random color generation for fallback scenarios
-def generate_random_color():
-    """Generate a random bright color"""
-    import random
-    # Generate random RGB values with higher saturation for bright colors
-    r = random.randint(100, 255)
-    g = random.randint(100, 255)
-    b = random.randint(100, 255)
-    return f"#{r:02x}{g:02x}{b:02x}"
-
 class MCPNeo4jService:
     """Service for MCP Neo4j integration"""
     
@@ -260,8 +250,8 @@ class MCPNeo4jService:
                 "error": str(e)
             }
     
-    def _create_query_prompt(self, query: str, schema: Dict[str, Any], chart_type: str) -> str:
-        """Create a prompt for OpenAI to generate Cypher queries using Jinja2 template"""
+    def _create_query_prompt(self, query: str, schema: Dict[str, Any]) -> str:
+        """Create a prompt for OpenAI to generate Cypher queries"""
         schema_info = None
         if schema and schema.get("success"):
             schema_data = schema["schema"]
@@ -273,8 +263,8 @@ class MCPNeo4jService:
         
         return create_cypher_query_prompt(query, schema_info)
     
-    async def process_natural_language_query(self, query: str, chart_type: str, openai_api_key: str, model: str = "gpt-4") -> Dict[str, Any]:
-        """Process natural language query and generate chart data"""
+    async def process_natural_language_query(self, query: str, openai_api_key: str = None, model: str = "gpt-4") -> Dict[str, Any]:
+        """Process natural language query and generate SVG chart"""
         try:
             if not self.http_client:
                 raise Exception("HTTP client not initialized")
@@ -287,7 +277,7 @@ class MCPNeo4jService:
             schema = await self.get_database_schema()
             
             # Create prompt for OpenAI
-            prompt = self._create_query_prompt(query, schema, chart_type)
+            prompt = self._create_query_prompt(query, schema)
             
             # Call OpenAI to generate Cypher query
             response = self.openai_client.chat.completions.create(
@@ -295,7 +285,7 @@ class MCPNeo4jService:
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are a Neo4j Cypher query expert. Generate accurate Cypher queries based on the database schema and user questions. Focus on creating queries that return data suitable for the specified chart type."
+                        "content": "You are a Neo4j Cypher query expert. Generate accurate Cypher queries based on the database schema and user questions."
                     },
                     {
                         "role": "user",
@@ -325,18 +315,47 @@ class MCPNeo4jService:
             query_result = await self.execute_cypher_query(cypher_query)
             
             if query_result["success"]:
-                # Convert query results to chart data using LLM for color generation
-                chart_data = await self._convert_to_chart_data_with_llm(query, query_result["data"], chart_type, openai_api_key, model)
-                
-                return {
-                    "success": True,
-                    "natural_language_query": query,
-                    "cypher_query": cypher_query,
-                    "chartType": chart_type,
-                    "chartData": chart_data.get("chartData", []),
-                    "chartConfig": chart_data.get("chartConfig", {}),
-                    "raw_data": query_result["data"]
-                }
+                # Check if we got actual data or an error message
+                data = query_result["data"]
+                if isinstance(data, list) and len(data) > 0 and not any("Error" in str(item) for item in data):
+                    # Generate complete React component using LLM
+                    logger.info(f"Query successful, generating React component for {len(data)} data points")
+                    chart_artifact = self._generate_react_component(query, data, openai_api_key, model)
+                    logger.info(f"Chart artifact result: {chart_artifact}")
+                    
+                    return {
+                        "success": True,
+                        "natural_language_query": query,
+                        "cypher_query": cypher_query,
+                        "chartData": chart_artifact.get("chartData"),
+                        "chartConfig": chart_artifact.get("chartConfig"),
+                        "chartType": chart_artifact.get("chartType"),
+                        "raw_data": data
+                    }
+                else:
+                    # Data contains errors, try fallback
+                    logger.warning(f"Query returned error data: {data}. Trying fallback...")
+                    fallback_query = "MATCH (n) RETURN labels(n)[0] as name, count(*) as count LIMIT 10"
+                    fallback_result = await self.execute_cypher_query(fallback_query)
+                    
+                    if fallback_result["success"]:
+                        chart_artifact = self._generate_react_component(query, fallback_result["data"], openai_api_key, model)
+                        return {
+                            "success": True,
+                            "natural_language_query": query,
+                            "cypher_query": f"{cypher_query} (fallback: {fallback_query})",
+                            "chartData": chart_artifact.get("chartData"),
+                            "chartConfig": chart_artifact.get("chartConfig"),
+                            "chartType": chart_artifact.get("chartType"),
+                            "raw_data": fallback_result["data"]
+                        }
+                    else:
+                        return {
+                            "success": False,
+                            "natural_language_query": query,
+                            "cypher_query": cypher_query,
+                            "error": f"Query failed: {query_result.get('error', 'Unknown error')}"
+                        }
             else:
                 # Try a fallback simple query if the complex one failed
                 logger.warning(f"Complex query failed: {query_result['error']}. Trying fallback query...")
@@ -344,14 +363,14 @@ class MCPNeo4jService:
                 fallback_result = await self.execute_cypher_query(fallback_query)
                 
                 if fallback_result["success"]:
-                    chart_data = await self._convert_to_chart_data_with_llm(query, fallback_result["data"], chart_type, openai_api_key, model)
+                    chart_artifact = self._generate_react_component(query, fallback_result["data"], openai_api_key, model)
                     return {
                         "success": True,
                         "natural_language_query": query,
                         "cypher_query": f"{cypher_query} (fallback: {fallback_query})",
-                        "chartType": chart_type,
-                        "chartData": chart_data.get("chartData", []),
-                        "chartConfig": chart_data.get("chartConfig", {}),
+                        "chartData": chart_artifact.get("chartData"),
+                        "chartConfig": chart_artifact.get("chartConfig"),
+                        "chartType": chart_artifact.get("chartType"),
                         "raw_data": fallback_result["data"]
                     }
                 else:
@@ -370,306 +389,287 @@ class MCPNeo4jService:
                 "error": str(e)
             }
     
-    async def _convert_to_chart_data_with_llm(self, query: str, raw_data: List[Dict], chart_type: str, openai_api_key: str, model: str) -> Dict[str, Any]:
-        """Convert raw query results to chart-specific data format using LLM for color generation"""
+    def _generate_react_component(self, query: str, raw_data: List[Dict], openai_api_key: str, model: str) -> Dict[str, Any]:
+        """Generate structured chart data and config using LLM"""
         try:
             if not raw_data:
                 return {"error": "No data available"}
             
-            # Create prompt for LLM to format the data with colors using Jinja2 template
-            prompt = create_chart_formatting_prompt(query, chart_type, raw_data)
+            # Use all the data - don't limit it
+            logger.info(f"Using all data: {len(raw_data)} items")
+            
+            # Create prompt for LLM to generate structured data
+            prompt = create_chart_formatting_prompt(query, raw_data)
             
             # Initialize OpenAI client if not already done
             if not self.openai_client:
                 self.openai_client = openai.OpenAI(api_key=openai_api_key)
             
-            # Call OpenAI to generate formatted chart data with colors
+            # Call OpenAI to generate structured chart data
             response = self.openai_client.chat.completions.create(
                 model=model,
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are a data visualization expert. Format data for charts with bright, vibrant colors. Always return valid JSON."
+                        "content": "You are a data visualization expert. Generate structured chart data and configuration in JSON format."
                     },
                     {
                         "role": "user",
                         "content": prompt
                     }
                 ],
-                temperature=0.7,  # Higher temperature for more creative colors
-                max_tokens=1000
+                temperature=0.1,
+                max_tokens=1500
             )
             
-            # Extract and parse the JSON response
-            chart_data_text = response.choices[0].message.content.strip()
+            # Extract the JSON response
+            json_content = response.choices[0].message.content.strip()
             
-            logger.info(f"LLM Response: {chart_data_text[:500]}...")  # Log first 500 chars
+            logger.info(f"Raw LLM response length: {len(json_content)}")
+            logger.info(f"Raw LLM response first 200 chars: {json_content[:200]}")
             
-            # Clean up the response (remove markdown formatting if present)
-            if chart_data_text.startswith("```json"):
-                chart_data_text = chart_data_text[7:]
-            if chart_data_text.startswith("```"):
-                chart_data_text = chart_data_text[3:]
-            if chart_data_text.endswith("```"):
-                chart_data_text = chart_data_text[:-3]
+            # Clean up the response (remove any markdown formatting)
+            if json_content.startswith("```json"):
+                json_content = json_content[7:]
+            elif json_content.startswith("```"):
+                json_content = json_content[3:]
+            if json_content.endswith("```"):
+                json_content = json_content[:-3]
             
-            chart_data_text = chart_data_text.strip()
+            json_content = json_content.strip()
             
-            logger.info(f"Cleaned LLM Response: {chart_data_text[:500]}...")  # Log first 500 chars
+            logger.info(f"Cleaned LLM response length: {len(json_content)}")
+            logger.info(f"Cleaned LLM response first 200 chars: {json_content[:200]}")
             
             # Parse the JSON response
-            formatted_data = json.loads(chart_data_text)
-            
-            logger.info(f"Parsed JSON: {formatted_data}")
-            
-            return formatted_data
+            try:
+                chart_data = json.loads(json_content)
+                logger.info("✅ Successfully parsed JSON response")
+                
+                # Validate the structure
+                if "chartData" not in chart_data or "chartConfig" not in chart_data:
+                    raise ValueError("Missing required fields: chartData or chartConfig")
+                
+                return {
+                    "chartData": chart_data["chartData"],
+                    "chartConfig": chart_data["chartConfig"],
+                    "chartType": chart_data.get("type", "bar")
+                }
+                
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse JSON response: {e}")
+                logger.error(f"Response content: {json_content}")
+                
+                # Fallback: create simple structured data
+                return self._create_fallback_chart_data(query, raw_data)
             
         except Exception as e:
-            logger.error(f"Error converting to chart data with LLM: {e}")
-            # Fallback to simple formatting
-            return self._convert_to_chart_data(raw_data, chart_type)
+            logger.error(f"Error generating chart data: {e}")
+            return {"error": f"Failed to generate chart: {str(e)}"}
     
-    def _convert_to_chart_data(self, raw_data: List[Dict], chart_type: str) -> Dict[str, Any]:
-        """Convert raw query results to chart-specific data format"""
+    def _create_fallback_chart_data(self, query: str, raw_data: List[Dict]) -> Dict[str, Any]:
+        """Create simple fallback chart data when LLM fails"""
         try:
+            logger.info(f"Creating fallback chart data for query: {query}")
+            
+            # Determine chart type from query
+            chart_type = self._infer_chart_type_from_query(query)
+            
             if not raw_data:
-                return {"error": "No data available"}
+                return {
+                    "chartData": [{"name": "No Data", "value": 0}],
+                    "chartConfig": {"No Data": {"label": "No Data", "color": "#94a3b8"}},
+                    "chartType": chart_type
+                }
             
-            # Extract the first row to understand the data structure
-            first_row = raw_data[0] if raw_data else {}
-            
-            if chart_type.lower() in ["bar", "column"]:
-                return self._create_bar_chart_data(raw_data)
-            elif chart_type.lower() == "pie":
-                return self._create_pie_chart_data(raw_data)
-            elif chart_type.lower() == "line":
-                return self._create_line_chart_data(raw_data)
-            elif chart_type.lower() == "area":
-                return self._create_area_chart_data(raw_data)
-            elif chart_type.lower() in ["scatter", "scatterplot"]:
-                return self._create_scatter_chart_data(raw_data)
-            else:
-                # Default to bar chart
-                return self._create_bar_chart_data(raw_data)
-                
-        except Exception as e:
-            logger.error(f"Error converting to chart data: {e}")
-            return {"error": f"Failed to convert data: {str(e)}"}
-    
-    def _create_bar_chart_data(self, raw_data: List[Dict]) -> Dict[str, Any]:
-        """Create bar chart data format"""
-        try:
-            # Process the data correctly - look for common patterns
+            # Process raw data into simple format
             chart_data = []
             chart_config = {}
+            colors = ["#2563eb", "#60a5fa", "#93c5fd", "#dbeafe", "#1e40af", "#1d4ed8"]
             
-            for row in raw_data:
-                # Look for common column patterns
-                name_field = None
-                value_field = None
+            for i, item in enumerate(raw_data[:10]):  # Limit to 10 items
+                name = item.get("name") or item.get("NodeType") or item.get("RelationshipType") or f"Item {i+1}"
+                value = item.get("count") or item.get("Count") or item.get("value") or 0
                 
-                # Try to find name and value fields
-                for key, value in row.items():
-                    if key.lower() in ['name', 'label', 'node', 'type', 'category']:
-                        name_field = str(value)
-                    elif key.lower() in ['count', 'value', 'amount', 'total']:
-                        value_field = value
-                
-                # If we found both, use them
-                if name_field and value_field is not None:
-                    chart_data.append({
-                        "name": name_field,
-                        "value": int(value_field) if isinstance(value_field, (int, float)) else 1
-                    })
-                    chart_config[name_field] = {
-                        "label": name_field,
-                        "color": generate_random_color()
-                    }
-                else:
-                    # Fallback: use the first string field as name, first number as value
-                    name = None
-                    value = 1
-                    for key, val in row.items():
-                        if isinstance(val, str) and not name:
-                            name = val
-                        elif isinstance(val, (int, float)) and value == 1:
-                            value = int(val)
-                    
-                    if name:
-                        chart_data.append({
-                            "name": name,
-                            "value": value
-                        })
-                        chart_config[name] = {
-                            "label": name,
-                            "color": generate_random_color()
-                        }
-            
-            if not chart_data:
-                # Ultimate fallback
-                chart_data = [{"name": "Data", "value": len(raw_data)}]
-                chart_config = {"Data": {"label": "Data", "color": generate_random_color()}}
+                chart_data.append({"name": name, "value": value})
+                chart_config[name] = {
+                    "label": name,
+                    "color": colors[i % len(colors)]
+                }
             
             return {
                 "chartData": chart_data,
-                "chartConfig": chart_config
+                "chartConfig": chart_config,
+                "chartType": chart_type
             }
-        except Exception as e:
-            return {"error": f"Failed to create bar chart data: {str(e)}"}
-    
-    def _create_pie_chart_data(self, raw_data: List[Dict]) -> Dict[str, Any]:
-        """Create pie chart data format"""
-        try:
-            # Process the data correctly - look for common patterns
-            chart_data = []
-            chart_config = {}
             
-            for row in raw_data:
-                # Look for common column patterns
-                name_field = None
-                value_field = None
-                
-                # Try to find name and value fields
-                for key, value in row.items():
-                    if key.lower() in ['name', 'label', 'node', 'type', 'category']:
-                        name_field = str(value)
-                    elif key.lower() in ['count', 'value', 'amount', 'total']:
-                        value_field = value
-                
-                # If we found both, use them
-                if name_field and value_field is not None:
-                    chart_data.append({
-                        "name": name_field,
-                        "value": int(value_field) if isinstance(value_field, (int, float)) else 1
-                    })
-                    chart_config[name_field] = {
-                        "label": name_field,
-                        "color": generate_random_color()
-                    }
+        except Exception as e:
+            logger.error(f"Error creating fallback chart data: {e}")
+            return {
+                "chartData": [{"name": "Error", "value": 0}],
+                "chartConfig": {"Error": {"label": "Error", "color": "#ef4444"}},
+                "chartType": self._infer_chart_type_from_query(query)
+            }
+    
+    def _infer_chart_type_from_query(self, query: str) -> str:
+        """Infer chart type from user query"""
+        query_lower = query.lower()
+        
+        # Check for pie chart keywords
+        pie_keywords = ["pie", "proportion", "percentage", "part", "whole", "distribution", "share"]
+        if any(keyword in query_lower for keyword in pie_keywords):
+            return "pie"
+        
+        # Check for line chart keywords
+        line_keywords = ["line", "trend", "time", "series", "change", "over time", "progression", "growth", "decline"]
+        if any(keyword in query_lower for keyword in line_keywords):
+            return "line"
+        
+        # Default to bar chart for comparisons, categories, rankings, counts
+        return "bar"
+    
+    def _create_fallback_react_component(self, query: str, raw_data: List[Dict]) -> str:
+        """Create a simple fallback React component when LLM fails"""
+        try:
+            logger.info(f"Creating fallback React component for query: {query}")
+            logger.info(f"Raw data length: {len(raw_data) if raw_data else 0}")
+            
+            if not raw_data:
+                logger.error("No raw data available for fallback component")
+                return None
+            
+            # Process the data
+            chart_data = []
+            for i, row in enumerate(raw_data[:20]):  # Limit to first 20 items
+                logger.info(f"Processing row {i}: {row}")
+                # Handle different field names
+                name = row.get('name') or row.get('NodeType') or 'Unknown'
+                if isinstance(name, list):
+                    name = ' '.join(name) if name else 'Unknown'
                 else:
-                    # Fallback: use the first string field as name, first number as value
-                    name = None
-                    value = 1
-                    for key, val in row.items():
-                        if isinstance(val, str) and not name:
-                            name = val
-                        elif isinstance(val, (int, float)) and value == 1:
-                            value = int(val)
-                    
-                    if name:
-                        chart_data.append({
-                            "name": name,
-                            "value": value
-                        })
-                        chart_config[name] = {
-                            "label": name,
-                            "color": generate_random_color()
-                        }
+                    name = str(name)
+                
+                count = row.get('count') or row.get('Count') or row.get('value') or 0
+                chart_data.append({'name': name, 'value': count})
+                logger.info(f"Processed: name='{name}', value={count}")
+            
+            logger.info(f"Final chart_data: {chart_data}")
             
             if not chart_data:
-                # Ultimate fallback
-                chart_data = [{"name": "Data", "value": len(raw_data)}]
-                chart_config = {"Data": {"label": "Data", "color": generate_random_color()}}
+                logger.error("No chart data generated from raw data")
+                return None
             
-            return {
-                "chartData": chart_data,
-                "chartConfig": chart_config
-            }
+            # Generate colors
+            colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F']
+            
+            # Create React component using React.createElement
+            react_component = f'''// Note: React and Recharts are already imported in the iframe
+const ChartComponent = () => {{
+  const data = {chart_data};
+  
+  return React.createElement('div', {{ className: 'w-full h-full p-4 bg-white rounded-lg shadow-lg' }},
+    React.createElement('h3', {{ className: 'text-xl font-bold text-gray-800 mb-4 text-center' }}, '{query}'),
+    React.createElement(ResponsiveContainer, {{ width: '100%', height: 400 }},
+      React.createElement(BarChart, {{ data: data, margin: {{ top: 5, right: 30, left: 20, bottom: 5 }} }},
+        React.createElement(CartesianGrid, {{ strokeDasharray: '3 3' }}),
+        React.createElement(XAxis, {{ 
+          dataKey: 'name',
+          angle: -45,
+          textAnchor: 'end',
+          height: 80,
+          interval: 0
+        }}),
+        React.createElement(YAxis),
+        React.createElement(Tooltip),
+        React.createElement(Legend),
+        React.createElement(Bar, {{ 
+          dataKey: 'value',
+          fill: '#8884d8',
+          radius: [4, 4, 0, 0]
+        }})
+      )
+    )
+  );
+}};'''
+            
+            return react_component
+            
         except Exception as e:
-            return {"error": f"Failed to create pie chart data: {str(e)}"}
+            logger.error(f"Error creating fallback React component: {e}")
+            return None
     
-    def _create_line_chart_data(self, raw_data: List[Dict]) -> Dict[str, Any]:
-        """Create line chart data format"""
+    def _fix_jsx_syntax(self, react_content: str) -> str:
+        """Fix common JSX syntax issues in React components"""
         try:
-            labels = []
-            values = []
+            # Fix missing quotes around JSX attributes
+            import re
             
-            for row in raw_data:
-                for key, value in row.items():
-                    if isinstance(value, (int, float)):
-                        values.append(value)
-                        # Try to find a date or label field
-                        label = None
-                        for k, v in row.items():
-                            if k != key and (isinstance(v, str) or isinstance(v, (int, float))):
-                                label = str(v)
-                                break
-                        labels.append(label or f"Point {len(labels) + 1}")
-                        break
+            # Fix height={400} -> height={{400}}
+            react_content = re.sub(r'height=(\d+)', r'height={{\1}}', react_content)
+            react_content = re.sub(r'width=(\d+)', r'width={{\1}}', react_content)
+            react_content = re.sub(r'angle=(-?\d+)', r'angle={{\1}}', react_content)
+            react_content = re.sub(r'interval=(\d+)', r'interval={{\1}}', react_content)
             
-            if not labels:
-                labels = [f"Point {i+1}" for i in range(len(raw_data))]
-                values = [i+1 for i in range(len(raw_data))]
+            # Fix radius=[4, 4, 0, 0] -> radius={{[4, 4, 0, 0]}}
+            react_content = re.sub(r'radius=\[([^\]]+)\]', r'radius={{\[\1\]}}', react_content)
             
-            return {
-                "type": "line",
-                "data": {
-                    "labels": labels,
-                    "datasets": [{
-                        "label": "Values",
-                        "data": values,
-                        "borderColor": "rgba(54, 162, 235, 1)",
-                        "backgroundColor": "rgba(54, 162, 235, 0.1)",
-                        "tension": 0.1
-                    }]
-                }
-            }
+            # Fix data={data} -> data={{data}}
+            react_content = re.sub(r'data=\{data\}', r'data={{{data}}}', react_content)
+            
+            # Fix margin={{ top: 5, right: 30, left: 20, bottom: 5 }} -> margin={{{ top: 5, right: 30, left: 20, bottom: 5 }}}
+            react_content = re.sub(r'margin=\{\{([^}]+)\}\}', r'margin={{{{\1}}}}', react_content)
+            
+            return react_content
+            
         except Exception as e:
-            return {"error": f"Failed to create line chart data: {str(e)}"}
+            logger.error(f"Error fixing JSX syntax: {e}")
+            return react_content
     
-    def _create_area_chart_data(self, raw_data: List[Dict]) -> Dict[str, Any]:
-        """Create area chart data format"""
+    def _remove_import_statements(self, react_content: str) -> str:
+        """Remove any import statements from the React component"""
         try:
-            # Similar to line chart but with filled area
-            line_data = self._create_line_chart_data(raw_data)
-            if "error" in line_data:
-                return line_data
+            import re
             
-            line_data["type"] = "area"
-            line_data["data"]["datasets"][0]["fill"] = True
+            # Remove import statements
+            react_content = re.sub(r'^import\s+.*?from\s+[\'"][^\'"]+[\'"];?\s*$', '', react_content, flags=re.MULTILINE)
+            react_content = re.sub(r'^import\s+[\'"][^\'"]+[\'"];?\s*$', '', react_content, flags=re.MULTILINE)
             
-            return line_data
+            # Remove export statements
+            react_content = re.sub(r'^export\s+.*?;?\s*$', '', react_content, flags=re.MULTILINE)
+            
+            # Clean up extra whitespace
+            react_content = re.sub(r'\n\s*\n\s*\n', '\n\n', react_content)
+            react_content = react_content.strip()
+            
+            logger.info(f"Removed import/export statements. New length: {len(react_content)}")
+            
+            return react_content
+            
         except Exception as e:
-            return {"error": f"Failed to create area chart data: {str(e)}"}
+            logger.error(f"Error removing import statements: {e}")
+            return react_content
     
-    def _create_scatter_chart_data(self, raw_data: List[Dict]) -> Dict[str, Any]:
-        """Create scatter chart data format"""
+    def _convert_jsx_to_react_create_element(self, react_content: str) -> str:
+        """Convert JSX syntax to React.createElement calls"""
         try:
-            points = []
+            import re
             
-            for row in raw_data:
-                x_values = []
-                y_values = []
+            # Check if the content contains JSX syntax
+            if '<' in react_content and '>' in react_content:
+                logger.warning("JSX syntax detected, attempting to convert to React.createElement")
                 
-                for key, value in row.items():
-                    if isinstance(value, (int, float)):
-                        if len(x_values) == 0:
-                            x_values.append(value)
-                        elif len(y_values) == 0:
-                            y_values.append(value)
+                # This is a basic conversion - for complex JSX, we might need a more sophisticated approach
+                # For now, we'll just log a warning and return the content as-is
+                # The iframe should handle JSX with Babel transpilation
                 
-                if len(x_values) > 0 and len(y_values) > 0:
-                    points.append({"x": x_values[0], "y": y_values[0]})
-                elif len(x_values) > 0:
-                    points.append({"x": x_values[0], "y": 0})
+                logger.info("JSX detected but keeping as-is for Babel transpilation")
+                return react_content
             
-            if not points:
-                # Fallback: create simple scatter plot
-                points = [{"x": i, "y": i} for i in range(len(raw_data))]
+            return react_content
             
-            return {
-                "type": "scatter",
-                "data": {
-                    "datasets": [{
-                        "label": "Data Points",
-                        "data": points,
-                        "backgroundColor": "rgba(54, 162, 235, 0.6)",
-                        "borderColor": "rgba(54, 162, 235, 1)"
-                    }]
-                }
-            }
         except Exception as e:
-            return {"error": f"Failed to create scatter chart data: {str(e)}"}
+            logger.error(f"Error converting JSX to React.createElement: {e}")
+            return react_content
 
 # Global MCP service instance
 mcp_service = MCPNeo4jService()
