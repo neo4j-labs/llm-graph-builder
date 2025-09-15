@@ -65,6 +65,11 @@ class MessageData(BaseModel):
     filter_properties: Optional[Dict[str, Any]] = None
     requireGrounding: bool = True
     document_names: Optional[List[str]] = []
+    uri: Optional[str] = None
+    userName: Optional[str] = None
+    password: Optional[str] = None
+    database: Optional[str] = None
+    model: Optional[str] = None
     # tools: List[str]
 
 logger = CustomLogger()
@@ -474,9 +479,17 @@ async def magic_trek_chat_bot(
     messages = messageData.messages
     question = messageData.question
     filter_properties = messageData.filter_properties
+    model = messageData.model if hasattr(messageData, 'model') else "openai_gpt_4o_mini"
     requireGrounding = messageData.requireGrounding if hasattr(messageData, 'requireGrounding') else True
     document_names = messageData.document_names if hasattr(messageData, 'document_names') else []
     document_names = json.dumps(document_names)
+    
+    # Get connection parameters from API params, fallback to environment variables
+    uri = messageData.uri if messageData.uri else os.getenv('MAGIC_TREK_NEO4J_URI')
+    userName = messageData.userName if messageData.userName else os.getenv('MAGIC_TREK_NEO4J_USERNAME')
+    password = messageData.password if messageData.password else os.getenv('MAGIC_TREK_NEO4J_PASSWORD')
+    database = messageData.database if messageData.database else os.getenv('MAGIC_TREK_NEO4J_DATABASE')
+    
     print(f'question = {question}')
     print(messages)
     print(len(messages))
@@ -485,17 +498,13 @@ async def magic_trek_chat_bot(
     logging.info(f"requireGrounding = {requireGrounding}")
     logging.info(f"IAN-TEST called at {datetime.now()}")
     qa_rag_start_time = time.time()
+    logging.info(f"model = {model}")
 
     # model = "openai_gpt_3.5" # changed from this model by ian friday mar 21, 2025
-    model = "openai_gpt_4o_mini" 
+    # model = "openai_gpt_4o_mini"
     # model = "gpt-4-turbo-preview"
     mode = os.getenv('MAGIC_TREK_RAG_MODE') ## changed by ian from graph_vector_fulltext to graph_vector april 1, 2025
-    uri = os.getenv('MAGIC_TREK_NEO4J_URI')
     # uri = "neo4j+s://bf80b146.databases.neo4j.io"
-    userName = os.getenv('MAGIC_TREK_NEO4J_USERNAME')
-    password = os.getenv('MAGIC_TREK_NEO4J_PASSWORD')
-    # password = "xE8XDsy7ZRMasKSj4sVN6lgbV9kGbI_MX5WSZ7quvxM"
-    database = os.getenv('MAGIC_TREK_NEO4J_DATABASE')
 
     print(f"MAGIC_TREK_NEO4J_URI: {uri}")
     print(f"MAGIC_TREK_RAG_MODE: {mode}")
@@ -605,6 +614,7 @@ async def chat_bot_grounding(
     logging.info(f"QA_RAG (grounding) called at {datetime.now()}")
     logging.info(f"document_names = {document_names}")
     logging.info(f"filterProperties = {filterProperties}")
+    logging.info(f"model = {model}")
     qa_rag_start_time = time.time()
     
     # Parse filterProperties JSON if provided
