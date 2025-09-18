@@ -72,6 +72,7 @@ class MessageData(BaseModel):
     database: Optional[str] = None
     model: Optional[str] = None
     chunk_similarity_threshold: Optional[float] = None
+    session_id: Optional[str] = None
     # tools: List[str]
 
 logger = CustomLogger()
@@ -486,7 +487,7 @@ async def magic_trek_chat_bot(
     document_names = messageData.document_names if hasattr(messageData, 'document_names') else []
     document_names = json.dumps(document_names)
     chunk_similarity_threshold = messageData.chunk_similarity_threshold if hasattr(messageData, 'chunk_similarity_threshold') and messageData.chunk_similarity_threshold is not None else CHAT_SEARCH_KWARG_SCORE_THRESHOLD
-    
+    session_id = messageData.session_id if hasattr(messageData, 'session_id') and messageData.session_id is not None else "7f7fb2ac-d849-4569-9647-17d5f3a1615e"
     # Get connection parameters from API params, fallback to environment variables
     uri = messageData.uri if messageData.uri else os.getenv('MAGIC_TREK_NEO4J_URI')
     userName = messageData.userName if messageData.userName else os.getenv('MAGIC_TREK_NEO4J_USERNAME')
@@ -515,7 +516,6 @@ async def magic_trek_chat_bot(
 
     mode = "graph_vector"
     # document_names= '["MM Disease State Overview_FGuide_March2025_scrubbed.txt"]'
-    session_id = "7f7fb2ac-d849-4569-9647-17d5f3a1615e"
     ## end of added by ian
     try:
         if mode == "graph":
