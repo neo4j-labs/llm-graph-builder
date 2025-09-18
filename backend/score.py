@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.main import *
 from src.QA_integration import *
 from src.shared.common_fn import *
+from src.shared.constants import CHAT_SEARCH_KWARG_SCORE_THRESHOLD
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 import uvicorn
 import asyncio
@@ -70,6 +71,7 @@ class MessageData(BaseModel):
     password: Optional[str] = None
     database: Optional[str] = None
     model: Optional[str] = None
+    chunk_similarity_threshold: Optional[float] = None
     # tools: List[str]
 
 logger = CustomLogger()
@@ -483,6 +485,7 @@ async def magic_trek_chat_bot(
     requireGrounding = messageData.requireGrounding if hasattr(messageData, 'requireGrounding') else True
     document_names = messageData.document_names if hasattr(messageData, 'document_names') else []
     document_names = json.dumps(document_names)
+    chunk_similarity_threshold = messageData.chunk_similarity_threshold if hasattr(messageData, 'chunk_similarity_threshold') and messageData.chunk_similarity_threshold is not None else CHAT_SEARCH_KWARG_SCORE_THRESHOLD
     
     # Get connection parameters from API params, fallback to environment variables
     uri = messageData.uri if messageData.uri else os.getenv('MAGIC_TREK_NEO4J_URI')
@@ -508,7 +511,7 @@ async def magic_trek_chat_bot(
 
     print(f"MAGIC_TREK_NEO4J_URI: {uri}")
     print(f"MAGIC_TREK_RAG_MODE: {mode}")
-    print(f"KNN_MIN_SCORE: {os.getenv('KNN_MIN_SCORE')}")
+    print(f"CHAT_SEARCH_KWARG_SCORE_THRESHOLD: {CHAT_SEARCH_KWARG_SCORE_THRESHOLD}")
 
     mode = "graph_vector"
     # document_names= '["MM Disease State Overview_FGuide_March2025_scrubbed.txt"]'
@@ -534,7 +537,8 @@ async def magic_trek_chat_bot(
             mode=mode,
             write_access=write_access,
             filter_properties=filter_properties,
-            requireGrounding=requireGrounding
+            requireGrounding=requireGrounding,
+            chunk_similarity_threshold=chunk_similarity_threshold
         )
 
         total_call_time = time.time() - qa_rag_start_time
@@ -609,7 +613,8 @@ async def chat_bot_grounding(
     mode=Form(None),
     email=Form(None),
     requireGrounding: bool = Form(True),
-    filterProperties: str = Form(None)
+    filterProperties: str = Form(None),
+    chunk_similarity_threshold: float = Form(None)
 ):
     logging.info(f"QA_RAG (grounding) called at {datetime.now()}")
     logging.info(f"document_names = {document_names}")
@@ -626,6 +631,9 @@ async def chat_bot_grounding(
             logging.warning(f"Invalid JSON in filterProperties: {e}")
             filter_properties = None
     
+    # Use chunk_similarity_threshold parameter if provided, otherwise fallback to default constant
+    effective_chunk_similarity_threshold = chunk_similarity_threshold if chunk_similarity_threshold is not None else CHAT_SEARCH_KWARG_SCORE_THRESHOLD
+    logging.info(f"effective_chunk_similarity_threshold = {effective_chunk_similarity_threshold}")
     try:
         if mode == "graph":
             graph = Neo4jGraph( url=uri,username=userName,password=password,database=database,sanitize = True, refresh_schema=True)
@@ -636,7 +644,7 @@ async def chat_bot_grounding(
         write_access = graph_DB_dataAccess.check_account_access(database=database)
         # Select the system template based on requireGrounding (to be used inside QA_RAG or before calling it):
         # system_template = CHAT_SYSTEM_TEMPLATE if requireGrounding else CHAT_SYSTEM_TEMPLATE_UNGROUNDED
-        result = await asyncio.to_thread(QA_RAG_GROUNDING,graph=graph,model=model,question=question,document_names=document_names,session_id=session_id,mode=mode,write_access=write_access,filter_properties=filter_properties,requireGrounding=requireGrounding)
+        result = await asyncio.to_thread(QA_RAG_GROUNDING,graph=graph,model=model,question=question,document_names=document_names,session_id=session_id,mode=mode,write_access=write_access,filter_properties=filter_properties,requireGrounding=requireGrounding,chunk_similarity_threshold=effective_chunk_similarity_threshold)
 
         total_call_time = time.time() - qa_rag_start_time
         logging.info(f"Total Response time is  {total_call_time:.2f} seconds")

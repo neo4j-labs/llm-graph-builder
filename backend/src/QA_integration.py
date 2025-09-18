@@ -290,6 +290,12 @@ def retrieve_documents(doc_retriever, messages):
 
     start_time = time.time()
     try:
+        logging.info(f"=== DOCUMENT RETRIEVAL - MESSAGES BEING USED ===")
+        for i, msg in enumerate(messages):
+            logging.info(f"Retrieval Message {i}: Role={msg.type}, Content={msg.content}")
+            logging.info(msg.content)
+        logging.info(f"=== END RETRIEVAL MESSAGES (Total: {len(messages)} messages) ===")
+
         handler = CustomCallback()
         docs = doc_retriever.invoke({"messages": messages},{"callbacks":[handler]})
         transformed_question = handler.transformed_question
@@ -498,7 +504,7 @@ def extract_tool_calls_direct(model, messages):
     tools = list(map(remap_tool_names, tools))
     return tools
 
-def setup_chat(model, graph, document_names, chat_mode_settings, filter_properties=None):
+def setup_chat(model, graph, document_names, chat_mode_settings, filter_properties=None, chunk_similarity_threshold=None):
     start_time = time.time()
     try:
         if model == "diffbot":
@@ -507,7 +513,9 @@ def setup_chat(model, graph, document_names, chat_mode_settings, filter_properti
         llm, model_name = get_llm(model=model)
         logging.info(f"Model called in chat: {model} (version: {model_name})")
 
-        retriever = get_neo4j_retriever(graph=graph, chat_mode_settings=chat_mode_settings, document_names=document_names, filter_properties=filter_properties)
+        # Use chunk_similarity_threshold as score_threshold if provided, otherwise use default
+        effective_score_threshold = chunk_similarity_threshold if chunk_similarity_threshold is not None else CHAT_SEARCH_KWARG_SCORE_THRESHOLD
+        retriever = get_neo4j_retriever(graph=graph, chat_mode_settings=chat_mode_settings, document_names=document_names, filter_properties=filter_properties, score_threshold=effective_score_threshold)
         doc_retriever = create_document_retriever_chain(llm, retriever)
         
         chat_setup_time = time.time() - start_time
@@ -554,9 +562,9 @@ def extract_tool_calls(model, messages):
     return tools
 
 
-def process_chat_response(messages, history, question, model, graph, document_names, chat_mode_settings, extract_tools=False, filter_properties=None, requireGrounding=True):
+def process_chat_response(messages, history, question, model, graph, document_names, chat_mode_settings, extract_tools=False, filter_properties=None, requireGrounding=True, chunk_similarity_threshold=None):
     try:
-        llm, doc_retriever, model_version = setup_chat(model, graph, document_names, chat_mode_settings, filter_properties)
+        llm, doc_retriever, model_version = setup_chat(model, graph, document_names, chat_mode_settings, filter_properties, chunk_similarity_threshold)
 
         # Shared variable to store tool calls, initialized as empty list
         tool_calls = []
@@ -825,14 +833,15 @@ def convert_messages_to_langchain(messages):
     
     return langchain_messages
 
-def MAGIC_TREK_QA_RAG(graph,model, messages, question, document_names, session_id, mode, write_access=True, filter_properties=None, requireGrounding=True):
+def MAGIC_TREK_QA_RAG(graph,model, messages, question, document_names, session_id, mode, write_access=True, filter_properties=None, requireGrounding=True, chunk_similarity_threshold=None):
     logging.info(f"Chat Mode: {mode}")
     logging.info(f"document_names = {document_names}")
     logging.info(f"document_names type: {type(document_names)}")
     # document_names = "[]"
-
+    logging.info(f"session_id = {session_id}")
     logging.info(f"question = {question}")
     logging.info(f"filter_properties = {filter_properties}")
+    logging.info(f"chunk_similarity_threshold = {chunk_similarity_threshold}")
     # receive the message history from our frontend
     messages = convert_messages_to_langchain(messages)
     logging.info("translated message history:")
@@ -886,7 +895,8 @@ def MAGIC_TREK_QA_RAG(graph,model, messages, question, document_names, session_i
                 chat_mode_settings=chat_mode_settings,
                 extract_tools=True,
                 filter_properties=filter_properties,
-                requireGrounding=requireGrounding
+                requireGrounding=requireGrounding,
+                chunk_similarity_threshold=chunk_similarity_threshold
             )
 
     # result["session_id"] = session_id
@@ -938,7 +948,7 @@ def QA_RAG(graph,model, question, document_names, session_id, mode, write_access
     
     return result
 
-def QA_RAG_GROUNDING(graph,model, question, document_names, session_id, mode, write_access=True, filter_properties=None, requireGrounding=True):
+def QA_RAG_GROUNDING(graph,model, question, document_names, session_id, mode, write_access=True, filter_properties=None, requireGrounding=True, chunk_similarity_threshold=None):
     logging.info(f"Chat Mode: {mode}")
 
     history = create_neo4j_chat_message_history(graph, session_id, write_access)
@@ -977,7 +987,7 @@ def QA_RAG_GROUNDING(graph,model, question, document_names, session_id, mode, wr
                 "user": "chatbot"
             }
         else:
-            result = process_chat_response(messages,history, question, model, graph, document_names,chat_mode_settings, extract_tools=False, filter_properties=filter_properties, requireGrounding=requireGrounding)
+            result = process_chat_response(messages,history, question, model, graph, document_names,chat_mode_settings, extract_tools=False, filter_properties=filter_properties, requireGrounding=requireGrounding, chunk_similarity_threshold=chunk_similarity_threshold)
 
     result["session_id"] = session_id
     
