@@ -2,11 +2,14 @@ FROM python:3.10-slim
 WORKDIR /code
 ENV PORT 8000
 EXPOSE 8000
+
+ENV GIT_PYTHON_REFRESH=quiet
 # Install dependencies and clean up in one layer
 RUN apt-get update && \
    apt-get install -y --no-install-recommends \
        libmagic1 \
-       libgl1-mesa-glx \
+       libgl1 \
+       libglx-mesa0 \
        libreoffice \
        cmake \
        poppler-utils \
@@ -23,4 +26,4 @@ RUN pip install -r requirements.txt -c constraints.txt
 # Copy application code
 COPY . /code
 # Set command
-CMD ["gunicorn", "score:app", "--workers", "8","--threads", "8", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "--timeout", "300"]
+CMD ["gunicorn", "score:app", "--workers", "1","--threads", "2", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "--timeout", "300"]

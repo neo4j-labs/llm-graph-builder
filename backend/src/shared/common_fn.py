@@ -86,9 +86,9 @@ def load_embedding_model(embedding_model_name: str):
         logging.info(f"Embedding: Using bedrock titan Embeddings , Dimension:{dimension}")
     else:
         embeddings = HuggingFaceEmbeddings(
-            model_name="all-MiniLM-L6-v2"#, cache_folder="/embedding_model"
+            model_name="Qwen/Qwen3-Embedding-0.6B"#, cache_folder="/embedding_model"
         )
-        dimension = 384
+        dimension = 1024
         logging.info(f"Embedding: Using Langchain HuggingFaceEmbeddings , Dimension:{dimension}")
     return embeddings, dimension
 
