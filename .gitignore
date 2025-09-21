@@ -174,3 +174,5 @@ newenv
 files
 startupbackend.sh
 startupfrontend.sh
+
+ollama_models
