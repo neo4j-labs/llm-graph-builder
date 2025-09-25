@@ -85,7 +85,7 @@ def get_llm(model: str):
 
         elif "groq" in model:
             model_name, base_url, api_key = env_value.split(",")
-            llm = ChatGroq(api_key=api_key, model_name=model_name, temperature=0)
+            llm = ChatGroq(api_key=api_key, model_name=model_name, base_url=base_url, temperature=0)
 
         elif "bedrock" in model:
             model_name, aws_access_key, aws_secret_key, region_name = env_value.split(",")
