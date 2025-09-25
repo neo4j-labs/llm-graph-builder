@@ -32,6 +32,7 @@ import shutil
 import urllib.parse
 import json
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
+from langchain.docstore.document import Document
 
 warnings.filterwarnings("ignore")
 load_dotenv()

@@ -17,6 +17,7 @@ langchain-aws
 langchain-anthropic
 langchain-fireworks
 langchain-community
+langchain-ollama
 langchain-core
 langchain-experimental
 langchain-google-vertexai

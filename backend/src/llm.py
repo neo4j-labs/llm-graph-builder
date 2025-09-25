@@ -10,7 +10,7 @@ from langchain_experimental.graph_transformers import LLMGraphTransformer
 from langchain_anthropic import ChatAnthropic
 from langchain_fireworks import ChatFireworks
 from langchain_aws import ChatBedrock
-from langchain_community.chat_models import ChatOllama
+from langchain_ollama import ChatOllama
 import boto3
 import google.auth
 from src.shared.constants import ADDITIONAL_INSTRUCTIONS
@@ -102,7 +102,9 @@ def get_llm(model: str):
 
         elif "ollama" in model:
             model_name, base_url = env_value.split(",")
-            llm = ChatOllama(base_url=base_url, model=model_name)
+            llm = ChatOllama(base_url=base_url,
+                             model=model_name,
+                             temperature=0,)
 
         elif "diffbot" in model:
             #model_name = "diffbot"
@@ -180,6 +182,7 @@ async def get_graph_document_list(
     if additional_instructions:
         additional_instructions = sanitize_additional_instruction(additional_instructions)
     graph_document_list = []
+
     if "diffbot_api_key" in dir(llm):
         llm_transformer = llm
     else:
@@ -213,7 +216,7 @@ async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowed
    try:
        llm, model_name = get_llm(model)
        logging.info(f"Using model: {model_name}")
-    
+
        combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list, chunks_to_combine)
        logging.info(f"Combined {len(combined_chunk_document_list)} chunks")
     

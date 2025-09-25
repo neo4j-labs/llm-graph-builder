@@ -10,6 +10,7 @@ services:
       - neo4j_plugins:/plugins
     environment:
       - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+      - NEO4J_URI=neo4j://localhost:7474
       - NEO4J_AUTH=neo4j/password
       - NEO4J_dbms_memory_pagecache_size=2G
       - NEO4J_dbms_memory_heap_initial__size=2G
@@ -18,13 +19,13 @@ services:
       - NEO4J_dbms_security_procedures_unrestricted=apoc.*,gds.*
       - NEO4J_dbms_security_procedures_allowlist=apoc.*,gds.*
     ports:
-      - "7474:7474"
-      - "7687:7687"
+      - "7474:7474" # HTTP port
+      - "7687:7687" # Bolt port
     networks:
       - net
     profiles:
       - full
-      - be
+      - services
 
   backend:
     build:
@@ -34,7 +35,7 @@ services:
       - ./backend:/code
     environment:
       - ENABLE_USER_AGENT=${ENABLE_USER_AGENT-false}
-      - NEO4J_URI=${NEO4J_URI-neo4j://database:7687}
+      - NEO4J_URI=${NEO4J_URI-bolt://localhost:7687}
       - NEO4J_PASSWORD=${NEO4J_PASSWORD-password}
       - NEO4J_USERNAME=${NEO4J_USERNAME-neo4j}
       - OPENAI_API_KEY=${OPENAI_API_KEY-}
@@ -70,7 +71,6 @@ services:
 
     profiles:
       - full
-      - be
 
   frontend:
     depends_on:
@@ -133,7 +133,7 @@ services:
       - "11434"
     profiles:
       - full
-      - be
+      - services
       
 networks:
   net:
@@ -143,3 +143,5 @@ volumes:
   neo4j_logs:
   neo4j_import:
   neo4j_plugins:
+  ollama_models:
+  scripts:
