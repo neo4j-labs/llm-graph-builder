@@ -888,9 +888,7 @@ If any item cannot be grouped, it must remain in its own category using its orig
 Use these rules to group and name categories accurately without introducing errors or new types.
 """
 
-ADDITIONAL_INSTRUCTIONS = """Your goal is to identify and categorize entities while ensuring that specific data 
-types such as dates, numbers, revenues, and other non-entity information are not extracted as separate nodes.
-Instead, treat these as properties associated with the relevant entities."""
+ADDITIONAL_INSTRUCTIONS = """Also take the numerical values and time or dates into account and, if necessary, create dedicated entities."""
 
 SCHEMA_VISUALIZATION_QUERY = """
 CALL db.schema.visualization() YIELD nodes, relationships

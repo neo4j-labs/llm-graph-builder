@@ -384,12 +384,17 @@ async def post_processing(uri=Form(None), userName=Form(None), password=Form(Non
             await asyncio.to_thread(graph_schema_consolidation, graph)
             api_name = 'post_processing/graph_schema_consolidation'
             logging.info(f'Updated nodes and relationship labels')
-            
+
+        """
+        #COMMUNITIES CREATION IS DISABLED FOR TIME BEING
+
         if "enable_communities" in tasks:
             api_name = 'create_communities'
             await asyncio.to_thread(create_communities, uri, userName, password, database)  
-            
+
             logging.info(f'created communities')
+        """
+
         graph = create_graph_database_connection(uri, userName, password, database)   
         graphDb_data_Access = graphDBdataAccess(graph)
         document_name = ""
