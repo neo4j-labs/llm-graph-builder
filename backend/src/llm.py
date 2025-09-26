@@ -247,7 +247,6 @@ async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowed
            allowed_relationships,
            additional_instructions
        )
-       logging.info(f"Generated {len(graph_document_list)} graph documents")
        return graph_document_list
    except Exception as e:
        logging.error(f"Error in get_graph_from_llm: {e}", exc_info=True)
