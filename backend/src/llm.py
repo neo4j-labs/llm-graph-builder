@@ -192,7 +192,7 @@ async def get_graph_document_list(
         else:
             node_properties = ["description"]
             relationship_properties = ["description"]
-        TOOL_SUPPORTED_MODELS = {"qwen3", "deepseek"} 
+        TOOL_SUPPORTED_MODELS = {}
         model_name = get_llm_model_name(llm)
         ignore_tool_usage = not any(pattern in model_name for pattern in TOOL_SUPPORTED_MODELS)
         logging.info(f"Keeping ignore tool usage parameter as {ignore_tool_usage}")
@@ -222,7 +222,7 @@ async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowed
     
        allowed_nodes = [node.strip() for node in allowedNodes.split(',') if node.strip()]
        logging.info(f"Allowed nodes: {allowed_nodes}")
-    
+
        allowed_relationships = []
        if allowedRelationship:
            items = [item.strip() for item in allowedRelationship.split(',') if item.strip()]

@@ -251,7 +251,7 @@ RETURN
 CHAT_MAX_TOKENS = 1000
 CHAT_SEARCH_KWARG_SCORE_THRESHOLD = 0.5
 CHAT_DOC_SPLIT_SIZE = 3000
-CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD = 0.10
+CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD = 0.5     #parameter to filter out low score chunks from vector search results
 
 CHAT_TOKEN_CUT_OFF = {
      ('openai_gpt_3.5','azure_ai_gpt_35',"gemini_1.0_pro","gemini_1.5_pro", "gemini_1.5_flash","groq-llama3",'groq_llama3_70b','anthropic_claude_3_5_sonnet','fireworks_llama_v3_70b','bedrock_claude_3_5_sonnet', ) : 4, 

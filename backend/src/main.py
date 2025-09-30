@@ -231,18 +231,23 @@ def create_source_node_graph_url_wikipedia(graph, model, wiki_query, source_type
 async def extract_graph_from_file_local_file(uri, userName, password, database, model, merged_file_path, fileName, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions):
 
   logging.info(f'Process file name :{fileName}')
+
   if not retry_condition:
     gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
     if gcs_file_cache == 'True':
       folder_name = create_gcs_bucket_folder_name_hashed(uri, fileName)
-      file_name, pages = get_documents_from_gcs( PROJECT_ID, BUCKET_UPLOAD, folder_name, fileName)
+      file_name, pages = get_documents_from_gcs(PROJECT_ID, BUCKET_UPLOAD, folder_name, fileName)
     else:
       file_name, pages, file_extension = get_documents_from_file_by_path(merged_file_path,fileName)
+
+    total_file_words = sum(len(p.page_content.split()) for p in pages)
+    big_file = (total_file_words > int(os.environ.get('WORDS_FOR_BIG_FILE', 2000)))
+
     if pages==None or len(pages)==0:
       raise LLMGraphBuilderException(f'File content is not available for file : {file_name}')
-    return await processing_source(uri, userName, password, database, model, file_name, pages, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, True, merged_file_path, additional_instructions=additional_instructions)
+    return await processing_source(uri, userName, password, database, model, file_name, pages, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, True, merged_file_path, additional_instructions=additional_instructions, big_file=big_file)
   else:
-    return await processing_source(uri, userName, password, database, model, fileName, [], allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, True, merged_file_path, retry_condition, additional_instructions=additional_instructions)
+    return await processing_source(uri, userName, password, database, model, fileName, [], allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, True, merged_file_path, retry_condition, additional_instructions=additional_instructions, big_file=False)
   
 async def extract_graph_from_file_s3(uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions):
   if not retry_condition:
@@ -295,7 +300,7 @@ async def extract_graph_from_file_gcs(uri, userName, password, database, model, 
   else:
     return await processing_source(uri, userName, password, database, model, file_name, [], allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition=retry_condition, additional_instructions=additional_instructions)
   
-async def processing_source(uri, userName, password, database, model, file_name, pages, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, is_uploaded_from_local=None, merged_file_path=None, retry_condition=None, additional_instructions=None):
+async def processing_source(uri, userName, password, database, model, file_name, pages, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, is_uploaded_from_local=None, merged_file_path=None, retry_condition=None, additional_instructions=None, big_file=False):
   """
    Extracts a Neo4jGraph from a PDF file based on the model.
    
@@ -316,12 +321,14 @@ async def processing_source(uri, userName, password, database, model, file_name,
   start_time = datetime.now()
   processing_source_start_time = time.time()
   start_create_connection = time.time()
+
   graph = create_graph_database_connection(uri, userName, password, database)
   end_create_connection = time.time()
   elapsed_create_connection = end_create_connection - start_create_connection
   logging.info(f'Time taken database connection: {elapsed_create_connection:.2f} seconds')
   uri_latency["create_connection"] = f'{elapsed_create_connection:.2f}'
   graphDb_data_Access = graphDBdataAccess(graph)
+
   create_chunk_vector_index(graph)
   start_get_chunkId_chunkDoc_list = time.time()
   total_chunks, chunkId_chunkDoc_list = get_chunkId_chunkDoc_list(graph, file_name, pages, token_chunk_size, chunk_overlap, retry_condition)
@@ -371,6 +378,10 @@ async def processing_source(uri, userName, password, database, model, file_name,
       # selected_chunks = []
       is_cancelled_status = False
       job_status = "Completed"
+
+      if big_file:
+        logging.info(f"Big file with more than 2000 words, hence extracting only chunk nodes - skipping graph documents and entity extraction for file {file_name}")
+
       for i in range(0, len(chunkId_chunkDoc_list), update_graph_chunk_processed):
         select_chunks_upto = i+update_graph_chunk_processed
         logging.info(f'Selected Chunks upto: {select_chunks_upto}')
@@ -387,7 +398,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
           break
         else:
           processing_chunks_start_time = time.time()
-          node_count,rel_count,latency_processed_chunk = await processing_chunks(selected_chunks,graph,uri, userName, password, database,file_name,model,allowedNodes,allowedRelationship,chunks_to_combine,node_count, rel_count, additional_instructions)
+          node_count,rel_count,latency_processed_chunk = await processing_chunks(selected_chunks,graph,uri, userName, password, database,file_name,model,allowedNodes,allowedRelationship,chunks_to_combine,node_count, rel_count, additional_instructions, big_file=big_file)
           processing_chunks_end_time = time.time()
           processing_chunks_elapsed_end_time = processing_chunks_end_time - processing_chunks_start_time
           logging.info(f"Time taken {update_graph_chunk_processed} chunks processed upto {select_chunks_upto} completed in {processing_chunks_elapsed_end_time:.2f} seconds for file name {file_name}")
@@ -464,7 +475,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
     logging.error(error_message)
     raise LLMGraphBuilderException(error_message)
 
-async def processing_chunks(chunkId_chunkDoc_list,graph,uri, userName, password, database,file_name,model,allowedNodes,allowedRelationship, chunks_to_combine, node_count, rel_count, additional_instructions=None):
+async def processing_chunks(chunkId_chunkDoc_list,graph,uri, userName, password, database,file_name,model,allowedNodes,allowedRelationship, chunks_to_combine, node_count, rel_count, additional_instructions=None, big_file=False):
   #create vector index and update chunk node with embedding
   latency_processing_chunk = {}
   if graph is not None:
@@ -475,14 +486,23 @@ async def processing_chunks(chunkId_chunkDoc_list,graph,uri, userName, password,
   
   start_update_embedding = time.time()
   create_chunk_embeddings( graph, chunkId_chunkDoc_list, file_name)
+  
   end_update_embedding = time.time()
   elapsed_update_embedding = end_update_embedding - start_update_embedding
   logging.info(f'Time taken to update embedding in chunk node: {elapsed_update_embedding:.2f} seconds')
   latency_processing_chunk["update_embedding"] = f'{elapsed_update_embedding:.2f}'
+
+  if big_file:
+    graphDb_data_Access = graphDBdataAccess(graph)
+    count_response = graphDb_data_Access.update_node_relationship_count(file_name)
+    node_count = count_response[file_name].get('nodeCount',"0")
+    rel_count = count_response[file_name].get('relationshipCount',"0")
+    return node_count, rel_count, latency_processing_chunk
+  
   logging.info("Get graph document list from models")
   
   start_entity_extraction = time.time()
-  graph_documents =  await get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship, chunks_to_combine, additional_instructions)
+  graph_documents = await get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship, chunks_to_combine, additional_instructions)
   end_entity_extraction = time.time()
   elapsed_entity_extraction = end_entity_extraction - start_entity_extraction
   logging.info(f'Time taken to extract enitities from LLM Graph Builder: {elapsed_entity_extraction:.2f} seconds')
@@ -528,7 +548,7 @@ def get_chunkId_chunkDoc_list(graph, file_name, pages, token_chunk_size, chunk_o
     chunkId_chunkDoc_list = create_relation_between_chunks(graph,file_name,chunks)
     return len(chunks), chunkId_chunkDoc_list
   
-  else:  
+  else:
     chunkId_chunkDoc_list=[]
     chunks =  execute_graph_query(graph,QUERY_TO_GET_CHUNKS, params={"filename":file_name})
     

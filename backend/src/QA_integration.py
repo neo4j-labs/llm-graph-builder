@@ -35,7 +35,8 @@ from langchain_community.chat_models import ChatOllama
 from src.llm import get_llm
 from src.shared.common_fn import load_embedding_model
 from src.shared.constants import *
-load_dotenv() 
+
+load_dotenv()
 
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
 EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL) 
@@ -161,6 +162,7 @@ def get_rag_chain(llm, system_template=CHAT_SYSTEM_TEMPLATE):
         question_answering_prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", system_template),
+
                 MessagesPlaceholder(variable_name="messages"),
                 (
                     "human",
@@ -168,7 +170,6 @@ def get_rag_chain(llm, system_template=CHAT_SYSTEM_TEMPLATE):
                 ),
             ]
         )
-
         question_answering_chain = question_answering_prompt | llm
 
         return question_answering_chain
@@ -232,7 +233,6 @@ def process_documents(docs, question, messages, llm, model,chat_mode_settings):
         formatted_docs, sources, entitydetails, communities = format_documents(docs, model,chat_mode_settings)
         
         rag_chain = get_rag_chain(llm=llm)
-        
         ai_response = rag_chain.invoke({
             "messages": messages[:-1],
             "context": formatted_docs,
@@ -435,14 +435,29 @@ def process_chat_response(messages, history, question, model, graph, document_na
     try:
         llm, doc_retriever, model_version = setup_chat(model, graph, document_names, chat_mode_settings)
         
-        docs,transformed_question = retrieve_documents(doc_retriever, messages)  
+        docs,transformed_question = retrieve_documents(doc_retriever, messages)
 
         if docs:
             content, result, total_tokens,formatted_docs = process_documents(docs, question, messages, llm, model, chat_mode_settings)
         else:
-            content = "I couldn't find any relevant documents to answer your question."
+            # if no documents are retrieved, directly get response from internal knowledge of the LLM
+            system_prompt = "You are an AI-powered question-answering agent. Your task is to provide accurate and comprehensive responses to user queries."
+            llm = get_llm(model=model)[0]
+            generic_prompt = ChatPromptTemplate.from_messages(
+                [
+                    ("system", system_prompt),
+                    MessagesPlaceholder(variable_name="messages"),
+                    ("human", "{input}"),
+                ]
+            )
+            llm_chain = generic_prompt | llm
+            response = llm_chain.invoke({
+                "messages": messages[:-1],
+                "input": question
+            })
+            content = response.content
+            total_tokens = get_total_tokens(response, llm)
             result = {"sources": list(), "nodedetails": list(), "entities": list()}
-            total_tokens = 0
             formatted_docs = ""
         
         ai_response = AIMessage(content=content)
@@ -575,7 +590,6 @@ def get_graph_response(graph_chain, question):
 def process_graph_response(model, graph, question, messages, history):
     try:
         graph_chain, qa_llm, model_version = create_graph_chain(model, graph)
-        
         graph_response = get_graph_response(graph_chain, question)
         
         ai_response_content = graph_response.get("response", "Something went wrong")
@@ -658,7 +672,6 @@ def QA_RAG(graph,model, question, document_names, session_id, mode, write_access
 
     history = create_neo4j_chat_message_history(graph, session_id, write_access)
     messages = history.messages
-
     user_question = HumanMessage(content=question)
     messages.append(user_question)
 
