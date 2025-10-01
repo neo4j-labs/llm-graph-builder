@@ -441,11 +441,10 @@ def process_chat_response(messages, history, question, model, graph, document_na
             content, result, total_tokens,formatted_docs = process_documents(docs, question, messages, llm, model, chat_mode_settings)
         else:
             # if no documents are retrieved, directly get response from internal knowledge of the LLM
-            system_prompt = "You are an AI-powered question-answering agent. Your task is to provide accurate and comprehensive responses to user queries."
             llm = get_llm(model=model)[0]
             generic_prompt = ChatPromptTemplate.from_messages(
                 [
-                    ("system", system_prompt),
+                    ("system", "You are an AI-powered question-answering agent. Your task is to provide accurate and comprehensive responses to user queries."),
                     MessagesPlaceholder(variable_name="messages"),
                     ("human", "{input}"),
                 ]
