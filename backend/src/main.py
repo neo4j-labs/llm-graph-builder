@@ -585,23 +585,48 @@ async def processing_chunks(chunkId_chunkDoc_list, graph, uri, userName, passwor
         return node_count, rel_count, latency_processing_chunk
 
     logging.info("Get graph document list from models")
-    start_entity_extraction = time.time()
 
     if "phoneCall_" in file_name:
         allowedNodes = "Contact,Date,Duration,Time,App,Call"
-        allowedRelationship = "Call,WITH_CONTACT,Contact,Call,HAS_DATE,Date,Call,SOURCE_APP,App,Call,HAS_DURATION,Duration,Call,STARTS_AT,Time,Call,END_AT,Time"
-        graph_documents = await get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship,
-                                                   chunks_to_combine, additional_instructions)
-    elif "contact_" in file_name:
-        allowedNodes = "Contact,Phone_number,App,Name"
-        allowedRelationship = "Contact,SOURCE_APP,App,Contact,HAS_NAME,Name,Contact,HAS_PHONE_NUMBER,Phone_number"
-        graph_documents = await get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship,
-                                                   chunks_to_combine, additional_instructions)
-    else:
-        graph_documents = await get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship,
-                                                   chunks_to_combine, additional_instructions)
+        allowedRelationship = "Call,WITH_CONTACT,Contact,Call,HAS_DATE,Date,Call,SOURCE_APP,App,Call,HAS_DURATION,Duration,Call,HAS_START_TIME,Time,Call,HAS_END_TIME,Time"
 
+    elif "contact_" in file_name:
+        allowedNodes = "Contact,Phone_Number,App,Name"
+        allowedRelationship = "Contact,SOURCE_APP,App,Contact,HAS_NAME,Name,Contact,HAS_PHONE_NUMBER,Phone_Number"
+
+    elif "alarm_" in file_name:
+        allowedNodes = "App,Alarm,Recurrence_Type,Label,Time,Date"
+        allowedRelationship = "Alarm,SOURCE_APP,App,Alarm,HAS_TYPE,Recurrence_Type,Alarm,HAS_LABEL,Label,Alarm,HAS_TIME,Time,Alarm,HAS_DATE,Date"
+
+    elif "recurrentAlarm_" in file_name:
+        allowedNodes = "App,Alarm,Alarm_Type,Label,Repeat_Frequency,Time,Day_Of_Week,Day_Of_Month,Date"
+        allowedRelationship = "Alarm,SOURCE_APP,App,Alarm,HAS_TYPE,Alarm_Type,Alarm,HAS_LABEL,Label,Alarm,HAS_TIME,Time,Alarm,HAS_FREQUENCY,Repeat_Frequency,Alarm,SET_ON,Date,Alarm,SET_ON,Day_Of_Week,Alarm,SET_ON,Day_Of_Month"
+
+    elif "event_" in file_name:
+        allowedNodes = "App,Event,Recurrence_Type,Label,Time,Date"
+        allowedRelationship = "Event,SOURCE_APP,App,Event,HAS_TYPE,Recurrence_Type,Event,HAS_LABEL,Label,Event,HAS_START_TIME,Time,Event,HAS_END_TIME,Time,Event,HAS_DATE,Date"
+
+    elif "recurrentEvent_" in file_name:
+        allowedNodes = "App,Event,Recurrence_Type,Label,Repeat_Frequency,Time,Day_Of_Week,Day_Of_Month,Date"
+        allowedRelationship = "Event,SOURCE_APP,App,Event,HAS_TYPE,Recurrence_Type,Event,HAS_LABEL,Label,Event,HAS_START_TIME,Time,Event,HAS_END_TIME,Time,Event,HAS_FREQUENCY,Repeat_Frequency,Event,SET_ON,Date,Event,SET_ON,Day_Of_Week,Event,SET_ON,Day_Of_Month"
+
+    elif "note_" in file_name:
+        allowedNodes = "App,Note,Label,Date,Time"
+        allowedRelationship = "Note,SOURCE_APP,App,Note,HAS_LABEL,Label,Note,CREATION_DATE,Date,Note,CREATION_TIME,Time,Note,TIME_MODIFIED,Time,Note,DATE_MODIFIED,Date"
+
+    elif "photo_" in file_name:
+        allowedNodes = "App,Photo,Location,Date,Time,Path"
+        allowedRelationship = "Photo,SOURCE_APP,App,Photo,CREATION_DATE,Date,Photo,CREATION_TIME,Time,Photo,TAKEN_IN,Location,Photo,HAS_PATH,Path"
+
+    elif "doc_" in file_name:
+        allowedNodes = "App,Document,Date,Time,Path"
+        allowedRelationship = "Doc,SOURCE_APP,App,Doc,CREATION_DATE,Date,Doc,CREATION_TIME,Time,Doc,DATE_MODIFIED,Date,Doc,TIME_MODIFIED,Time,Doc,HAS_PATH,Path"
+
+    start_entity_extraction = time.time()
+    graph_documents = await get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship,
+                                               chunks_to_combine, additional_instructions)
     end_entity_extraction = time.time()
+
     elapsed_entity_extraction = end_entity_extraction - start_entity_extraction
     logging.info(f'Time taken to extract enitities from LLM Graph Builder: {elapsed_entity_extraction:.2f} seconds')
     latency_processing_chunk["entity_extraction"] = f'{elapsed_entity_extraction:.2f}'
