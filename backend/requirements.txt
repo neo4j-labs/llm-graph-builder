@@ -52,7 +52,6 @@ gunicorn
 wikipedia
 wrapt
 yarl
-youtube-transcript-api
 zipp
 sentence-transformers
 google-cloud-logging

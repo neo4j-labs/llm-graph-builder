@@ -1,7 +1,7 @@
-import logging
-from src.graph_query import *
-from src.shared.constants import * 
+from graph_query import *
+from shared.constants import *
 import re
+
 
 def process_records(records):
     """

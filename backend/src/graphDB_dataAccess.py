@@ -3,11 +3,10 @@ import os
 import time
 from neo4j.exceptions import TransientError
 from langchain_neo4j import Neo4jGraph
-from src.shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file, load_embedding_model
-from src.document_sources.gcs_bucket import delete_file_from_gcs
-from src.shared.constants import BUCKET_UPLOAD,NODEREL_COUNT_QUERY_WITH_COMMUNITY, NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY
-from src.entities.source_node import sourceNode
-from src.communities import MAX_COMMUNITY_LEVELS
+from shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file, load_embedding_model
+from shared.constants import BUCKET_UPLOAD,NODEREL_COUNT_QUERY_WITH_COMMUNITY, NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY
+from source_node import sourceNode
+from communities import MAX_COMMUNITY_LEVELS
 import json
 from dotenv import load_dotenv
 
@@ -293,7 +292,7 @@ class graphDBdataAccess:
         filename_list= list(map(str.strip, json.loads(filenames)))
         source_types_list= list(map(str.strip, json.loads(source_types)))
         gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
-        
+
         for (file_name,source_type) in zip(filename_list, source_types_list):
             merged_file_path = os.path.join(merged_dir, file_name)
             if source_type == 'local file' and gcs_file_cache == 'True':

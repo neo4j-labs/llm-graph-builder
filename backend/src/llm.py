@@ -1,22 +1,19 @@
 import logging
 from langchain.docstore.document import Document
 import os
-from langchain_openai import ChatOpenAI, AzureChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain_google_vertexai import ChatVertexAI
 from langchain_groq import ChatGroq
 from langchain_google_vertexai import HarmBlockThreshold, HarmCategory
 from langchain_experimental.graph_transformers.diffbot import DiffbotGraphTransformer
 from langchain_experimental.graph_transformers import LLMGraphTransformer
 from langchain_anthropic import ChatAnthropic
-from langchain_fireworks import ChatFireworks
-from langchain_aws import ChatBedrock
 from langchain_ollama import ChatOllama
-import boto3
 import google.auth
-from src.shared.constants import ADDITIONAL_INSTRUCTIONS
-from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
+from shared.constants import ADDITIONAL_INSTRUCTIONS
+from shared.llm_graph_builder_exception import LLMGraphBuilderException
 import re
-from typing import List
+
 
 def get_llm(model: str):
     """Retrieve the specified language model based on the model name."""
@@ -61,58 +58,21 @@ def get_llm(model: str):
                 temperature=0,
                 )
 
-        elif "azure" in model:
-            model_name, api_endpoint, api_key, api_version = env_value.split(",")
-            llm = AzureChatOpenAI(
-                api_key=api_key,
-                azure_endpoint=api_endpoint,
-                azure_deployment=model_name,  # takes precedence over model parameter
-                api_version=api_version,
-                temperature=0,
-                max_tokens=None,
-                timeout=None,
-            )
-
         elif "anthropic" in model:
             model_name, api_key = env_value.split(",")
             llm = ChatAnthropic(
                 api_key=api_key, model=model_name, temperature=0, timeout=None
             )
 
-        elif "fireworks" in model:
-            model_name, api_key = env_value.split(",")
-            llm = ChatFireworks(api_key=api_key, model=model_name)
-
         elif "groq" in model:
             model_name, base_url, api_key = env_value.split(",")
             llm = ChatGroq(api_key=api_key, model_name=model_name, base_url=base_url, temperature=0)
-
-        elif "bedrock" in model:
-            model_name, aws_access_key, aws_secret_key, region_name = env_value.split(",")
-            bedrock_client = boto3.client(
-                service_name="bedrock-runtime",
-                region_name=region_name,
-                aws_access_key_id=aws_access_key,
-                aws_secret_access_key=aws_secret_key,
-            )
-
-            llm = ChatBedrock(
-                client=bedrock_client,region_name=region_name, model_id=model_name, model_kwargs=dict(temperature=0)
-            )
 
         elif "ollama" in model:
             model_name, base_url = env_value.split(",")
             llm = ChatOllama(base_url=base_url,
                              model=model_name,
                              temperature=0,)
-
-        elif "diffbot" in model:
-            #model_name = "diffbot"
-            model_name, api_key = env_value.split(",")
-            llm = DiffbotGraphTransformer(
-                diffbot_api_key=api_key,
-                extract_types=["entities", "facts"],
-            )
         
         else: 
             model_name, api_endpoint, api_key = env_value.split(",")
@@ -203,7 +163,7 @@ async def get_graph_document_list(
             allowed_nodes=allowedNodes,
             allowed_relationships=allowedRelationship,
             ignore_tool_usage=ignore_tool_usage,
-            additional_instructions=ADDITIONAL_INSTRUCTIONS+ (additional_instructions if additional_instructions else "")
+            additional_instructions=ADDITIONAL_INSTRUCTIONS + (additional_instructions if additional_instructions else "")
         )
     
     if isinstance(llm,DiffbotGraphTransformer):

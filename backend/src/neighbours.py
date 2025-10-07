@@ -1,5 +1,5 @@
 import logging
-from src.graph_query import *
+from graph_query import *
 
 NEIGHBOURS_FROM_ELEMENT_ID_QUERY = """
 MATCH (n) 

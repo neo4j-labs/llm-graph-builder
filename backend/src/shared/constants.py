@@ -1,11 +1,6 @@
-OPENAI_MODELS = ["openai-gpt-3.5", "openai-gpt-4o", "openai-gpt-4o-mini"]
-GEMINI_MODELS = ["gemini-1.0-pro", "gemini-1.5-pro", "gemini-1.5-flash"]
-GROQ_MODELS = ["groq-llama3"]
 BUCKET_UPLOAD = 'llm-graph-builder-upload'
 BUCKET_FAILED_FILE = 'llm-graph-builder-failed'
-PROJECT_ID = 'llm-experiments-387609' 
-GRAPH_CHUNK_LIMIT = 50 
-
+GRAPH_CHUNK_LIMIT = 50
 
 #query 
 GRAPH_QUERY = """
@@ -246,18 +241,18 @@ RETURN
   COALESCE(entityEntityRelCount, 0) AS entityEntityRelCount
 """
 
-
 ## CHAT SETUP
 CHAT_MAX_TOKENS = 1000
 CHAT_SEARCH_KWARG_SCORE_THRESHOLD = 0.5
 CHAT_DOC_SPLIT_SIZE = 3000
-CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD = 0.5     #parameter to filter out low score chunks from vector search results
+CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD = 0.3  #parameter to filter out low score chunks from vector search results
 
 CHAT_TOKEN_CUT_OFF = {
-     ('openai_gpt_3.5','azure_ai_gpt_35',"gemini_1.0_pro","gemini_1.5_pro", "gemini_1.5_flash","groq-llama3",'groq_llama3_70b','anthropic_claude_3_5_sonnet','fireworks_llama_v3_70b','bedrock_claude_3_5_sonnet', ) : 4, 
-     ("openai-gpt-4","diffbot" ,'azure_ai_gpt_4o',"openai_gpt_4o", "openai_gpt_4o_mini") : 28,
-     ("ollama_llama3") : 2  
-}  
+    ('openai_gpt_3.5', 'azure_ai_gpt_35', "gemini_1.0_pro", "gemini_1.5_pro", "gemini_1.5_flash", "groq-llama3",
+     'groq_llama3_70b', 'anthropic_claude_3_5_sonnet', 'fireworks_llama_v3_70b', 'bedrock_claude_3_5_sonnet',): 4,
+    ("openai-gpt-4", "diffbot", 'azure_ai_gpt_4o', "openai_gpt_4o", "openai_gpt_4o_mini"): 28,
+    ("ollama_llama3"): 2
+}
 
 ### CHAT TEMPLATES 
 CHAT_SYSTEM_TEMPLATE = """
@@ -302,7 +297,7 @@ AI Response: "I don't have that information right now. Is there something else I
 Note: This system does not generate answers based solely on internal knowledge. It answers from the information provided in the user's current and previous inputs, and from the context.
 """
 
-QUESTION_TRANSFORM_TEMPLATE = "Given the below conversation, generate a search query to look up in order to get information relevant to the conversation. Only respond with the query, nothing else." 
+QUESTION_TRANSFORM_TEMPLATE = "Given the below conversation, generate a search query to look up in order to get information relevant to the conversation. Only respond with the query, nothing else."
 
 ## CHAT QUERIES
 VECTOR_SEARCH_TOP_K = 5
@@ -329,7 +324,7 @@ RETURN text,
                        END, 
                        d.fileName), 
         chunkdetails: chunkdetails} AS metadata
-""" 
+"""
 
 ### Vector graph search 
 VECTOR_GRAPH_SEARCH_ENTITY_LIMIT = 40
@@ -435,6 +430,7 @@ VECTOR_GRAPH_SEARCH_ENTITY_QUERY = """
 #         }
 #     } AS metadata
 # """
+
 VECTOR_GRAPH_SEARCH_QUERY_SUFFIX = """
    WITH apoc.coll.toSet(apoc.coll.flatten(collect(DISTINCT paths))) AS paths,
         collect(DISTINCT e) AS entities
@@ -504,7 +500,7 @@ RETURN
    } AS metadata
 """
 
-VECTOR_GRAPH_SEARCH_QUERY = VECTOR_GRAPH_SEARCH_QUERY_PREFIX+ VECTOR_GRAPH_SEARCH_ENTITY_QUERY.format(
+VECTOR_GRAPH_SEARCH_QUERY = VECTOR_GRAPH_SEARCH_QUERY_PREFIX + VECTOR_GRAPH_SEARCH_ENTITY_QUERY.format(
     no_of_entites=VECTOR_GRAPH_SEARCH_ENTITY_LIMIT,
     embedding_match_min=VECTOR_GRAPH_SEARCH_EMBEDDING_MIN_MATCH,
     embedding_match_max=VECTOR_GRAPH_SEARCH_EMBEDDING_MAX_MATCH,
@@ -680,7 +676,7 @@ RETURN
 LOCAL_COMMUNITY_SEARCH_QUERY_FORMATTED = LOCAL_COMMUNITY_SEARCH_QUERY.format(
     topChunks=LOCAL_COMMUNITY_TOP_CHUNKS,
     topCommunities=LOCAL_COMMUNITY_TOP_COMMUNITIES,
-    topOutsideRels=LOCAL_COMMUNITY_TOP_OUTSIDE_RELS)+LOCAL_COMMUNITY_SEARCH_QUERY_SUFFIX
+    topOutsideRels=LOCAL_COMMUNITY_TOP_OUTSIDE_RELS) + LOCAL_COMMUNITY_SEARCH_QUERY_SUFFIX
 
 GLOBAL_SEARCH_TOP_K = 10
 
@@ -699,8 +695,6 @@ RETURN text,
        avg_score AS score,
        {communitydetails: communityDetails} AS metadata
 """
-
-
 
 GLOBAL_COMMUNITY_DETAILS_QUERY = """
 MATCH (community:__Community__)
@@ -721,70 +715,69 @@ CHAT_GLOBAL_VECTOR_FULLTEXT_MODE = "global_vector"
 CHAT_GRAPH_MODE = "graph"
 CHAT_DEFAULT_MODE = "graph_vector_fulltext"
 
-CHAT_MODE_CONFIG_MAP= {
-        CHAT_VECTOR_MODE : {
-            "retrieval_query": VECTOR_SEARCH_QUERY,
-            "top_k": VECTOR_SEARCH_TOP_K,
-            "index_name": "vector",
-            "keyword_index": None,
-            "document_filter": True,
-            "node_label": "Chunk",
-            "embedding_node_property":"embedding",
-            "text_node_properties":["text"],
+CHAT_MODE_CONFIG_MAP = {
+    CHAT_VECTOR_MODE: {
+        "retrieval_query": VECTOR_SEARCH_QUERY,
+        "top_k": VECTOR_SEARCH_TOP_K,
+        "index_name": "vector",
+        "keyword_index": None,
+        "document_filter": True,
+        "node_label": "Chunk",
+        "embedding_node_property": "embedding",
+        "text_node_properties": ["text"],
 
-        },
-        CHAT_FULLTEXT_MODE : {
-            "retrieval_query": VECTOR_SEARCH_QUERY,  
-            "top_k": VECTOR_SEARCH_TOP_K,
-            "index_name": "vector",  
-            "keyword_index": "keyword", 
-            "document_filter": False,            
-            "node_label": "Chunk",
-            "embedding_node_property":"embedding",
-            "text_node_properties":["text"],
-        },
-        CHAT_ENTITY_VECTOR_MODE : {
-            "retrieval_query": LOCAL_COMMUNITY_SEARCH_QUERY_FORMATTED,
-            "top_k": LOCAL_COMMUNITY_TOP_K,
-            "index_name": "entity_vector",
-            "keyword_index": None,
-            "document_filter": False,            
-            "node_label": "__Entity__",
-            "embedding_node_property":"embedding",
-            "text_node_properties":["id"],
-        },
-        CHAT_VECTOR_GRAPH_MODE : {
-            "retrieval_query": VECTOR_GRAPH_SEARCH_QUERY,
-            "top_k": VECTOR_SEARCH_TOP_K,
-            "index_name": "vector",
-            "keyword_index": None,
-            "document_filter": True,            
-            "node_label": "Chunk",
-            "embedding_node_property":"embedding",
-            "text_node_properties":["text"],
-        },
-        CHAT_VECTOR_GRAPH_FULLTEXT_MODE : {
-            "retrieval_query": VECTOR_GRAPH_SEARCH_QUERY,
-            "top_k": VECTOR_SEARCH_TOP_K,
-            "index_name": "vector",
-            "keyword_index": "keyword",
-            "document_filter": False,            
-            "node_label": "Chunk",
-            "embedding_node_property":"embedding",
-            "text_node_properties":["text"],
-        },
-        CHAT_GLOBAL_VECTOR_FULLTEXT_MODE : {
-            "retrieval_query": GLOBAL_VECTOR_SEARCH_QUERY,
-            "top_k": GLOBAL_SEARCH_TOP_K,
-            "index_name": "community_vector",
-            "keyword_index": "community_keyword",
-            "document_filter": False,            
-            "node_label": "__Community__",
-            "embedding_node_property":"embedding",
-            "text_node_properties":["summary"],
-        },
-    }
-YOUTUBE_CHUNK_SIZE_SECONDS = 60
+    },
+    CHAT_FULLTEXT_MODE: {
+        "retrieval_query": VECTOR_SEARCH_QUERY,
+        "top_k": VECTOR_SEARCH_TOP_K,
+        "index_name": "vector",
+        "keyword_index": "keyword",
+        "document_filter": False,
+        "node_label": "Chunk",
+        "embedding_node_property": "embedding",
+        "text_node_properties": ["text"],
+    },
+    CHAT_ENTITY_VECTOR_MODE: {
+        "retrieval_query": LOCAL_COMMUNITY_SEARCH_QUERY_FORMATTED,
+        "top_k": LOCAL_COMMUNITY_TOP_K,
+        "index_name": "entity_vector",
+        "keyword_index": None,
+        "document_filter": False,
+        "node_label": "__Entity__",
+        "embedding_node_property": "embedding",
+        "text_node_properties": ["id"],
+    },
+    CHAT_VECTOR_GRAPH_MODE: {
+        "retrieval_query": VECTOR_GRAPH_SEARCH_QUERY,
+        "top_k": VECTOR_SEARCH_TOP_K,
+        "index_name": "vector",
+        "keyword_index": None,
+        "document_filter": True,
+        "node_label": "Chunk",
+        "embedding_node_property": "embedding",
+        "text_node_properties": ["text"],
+    },
+    CHAT_VECTOR_GRAPH_FULLTEXT_MODE: {
+        "retrieval_query": VECTOR_GRAPH_SEARCH_QUERY,
+        "top_k": VECTOR_SEARCH_TOP_K,
+        "index_name": "vector",
+        "keyword_index": "keyword",
+        "document_filter": False,
+        "node_label": "Chunk",
+        "embedding_node_property": "embedding",
+        "text_node_properties": ["text"],
+    },
+    CHAT_GLOBAL_VECTOR_FULLTEXT_MODE: {
+        "retrieval_query": GLOBAL_VECTOR_SEARCH_QUERY,
+        "top_k": GLOBAL_SEARCH_TOP_K,
+        "index_name": "community_vector",
+        "keyword_index": "community_keyword",
+        "document_filter": False,
+        "node_label": "__Community__",
+        "embedding_node_property": "embedding",
+        "text_node_properties": ["summary"],
+    },
+}
 
 QUERY_TO_GET_CHUNKS = """
             MATCH (d:Document)
@@ -793,7 +786,7 @@ QUERY_TO_GET_CHUNKS = """
             OPTIONAL MATCH (d)<-[:PART_OF|FIRST_CHUNK]-(c:Chunk)
             RETURN c.id as id, c.text as text, c.position as position 
             """
-            
+
 QUERY_TO_DELETE_EXISTING_ENTITIES = """
                                 MATCH (d:Document {fileName:$filename})
                                 WITH d
@@ -802,16 +795,16 @@ QUERY_TO_DELETE_EXISTING_ENTITIES = """
                                 MATCH (c)-[:HAS_ENTITY]->(e)
                                 WHERE NOT EXISTS { (e)<-[:HAS_ENTITY]-()<-[:PART_OF]-(d2:Document) }
                                 DETACH DELETE e
-                                """   
+                                """
 
-QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION="""
+QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION = """
                               MATCH (d:Document)
                               WHERE d.fileName = $filename
                               WITH d
                               MATCH (c:Chunk) WHERE c.embedding is null 
                               RETURN c.id as id,c.position as position 
                               ORDER BY c.position LIMIT 1
-                              """   
+                              """
 QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY = """
                               MATCH (d:Document)
                               WHERE d.fileName = $filename
@@ -824,11 +817,11 @@ QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT = """
                               MATCH (d:Document)<-[:PART_OF]-(:Chunk)-[:HAS_ENTITY]->(e) where d.fileName=$filename
                               OPTIONAL MATCH (d)<-[:PART_OF]-(:Chunk)-[:HAS_ENTITY]->(e2:!Chunk)-[rel]-(e)
                               RETURN count(DISTINCT e) as nodes, count(DISTINCT rel) as rels
-                              """                              
+                              """
 
-START_FROM_BEGINNING  = "start_from_beginning"     
+START_FROM_BEGINNING = "start_from_beginning"
 DELETE_ENTITIES_AND_START_FROM_BEGINNING = "delete_entities_and_start_from_beginning"
-START_FROM_LAST_PROCESSED_POSITION = "start_from_last_processed_position"                                                    
+START_FROM_LAST_PROCESSED_POSITION = "start_from_last_processed_position"
 
 GRAPH_CLEANUP_PROMPT = """
 You are tasked with organizing a list of types into semantic categories based on their meanings, including synonyms or morphological similarities. The input will include two separate lists: one for **Node Labels** and one for **Relationship Types**. Follow these rules strictly:
