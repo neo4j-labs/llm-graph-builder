@@ -5,7 +5,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
-from shared.common_fn import load_embedding_model
+from src.shared.common_fn import load_embedding_model
 
 
 COMMUNITY_PROJECTION_NAME = "communities"

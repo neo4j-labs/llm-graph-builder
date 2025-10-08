@@ -1,5 +1,5 @@
 from graph_query import *
-from shared.constants import *
+from src.shared.constants import *
 import re
 
 

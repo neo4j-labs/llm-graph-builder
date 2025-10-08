@@ -3,14 +3,15 @@ import os
 import time
 from neo4j.exceptions import TransientError
 from langchain_neo4j import Neo4jGraph
-from shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file, load_embedding_model
-from shared.constants import BUCKET_UPLOAD,NODEREL_COUNT_QUERY_WITH_COMMUNITY, NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY
-from source_node import sourceNode
-from communities import MAX_COMMUNITY_LEVELS
+from src.shared.common_fn import delete_uploaded_local_file, load_embedding_model
+from src.shared.constants import NODEREL_COUNT_QUERY_WITH_COMMUNITY, NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY
+from src.source_node import sourceNode
+from src.communities import MAX_COMMUNITY_LEVELS
 import json
 from dotenv import load_dotenv
 
 load_dotenv()
+
 
 class graphDBdataAccess:
 
@@ -25,19 +26,23 @@ class graphDBdataAccess:
                 is_cancelled_status = result[0]['is_cancelled']
                 if bool(is_cancelled_status) == True:
                     job_status = 'Cancelled'
-            if retry_condition is not None: 
+            if retry_condition is not None:
                 retry_condition = None
-                self.graph.query("""MERGE(d:Document {fileName :$fName}) SET d.status = $status, d.errorMessage = $error_msg, d.retry_condition = $retry_condition""",
-                            {"fName":file_name, "status":job_status, "error_msg":exp_msg, "retry_condition":retry_condition},session_params={"database":self.graph._database})
-            else :    
-                self.graph.query("""MERGE(d:Document {fileName :$fName}) SET d.status = $status, d.errorMessage = $error_msg""",
-                            {"fName":file_name, "status":job_status, "error_msg":exp_msg},session_params={"database":self.graph._database})
+                self.graph.query(
+                    """MERGE(d:Document {fileName :$fName}) SET d.status = $status, d.errorMessage = $error_msg, d.retry_condition = $retry_condition""",
+                    {"fName": file_name, "status": job_status, "error_msg": exp_msg,
+                     "retry_condition": retry_condition}, session_params={"database": self.graph._database})
+            else:
+                self.graph.query(
+                    """MERGE(d:Document {fileName :$fName}) SET d.status = $status, d.errorMessage = $error_msg""",
+                    {"fName": file_name, "status": job_status, "error_msg": exp_msg},
+                    session_params={"database": self.graph._database})
         except Exception as e:
             error_message = str(e)
             logging.error(f"Error in updating document node status as failed: {error_message}")
             raise Exception(error_message)
-        
-    def create_source_node(self, obj_source_node:sourceNode):
+
+    def create_source_node(self, obj_source_node: sourceNode):
         try:
             job_status = "New"
             logging.info(f"creating source node if does not exist in database {self.graph._database}")
@@ -52,27 +57,31 @@ class graphDBdataAccess:
                             d.chunkNodeCount=$chunkNodeCount,d.chunkRelCount=$chunkRelCount,
                             d.entityNodeCount=$entityNodeCount,d.entityEntityRelCount=$entityEntityRelCount,
                             d.communityNodeCount=$communityNodeCount,d.communityRelCount=$communityRelCount""",
-                            {"fn":obj_source_node.file_name, "fs":obj_source_node.file_size, "ft":obj_source_node.file_type, "st":job_status, 
-                            "url":obj_source_node.url,
-                            "awsacc_key_id":obj_source_node.awsAccessKeyId, "f_source":obj_source_node.file_source, "c_at":obj_source_node.created_at,
-                            "u_at":obj_source_node.created_at, "pt":0, "e_message":'', "n_count":0, "r_count":0, "model":obj_source_node.model,
-                            "gcs_bucket": obj_source_node.gcsBucket, "gcs_bucket_folder": obj_source_node.gcsBucketFolder, 
-                            "language":obj_source_node.language, "gcs_project_id":obj_source_node.gcsProjectId,
-                            "access_token":obj_source_node.access_token,
-                            "chunkNodeCount":obj_source_node.chunkNodeCount,
-                            "chunkRelCount":obj_source_node.chunkRelCount,
-                            "entityNodeCount":obj_source_node.entityNodeCount,
-                            "entityEntityRelCount":obj_source_node.entityEntityRelCount,
-                            "communityNodeCount":obj_source_node.communityNodeCount,
-                            "communityRelCount":obj_source_node.communityRelCount
-                            },session_params={"database":self.graph._database})
+                             {"fn": obj_source_node.file_name, "fs": obj_source_node.file_size,
+                              "ft": obj_source_node.file_type, "st": job_status,
+                              "url": obj_source_node.url,
+                              "awsacc_key_id": obj_source_node.awsAccessKeyId, "f_source": obj_source_node.file_source,
+                              "c_at": obj_source_node.created_at,
+                              "u_at": obj_source_node.created_at, "pt": 0, "e_message": '', "n_count": 0, "r_count": 0,
+                              "model": obj_source_node.model,
+                              "gcs_bucket": obj_source_node.gcsBucket,
+                              "gcs_bucket_folder": obj_source_node.gcsBucketFolder,
+                              "language": obj_source_node.language, "gcs_project_id": obj_source_node.gcsProjectId,
+                              "access_token": obj_source_node.access_token,
+                              "chunkNodeCount": obj_source_node.chunkNodeCount,
+                              "chunkRelCount": obj_source_node.chunkRelCount,
+                              "entityNodeCount": obj_source_node.entityNodeCount,
+                              "entityEntityRelCount": obj_source_node.entityEntityRelCount,
+                              "communityNodeCount": obj_source_node.communityNodeCount,
+                              "communityRelCount": obj_source_node.communityRelCount
+                              }, session_params={"database": self.graph._database})
         except Exception as e:
             error_message = str(e)
             logging.info(f"error_message = {error_message}")
             self.update_exception_db(self, obj_source_node.file_name, error_message)
             raise Exception(error_message)
-        
-    def update_source_node(self, obj_source_node:sourceNode):
+
+    def update_source_node(self, obj_source_node: sourceNode):
         try:
 
             params = {}
@@ -89,12 +98,12 @@ class graphDBdataAccess:
                 params['updatedAt'] = obj_source_node.updated_at
 
             if obj_source_node.processing_time is not None and obj_source_node.processing_time != 0:
-                params['processingTime'] = round(obj_source_node.processing_time.total_seconds(),2)
+                params['processingTime'] = round(obj_source_node.processing_time.total_seconds(), 2)
 
-            if obj_source_node.node_count is not None :
+            if obj_source_node.node_count is not None:
                 params['nodeCount'] = obj_source_node.node_count
 
-            if obj_source_node.relationship_count is not None :
+            if obj_source_node.relationship_count is not None:
                 params['relationshipCount'] = obj_source_node.relationship_count
 
             if obj_source_node.model is not None and obj_source_node.model != '':
@@ -106,23 +115,23 @@ class graphDBdataAccess:
             if obj_source_node.is_cancelled is not None:
                 params['is_cancelled'] = obj_source_node.is_cancelled
 
-            if obj_source_node.processed_chunk is not None :
+            if obj_source_node.processed_chunk is not None:
                 params['processed_chunk'] = obj_source_node.processed_chunk
-            
-            if obj_source_node.retry_condition is not None :
-                params['retry_condition'] = obj_source_node.retry_condition    
 
-            param= {"props":params}
-            
+            if obj_source_node.retry_condition is not None:
+                params['retry_condition'] = obj_source_node.retry_condition
+
+            param = {"props": params}
+
             logging.info(f'Base Param value 1 : {param}')
             query = "MERGE(d:Document {fileName :$props.fileName}) SET d += $props"
             logging.info("Update source node properties")
-            self.graph.query(query,param,session_params={"database":self.graph._database})
+            self.graph.query(query, param, session_params={"database": self.graph._database})
         except Exception as e:
             error_message = str(e)
-            self.update_exception_db(self,self.file_name,error_message)
+            self.update_exception_db(self, self.file_name, error_message)
             raise Exception(error_message)
-    
+
     def get_source_list(self):
         """
         Args:
@@ -138,15 +147,16 @@ class graphDBdataAccess:
         """
         logging.info("Get existing files list from graph")
         query = "MATCH(d:Document) WHERE d.fileName IS NOT NULL RETURN d ORDER BY d.updatedAt DESC"
-        result = self.graph.query(query,session_params={"database":self.graph._database})
+        result = self.graph.query(query, session_params={"database": self.graph._database})
         list_of_json_objects = [entry['d'] for entry in result]
         return list_of_json_objects
-        
+
     def update_KNN_graph(self):
         """
-        Update the graph node with SIMILAR relationship where embedding scrore match
+        Update the graph node with SIMILAR relationship where embedding score match
         """
-        index = self.graph.query("""show indexes yield * where type = 'VECTOR' and name = 'vector'""",session_params={"database":self.graph._database})
+        index = self.graph.query("""show indexes yield * where type = 'VECTOR' and name = 'vector'""",
+                                 session_params={"database": self.graph._database})
         # logging.info(f'show index vector: {index}')
         knn_min_score = os.environ.get('KNN_MIN_SCORE')
         if len(index) > 0:
@@ -156,27 +166,29 @@ class graphDBdataAccess:
                                     CALL db.index.vector.queryNodes('vector', 6, c.embedding) yield node, score
                                     WHERE node <> c and score >= $score MERGE (c)-[rel:SIMILAR]-(node) SET rel.score = score
                                 """,
-                                {"score":float(knn_min_score)}
-                                ,session_params={"database":self.graph._database})
+                             {"score": float(knn_min_score)}
+                             , session_params={"database": self.graph._database})
         else:
             logging.info("Vector index does not exist, So KNN graph not update")
 
     def check_account_access(self, database):
         try:
             query_dbms_componenet = "call dbms.components() yield edition"
-            result_dbms_componenet = self.graph.query(query_dbms_componenet,session_params={"database":self.graph._database})
+            result_dbms_componenet = self.graph.query(query_dbms_componenet,
+                                                      session_params={"database": self.graph._database})
 
-            if  result_dbms_componenet[0]["edition"] == "enterprise":
+            if result_dbms_componenet[0]["edition"] == "enterprise":
                 query = """
                 SHOW USER PRIVILEGES 
                 YIELD * 
                 WHERE graph = $database AND action IN ['read'] 
                 RETURN COUNT(*) AS readAccessCount
                 """
-            
+
                 logging.info(f"Checking access for database: {database}")
 
-                result = self.graph.query(query, params={"database": database},session_params={"database":self.graph._database})
+                result = self.graph.query(query, params={"database": database},
+                                          session_params={"database": self.graph._database})
                 read_access_count = result[0]["readAccessCount"] if result else 0
 
                 logging.info(f"Read access count: {read_access_count}")
@@ -201,7 +213,7 @@ class graphDBdataAccess:
             gds_procedure_count = """
             SHOW FUNCTIONS YIELD name WHERE name STARTS WITH 'gds.version' RETURN COUNT(*) AS totalGdsProcedures
             """
-            result = self.graph.query(gds_procedure_count,session_params={"database":self.graph._database})
+            result = self.graph.query(gds_procedure_count, session_params={"database": self.graph._database})
             total_gds_procedures = result[0]['totalGdsProcedures'] if result else 0
 
             if total_gds_procedures > 0:
@@ -213,8 +225,8 @@ class graphDBdataAccess:
         except Exception as e:
             logging.error(f"An error occurred while checking GDS version: {e}")
             return False
-            
-    def connection_check_and_get_vector_dimensions(self,database):
+
+    def connection_check_and_get_vector_dimensions(self, database):
         """
         Get the vector index dimension from database and application configuration and DB connection status
         
@@ -226,47 +238,54 @@ class graphDBdataAccess:
         Returns:
         Returns a status of connection from NEO4j is success or failure
         """
-        
+
         db_vector_dimension = self.graph.query("""SHOW INDEXES YIELD *
                                     WHERE type = 'VECTOR' AND name = 'vector'
                                     RETURN options.indexConfig['vector.dimensions'] AS vector_dimensions
-                                """,session_params={"database":self.graph._database})
-        
+                                """, session_params={"database": self.graph._database})
+
         result_chunks = self.graph.query("""match (c:Chunk) return size(c.embedding) as embeddingSize, count(*) as chunks, 
                                                     count(c.embedding) as hasEmbedding
-                                """,session_params={"database":self.graph._database})
-        
+                                """, session_params={"database": self.graph._database})
+
         embedding_model = os.getenv('EMBEDDING_MODEL')
         embeddings, application_dimension = load_embedding_model(embedding_model)
         logging.info(f'embedding model:{embeddings} and dimesion:{application_dimension}')
 
         gds_status = self.check_gds_version()
         write_access = self.check_account_access(database=database)
-        
+
         if self.graph:
             if len(db_vector_dimension) > 0:
-                return {'db_vector_dimension': db_vector_dimension[0]['vector_dimensions'], 'application_dimension':application_dimension, 'message':"Connection Successful","gds_status":gds_status,"write_access":write_access}
+                return {'db_vector_dimension': db_vector_dimension[0]['vector_dimensions'],
+                        'application_dimension': application_dimension, 'message': "Connection Successful",
+                        "gds_status": gds_status, "write_access": write_access}
             else:
                 if len(db_vector_dimension) == 0 and len(result_chunks) == 0:
                     logging.info("Chunks and vector index does not exists in database")
-                    return {'db_vector_dimension': 0, 'application_dimension':application_dimension, 'message':"Connection Successful","chunks_exists":False,"gds_status":gds_status,"write_access":write_access}
-                elif len(db_vector_dimension) == 0 and result_chunks[0]['hasEmbedding']==0 and result_chunks[0]['chunks'] > 0:
-                    return {'db_vector_dimension': 0, 'application_dimension':application_dimension, 'message':"Connection Successful","chunks_exists":True,"gds_status":gds_status,"write_access":write_access}
+                    return {'db_vector_dimension': 0, 'application_dimension': application_dimension,
+                            'message': "Connection Successful", "chunks_exists": False, "gds_status": gds_status,
+                            "write_access": write_access}
+                elif len(db_vector_dimension) == 0 and result_chunks[0]['hasEmbedding'] == 0 and result_chunks[0][
+                    'chunks'] > 0:
+                    return {'db_vector_dimension': 0, 'application_dimension': application_dimension,
+                            'message': "Connection Successful", "chunks_exists": True, "gds_status": gds_status,
+                            "write_access": write_access}
                 else:
-                    return {'message':"Connection Successful","gds_status": gds_status,"write_access":write_access}
+                    return {'message': "Connection Successful", "gds_status": gds_status, "write_access": write_access}
 
-    def execute_query(self, query, param=None,max_retries=3, delay=2):
+    def execute_query(self, query, param=None, max_retries=3, delay=2):
         retries = 0
         while retries < max_retries:
             try:
-                return self.graph.query(query, param,session_params={"database":self.graph._database})
+                return self.graph.query(query, param, session_params={"database": self.graph._database})
             except TransientError as e:
                 if "DeadlockDetected" in str(e):
                     retries += 1
                     logging.info(f"Deadlock detected. Retrying {retries}/{max_retries} in {delay} seconds...")
                     time.sleep(delay)  # Wait before retrying
                 else:
-                    raise 
+                    raise
         logging.error("Failed to execute query after maximum retries due to persistent deadlocks.")
         raise RuntimeError("Query execution failed after multiple retries due to deadlock.")
 
@@ -284,25 +303,20 @@ class graphDBdataAccess:
                 d.communityRelCount AS communityRelCount,
                 d.createdAt AS created_time
                 """
-        param = {"file_name" : file_name}
+        param = {"file_name": file_name}
         return self.execute_query(query, param)
-    
-    def delete_file_from_graph(self, filenames, source_types, deleteEntities:str, merged_dir:str, uri):
-        
-        filename_list= list(map(str.strip, json.loads(filenames)))
-        source_types_list= list(map(str.strip, json.loads(source_types)))
-        gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
 
-        for (file_name,source_type) in zip(filename_list, source_types_list):
+    def delete_file_from_graph(self, filenames, source_types, deleteEntities: str, merged_dir: str, uri):
+
+        filename_list = list(map(str.strip, json.loads(filenames)))
+        source_types_list = list(map(str.strip, json.loads(source_types)))
+
+        for (file_name, source_type) in zip(filename_list, source_types_list):
             merged_file_path = os.path.join(merged_dir, file_name)
-            if source_type == 'local file' and gcs_file_cache == 'True':
-                folder_name = create_gcs_bucket_folder_name_hashed(uri, file_name)
-                delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
-            else:
-                logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
-                delete_uploaded_local_file(merged_file_path,file_name)
-                
-        query_to_delete_document="""
+            logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
+            delete_uploaded_local_file(merged_file_path, file_name)
+
+        query_to_delete_document = """
             MATCH (d:Document)
             WHERE d.fileName IN $filename_list AND coalesce(d.fileSource, "None") IN $source_types_list
             WITH COLLECT(d) AS documents
@@ -342,18 +356,20 @@ class graphDBdataAccess:
                 WHERE c.level = level AND NOT EXISTS { ()-[:PARENT_COMMUNITY]->(c) }
                 DETACH DELETE c
                 }
-        """   
-        param = {"filename_list" : filename_list, "source_types_list": source_types_list}
-        community_param = {"max_level":MAX_COMMUNITY_LEVELS}
+        """
+        param = {"filename_list": filename_list, "source_types_list": source_types_list}
+        community_param = {"max_level": MAX_COMMUNITY_LEVELS}
         if deleteEntities == "true":
             result = self.execute_query(query_to_delete_document_and_entities, param)
-            _ = self.execute_query(query_to_delete_communities,community_param)
-            logging.info(f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' from database")
-        else :
-            result = self.execute_query(query_to_delete_document, param)    
-            logging.info(f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' with their entities from database")
+            _ = self.execute_query(query_to_delete_communities, community_param)
+            logging.info(
+                f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' from database")
+        else:
+            result = self.execute_query(query_to_delete_document, param)
+            logging.info(
+                f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' with their entities from database")
         return len(filename_list)
-    
+
     def list_unconnected_nodes(self):
         query = """
         MATCH (e:!Chunk&!Document&!`__Community__`) 
@@ -384,16 +400,16 @@ class graphDBdataAccess:
         nodes_list = self.execute_query(query)
         total_nodes = self.execute_query(query_total_nodes)
         return nodes_list, total_nodes[0]
-    
-    def delete_unconnected_nodes(self,unconnected_entities_list):
+
+    def delete_unconnected_nodes(self, unconnected_entities_list):
         entities_list = list(map(str.strip, json.loads(unconnected_entities_list)))
         query = """
         MATCH (e) WHERE elementId(e) IN $elementIds
         DETACH DELETE e
         """
-        param = {"elementIds":entities_list}
-        return self.execute_query(query,param)
-    
+        param = {"elementIds": entities_list}
+        return self.execute_query(query, param)
+
     def get_duplicate_nodes_list(self):
         score_value = float(os.environ.get('DUPLICATE_SCORE_VALUE'))
         text_distance = int(os.environ.get('DUPLICATE_TEXT_DISTANCE'))
@@ -437,14 +453,16 @@ class graphDBdataAccess:
                 LIMIT 100
                 """
         total_duplicate_nodes = "RETURN COUNT(DISTINCT(n)) as total"
-        
-        param = {"duplicate_score_value": score_value, "duplicate_text_distance" : text_distance}
-        
-        nodes_list = self.execute_query(query_duplicate_nodes.format(return_statement=return_query_duplicate_nodes),param=param)
-        total_nodes = self.execute_query(query_duplicate_nodes.format(return_statement=total_duplicate_nodes),param=param)
+
+        param = {"duplicate_score_value": score_value, "duplicate_text_distance": text_distance}
+
+        nodes_list = self.execute_query(query_duplicate_nodes.format(return_statement=return_query_duplicate_nodes),
+                                        param=param)
+        total_nodes = self.execute_query(query_duplicate_nodes.format(return_statement=total_duplicate_nodes),
+                                         param=param)
         return nodes_list, total_nodes[0]
-    
-    def merge_duplicate_nodes(self,duplicate_nodes_list):
+
+    def merge_duplicate_nodes(self, duplicate_nodes_list):
         nodes_list = json.loads(duplicate_nodes_list)
         logging.info(f'Nodes list to merge {nodes_list}')
         query = """
@@ -461,54 +479,53 @@ class graphDBdataAccess:
         }
         RETURN sum(mergedCount) as totalMerged
         """
-        param = {"rows":nodes_list}
-        return self.execute_query(query,param)
-    
+        param = {"rows": nodes_list}
+        return self.execute_query(query, param)
+
     def drop_create_vector_index(self, isVectorIndexExist):
         """
         drop and create the vector index when vector index dimesion are different.
         """
         embedding_model = os.getenv('EMBEDDING_MODEL')
         embeddings, dimension = load_embedding_model(embedding_model)
-        
+
         if isVectorIndexExist == 'true':
-            self.graph.query("""drop index vector""",session_params={"database":self.graph._database})
-        
+            self.graph.query("""drop index vector""", session_params={"database": self.graph._database})
+
         self.graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
                             OPTIONS {indexConfig: {
                             `vector.dimensions`: $dimensions,
                             `vector.similarity_function`: 'cosine'
                             }}
                         """,
-                        {
-                            "dimensions" : dimension
-                        },session_params={"database":self.graph._database}
-                        )
+                         {
+                             "dimensions": dimension
+                         }, session_params={"database": self.graph._database}
+                         )
         return "Drop and Re-Create vector index succesfully"
 
-
-    def update_node_relationship_count(self,document_name):
+    def update_node_relationship_count(self, document_name):
         logging.info("updating node and relationship count")
         label_query = """CALL db.labels"""
         community_flag = {'label': '__Community__'} in self.execute_query(label_query)
         if (not document_name) and (community_flag):
             result = self.execute_query(NODEREL_COUNT_QUERY_WITH_COMMUNITY)
         elif (not document_name) and (not community_flag):
-             return []
+            return []
         else:
             param = {"document_name": document_name}
             result = self.execute_query(NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY, param)
         response = {}
         if result:
             for record in result:
-                filename = record.get("filename",None)
-                chunkNodeCount = int(record.get("chunkNodeCount",0))
-                chunkRelCount = int(record.get("chunkRelCount",0))
-                entityNodeCount = int(record.get("entityNodeCount",0))
-                entityEntityRelCount = int(record.get("entityEntityRelCount",0))
+                filename = record.get("filename", None)
+                chunkNodeCount = int(record.get("chunkNodeCount", 0))
+                chunkRelCount = int(record.get("chunkRelCount", 0))
+                entityNodeCount = int(record.get("entityNodeCount", 0))
+                entityEntityRelCount = int(record.get("entityEntityRelCount", 0))
                 if (not document_name) and (community_flag):
-                    communityNodeCount = int(record.get("communityNodeCount",0))
-                    communityRelCount = int(record.get("communityRelCount",0))
+                    communityNodeCount = int(record.get("communityNodeCount", 0))
+                    communityRelCount = int(record.get("communityRelCount", 0))
                 else:
                     communityNodeCount = 0
                     communityRelCount = 0
@@ -525,7 +542,7 @@ class graphDBdataAccess:
                     d.nodeCount = $nodeCount,
                     d.relationshipCount = $relationshipCount
                 """
-                self.execute_query(update_query,{
+                self.execute_query(update_query, {
                     "filename": filename,
                     "chunkNodeCount": chunkNodeCount,
                     "chunkRelCount": chunkRelCount,
@@ -533,22 +550,22 @@ class graphDBdataAccess:
                     "entityEntityRelCount": entityEntityRelCount,
                     "communityNodeCount": communityNodeCount,
                     "communityRelCount": communityRelCount,
-                    "nodeCount" : nodeCount,
-                    "relationshipCount" : relationshipCount
-                    })
-                
+                    "nodeCount": nodeCount,
+                    "relationshipCount": relationshipCount
+                })
+
                 response[filename] = {"chunkNodeCount": chunkNodeCount,
-                    "chunkRelCount": chunkRelCount,
-                    "entityNodeCount": entityNodeCount,
-                    "entityEntityRelCount": entityEntityRelCount,
-                    "communityNodeCount": communityNodeCount,
-                    "communityRelCount": communityRelCount,
-                    "nodeCount" : nodeCount,
-                    "relationshipCount" : relationshipCount
-                    }
+                                      "chunkRelCount": chunkRelCount,
+                                      "entityNodeCount": entityNodeCount,
+                                      "entityEntityRelCount": entityEntityRelCount,
+                                      "communityNodeCount": communityNodeCount,
+                                      "communityRelCount": communityRelCount,
+                                      "nodeCount": nodeCount,
+                                      "relationshipCount": relationshipCount
+                                      }
 
         return response
-    
+
     def get_nodelabels_relationships(self):
         node_query = """
                     CALL db.labels() YIELD label
@@ -564,22 +581,22 @@ class graphDBdataAccess:
                 WHERE NOT relationshipType  IN ['PART_OF', 'NEXT_CHUNK', 'HAS_ENTITY', '_Bloom_Perspective_','FIRST_CHUNK','SIMILAR','IN_COMMUNITY','PARENT_COMMUNITY'] 
                 return relationshipType order by relationshipType
                 """
-            
+
         try:
             node_result = self.execute_query(node_query)
             node_labels = [record["label"] for record in node_result]
             relationship_result = self.execute_query(relation_query)
             relationship_types = [record["relationshipType"] for record in relationship_result]
-            return node_labels,relationship_types
+            return node_labels, relationship_types
         except Exception as e:
             print(f"Error in getting node labels/relationship types from db: {e}")
             return []
 
-    def get_websource_url(self,file_name):
+    def get_websource_url(self, file_name):
         logging.info("Checking if same title with different URL exist in db ")
         query = """
                 MATCH(d:Document {fileName : $file_name}) WHERE d.fileSource = "web-url" 
                 RETURN d.url AS url
                 """
-        param = {"file_name" : file_name}
+        param = {"file_name": file_name}
         return self.execute_query(query, param)

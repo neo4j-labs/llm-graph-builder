@@ -1,6 +1,6 @@
 from typing import List
 from pydantic.v1 import BaseModel, Field
-from src.llm import get_llm
+from ..llm import get_llm
 from langchain_core.prompts import ChatPromptTemplate
 import logging
 

@@ -33,8 +33,8 @@ from langchain_community.chat_models import ChatOllama
 
 # Local imports
 from llm import get_llm
-from shared.common_fn import load_embedding_model
-from shared.constants import *
+from src.shared.common_fn import load_embedding_model
+from src.shared.constants import *
 
 load_dotenv()
 

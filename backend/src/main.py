@@ -1,4 +1,4 @@
-from shared.constants import (BUCKET_UPLOAD, BUCKET_FAILED_FILE, QUERY_TO_GET_CHUNKS,
+from src.shared.constants import (QUERY_TO_GET_CHUNKS,
                               QUERY_TO_DELETE_EXISTING_ENTITIES,
                               QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION,
                               QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY,
@@ -6,21 +6,21 @@ from shared.constants import (BUCKET_UPLOAD, BUCKET_FAILED_FILE, QUERY_TO_GET_CH
                               START_FROM_LAST_PROCESSED_POSITION,
                               DELETE_ENTITIES_AND_START_FROM_BEGINNING,
                               QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT)
-from shared.schema_extraction import schema_extraction_from_text
+from src.shared.schema_extraction import schema_extraction_from_text
 from dotenv import load_dotenv
 from datetime import datetime
-from create_chunks import CreateChunksofDocument
-from graphDB_dataAccess import graphDBdataAccess
-from local_file import get_documents_from_file_by_path
-from source_node import sourceNode
-from llm import get_graph_from_llm
-from shared.common_fn import *
-from make_relationships import *
-from graph_query import get_graphDB_driver
+from src.create_chunks import CreateChunksofDocument
+from src.graphDB_dataAccess import graphDBdataAccess
+from src.local_file import get_documents_from_file_by_path
+from src.source_node import sourceNode
+from src.llm import get_graph_from_llm
+from src.shared.common_fn import *
+from src.make_relationships import *
+from src.graph_query import get_graphDB_driver
 import warnings
 import shutil
 import json
-from shared.llm_graph_builder_exception import LLMGraphBuilderException
+from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from langchain.docstore.document import Document
 
 warnings.filterwarnings("ignore")
@@ -43,7 +43,7 @@ async def extract_graph_from_file_local_file(uri, userName, password, database, 
             raise LLMGraphBuilderException(f'File content is not available for file : {file_name}')
         return await processing_source(uri, userName, password, database, model, file_name, pages, allowedNodes,
                                        allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, True,
-                                       merged_file_path, additional_instructions=additional_instructions,
+                                       merged_file_path, retry_condition, additional_instructions=additional_instructions,
                                        big_file=big_file)
     else:
         return await processing_source(uri, userName, password, database, model, fileName, [], allowedNodes,
@@ -75,39 +75,31 @@ async def processing_source(uri, userName, password, database, model, file_name,
     response = {}
     start_time = datetime.now()
     processing_source_start_time = time.time()
+    
     start_create_connection = time.time()
-
-    #AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
     graph = create_graph_database_connection(uri, userName, password, database)
-    #AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-
     end_create_connection = time.time()
+    
     elapsed_create_connection = end_create_connection - start_create_connection
     logging.info(f'Time taken database connection: {elapsed_create_connection:.2f} seconds')
     uri_latency["create_connection"] = f'{elapsed_create_connection:.2f}'
     graphDb_data_Access = graphDBdataAccess(graph)
 
     create_chunk_vector_index(graph)
+    
     start_get_chunkId_chunkDoc_list = time.time()
-
-    #AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-    total_chunks, chunkId_chunkDoc_list = get_chunkId_chunkDoc_list(graph, file_name, pages, token_chunk_size,
-                                                                    chunk_overlap, retry_condition)
-    #AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-
+    total_chunks, chunkId_chunkDoc_list = get_chunkId_chunkDoc_list(graph, file_name, pages, token_chunk_size, chunk_overlap, retry_condition)
     end_get_chunkId_chunkDoc_list = time.time()
+    
     elapsed_get_chunkId_chunkDoc_list = end_get_chunkId_chunkDoc_list - start_get_chunkId_chunkDoc_list
     logging.info(f'Time taken to create list chunkids with chunk document: {elapsed_get_chunkId_chunkDoc_list:.2f} seconds')
     uri_latency["create_list_chunk_and_document"] = f'{elapsed_get_chunkId_chunkDoc_list:.2f}'
     uri_latency["total_chunks"] = total_chunks
 
     start_status_document_node = time.time()
-
-    #AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
     result = graphDb_data_Access.get_current_status_document_node(file_name)
-    #AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-
     end_status_document_node = time.time()
+    
     elapsed_status_document_node = end_status_document_node - start_status_document_node
     logging.info(f'Time taken to get the current status of document node: {elapsed_status_document_node:.2f} seconds')
     uri_latency["get_status_document_node"] = f'{elapsed_status_document_node:.2f}'
@@ -133,13 +125,10 @@ async def processing_source(uri, userName, password, database, model, file_name,
             logging.info(obj_source_node)
 
             start_update_source_node = time.time()
-
-            # AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
             graphDb_data_Access.update_source_node(obj_source_node)
             graphDb_data_Access.update_node_relationship_count(file_name)
-            # AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-
             end_update_source_node = time.time()
+
             elapsed_update_source_node = end_update_source_node - start_update_source_node
             logging.info(f'Time taken to update the document source node: {elapsed_update_source_node:.2f} seconds')
             uri_latency["update_source_node"] = f'{elapsed_update_source_node:.2f}'
@@ -167,15 +156,16 @@ async def processing_source(uri, userName, password, database, model, file_name,
                     break
                 else:
                     processing_chunks_start_time = time.time()
+
                     node_count, rel_count, latency_processed_chunk = await processing_chunks(selected_chunks, graph,
                                                                                              uri, userName, password,
                                                                                              database, file_name, model,
                                                                                              allowedNodes,
                                                                                              allowedRelationship,
                                                                                              chunks_to_combine,
-                                                                                             node_count, rel_count,
                                                                                              additional_instructions,
                                                                                              big_file=big_file)
+
                     processing_chunks_end_time = time.time()
                     processing_chunks_elapsed_end_time = processing_chunks_end_time - processing_chunks_start_time
                     logging.info(
@@ -251,8 +241,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
 
 
 async def processing_chunks(chunkId_chunkDoc_list, graph, uri, userName, password, database, file_name, model,
-                            allowedNodes, allowedRelationship, chunks_to_combine, node_count, rel_count,
-                            additional_instructions=None, big_file=False):
+                            allowedNodes, allowedRelationship, chunks_to_combine, additional_instructions=None, big_file=False):
     #create vector index and update chunk node with embedding
     latency_processing_chunk = {}
     if graph is not None:
@@ -311,7 +300,7 @@ async def processing_chunks(chunkId_chunkDoc_list, graph, uri, userName, passwor
         allowedRelationship = "Photo,SOURCE_APP,App,Photo,CREATION_DATE,Date,Photo,CREATION_TIME,Time,Photo,TAKEN_IN,Location,Photo,HAS_PATH,Path"
 
     elif "doc_" in file_name:
-        allowedNodes = "App,Document,Date,Time,Path"
+        allowedNodes = "App,Doc,Date,Time,Path"
         allowedRelationship = "Doc,SOURCE_APP,App,Doc,CREATION_DATE,Date,Doc,CREATION_TIME,Time,Doc,DATE_MODIFIED,Date,Doc,TIME_MODIFIED,Time,Doc,HAS_PATH,Path"
 
     start_entity_extraction = time.time()
@@ -331,7 +320,7 @@ async def processing_chunks(chunkId_chunkDoc_list, graph, uri, userName, passwor
     logging.info(f'Time taken to save graph document in neo4j: {elapsed_save_graphDocuments:.2f} seconds')
     latency_processing_chunk["save_graphDocuments"] = f'{elapsed_save_graphDocuments:.2f}'
 
-    chunks_and_graphDocuments_list = get_chunk_and_graphDocument(cleaned_graph_documents, chunkId_chunkDoc_list)
+    chunks_and_graphDocuments_list = get_chunk_and_graphDocument(cleaned_graph_documents)
 
     start_relationship = time.time()
     merge_relationship_between_chunk_and_entites(graph, chunks_and_graphDocuments_list)
@@ -461,29 +450,20 @@ def merge_chunks_local(file_name, total_chunks, chunk_dir, merged_dir):
     return file_size
 
 
-def upload_file(graph, model, chunk, chunk_number: int, total_chunks: int, originalname, uri, chunk_dir, merged_dir):
-    gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
-    logging.info(f'gcs file cache: {gcs_file_cache}')
+def upload_file(graph, model, chunk, chunk_number: int, total_chunks: int, originalname, chunk_dir, merged_dir):
 
-    if gcs_file_cache == 'True':
-        folder_name = create_gcs_bucket_folder_name_hashed(uri, originalname)
-        upload_file_to_gcs(chunk, chunk_number, originalname, BUCKET_UPLOAD, folder_name)
-    else:
-        if not os.path.exists(chunk_dir):
-            os.mkdir(chunk_dir)
+    if not os.path.exists(chunk_dir):
+        os.mkdir(chunk_dir)
 
-        chunk_file_path = os.path.join(chunk_dir, f"{originalname}_part_{chunk_number}")
-        logging.info(f'Chunk File Path: {chunk_file_path}')
+    chunk_file_path = os.path.join(chunk_dir, f"{originalname}_part_{chunk_number}")
+    logging.info(f'Chunk File Path: {chunk_file_path}')
 
-        with open(chunk_file_path, "wb") as chunk_file:
-            chunk_file.write(chunk.file.read())
+    with open(chunk_file_path, "wb") as chunk_file:
+        chunk_file.write(chunk.file.read())
 
     if int(chunk_number) == int(total_chunks):
         # If this is the last chunk, merge all chunks into a single file
-        if gcs_file_cache == 'True':
-            file_size = merge_file_gcs(BUCKET_UPLOAD, originalname, folder_name, int(total_chunks))
-        else:
-            file_size = merge_chunks_local(originalname, int(total_chunks), chunk_dir, merged_dir)
+        file_size = merge_chunks_local(originalname, int(total_chunks), chunk_dir, merged_dir)
 
         logging.info("File merged successfully")
         file_extension = originalname.split('.')[-1]
@@ -545,10 +525,9 @@ def get_labels_and_relationtypes(uri, userName, password, database):
     return {"triplets": list(triples)}
 
 
-def manually_cancelled_job(graph, filenames, source_types, merged_dir, uri):
+def manually_cancelled_job(graph, filenames, source_types, merged_dir):
     filename_list = list(map(str.strip, json.loads(filenames)))
     source_types_list = list(map(str.strip, json.loads(source_types)))
-    gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
 
     for (file_name, source_type) in zip(filename_list, source_types_list):
         obj_source_node = sourceNode()
@@ -558,15 +537,12 @@ def manually_cancelled_job(graph, filenames, source_types, merged_dir, uri):
         obj_source_node.updated_at = datetime.now()
         graphDb_data_Access = graphDBdataAccess(graph)
         graphDb_data_Access.update_source_node(obj_source_node)
-        count_response = graphDb_data_Access.update_node_relationship_count(file_name)
-        obj_source_node = None
+        graphDb_data_Access.update_node_relationship_count(file_name)
         merged_file_path = os.path.join(merged_dir, file_name)
-        if source_type == 'local file' and gcs_file_cache == 'True':
-            folder_name = create_gcs_bucket_folder_name_hashed(uri, file_name)
-            delete_file_from_gcs(BUCKET_UPLOAD, folder_name, file_name)
-        else:
-            logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
-            delete_uploaded_local_file(merged_file_path, file_name)
+
+        logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
+        delete_uploaded_local_file(merged_file_path, file_name)
+
     return "Cancelled the processing job successfully"
 
 
@@ -603,13 +579,6 @@ def set_status_retry(graph, file_name, retry_condition):
     graphDb_data_Access.update_source_node(obj_source_node)
 
 
-def failed_file_process(uri, file_name, merged_file_path):
-    gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
-    if gcs_file_cache == 'True':
-        folder_name = create_gcs_bucket_folder_name_hashed(uri, file_name)
-        copy_failed_file(BUCKET_UPLOAD, BUCKET_FAILED_FILE, folder_name, file_name)
-        time.sleep(5)
-        delete_file_from_gcs(BUCKET_UPLOAD, folder_name, file_name)
-    else:
-        logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
-        delete_uploaded_local_file(merged_file_path, file_name)
+def failed_file_process(file_name, merged_file_path):
+    logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
+    delete_uploaded_local_file(merged_file_path, file_name)

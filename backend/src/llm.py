@@ -10,8 +10,8 @@ from langchain_experimental.graph_transformers import LLMGraphTransformer
 from langchain_anthropic import ChatAnthropic
 from langchain_ollama import ChatOllama
 import google.auth
-from shared.constants import ADDITIONAL_INSTRUCTIONS
-from shared.llm_graph_builder_exception import LLMGraphBuilderException
+from src.shared.constants import ADDITIONAL_INSTRUCTIONS
+from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 import re
 
 

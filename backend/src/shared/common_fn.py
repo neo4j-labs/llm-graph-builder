@@ -1,60 +1,17 @@
 import hashlib
 import logging
-from src.document_sources.youtube import create_youtube_url
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_google_vertexai import VertexAIEmbeddings
-from langchain_openai import OpenAIEmbeddings
 from langchain_neo4j import Neo4jGraph
 from neo4j.exceptions import TransientError
 from langchain_community.graphs.graph_document import GraphDocument
 from typing import List
-import re
 import os
 import time
 from pathlib import Path
 from urllib.parse import urlparse
-import boto3
-from langchain_community.embeddings import BedrockEmbeddings
 
 
-def check_url_source(source_type, yt_url: str = None, wiki_query: str = None):
-    language = ''
-    try:
-        logging.info(f"incoming URL: {yt_url}")
-        if source_type == 'youtube':
-            if re.match(
-                    '(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/)([\w\-_]+)\&?',
-                    yt_url.strip()):
-                youtube_url = create_youtube_url(yt_url.strip())
-                logging.info(youtube_url)
-                return youtube_url, language
-            else:
-                raise Exception('Incoming URL is not youtube URL')
-
-        elif source_type == 'Wikipedia':
-            wiki_query_id = ''
-            #pattern = r"https?:\/\/([a-zA-Z0-9\.\,\_\-\/]+)\.wikipedia\.([a-zA-Z]{2,3})\/wiki\/([a-zA-Z0-9\.\,\_\-\/]+)"
-            wikipedia_url_regex = r'https?:\/\/(www\.)?([a-zA-Z]{2,3})\.wikipedia\.org\/wiki\/(.*)'
-            wiki_id_pattern = r'^[a-zA-Z0-9 _\-\.\,\:\(\)\[\]\{\}\/]*$'
-
-            match = re.search(wikipedia_url_regex, wiki_query.strip())
-            if match:
-                language = match.group(2)
-                wiki_query_id = match.group(3)
-            # else :
-            #       languages.append("en")
-            #       wiki_query_ids.append(wiki_url.strip())
-            else:
-                raise Exception(f'Not a valid wikipedia url: {wiki_query} ')
-
-            logging.info(f"wikipedia query id = {wiki_query_id}")
-            return wiki_query_id, language
-    except Exception as e:
-        logging.error(f"Error in recognize URL: {e}")
-        raise Exception(e)
-
-
-def get_chunk_and_graphDocument(graph_document_list, chunkId_chunkDoc_list):
+def get_chunk_and_graphDocument(graph_document_list):
     logging.info("creating list of chunks and graph documents in get_chunk_and_graphDocument func")
     lst_chunk_chunkId_document = []
     for graph_document in graph_document_list:
@@ -65,32 +22,16 @@ def get_chunk_and_graphDocument(graph_document_list, chunkId_chunkDoc_list):
 
 
 def create_graph_database_connection(uri, userName, password, database):
-    graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, refresh_schema=False,
-                           sanitize=True)
+    graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, refresh_schema=False, sanitize=True)
     return graph
 
 
 def load_embedding_model(embedding_model_name: str):
-    if embedding_model_name == "openai":
-        embeddings = OpenAIEmbeddings()
-        dimension = 1536
-        logging.info(f"Embedding: Using OpenAI Embeddings , Dimension:{dimension}")
-    elif embedding_model_name == "vertexai":
-        embeddings = VertexAIEmbeddings(
-            model="textembedding-gecko@003"
-        )
-        dimension = 768
-        logging.info(f"Embedding: Using Vertex AI Embeddings , Dimension:{dimension}")
-    elif embedding_model_name == "titan":
-        embeddings = get_bedrock_embeddings()
-        dimension = 1536
-        logging.info(f"Embedding: Using bedrock titan Embeddings , Dimension:{dimension}")
-    else:
-        embeddings = HuggingFaceEmbeddings(
-            model_name="Qwen/Qwen3-Embedding-0.6B"  #, cache_folder="/embedding_model"
-        )
-        dimension = 1024
-        logging.info(f"Embedding: Using Langchain HuggingFaceEmbeddings , Dimension:{dimension}")
+    embeddings = HuggingFaceEmbeddings(
+        model_name="Qwen/Qwen3-Embedding-0.6B"  #, cache_folder="/embedding_model"
+    )
+    dimension = 1024
+    logging.info(f"Embedding: Using Langchain HuggingFaceEmbeddings , Dimension:{dimension}")
     return embeddings, dimension
 
 
@@ -161,55 +102,6 @@ def close_db_connection(graph, api_name):
         graph._driver.close()
 
 
-def create_gcs_bucket_folder_name_hashed(uri, file_name):
-    folder_name = uri + file_name
-    folder_name_sha1 = hashlib.sha1(folder_name.encode())
-    folder_name_sha1_hashed = folder_name_sha1.hexdigest()
-    return folder_name_sha1_hashed
-
-
 def formatted_time(current_time):
     formatted_time = current_time.strftime('%Y-%m-%d %H:%M:%S %Z')
     return str(formatted_time)
-
-
-def last_url_segment(url):
-    parsed_url = urlparse(url)
-    path = parsed_url.path.strip("/")  # Remove leading and trailing slashes
-    last_url_segment = path.split("/")[-1] if path else parsed_url.netloc.split(".")[0]
-    return last_url_segment
-
-
-def get_bedrock_embeddings():
-    """
-   Creates and returns a BedrockEmbeddings object using the specified model name.
-   Args:
-       model (str): The name of the model to use for embeddings.
-   Returns:
-       BedrockEmbeddings: An instance of the BedrockEmbeddings class.
-   """
-    try:
-        env_value = os.getenv("BEDROCK_EMBEDDING_MODEL")
-        if not env_value:
-            raise ValueError("Environment variable 'BEDROCK_EMBEDDING_MODEL' is not set.")
-        try:
-            model_name, aws_access_key, aws_secret_key, region_name = env_value.split(",")
-        except ValueError:
-            raise ValueError(
-                "Environment variable 'BEDROCK_EMBEDDING_MODEL' is improperly formatted. "
-                "Expected format: 'model_name,aws_access_key,aws_secret_key,region_name'."
-            )
-        bedrock_client = boto3.client(
-            service_name="bedrock-runtime",
-            region_name=region_name.strip(),
-            aws_access_key_id=aws_access_key.strip(),
-            aws_secret_access_key=aws_secret_key.strip(),
-        )
-        bedrock_embeddings = BedrockEmbeddings(
-            model_id=model_name.strip(),
-            client=bedrock_client
-        )
-        return bedrock_embeddings
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
-        raise
