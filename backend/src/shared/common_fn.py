@@ -5,7 +5,6 @@ from langchain_neo4j import Neo4jGraph
 from neo4j.exceptions import TransientError
 from langchain_community.graphs.graph_document import GraphDocument
 from typing import List
-import os
 import time
 from pathlib import Path
 from urllib.parse import urlparse

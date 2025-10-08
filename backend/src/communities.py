@@ -1,6 +1,6 @@
 import logging
 from graphdatascience import GraphDataScience
-from llm import get_llm
+from src.llm import get_llm
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser 
 from concurrent.futures import ThreadPoolExecutor, as_completed

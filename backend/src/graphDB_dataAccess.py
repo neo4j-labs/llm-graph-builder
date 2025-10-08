@@ -10,6 +10,7 @@ from src.communities import MAX_COMMUNITY_LEVELS
 import json
 from dotenv import load_dotenv
 
+
 load_dotenv()
 
 

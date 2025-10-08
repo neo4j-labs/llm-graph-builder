@@ -1,6 +1,5 @@
 from datetime import datetime
 
-
 class sourceNode:
     file_name: str = None
     file_size: int = None

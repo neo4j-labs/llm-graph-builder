@@ -2,7 +2,6 @@ from graph_query import *
 from src.shared.constants import *
 import re
 
-
 def process_records(records):
     """
     Processes a record to extract and organize node and relationship data.

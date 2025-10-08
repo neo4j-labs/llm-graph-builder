@@ -6,6 +6,7 @@ from langchain_core.documents import Document
 import chardet
 from langchain_core.document_loaders import BaseLoader
 
+
 class ListLoader(BaseLoader):
    """A wrapper to make a list of Documents compatible with BaseLoader."""
    def __init__(self, documents):

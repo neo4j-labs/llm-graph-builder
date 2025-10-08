@@ -4,6 +4,7 @@ from langchain_neo4j import Neo4jGraph
 import logging
 import os
 
+
 logging.basicConfig(format="%(asctime)s - %(message)s", level="INFO")
 
 

@@ -1,7 +1,7 @@
 from src.main import *
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from src.graphDB_dataAccess import graphDBdataAccess
-from typing import Optional
+from typing import Optional, Sequence
 from src.response_format import create_response
 from src.QA_integration import *
 from src.shared.common_fn import *
@@ -168,7 +168,7 @@ async def chat_bot(
         database: str = "neo4j",
         history=None,
         question: str = None,
-        document_names=None,
+        document_names="[]",
         mode: str = "graph_vector_fulltext"
 ):
     logging.info(f"QA_RAG called at {datetime.now()}")
@@ -195,10 +195,10 @@ async def chat_bot(
         gc.collect()
 
 
-def main():
-    result = chat_bot(question="What does the the 1963 sting ray costs?")
+async def main():
+    result = await chat_bot(question="tell me information about the 1963 string ray")
     print(result)
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

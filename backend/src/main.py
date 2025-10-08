@@ -27,7 +27,6 @@ warnings.filterwarnings("ignore")
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s', level='INFO')
 
-
 async def extract_graph_from_file_local_file(uri, userName, password, database, model, merged_file_path, fileName,
                                              allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap,
                                              chunks_to_combine, retry_condition, additional_instructions):

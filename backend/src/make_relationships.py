@@ -8,6 +8,7 @@ import hashlib
 import time
 from langchain_neo4j import Neo4jVector
 
+
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')

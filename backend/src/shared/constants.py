@@ -2,6 +2,7 @@ BUCKET_UPLOAD = 'llm-graph-builder-upload'
 BUCKET_FAILED_FILE = 'llm-graph-builder-failed'
 GRAPH_CHUNK_LIMIT = 50
 
+
 #query 
 GRAPH_QUERY = """
 MATCH docs = (d:Document) 

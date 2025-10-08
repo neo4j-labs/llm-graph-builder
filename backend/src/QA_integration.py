@@ -2,25 +2,18 @@ import os
 import json
 import time
 import logging
-
-import threading
 from datetime import datetime
 from typing import Any
 from dotenv import load_dotenv
-
 from langchain_neo4j import Neo4jVector
-from langchain_neo4j import Neo4jChatMessageHistory
-from langchain_neo4j import GraphCypherQAChain
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableBranch
 from langchain.retrievers import ContextualCompressionRetriever
-from langchain_community.document_transformers import EmbeddingsRedundantFilter
 from langchain.retrievers.document_compressors import EmbeddingsFilter, DocumentCompressorPipeline
 from langchain_text_splitters import TokenTextSplitter
-from langchain_core.messages import HumanMessage, AIMessage
-from langchain_community.chat_message_histories import ChatMessageHistory
-from langchain_core.callbacks import StdOutCallbackHandler, BaseCallbackHandler
+from langchain_core.messages import HumanMessage
+from langchain_core.callbacks import BaseCallbackHandler
 
 # LangChain chat models
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
@@ -32,7 +25,7 @@ from langchain_aws import ChatBedrock
 from langchain_community.chat_models import ChatOllama
 
 # Local imports
-from llm import get_llm
+from src.llm import get_llm
 from src.shared.common_fn import load_embedding_model
 from src.shared.constants import *
 
@@ -362,7 +355,9 @@ def setup_chat(model, graph, document_names, chat_mode_settings):
 def process_chat_response(messages, question, model, graph, document_names, chat_mode_settings):
     try:
         llm, doc_retriever, model_version = setup_chat(model, graph, document_names, chat_mode_settings)
+        print(llm, doc_retriever, model_version)
         docs, transformed_question = retrieve_documents(doc_retriever, messages)
+        print(docs)
 
         if docs:
             content = process_documents(docs, question, messages, llm, model, chat_mode_settings)
@@ -394,9 +389,12 @@ def QA_RAG(graph, model, history, question, document_names, mode):
     logging.info(f"Chat Mode: {mode}")
 
     # ATTENZIONE!!!!!!!!!!!!!!!!!!!!!!!
-    messages = history.messages
+    """messages = history.messages
     user_question = HumanMessage(content=question)
-    messages.append(user_question)
+    messages.append(user_question)"""
+
+    messages = []
+    messages = messages.append(HumanMessage(content=question))
     # ATTENZIONE!!!!!!!!!!!!!!!!!!!!!!!
 
     chat_mode_settings = get_chat_mode_settings(mode=mode)

@@ -14,7 +14,6 @@ from src.shared.constants import ADDITIONAL_INSTRUCTIONS
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 import re
 
-
 def get_llm(model: str):
     """Retrieve the specified language model based on the model name."""
     model = model.lower().strip()
