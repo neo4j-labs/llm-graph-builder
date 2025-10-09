@@ -1,3 +1,5 @@
+import os
+
 from src.main import *
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from src.graphDB_dataAccess import graphDBdataAccess
@@ -42,82 +44,16 @@ def validate_file_path(directory, filename):
         raise ValueError("Invalid file path")
     return abs_file_path
 
-
-# Function to check backend connection
-async def backend_connection_configuration():
-    try:
-        start = time.time()
-        uri = os.getenv('NEO4J_URI')
-        username = os.getenv('NEO4J_USERNAME')
-        database = os.getenv('NEO4J_DATABASE')
-        password = os.getenv('NEO4J_PASSWORD')
-        if all([uri, username, database, password]):
-            graph = Neo4jGraph()
-            logging.info(f'login connection status of object: {graph}')
-            if graph is not None:
-                graph_connection = True
-                graphDb_data_Access = graphDBdataAccess(graph)
-                result = graphDb_data_Access.connection_check_and_get_vector_dimensions(database)
-                result['uri'] = uri
-                end = time.time()
-                elapsed_time = end - start
-                result['api_name'] = 'backend_connection_configuration'
-                result['elapsed_api_time'] = f'{elapsed_time:.2f}'
-                result['graph_connection'] = f'{graph_connection}',
-                result['connection_from'] = 'backend'
-                logger.log_struct(result, "INFO")
-                return create_response('Success', message=f"Backend connection successful", data=result)
-        else:
-            graph_connection = False
-            return create_response('Success', message=f"Backend connection is not successful", data=graph_connection)
-    except Exception as e:
-        graph_connection = False
-        job_status = "Failed"
-        message = "Unable to connect backend DB"
-        error_message = str(e)
-        logging.exception(f'{error_message}')
-        return create_response(job_status, message=message,
-                               error=error_message.rstrip('.') + ', or fill from the login dialog.',
-                               data=graph_connection)
-    finally:
-        gc.collect()
-
-
-# Function to upload a file
-async def upload_large_file_into_chunks(
-        file_path: str = None,
-        originalname: str = None,
-        model: str = "groq_gpt-oss-120b",
+def compute_entity_embeddings(
         uri: str = "bolt://localhost:7687",
         userName: str = "neo4j",
         password: str = "password",
         database: str = "neo4j",
 ):
-    totalChunks
+    graph = create_graph_database_connection(uri, userName, password, database)
+    graphDBdataAccess(graph)
 
-    for chunkNumber, chunk in enumerate(...):
-
-        try:
-            graph = create_graph_database_connection(uri, userName, password, database)
-            result = await asyncio.to_thread(upload_file, graph, model, file, chunkNumber, totalChunks, originalname, uri,
-                                             CHUNK_DIR, MERGED_DIR)
-            if int(chunkNumber) == int(totalChunks):
-                return create_response('Success', data=result, message='Source Node Created Successfully')
-            else:
-                return create_response('Success', message=result)
-        except Exception as e:
-            message = "Unable to upload file in chunks"
-            error_message = str(e)
-            graph = create_graph_database_connection(uri, userName, password, database)
-            graphDb_data_Access = graphDBdataAccess(graph)
-            graphDb_data_Access.update_exception_db(originalname, error_message)
-            logging.info(message)
-            logging.exception(f'Exception:{error_message}')
-            return create_response('Failed', message=message + error_message[:100], error=error_message,
-                                   file_name=originalname)
-        finally:
-            gc.collect()
-
+    create_entity_embedding(graph)
 
 # Function to extract knowledge graph from a local file
 async def extract_knowledge_graph_from_file(
@@ -132,7 +68,7 @@ async def extract_knowledge_graph_from_file(
         token_chunk_size: int = 300,
         chunk_overlap: int = 20,
         chunks_to_combine: int = 3,
-        retry_condition: str = "delete_entities_and_start_from_beginning",
+        retry_condition: str = None,
         additional_instructions: Optional[str] = None,
 
 ):
@@ -143,7 +79,7 @@ async def extract_knowledge_graph_from_file(
 
         file_name = sanitize_filename(file_name)
         merged_file_path = validate_file_path(MERGED_DIR, file_name)
-        result = await extract_graph_from_file_local_file(uri, userName, password, database, model,
+        uri_latency, result = await extract_graph_from_file_local_file(uri, userName, password, database, model,
                                                           merged_file_path, file_name, allowedNodes,
                                                           allowedRelationship, token_chunk_size,
                                                           chunk_overlap, chunks_to_combine,
@@ -185,7 +121,7 @@ async def extract_knowledge_graph_from_file(
         graphDb_data_Access = graphDBdataAccess(graph)
         graphDb_data_Access.update_exception_db(file_name, error_message, retry_condition)
 
-        failed_file_process(uri, file_name, merged_file_path)
+        failed_file_process(file_name, merged_file_path)
         graphDb_data_Access.get_current_status_document_node(file_name)
         logging.exception(f'File Failed in extraction: {e}')
         return create_response("Failed", message=error_message, error=error_message, file_name=file_name)
@@ -287,17 +223,22 @@ async def chat_bot(
 
 
 async def main():
-
-    #UPLOADARE UN FILE
-    # metti un file da temp
+    
     # ESTRARRE KG DA FILE LOCALE
+    fileName = "contact_SaraErba_521.txt"
+    with open(f"./temp/{fileName}", "r") as f:
+        content = f.read()
+
+    with open(f"./merged_files/{fileName}", "w") as f:
+        f.write(content)
+
     res = await extract_knowledge_graph_from_file(
         uri="bolt://localhost:7687",
         userName="neo4j",
         password="password",
         database="neo4j",
         model="groq_gpt-oss-120b",
-        file_name="...",
+        file_name=fileName,
         additional_instructions=None,
     )
     if res["status"] == "Success":
@@ -307,6 +248,9 @@ async def main():
             password="password",
             database="neo4j"
         )
+
+
+
 
     """
     
