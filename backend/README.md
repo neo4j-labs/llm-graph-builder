@@ -16,9 +16,14 @@ Follow these steps to set up and run the project locally:
 
 > cd llm-graph-builder
 
-2. Install Dependency :
+2. Create venv and activate it
 
-> pip install -t requirements.txt
+> python -m venv .venv
+> source .venv/bin/activate
+
+3. Install Dependencies :
+
+> pip install -r requirements.txt
 
 ## Run backend project using unicorn
 Run the server:
