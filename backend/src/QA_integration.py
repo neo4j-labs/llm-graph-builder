@@ -161,11 +161,11 @@ def format_documents(documents, model):
     return "\n\n".join(formatted_docs)
 
 
-def process_documents(docs, question, messages, llm, model, chat_mode_settings):
+def process_documents(docs, question, messages, llm, model):
     start_time = time.time()
 
     try:
-        formatted_docs = format_documents(docs, model, chat_mode_settings)
+        formatted_docs = format_documents(docs, model)
 
         rag_chain = get_rag_chain(llm=llm)
         ai_response = rag_chain.invoke({
@@ -355,12 +355,10 @@ def setup_chat(model, graph, document_names, chat_mode_settings):
 def process_chat_response(messages, question, model, graph, document_names, chat_mode_settings):
     try:
         llm, doc_retriever, model_version = setup_chat(model, graph, document_names, chat_mode_settings)
-        print(llm, doc_retriever, model_version)
         docs, transformed_question = retrieve_documents(doc_retriever, messages)
-        print(docs)
 
         if docs:
-            content = process_documents(docs, question, messages, llm, model, chat_mode_settings)
+            content = process_documents(docs, question, messages, llm, model)
         else:
             content = "I couldn't find any relevant documents to answer your question."
 
@@ -388,15 +386,8 @@ def get_chat_mode_settings(mode, settings_map=CHAT_MODE_CONFIG_MAP):
 def QA_RAG(graph, model, history, question, document_names, mode):
     logging.info(f"Chat Mode: {mode}")
 
-    # ATTENZIONE!!!!!!!!!!!!!!!!!!!!!!!
-    """messages = history.messages
-    user_question = HumanMessage(content=question)
-    messages.append(user_question)"""
-
-    messages = []
-    messages = messages.append(HumanMessage(content=question))
-    # ATTENZIONE!!!!!!!!!!!!!!!!!!!!!!!
-
+    messages = history
+    messages.append(HumanMessage(content=question))
     chat_mode_settings = get_chat_mode_settings(mode=mode)
     document_names = list(map(str.strip, json.loads(document_names)))
 

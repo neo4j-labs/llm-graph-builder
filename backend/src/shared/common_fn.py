@@ -1,4 +1,3 @@
-import hashlib
 import logging
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_neo4j import Neo4jGraph
@@ -7,8 +6,6 @@ from langchain_community.graphs.graph_document import GraphDocument
 from typing import List
 import time
 from pathlib import Path
-from urllib.parse import urlparse
-
 
 def get_chunk_and_graphDocument(graph_document_list):
     logging.info("creating list of chunks and graph documents in get_chunk_and_graphDocument func")
@@ -21,7 +18,7 @@ def get_chunk_and_graphDocument(graph_document_list):
 
 
 def create_graph_database_connection(uri, userName, password, database):
-    graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, refresh_schema=False, sanitize=True)
+    graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, refresh_schema=True, sanitize=True)
     return graph
 
 

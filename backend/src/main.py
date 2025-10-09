@@ -411,7 +411,7 @@ def get_source_list_from_graph(uri, userName, password, db_name=None):
 
 def update_graph(graph):
     """
-  Update the graph node with SIMILAR relationship where embedding scrore match
+  Update the graph node with SIMILAR relationship where embedding score match
   """
     graph_DB_dataAccess = graphDBdataAccess(graph)
     graph_DB_dataAccess.update_KNN_graph()
