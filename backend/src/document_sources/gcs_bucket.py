@@ -62,9 +62,7 @@ def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, g
       except LookupError:
           logging.info(f"NLTK resource '{res}' not found; downloading to /usr/local/nltk_data")
           nltk.download(res, download_dir="/usr/local/nltk_data")
-          
-          if "/usr/local/nltk_data" not in nltk.data.path:
-              nltk.data.path.append("/usr/local/nltk_data")
+
 
   if gcs_bucket_folder is not None and gcs_bucket_folder.strip() != "":
       if gcs_bucket_folder.endswith('/'):
