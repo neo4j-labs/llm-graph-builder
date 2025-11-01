@@ -8,7 +8,7 @@ fastapi-health==0.4.0
 fireworks-ai==0.15.12
 google-api-core==2.25.1
 google-auth==2.40.3
-google_auth_oauthlib==1.2.2
+google_auth_oauthlib==1.2.3
 google-cloud-core==2.4.3
 json-repair==0.39.1
 pip-install==1.3.5
