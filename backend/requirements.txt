@@ -38,7 +38,7 @@ python-magic==0.4.27
 PyPDF2==3.0.1
 PyMuPDF==1.26.1
 starlette==0.46.2
-sse-starlette==2.3.6
+sse-starlette==3.0.3
 starlette-session==0.4.3
 tqdm==4.67.1
 unstructured[all-docs]
