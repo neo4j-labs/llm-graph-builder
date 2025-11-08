@@ -638,16 +638,16 @@ const Content: React.FC<ContentProps> = ({
         showNormalToast(response.data.message as string);
         retryOnclose();
       } else {
-        const isStartFromBegining = retryoption === RETRY_OPIONS[0] || retryoption === RETRY_OPIONS[1];
+        const isStartFromBeginning = retryoption === RETRY_OPIONS[0] || retryoption === RETRY_OPIONS[1];
         setFilesData((prev) => {
           return prev.map((f) => {
             return f.name === filename
               ? {
                   ...f,
                   status: 'Ready to Reprocess',
-                  processingProgress: isStartFromBegining ? 0 : f.processingProgress,
-                  nodesCount: isStartFromBegining ? 0 : f.nodesCount,
-                  relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
+                  processingProgress: isStartFromBeginning ? 0 : f.processingProgress,
+                  nodesCount: isStartFromBeginning ? 0 : f.nodesCount,
+                  relationshipsCount: isStartFromBeginning ? 0 : f.relationshipsCount,
                 }
               : f;
           });

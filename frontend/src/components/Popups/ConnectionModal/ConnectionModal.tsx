@@ -54,7 +54,7 @@ export default function ConnectionModal({
     errorMessage,
     setIsGCSActive,
     setShowDisconnectButton,
-    // setChunksToBeProces,
+    // setChunksToBeProcess,
   } = useCredentials();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [searchParams, setSearchParams] = useSearchParams();
