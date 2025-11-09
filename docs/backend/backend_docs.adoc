@@ -242,7 +242,7 @@ This API is responsible for -
 
 ** SentenceTransformer embeddingds are used by default, also embeddings are made configurable to use either OpenAIEmbeddings or VertexAIEmbeddings.
 
-** Vector index is created in databse on embeddingds created for chunks.
+** Vector index is created in database on embeddingds created for chunks.
 
 **API Parameters :**
 

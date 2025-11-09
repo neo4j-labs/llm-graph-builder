@@ -17,8 +17,8 @@ const connectAPI = async () => {
 
 const envConnectionAPI = async () => {
   try {
-    const conectionUrl = `/backend_connection_configuration`;
-    const response = await api.post(conectionUrl);
+    const connectionUrl = `/backend_connection_configuration`;
+    const response = await api.post(connectionUrl);
     return response;
   } catch (error) {
     console.log('API Connection error', error);

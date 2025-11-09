@@ -232,7 +232,7 @@ async def extract_knowledge_graph_from_file(
           model: Type of model to use ('Diffbot'or'OpenAI GPT')
 
     Returns:
-          Nodes and Relations created in Neo4j databse for the pdf file
+          Nodes and Relations created in Neo4j database for the pdf file
     """
     try:
         start_time = time.time()
@@ -340,7 +340,7 @@ async def get_source_list(
     database=Form(None),
     email=Form(None)):
     """
-    Calls 'get_source_list_from_graph' which returns list of sources which already exist in databse
+    Calls 'get_source_list_from_graph' which returns list of sources which already exist in database
     """
     try:
         start = time.time()
