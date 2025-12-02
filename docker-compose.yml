@@ -1,7 +1,5 @@
-version: "3"
-
 services:
-  backend:
+  neo4j-backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -26,25 +24,18 @@ services:
       - NUMBER_OF_CHUNKS_TO_COMBINE=${NUMBER_OF_CHUNKS_TO_COMBINE-6}
       - ENTITY_EMBEDDING=${ENTITY_EMBEDDING-False}
       - GCS_FILE_CACHE=${GCS_FILE_CACHE-False}
-#      - LLM_MODEL_CONFIG_anthropic_claude_35_sonnet=${LLM_MODEL_CONFIG_anthropic_claude_35_sonnet-}
-#      - LLM_MODEL_CONFIG_fireworks_llama_v3_70b=${LLM_MODEL_CONFIG_fireworks_llama_v3_70b-}
-#      - LLM_MODEL_CONFIG_azure_ai_gpt_4o=${LLM_MODEL_CONFIG_azure_ai_gpt_4o-}
-#      - LLM_MODEL_CONFIG_azure_ai_gpt_35=${LLM_MODEL_CONFIG_azure_ai_gpt_35-}
-#      - LLM_MODEL_CONFIG_groq_llama3_70b=${LLM_MODEL_CONFIG_groq_llama3_70b-}
-#      - LLM_MODEL_CONFIG_bedrock_claude_3_5_sonnet=${LLM_MODEL_CONFIG_bedrock_claude_3_5_sonnet-}
-#     - LLM_MODEL_CONFIG_fireworks_qwen_72b=${LLM_MODEL_CONFIG_fireworks_qwen_72b-}
       - LLM_MODEL_CONFIG_ollama_llama3=${LLM_MODEL_CONFIG_ollama_llama3-}
-    container_name: backend
+    container_name: neo4j-backend
     extra_hosts:
       - host.docker.internal:host-gateway
     ports:
       - "8000:8000"
     networks:
-      - net
+      - neo4j-network
 
-  frontend:
+  neo4j-frontend:
     depends_on:
-      - backend
+      - neo4j-backend
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -73,11 +64,33 @@ services:
       - /app/node_modules
     env_file:
       - ./frontend/.env
-    container_name: frontend
+    container_name: neo4j-frontend
     ports:
       - "8080:8080"
     networks:
-      - net
+      - neo4j-network
+
+  neo4j-browser:
+    container_name: neo4j-browser
+    restart: unless-stopped
+    image: neo4j:latest
+    ports:
+      - 7474:7474
+      - 7687:7687
+    environment:
+      - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+      - NEO4J_AUTH=none
+      - NEO4J_apoc_export_file_enabled=true
+      - NEO4J_apoc_import_file_enabled=true
+      - NEO4J_apoc_import_file_use__neo4j__config=true
+      - NEO4J_PLUGINS=["apoc", "graph-data-science"]
+    volumes:
+      - ./neo4j_db/data:/data
+      - ./neo4j_db/logs:/logs
+      - ./neo4j_db/import:/var/lib/neo4j/import
+      - ./neo4j_db/plugins:/plugins
+    networks:
+      - neo4j-network
 
 networks:
-  net:
+  neo4j-network:
