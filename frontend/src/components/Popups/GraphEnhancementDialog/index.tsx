@@ -128,7 +128,7 @@ export default function GraphEnhancementDialog({
               alt='graph-enhancement-options-logo'
             />
             <div className='flex flex-col'>
-              <Typography variant={isTablet ? 'h5' : 'h2'}>Graph Enhancements</Typography>
+              <Typography variant={isTablet ? 'h5' : 'h2'}>Graph Settings</Typography>
               <Typography variant={isTablet ? 'subheading-small' : 'subheading-medium'} className='mb-2'>
                 {isTablet
                   ? `This set of tools will help you enhance the quality of your Knowledge Graph`

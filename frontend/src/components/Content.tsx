@@ -954,13 +954,13 @@ const Content: React.FC<ContentProps> = ({
             <ButtonWithToolTip
               placement='top'
               text='Enhance graph quality'
-              label='Graph Enhancemnet Settings'
+              label='Graph Enhancement Settings'
               className='mr-2!'
               onClick={toggleEnhancementDialog}
               disabled={!connectionStatus || isReadOnlyUser}
               size={isTablet ? 'small' : 'medium'}
             >
-              Graph Enhancement
+              Graph Settings
             </ButtonWithToolTip>
             {!connectionStatus ? (
               <SpotlightTarget
