@@ -69,8 +69,8 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
             isFluid
             htmlAttributes={{
               'aria-label': 'A selection dropdown',
-              "aria-label": 'llm-dropdown'
-            }} />
+            }}
+          />
         </SpotlightTarget>
         {children}
       </div>
