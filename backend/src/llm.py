@@ -50,7 +50,7 @@ def get_llm(model: str):
             )
         elif "openai" in model:
             model_name, api_key = env_value.split(",")
-            if "o3-mini" in model:
+            if "mini" in model:
                 llm= ChatOpenAI(
                 api_key=api_key,
                 model=model_name)
