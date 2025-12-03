@@ -21,6 +21,11 @@ This document provides comprehensive documentation for the Neo4j llm-graph-build
 
 == Local Setup and Execution
 
+Prerequisites:
+- Python 3.12 or higher
+- Node.js 20 or higher
+- Docker (optional, for containerized deployment)
+
 Run Docker Compose to build and start all components:
 ....
 docker-compose up --build
@@ -38,8 +43,8 @@ yarn run dev
 ** For backend
 ....
 cd backend
-python -m venv envName
-source envName/bin/activate 
+python3.12 -m venv venv
+source venv/bin/activate 
 pip install -r requirements.txt
 uvicorn score:app --reload
 ....
