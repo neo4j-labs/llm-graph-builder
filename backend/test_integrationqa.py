@@ -122,12 +122,13 @@ def test_graph_from_youtube_video(model_name):
 def test_graph_website(model_name):
    """Tests graph creation from a Website page."""
    try:
-       source_url = 'https://www.cloudskillsboost.google/'
+       source_url = 'https://www.scrapethissite.com/pages/simple/'
+       file_name = 'Countries of the World: A Simple Example | Scrape This Site | A public sandbox for learning web scraping-simple'
        graph = create_graph_database_connection(URI, USERNAME, PASSWORD, DATABASE)
        create_source_node_graph_web_url(graph, model_name, source_url, "web-url")
        result = asyncio.run(
            extract_graph_from_web_page(
-               URI, USERNAME, PASSWORD, DATABASE, model_name, source_url, "Google Cloud Skills Boost-www", '', '',100,20,1, None,''
+               URI, USERNAME, PASSWORD, DATABASE, model_name, source_url, file_name, '', '', 100, 20, 1, None, ''
            )
        )
        logging.info(f"Web URL test result: {result}")
@@ -291,18 +292,15 @@ def run_model_tests(model_name: str, chatbot_modes: List[str]) -> Dict[str, Any]
         "test_results": test_results
     }
 
-def run_tests_parallel(models: List[str], chatbot_modes: List[str]) -> None:
+def run_tests_sequential(models: List[str], chatbot_modes: List[str]) -> None:
     """
-    Runs all model tests in parallel, shows progress bars, and generates a summary report.
+    Runs all model tests sequentially, without progress bars, and generates a summary report.
     """
     all_summaries = []
-    with tqdm(total=len(models), desc="Models", position=0) as model_bar:
-        with ThreadPoolExecutor(max_workers=min(4, len(models))) as executor:
-            futures = {executor.submit(run_model_tests, model, chatbot_modes): model for model in models}
-            for future in as_completed(futures):
-                summary = future.result()
-                all_summaries.append(summary)
-                model_bar.update(1)
+    for idx, model in enumerate(models):
+        logging.info(f"Running tests for model {idx+1}/{len(models)}: {model}")
+        summary = run_model_tests(model, chatbot_modes)
+        all_summaries.append(summary)
     # Handle disconnected nodes and duplicates (single-threaded, after all models)
     start_time = time.time()
     try:
@@ -385,4 +383,4 @@ if __name__ == "__main__":
         "graph+vector+fulltext",
         "entity search+vector"
     ]
-    run_tests_parallel(models, chatbot_modes)
+    run_tests_sequential(models, chatbot_modes)
