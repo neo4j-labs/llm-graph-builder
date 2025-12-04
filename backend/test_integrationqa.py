@@ -21,7 +21,7 @@ load_dotenv()
 URI = os.getenv('NEO4J_URI')
 USERNAME = os.getenv('NEO4J_USERNAME')
 PASSWORD = os.getenv('NEO4J_PASSWORD')
-DATABASE = "persistent2"
+DATABASE = os.getenv('NEO4J_DATABASE')
 # Logging configuration
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 # Directory Paths
@@ -365,6 +365,7 @@ if __name__ == "__main__":
     models = [
             'openai_gpt_5.1',
             'openai_gpt_5_mini',
+            'openai_gpt_4.1',
             'openai_gpt_4.1_mini',
             'gemini_2.5_flash',
             'gemini_2.5_pro',
