@@ -87,7 +87,9 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                       <TextLink
                         href={generateYouTubeLink(chunk?.url, chunk?.start_time)}
                         type={'external'}
-                        target='_blank'
+                        htmlAttributes={{
+                          target: '_blank'
+                        }}
                       >
                         <Typography
                           variant='body-medium'
@@ -199,7 +201,9 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                   <>
                     <div className='flex! flex-row items-center gap-1'>
                       <GlobeAltIconOutline className='n-size-token-7' />
-                      <TextLink href={chunk?.url} type='external' target='_blank'>
+                      <TextLink href={chunk?.url} type='external' htmlAttributes={{
+                        target: '_blank'
+                      }}>
                         <Typography variant='body-medium'>{chunk?.url}</Typography>
                       </TextLink>
                     </div>
