@@ -115,7 +115,7 @@ def load_embedding_model(embedding_model_name: str):
         embeddings = VertexAIEmbeddings(
             model="gemini-embedding-001"
         )
-        dimension = 768
+        dimension = 3072
         logging.info(f"Embedding: Using Vertex AI Embeddings , Dimension:{dimension}")
     elif embedding_model_name == "titan":
         embeddings = get_bedrock_embeddings()

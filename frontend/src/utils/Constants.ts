@@ -12,8 +12,6 @@ export const llms =
   process.env?.VITE_LLM_MODELS?.trim() != ''
     ? (process.env.VITE_LLM_MODELS?.split(',') as string[])
     : [
-        'openai_gpt_4.1',
-        'openai_gpt_4.1_mini',
         'openai_gpt_5.1',
         'openai_gpt_5_mini',
         'gemini_2.5_flash',
@@ -21,6 +19,7 @@ export const llms =
         'diffbot',
         'groq_llama3.1_8b',
         'anthropic_claude_4.5_sonnet',
+        'anthropic_claude_4.5_haiku',
         'llama4_maverick',
         'bedrock_nova_micro_v1',
         'bedrock_nova_lite_v1',
@@ -31,8 +30,6 @@ export const llms =
       ];
 
 export const supportedLLmsForRagas = [
-  'openai_gpt_4.1',
-  'openai_gpt_4.1_mini',
   'openai_gpt_5.1',
   'openai_gpt_5_mini',
   'gemini_2.5_flash',
@@ -40,6 +37,7 @@ export const supportedLLmsForRagas = [
   'diffbot',
   'groq_llama3.1_8b',
   'anthropic_claude_4.5_sonnet',
+  'anthropic_claude_4.5_haiku',
   'llama4_maverick',
   'bedrock_nova_micro_v1',
   'bedrock_nova_lite_v1',
@@ -49,8 +47,6 @@ export const supportedLLmsForRagas = [
   'fireworks_gpt_oss',
 ];
 export const supportedLLmsForGroundTruthMetrics = [
-  'openai_gpt_4.1',
-  'openai_gpt_4.1_mini',
   'openai_gpt_5.1',
   'openai_gpt_5_mini',
   'gemini_2.5_flash',
@@ -58,6 +54,7 @@ export const supportedLLmsForGroundTruthMetrics = [
   'diffbot',
   'groq_llama3.1_8b',
   'anthropic_claude_4.5_sonnet',
+  'anthropic_claude_4.5_haiku',
   'llama4_maverick',
   'bedrock_nova_micro_v1',
   'bedrock_nova_lite_v1',
@@ -69,7 +66,7 @@ export const supportedLLmsForGroundTruthMetrics = [
 export const prodllms =
   process.env.VITE_LLM_MODELS_PROD?.trim() != ''
     ? (process.env.VITE_LLM_MODELS_PROD?.split(',') as string[])
-    : ['openai_gpt_4.1', 'openai_gpt_4.1_mini', 'diffbot', 'gemini_2.5_flash'];
+    : ['openai_gpt_5_mini', 'diffbot', 'gemini_2.5_flash', 'anthropic_claude_4.5_haiku'];
 
 export const chatModeLables = {
   vector: 'vector',
