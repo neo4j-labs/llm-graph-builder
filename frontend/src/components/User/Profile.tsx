@@ -35,9 +35,11 @@ export default function Profile() {
           <Avatar
             className='md:flex hidden'
             name={user?.name?.charAt(0).toLocaleUpperCase()}
-            shape='square'
             size='large'
             type='letters'
+            htmlAttributes={{
+              shape: 'square',
+            }}
           />
           <div className='flex flex-col'>
             <Typography variant='body-medium' className='p-0.5'>

@@ -9,7 +9,6 @@ from dotenv import load_dotenv
 from src.main import *
 from src.QA_integration import QA_RAG
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm

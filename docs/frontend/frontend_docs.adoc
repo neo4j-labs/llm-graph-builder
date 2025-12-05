@@ -141,8 +141,8 @@ Install necessary dependencies by running yarn install, such as axios for making
 == 2.	Connect to the Neo4j Aura instance: 
 Created a connection modal by adding details including protocol, URI, database name, username, and password. Added a submit button that triggers an API: ***/connect*** and accepts params like uri, password, username and database to establish a connection to the Neo4j Aura instance. Handled the authentication and error scenarios appropriately, by displaying relevant messages. To check whether the backend connection is up and working we hit the API: ***/health.*** The user can now access both AURA DS and AURA DB instances. 
 
-* If GDS Connection is there icon is scientific molecule >  Graph enhancement model > Post processing jobs > gives user the leverage to check and uncheck the communities checkbox.
-* If AURA DB > icon is database icon > Graph enhancement model > Post processing jobs > communities checkbox is disabled.
+* If GDS Connection is there icon is scientific molecule >  Graph settings model > Post processing jobs > gives user the leverage to check and uncheck the communities checkbox.
+* If AURA DB > icon is database icon > Graph settings model > Post processing jobs > communities checkbox is disabled.
 
 image::images/ConnectionModal.jpg[NoConnection, 600]
  
@@ -304,7 +304,7 @@ image::images/ChatModesProd.jpg[ChatModesProd, 600]
 image::images/ChatModesDev.jpg[ChatModesDev, 600]
 
 
-== 7.	Graph Enhancement Settings: 
+== 7.	Graph Settings: 
 Users can now set their own Schema for nodes and relations or can already be an existing schema.
 
 * ***Entity Extraction Settings:*** 

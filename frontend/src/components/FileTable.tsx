@@ -387,7 +387,13 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
             return (
               <Flex>
                 <span>
-                  <TextLink type='external' target='_blank' href={info.row.original.sourceUrl}>
+                  <TextLink
+                    type='external'
+                    href={info.row.original.sourceUrl}
+                    htmlAttributes={{
+                      target: '_blank',
+                    }}
+                  >
                     {info.row.original.fileSource}
                   </TextLink>
                 </span>
