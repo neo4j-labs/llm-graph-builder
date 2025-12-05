@@ -67,6 +67,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const [schemaNodes, setSchemaNodes] = useState<OptionType[]>([]);
   const [schemaRels, setSchemaRels] = useState<OptionType[]>([]);
   const [viewCheck, setViewcheck] = useState<string>('enhancement');
+  const [showLargeDatasetWarning, setShowLargeDatasetWarning] = useState<boolean>(false);
 
   const graphQuery: string =
     graphType.includes('DocumentChunk') && graphType.includes('Entities')
@@ -138,7 +139,14 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       }
       return nodeRelationshipData;
     } catch (error: any) {
-      console.log(error);
+      console.error('Error fetching graph data:', error);
+      if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        throw new Error('Request timed out. The dataset might be too large to preview. Try selecting fewer documents.');
+      }
+      if (error.name === 'AbortError') {
+        throw new Error('Request was cancelled.');
+      }
+      throw new Error(error.response?.data?.error || error.message || 'Failed to fetch graph data. Please try again.');
     }
   }, [viewPoint, selectedRows, graphQuery, inspectedName, userCredentials]);
 
@@ -146,35 +154,59 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const graphApi = async (mode?: string) => {
     try {
       const result = await fetchData();
-      if (result && result.data.data.nodes.length > 0) {
-        const neoNodes = result.data.data.nodes;
-        const nodeIds = new Set(neoNodes.map((node: any) => node.element_id));
-        const neoRels = result.data.data.relationships
-          .map((f: Relationship) => f)
-          .filter((rel: any) => nodeIds.has(rel.end_node_element_id) && nodeIds.has(rel.start_node_element_id));
-        const { finalNodes, finalRels, schemeVal } = processGraphData(neoNodes, neoRels);
 
-        if (mode === 'refreshMode') {
-          initGraph(graphType, finalNodes, finalRels, schemeVal);
-        } else {
-          setNode(finalNodes);
-          setRelationship(finalRels);
-          setNewScheme(schemeVal);
-          setLoading(false);
-        }
-        setAllNodes(finalNodes);
-        setAllRelationships(finalRels);
-        setScheme(schemeVal);
-        setDisableRefresh(false);
-      } else {
+      // Validate the response structure
+      if (!result) {
+        throw new Error('No response received from server. The request may have timed out.');
+      }
+
+      if (!result.data) {
+        throw new Error('Invalid response format received from server.');
+      }
+
+      if (!result.data.data) {
+        throw new Error(`No data in response. ${  result.data.error || 'Please try again.'}`);
+      }
+
+      const { nodes = [], relationships = [] } = result.data.data;
+
+      if (nodes.length === 0) {
         setLoading(false);
         setStatus('danger');
-        setStatusMessage(`No Nodes and Relations for the ${inspectedName} file`);
+        const documentCount = viewPoint === graphLabels.showGraphView ? selectedRows?.length || 0 : 1;
+        setStatusMessage(
+          documentCount > 1
+            ? `No graph data found for the selected ${documentCount} documents. This may be because the documents are still processing or contain no extractable entities.`
+            : `No graph data found for ${inspectedName}. The document may still be processing or contain no extractable entities.`
+        );
+        return;
       }
+
+      const neoNodes = nodes;
+      const nodeIds = new Set(neoNodes.map((node: any) => node.element_id));
+      const neoRels = relationships
+        .map((f: Relationship) => f)
+        .filter((rel: any) => nodeIds.has(rel.end_node_element_id) && nodeIds.has(rel.start_node_element_id));
+      const { finalNodes, finalRels, schemeVal } = processGraphData(neoNodes, neoRels);
+
+      if (mode === 'refreshMode') {
+        initGraph(graphType, finalNodes, finalRels, schemeVal);
+      } else {
+        setNode(finalNodes);
+        setRelationship(finalRels);
+        setNewScheme(schemeVal);
+        setLoading(false);
+      }
+      setAllNodes(finalNodes);
+      setAllRelationships(finalRels);
+      setScheme(schemeVal);
+      setDisableRefresh(false);
+      setShowLargeDatasetWarning(false);
     } catch (error: any) {
+      console.error('Graph API error:', error);
       setLoading(false);
       setStatus('danger');
-      setStatusMessage(error.message);
+      setStatusMessage(error.message || 'An unexpected error occurred while loading the graph.');
     }
   };
 
@@ -182,6 +214,9 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     if (open) {
       setLoading(true);
       setGraphType([]);
+      if (viewPoint === graphLabels.showGraphView && selectedRows && selectedRows.length > 8) {
+        setShowLargeDatasetWarning(true);
+      }
       if (viewPoint !== graphLabels.chatInfoView) {
         graphApi();
       } else {
@@ -405,6 +440,14 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           </Flex>
         </Dialog.Header>
         <Dialog.Content className='flex flex-col n-gap-token-4 w-full grow overflow-auto border! border-palette-neutral-border-weak!'>
+          {showLargeDatasetWarning && selectedRows && (
+            <Banner
+              name='large-dataset-warning'
+              description={`You are previewing ${selectedRows.length} documents. Loading may take longer and could timeout with large datasets. For better performance, try selecting fewer documents (4-8 recommended).`}
+              type='warning'
+              usage='inline'
+            />
+          )}
           <div className='bg-white relative w-full h-full max-h-full border! border-palette-neutral-border-weak!'>
             {loading ? (
               <div className='my-40 flex! items-center justify-center'>
