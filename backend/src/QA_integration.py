@@ -15,7 +15,6 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableBranch
 from langchain_classic.retrievers import ContextualCompressionRetriever
-from langchain_classic.document_transformers import EmbeddingsRedundantFilter
 from langchain_classic.retrievers.document_compressors import EmbeddingsFilter, DocumentCompressorPipeline
 from langchain_text_splitters import TokenTextSplitter
 from langchain_core.messages import HumanMessage, AIMessage
