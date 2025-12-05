@@ -79,6 +79,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isCancellingQueue, setIsCancellingQueue] = useState<boolean>(false);
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [filetypeFilter, setFiletypeFilter] = useState<string>('');
   const [fileSourceFilter, setFileSourceFilter] = useState<string>('');
@@ -387,9 +388,13 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
             return (
               <Flex>
                 <span>
-                  <TextLink type='external' href={info.row.original.sourceUrl} htmlAttributes={{
-                    target: '_blank'
-                  }}>
+                  <TextLink
+                    type='external'
+                    href={info.row.original.sourceUrl}
+                    htmlAttributes={{
+                      target: '_blank',
+                    }}
+                  >
                     {info.row.original.fileSource}
                   </TextLink>
                 </span>
@@ -829,6 +834,64 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
     }
   }, [connectionStatus, filesData.length, isReadOnlyUser]);
 
+  const refreshFileData = async () => {
+    try {
+      const res = await getSourceNodes();
+      if (res.data && res.data.status !== 'Failed' && res.data.data.length) {
+        const updatedFiles = res.data.data
+          .map((item: SourceNode) => {
+            const existingFile = filesData.find((f) => f.name === item.fileName);
+            if (existingFile) {
+              // Check if file is in queue
+              const isInQueue = queue.items.some((f) => f.name === item.fileName);
+              return {
+                ...existingFile,
+                status: isInQueue ? 'Waiting' : getFileSourceStatus(item),
+                nodesCount: item?.nodeCount ?? existingFile.nodesCount,
+                relationshipsCount: item?.relationshipCount ?? existingFile.relationshipsCount,
+                processingTotalTime: item?.processingTime ?? existingFile.processingTotalTime,
+              };
+            }
+            return existingFile;
+          })
+          .filter(Boolean);
+
+        setFilesData(updatedFiles as CustomFile[]);
+      }
+    } catch (error) {
+      console.error('Refresh failed:', error);
+    }
+  };
+
+  const cancelQueue = async () => {
+    if (queue.isEmpty()) {
+      showNormalToast('No files in queue to cancel');
+      return;
+    }
+
+    setIsCancellingQueue(true);
+    try {
+      const queuedFileNames = queue.items.map((f) => f.name as string).filter(Boolean);
+      const queuedFileSources = queue.items.map((f) => f.fileSource as string).filter(Boolean);
+      const res = await cancelAPI(queuedFileNames, queuedFileSources);
+
+      if (res.data.status === 'Success') {
+        queue.clear();
+        await refreshFileData();
+
+        showNormalToast(`Successfully cancelled ${queuedFileNames.length} waiting file(s)`);
+      } else {
+        throw new Error(res.data.error || 'Failed to cancel queue');
+      }
+    } catch (err) {
+      if (err instanceof Error) {
+        showErrorToast(`Failed to cancel queue: ${err.message}`);
+      }
+    } finally {
+      setIsCancellingQueue(false);
+    }
+  };
+
   const cancelHandler = async (fileName: string, id: string, fileSource: string) => {
     setFilesData((prevfiles) =>
       prevfiles.map((curfile) => {
@@ -1032,14 +1095,44 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                     </DataGridComponents.TableResults>
                   );
                 } else if (connectionStatus) {
+                  const queueSize = queue.size();
                   return (
                     <DataGridComponents.TableResults>
-                      <Flex flexDirection='row' gap='0' alignItems='center'>
-                        <span>
-                          <InformationCircleIconOutline className='n-size-token-6' />
-                        </span>
-                        {`Large files may be partially processed up to 10K characters due to resource limit.`}
-                        <span></span>
+                      <Flex flexDirection='row' gap='4' alignItems='center'>
+                        <Flex flexDirection='row' gap='0' alignItems='center'>
+                          <span>
+                            <InformationCircleIconOutline className='n-size-token-6' />
+                          </span>
+                          {`Large files may be partially processed up to 10K characters due to resource limit.`}
+                        </Flex>
+                        {queueSize > 0 && (
+                          <Flex
+                            flexDirection='row'
+                            gap='2'
+                            alignItems='center'
+                            className={`${isCancellingQueue ? 'opacity-50' : 'animate-pulse'} bg-palette-warning-bg-weak rounded-md px-3 py-2 border border-palette-warning-border`}
+                          >
+                            <InformationCircleIconOutline className='n-size-token-5 text-palette-warning-text' />
+                            <Typography variant='body-medium' className='font-semibold text-palette-warning-text'>
+                              {isCancellingQueue
+                                ? 'Cancelling files in waiting queue...'
+                                : `${queueSize} file${queueSize !== 1 ? 's' : ''} waiting in queue`}
+                            </Typography>
+                            {!isReadOnlyUser && (
+                              <IconButtonWithToolTip
+                                placement='right'
+                                text={isCancellingQueue ? 'Cancelling...' : 'Cancel all waiting files'}
+                                size='small'
+                                label='Cancel Queue'
+                                clean
+                                disabled={isCancellingQueue}
+                                onClick={cancelQueue}
+                              >
+                                <XMarkIconOutline className='n-size-token-4' />
+                              </IconButtonWithToolTip>
+                            )}
+                          </Flex>
+                        )}
                       </Flex>
                     </DataGridComponents.TableResults>
                   );
