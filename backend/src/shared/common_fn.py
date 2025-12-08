@@ -113,13 +113,13 @@ def load_embedding_model(embedding_model_name: str):
         logging.info(f"Embedding: Using OpenAI Embeddings , Dimension:{dimension}")
     elif embedding_model_name == "vertexai":        
         embeddings = VertexAIEmbeddings(
-            model="textembedding-gecko@003"
+            model="gemini-embedding-001"
         )
-        dimension = 768
+        dimension = 3072
         logging.info(f"Embedding: Using Vertex AI Embeddings , Dimension:{dimension}")
     elif embedding_model_name == "titan":
         embeddings = get_bedrock_embeddings()
-        dimension = 1536
+        dimension = 1024
         logging.info(f"Embedding: Using bedrock titan Embeddings , Dimension:{dimension}")
     else:
         # embeddings = HuggingFaceEmbeddings(model_name="./local_model")

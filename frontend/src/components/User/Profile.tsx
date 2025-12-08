@@ -38,7 +38,7 @@ export default function Profile() {
             size='large'
             type='letters'
             htmlAttributes={{
-              shape: 'square'
+              shape: 'square',
             }}
           />
           <div className='flex flex-col'>

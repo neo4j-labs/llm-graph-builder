@@ -50,7 +50,7 @@ def get_llm(model: str):
             )
         elif "openai" in model:
             model_name, api_key = env_value.split(",")
-            if "o3-mini" in model:
+            if "mini" in model:
                 llm= ChatOpenAI(
                 api_key=api_key,
                 model=model_name)
@@ -189,17 +189,14 @@ async def get_graph_document_list(
         else:
             node_properties = ["description"]
             relationship_properties = ["description"]
-        TOOL_SUPPORTED_MODELS = {"qwen3", "deepseek"} 
         model_name = get_llm_model_name(llm)
-        ignore_tool_usage = not any(pattern in model_name for pattern in TOOL_SUPPORTED_MODELS)
-        logging.info(f"Keeping ignore tool usage parameter as {ignore_tool_usage}")
         llm_transformer = LLMGraphTransformer(
             llm=llm,
             node_properties=node_properties,
             relationship_properties=relationship_properties,
             allowed_nodes=allowedNodes,
             allowed_relationships=allowedRelationship,
-            ignore_tool_usage=ignore_tool_usage,
+            ignore_tool_usage=True,
             additional_instructions=ADDITIONAL_INSTRUCTIONS+ (additional_instructions if additional_instructions else "")
         )
     

@@ -444,7 +444,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                         status={connectionStatus ? 'online' : 'offline'}
                         type='image'
                         htmlAttributes={{
-                          shape: 'square'
+                          shape: 'square',
                         }}
                       />
                     ) : (
@@ -456,7 +456,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                         status={connectionStatus ? 'online' : 'offline'}
                         type='image'
                         htmlAttributes={{
-                          shape: 'square'
+                          shape: 'square',
                         }}
                       />
                     )}
