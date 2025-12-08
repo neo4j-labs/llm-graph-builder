@@ -1,5 +1,5 @@
 import logging
-from langchain.docstore.document import Document
+from langchain_core.documents import Document
 import os
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
 from langchain_google_vertexai import ChatVertexAI

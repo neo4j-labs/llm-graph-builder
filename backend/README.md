@@ -1,6 +1,11 @@
 # Project Overview
 Welcome to our project! This project is built using FastAPI framework to create a fast and modern API with Python.
 
+## Prerequisites
+
+- Python 3.12 or higher
+- pip (Python package manager)
+
 ## Feature
 API Endpoint : This project provides various API endpoint to perform specific tasks.
 Data Validation : Utilize FastAPI data validation and serialization feature.
@@ -16,9 +21,14 @@ Follow these steps to set up and run the project locally:
 
 > cd llm-graph-builder
 
-2. Install Dependency :
+2. Create a virtual environment (recommended):
 
-> pip install -t requirements.txt
+> python3.12 -m venv venv
+> source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+3. Install Dependency :
+
+> pip install -r requirements.txt -c constraints.txt
 
 ## Run backend project using unicorn
 Run the server:

@@ -8,7 +8,30 @@ Transform unstructured data (PDFs, DOCs, TXT, YouTube videos, web pages, etc.) i
 
 This application allows you to upload files from various sources (local machine, GCS, S3 bucket, or web sources), choose your preferred LLM model, and generate a Knowledge Graph. 
 
----
+## Getting Started
+
+### **Prerequisites**
+- **Python 3.12 or higher** (for local/separate backend deployment)
+- Neo4j Database **5.23 or later** with APOC installed.
+  - **Neo4j Aura** databases (including the free tier) are supported.
+  - If using **Neo4j Desktop**, you will need to deploy the backend and frontend separately (docker-compose is not supported).
+
+#### **Backend Setup**
+1. Create the `.env` file in the `backend` folder by copying `backend/example.env`.
+2. Preconfigure user credentials in the `.env` file to bypass the login dialog:
+   ```bash
+   NEO4J_URI=<your-neo4j-uri>
+   NEO4J_USERNAME=<your-username>
+   NEO4J_PASSWORD=<your-password>
+   NEO4J_DATABASE=<your-database-name>
+   ```
+3. Run:
+   ```bash
+   cd backend
+   python3.12 -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   pip install -r requirements.txt -c constraints.txt
+   uvicorn score:app --reload
 
 ## Key Features
 
