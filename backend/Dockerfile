@@ -8,10 +8,12 @@ RUN apt-get update && \
        libmagic1 \
        libgl1 \
        libglx-mesa0 \
+       libgomp1 \
        libreoffice \
        cmake \
        poppler-utils \
-       tesseract-ocr && \
+       tesseract-ocr \
+       git && \
    apt-get clean && \
    rm -rf /var/lib/apt/lists/*
 
