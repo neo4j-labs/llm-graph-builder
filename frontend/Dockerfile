@@ -22,7 +22,11 @@ ARG VITE_CHUNK_TO_COMBINE=1
 
 WORKDIR /app
 COPY package.json yarn.lock ./
-RUN yarn install
+
+# Using npm registry instead of Yarn's registry
+RUN yarn config set registry https://registry.npmjs.org/
+RUN yarn install --frozen-lockfile
+
 COPY . ./
 RUN VITE_BACKEND_API_URL=$VITE_BACKEND_API_URL \
     VITE_REACT_APP_SOURCES=$VITE_REACT_APP_SOURCES \
