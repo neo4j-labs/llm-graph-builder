@@ -37,9 +37,7 @@ export default function Profile() {
             name={user?.name?.charAt(0).toLocaleUpperCase()}
             size='large'
             type='letters'
-            htmlAttributes={{
-              shape: 'square'
-            }}
+            shape='square'
           />
           <div className='flex flex-col'>
             <Typography variant='body-medium' className='p-0.5'>

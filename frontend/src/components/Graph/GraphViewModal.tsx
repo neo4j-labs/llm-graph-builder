@@ -165,7 +165,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       }
 
       if (!result.data.data) {
-        throw new Error(`No data in response. ${  result.data.error || 'Please try again.'}`);
+        throw new Error(`No data in response. ${result.data.error || 'Please try again.'}`);
       }
 
       const { nodes = [], relationships = [] } = result.data.data;
