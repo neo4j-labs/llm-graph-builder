@@ -17,9 +17,8 @@ services:
       - UPDATE_GRAPH_CHUNKS_PROCESSED=${UPDATE_GRAPH_CHUNKS_PROCESSED-20}
       - NUMBER_OF_CHUNKS_TO_COMBINE=${NUMBER_OF_CHUNKS_TO_COMBINE-6}
       - ENTITY_EMBEDDING=${ENTITY_EMBEDDING-False}
-      - LLM_MODEL_CONFIG_ollama=${LLM_MODEL_CONFIG_ollama-}
-      - LLM_MODEL_CONFIG_qwen_local=${LLM_MODEL_CONFIG_qwen_local-Qwen2.5-14B-Coder-Instruct,http://100.108.2.57/vllm_qwen2.5/}
-      - DEFAULT_DIFFBOT_CHAT_MODEL=${DEFAULT_DIFFBOT_CHAT_MODEL-qwen_local}
+      - LLM_MODEL_CONFIG_local_gpt=${LLM_MODEL_CONFIG_local_gpt-Gemma2-9B-Sealion-V3-Instruct,http://100.108.2.57/vllm_sealion/v1}
+      - DEFAULT_DIFFBOT_CHAT_MODEL=${DEFAULT_DIFFBOT_CHAT_MODEL-local_gpt}
     container_name: neo4j-backend
     # extra_hosts:
     #   - host.docker.internal:host-gateway
@@ -43,8 +42,8 @@ services:
         - VITE_ENV=${VITE_ENV-DEV}
         - VITE_CHAT_MODES=${VITE_CHAT_MODES-}
         - VITE_BATCH_SIZE=${VITE_BATCH_SIZE-2}
-        - VITE_LLM_MODELS=${VITE_LLM_MODELS-}
-        - VITE_LLM_MODELS_PROD=${VITE_LLM_MODELS_PROD-openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash}
+        - VITE_LLM_MODELS=${VITE_LLM_MODELS-local_gpt}
+        - VITE_LLM_MODELS_PROD=${VITE_LLM_MODELS_PROD-local_gpt}
         - VITE_CHUNK_OVERLAP=${VITE_CHUNK_OVERLAP-}
         - VITE_TOKENS_PER_CHUNK=${VITE_TOKENS_PER_CHUNK-}
         - VITE_CHUNK_TO_COMBINE=${VITE_CHUNK_TO_COMBINE-}
