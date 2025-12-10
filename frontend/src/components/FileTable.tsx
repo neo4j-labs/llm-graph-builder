@@ -919,6 +919,11 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
             return curfile;
           })
         );
+        setRowSelection((prev) => {
+          const updated = { ...prev };
+          delete updated[id];
+          return updated;
+        });
         setProcessedCount((prev) => {
           if (prev == batchSize) {
             return batchSize - 1;

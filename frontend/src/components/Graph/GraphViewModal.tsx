@@ -233,9 +233,37 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   }, [open]);
 
   useEffect(() => {
-    if (debouncedQuery) {
-      handleSearch(debouncedQuery);
-    }
+    const query = debouncedQuery.toLowerCase();
+    const updatedNodes = node.map((nodeVal) => {
+      if (query === '') {
+        return {
+          ...nodeVal,
+          selected: false,
+          size: graphLabels.nodeSize,
+        };
+      }
+      const { id, properties, caption } = nodeVal;
+      const propertiesMatch = properties?.id?.toLowerCase().includes(query);
+      const match = id.toLowerCase().includes(query) || propertiesMatch || caption?.toLowerCase().includes(query);
+
+      if (match) {
+        console.log({ id, caption });
+      }
+      return {
+        ...nodeVal,
+        selected: match,
+      };
+    });
+    const matchedNodes = updatedNodes.filter((n) => n.selected);
+    console.log(`Total matches: ${matchedNodes.length} out of ${node.length} nodes`);
+    const updatedRelationships = relationship.map((rel) => {
+      return {
+        ...rel,
+        selected: false,
+      };
+    });
+    setNode(updatedNodes);
+    setRelationship(updatedRelationships);
   }, [debouncedQuery]);
 
   const mouseEventCallbacks = useMemo(
@@ -290,37 +318,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     }
     return relationship.find((relationshipVal) => relationshipVal.id === selected.id);
   }, [selected, relationship, node]);
-
-  const handleSearch = useCallback(
-    (value: string) => {
-      const query = value.toLowerCase();
-      const updatedNodes = node.map((nodeVal) => {
-        if (query === '') {
-          return {
-            ...nodeVal,
-            selected: false,
-            size: graphLabels.nodeSize,
-          };
-        }
-        const { id, properties, caption } = nodeVal;
-        const propertiesMatch = properties?.id?.toLowerCase().includes(query);
-        const match = id.toLowerCase().includes(query) || propertiesMatch || caption?.toLowerCase().includes(query);
-        return {
-          ...nodeVal,
-          selected: match,
-        };
-      });
-      const updatedRelationships = relationship.map((rel) => {
-        return {
-          ...rel,
-          selected: false,
-        };
-      });
-      setNode(updatedNodes);
-      setRelationship(updatedRelationships);
-    },
-    [node, relationship]
-  );
 
   if (!open) {
     return <></>;
