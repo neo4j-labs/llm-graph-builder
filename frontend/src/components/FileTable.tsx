@@ -857,6 +857,15 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
           .filter(Boolean);
 
         setFilesData(updatedFiles as CustomFile[]);
+        setRowSelection((prev) => {
+          const updated = { ...prev };
+          updatedFiles.forEach((file) => {
+            if (file?.status === 'Cancelled' && updated[file.id]) {
+              delete updated[file.id];
+            }
+          });
+          return updated;
+        });
       }
     } catch (error) {
       console.error('Refresh failed:', error);
