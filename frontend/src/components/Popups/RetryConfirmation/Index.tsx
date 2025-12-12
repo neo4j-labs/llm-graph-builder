@@ -25,7 +25,12 @@ function RetryConfirmationDialog({
 }) {
   const { filesData, setFilesData } = useFileContext();
   const file = filesData.find((c) => c.id === fileId);
-  const RetryOptionsForFile = file?.status != 'Completed' ? RETRY_OPIONS : RETRY_OPIONS.slice(0, 2);
+  const RetryOptionsForFile =
+    file?.status === 'Completed'
+      ? RETRY_OPIONS.filter(
+          (option) => option !== 'start_from_beginning' && option !== 'start_from_last_processed_position'
+        )
+      : RETRY_OPIONS;
   return (
     <Dialog isOpen={open} onClose={onClose}>
       <Dialog.Header>Reprocess Options</Dialog.Header>
