@@ -4,7 +4,7 @@ export default function FallBackDialog() {
   return (
     <Dialog isOpen={true} size='medium'>
       <Dialog.Content className='flex justify-center items-center'>
-        <LoadingSpinner size='large' />;
+        <LoadingSpinner size='large' />
       </Dialog.Content>
     </Dialog>
   );

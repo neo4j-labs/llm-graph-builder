@@ -71,7 +71,13 @@ const SourcesInfo: FC<SourcesProps> = ({ loading, mode, chunks, sources }) => {
                     {isAllowedHost(link, ['wikipedia.org']) && (
                       <div className='flex! flex-row justify-between items-center'>
                         <img src={wikipedialogo} width={20} height={20} className='mr-2' alt='Wikipedia Logo' />
-                        <TextLink href={link} type='external' target='_blank'>
+                        <TextLink
+                          href={link}
+                          type='external'
+                          htmlAttributes={{
+                            target: '_blank',
+                          }}
+                        >
                           <HoverableLink url={link}>
                             <Typography
                               variant='body-medium'
@@ -98,7 +104,13 @@ const SourcesInfo: FC<SourcesProps> = ({ loading, mode, chunks, sources }) => {
                       <>
                         <div className='flex! flex-row justiy-between items-center'>
                           <img src={youtubelogo} width={20} height={20} className='mr-2' alt='youtube-source-logo' />
-                          <TextLink href={link} type='external' target='_blank'>
+                          <TextLink
+                            href={link}
+                            type='external'
+                            htmlAttributes={{
+                              target: '_blank',
+                            }}
+                          >
                             <HoverableLink url={link}>
                               <Typography
                                 variant='body-medium'
@@ -115,7 +127,13 @@ const SourcesInfo: FC<SourcesProps> = ({ loading, mode, chunks, sources }) => {
                       !isAllowedHost(link, ['storage.googleapis.com', 'wikipedia.org', 'www.youtube.com']) && (
                         <div className='flex! flex-row justify-between items-center'>
                           <GlobeAltIconOutline className='n-size-token-7' />
-                          <TextLink href={link} type='external' target='_blank'>
+                          <TextLink
+                            href={link}
+                            type='external'
+                            htmlAttributes={{
+                              target: '_blank',
+                            }}
+                          >
                             <Typography variant='body-medium'>{link}</Typography>
                           </TextLink>
                         </div>

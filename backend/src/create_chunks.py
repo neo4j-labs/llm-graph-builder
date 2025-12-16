@@ -1,5 +1,5 @@
 from langchain_text_splitters import TokenTextSplitter
-from langchain.docstore.document import Document
+from langchain_core.documents import Document
 from langchain_neo4j import Neo4jGraph
 import logging
 from src.document_sources.youtube import get_chunks_with_timestamps, get_calculated_timestamps

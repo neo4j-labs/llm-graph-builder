@@ -13,7 +13,13 @@ from ragas.llms import LangchainLLMWrapper
 from ragas.embeddings import LangchainEmbeddingsWrapper
 import nltk
 
-nltk.download('punkt')
+nltk.data.path.append("/usr/local/nltk_data")
+nltk.data.path.append(os.path.expanduser("~/.nltk_data"))
+try:
+    nltk.data.find("tokenizers/punkt")
+except LookupError:
+    nltk.download("punkt", download_dir=os.path.expanduser("~/.nltk_data"))
+    
 load_dotenv()
 
 EMBEDDING_MODEL = os.getenv("RAGAS_EMBEDDING_MODEL")

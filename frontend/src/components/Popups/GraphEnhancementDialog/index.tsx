@@ -50,6 +50,10 @@ export default function GraphEnhancementDialog({
     setPreDefinedPattern,
     setSelectedPreDefOption,
     allPatterns,
+    setDataImporterSchemaDialog,
+    setImporterNodes,
+    setImporterPattern,
+    setImporterRels,
   } = useFileContext();
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
 
@@ -85,7 +89,14 @@ export default function GraphEnhancementDialog({
     setPreDefinedNodes([]);
     setPreDefinedRels([]);
     setPreDefinedPattern([]);
+    // combined Nodes and rels
+    setCombinedNodes([]);
+    setCombinedRels([]);
     setCombinedPatterns([]);
+    // Data Importer
+    setImporterNodes([]);
+    setImporterPattern([]);
+    setImporterRels([]);
     setSelectedPreDefOption(null);
     onClose();
   };
@@ -117,7 +128,7 @@ export default function GraphEnhancementDialog({
               alt='graph-enhancement-options-logo'
             />
             <div className='flex flex-col'>
-              <Typography variant={isTablet ? 'h5' : 'h2'}>Graph Enhancements</Typography>
+              <Typography variant={isTablet ? 'h5' : 'h2'}>Graph Settings</Typography>
               <Typography variant={isTablet ? 'subheading-small' : 'subheading-medium'} className='mb-2'>
                 {isTablet
                   ? `This set of tools will help you enhance the quality of your Knowledge Graph`
@@ -193,6 +204,9 @@ export default function GraphEnhancementDialog({
               setCombinedNodes={setCombinedNodes}
               combinedRels={combinedRels}
               setCombinedRels={setCombinedRels}
+              openDataImporterSchema={() => {
+                setDataImporterSchemaDialog({ triggeredFrom: 'enhancementtab', show: true });
+              }}
             />
           </div>
         </Tabs.TabPanel>

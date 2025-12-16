@@ -2,8 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Select } from '@neo4j-ndl/react';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
 import { OptionType, TupleCreationProps } from '../../../../types';
-import { appLabels, LOCAL_KEYS } from '../../../../utils/Constants';
+import { appLabels } from '../../../../utils/Constants';
 import { useFileContext } from '../../../../context/UsersFiles';
+import { useCredentials } from '../../../../context/UserCredentials';
 interface IErrorState {
   showError: boolean;
   errorMessage: string;
@@ -15,8 +16,16 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
   onPatternChange,
   onAddPattern,
 }) => {
-  const { sourceOptions, setSourceOptions, typeOptions, setTypeOptions, targetOptions, setTargetOptions } =
-    useFileContext();
+  const {
+    sourceOptions,
+    setSourceOptions,
+    typeOptions,
+    setTypeOptions,
+    targetOptions,
+    setTargetOptions,
+    setSelectedRels,
+    selectedRels,
+  } = useFileContext();
   const [inputValues, setInputValues] = useState<{ source: string; type: string; target: string }>({
     source: '',
     type: '',
@@ -28,20 +37,88 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
     target: { showError: false, errorMessage: '' },
   });
   const sourceRef = useRef<HTMLDivElement | null>(null);
+  const { userCredentials } = useCredentials();
+  const deduplicateOptions = (options: OptionType[]): OptionType[] => {
+    const seen = new Set<string>();
+    return options.filter((option) => {
+      if (seen.has(option.value)) {
+        return false;
+      }
+      seen.add(option.value);
+      return true;
+    });
+  };
 
   useEffect(() => {
-    const savedSources = JSON.parse(localStorage.getItem('customSourceOptions') ?? 'null');
-    const savedTypes = JSON.parse(localStorage.getItem('customTypeOptions') ?? 'null');
-    const savedTargets = JSON.parse(localStorage.getItem('customTargetOptions') ?? 'null');
-    if (savedSources) {
-      setSourceOptions(savedSources);
+    const isGlobalStateSet =
+      selectedRels.length > 0 || sourceOptions.length > 0 || typeOptions.length > 0 || targetOptions.length > 0;
+    if (isGlobalStateSet) {
+      return;
     }
-    if (savedTypes) {
-      setTypeOptions(savedTypes);
+    const selectedNodeRelsStr = localStorage.getItem('selectedRelationshipLabels');
+    if (selectedNodeRelsStr != null) {
+      const selectedGraphOptions = JSON.parse(selectedNodeRelsStr);
+      if (userCredentials?.uri === selectedGraphOptions.db) {
+        const rels = selectedGraphOptions.selectedOptions;
+        const sourceSet = new Set<string>();
+        const typeSet = new Set<string>();
+        const targetSet = new Set<string>();
+        const mappedRels = rels.map((rel: { value: string }) => {
+          const [sourceVal, typeVal, targetVal] = rel.value.split(',');
+          sourceSet.add(sourceVal);
+          typeSet.add(typeVal);
+          targetSet.add(targetVal);
+          return {
+            source: { value: sourceVal, label: sourceVal },
+            type: { value: typeVal, label: typeVal },
+            target: { value: targetVal, label: targetVal },
+          };
+        });
+        const savedTypes: OptionType[] = Array.from(typeSet).map((val) => ({ value: val, label: val }));
+        const combinedSourceTarget = new Set([...sourceSet, ...targetSet]);
+        const combinedSourceTargetOptions: OptionType[] = Array.from(combinedSourceTarget).map((val) => ({
+          value: val,
+          label: val,
+        }));
+
+        setSelectedRels(mappedRels);
+        setSourceOptions(combinedSourceTargetOptions);
+        setTypeOptions(savedTypes);
+        setTargetOptions(combinedSourceTargetOptions);
+      }
     }
-    if (savedTargets) {
-      setTargetOptions(savedTargets);
-    }
+  }, []);
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    timeoutId = setTimeout(() => {
+      if (sourceOptions.length > 0) {
+        const deduped = deduplicateOptions(sourceOptions);
+        if (deduped.length !== sourceOptions.length) {
+          setSourceOptions(deduped);
+        }
+      }
+
+      if (targetOptions.length > 0) {
+        const deduped = deduplicateOptions(targetOptions);
+        if (deduped.length !== targetOptions.length) {
+          setTargetOptions(deduped);
+        }
+      }
+
+      if (typeOptions.length > 0) {
+        const deduped = deduplicateOptions(typeOptions);
+        if (deduped.length !== typeOptions.length) {
+          setTypeOptions(deduped);
+        }
+      }
+    }, 1000);
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, []);
 
   const handleNewValue = (newValue: string, type: 'source' | 'type' | 'target') => {
@@ -61,8 +138,12 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
     } else {
       setShowWarning((old) => ({ ...old, [type]: { showError: false, errorMessage: '' } }));
       const newOption: OptionType = { value: newValue.trim(), label: newValue.trim() };
-      const checkUniqueValue = (list: OptionType[], value: OptionType) =>
-        (list.some((opt) => opt.value === value.value) ? list : [...list, value]);
+      const checkUniqueValue = (list: OptionType[], value: OptionType) => {
+        const exists = list.some((opt) => opt.value === value.value);
+        const updatedList = exists ? list : [...list, value];
+        return deduplicateOptions(updatedList);
+      };
+
       switch (type) {
         case 'source':
           setSourceOptions((prev) => checkUniqueValue(prev, newOption));
@@ -79,7 +160,7 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
           onPatternChange(selectedSource as OptionType, selectedType as OptionType, newOption);
           break;
         default:
-          console.log('wrong type added');
+          // Invalid type provided
           break;
       }
       setInputValues((prev) => ({ ...prev, [type]: '' }));
@@ -92,9 +173,6 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
 
   const handleAddPattern = () => {
     onAddPattern();
-    localStorage.setItem(LOCAL_KEYS.source, JSON.stringify(sourceOptions));
-    localStorage.setItem(LOCAL_KEYS.type, JSON.stringify(typeOptions));
-    localStorage.setItem(LOCAL_KEYS.target, JSON.stringify(targetOptions));
     setTimeout(() => {
       const selectInput = sourceRef.current?.querySelector('input');
       selectInput?.focus();

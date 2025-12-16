@@ -1,4 +1,4 @@
-import { Dialog, Button, LoadingSpinner } from '@neo4j-ndl/react';
+import { Dialog, Button, LoadingSpinner, Typography } from '@neo4j-ndl/react';
 import PatternContainer from '../Popups/GraphEnhancementDialog/EnitityExtraction/PatternContainer';
 import { SchemaSelectionProps } from '../../types';
 
@@ -14,6 +14,7 @@ const SchemaSelectionDialog = ({
   highlightPattern,
   onApply,
   onCancel,
+  message,
 }: SchemaSelectionProps) => {
   return (
     <Dialog size='medium' isOpen={open} onClose={onClose} htmlAttributes={{ 'aria-labelledby': 'form-dialog-title' }}>
@@ -23,17 +24,19 @@ const SchemaSelectionDialog = ({
           <div className='my-40 flex! items-center justify-center'>
             <LoadingSpinner size='large' />
           </div>
+        ) : pattern.length !== 0 ? (
+          <PatternContainer
+            pattern={pattern}
+            handleRemove={handleRemove}
+            handleSchemaView={handleSchemaView}
+            highlightPattern={highlightPattern ?? ''}
+            nodes={nodes}
+            rels={rels}
+          ></PatternContainer>
         ) : (
-          pattern.length !== 0 && (
-            <PatternContainer
-              pattern={pattern}
-              handleRemove={handleRemove}
-              handleSchemaView={handleSchemaView}
-              highlightPattern={highlightPattern ?? ''}
-              nodes={nodes}
-              rels={rels}
-            ></PatternContainer>
-          )
+          <div className='my-40 flex! items-center justify-center'>
+            <Typography variant='body-medium'>{message}</Typography>
+          </div>
         )}
         <Dialog.Actions className='mt-3'>
           <Button onClick={onCancel} isDisabled={pattern.length === 0 || loading}>

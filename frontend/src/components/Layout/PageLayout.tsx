@@ -16,14 +16,14 @@ import { envConnectionAPI } from '../../services/ConnectAPI';
 import { healthStatus } from '../../services/HealthStatus';
 import { useAuth0 } from '@auth0/auth0-react';
 import { showErrorToast } from '../../utils/Toasts';
-import { APP_SOURCES, LOCAL_KEYS } from '../../utils/Constants';
+import { APP_SOURCES } from '../../utils/Constants';
 import { createDefaultFormData } from '../../API/Index';
 import LoadDBSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/LoadExistingSchema';
 import PredefinedSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/PredefinedSchemaDialog';
 import { SKIP_AUTH } from '../../utils/Constants';
 import { useNavigate } from 'react-router';
 import { deduplicateByFullPattern, deduplicateNodeByValue } from '../../utils/Utils';
-
+import DataImporterSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/DataImporter';
 const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
 const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
 const GenericModal = lazy(() => import('../WebSources/GenericSourceModal'));
@@ -186,13 +186,20 @@ const PageLayout: React.FC = () => {
     setSchemaValRels,
     setDbNodes,
     setDbRels,
-    setSchemaView,
     setPreDefinedNodes,
     setPreDefinedRels,
     setPreDefinedPattern,
     allPatterns,
     selectedNodes,
     selectedRels,
+    dataImporterSchemaDialog,
+    setDataImporterSchemaDialog,
+    setImporterPattern,
+    setImporterNodes,
+    setImporterRels,
+    setSourceOptions,
+    setTargetOptions,
+    setTypeOptions,
   } = useFileContext();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth0();
@@ -380,10 +387,9 @@ const PageLayout: React.FC = () => {
         const combined = [...rels, ...prevRels];
         return deduplicateByFullPattern(combined);
       });
-      setSchemaView('text');
-      localStorage.setItem(LOCAL_KEYS.source, JSON.stringify(updatedSource));
-      localStorage.setItem(LOCAL_KEYS.type, JSON.stringify(updatedType));
-      localStorage.setItem(LOCAL_KEYS.target, JSON.stringify(updatedTarget));
+      setSourceOptions((prev) => [...prev, ...updatedSource]);
+      setTargetOptions((prev) => [...prev, ...updatedTarget]);
+      setTypeOptions((prev) => [...prev, ...updatedType]);
     },
     []
   );
@@ -409,7 +415,6 @@ const PageLayout: React.FC = () => {
         triggeredFrom: 'loadExistingSchemaApply',
         show: true,
       });
-      setSchemaView('db');
       setDbNodes(nodes);
       setCombinedNodesVal((prevNodes: OptionType[]) => {
         const combined = [...nodes, ...prevNodes];
@@ -420,9 +425,9 @@ const PageLayout: React.FC = () => {
         const combined = [...rels, ...prevRels];
         return deduplicateByFullPattern(combined);
       });
-      localStorage.setItem(LOCAL_KEYS.source, JSON.stringify(updatedSource));
-      localStorage.setItem(LOCAL_KEYS.type, JSON.stringify(updatedType));
-      localStorage.setItem(LOCAL_KEYS.target, JSON.stringify(updatedTarget));
+      setSourceOptions((prev) => [...prev, ...updatedSource]);
+      setTargetOptions((prev) => [...prev, ...updatedTarget]);
+      setTypeOptions((prev) => [...prev, ...updatedType]);
     },
     []
   );
@@ -447,7 +452,6 @@ const PageLayout: React.FC = () => {
         triggeredFrom: 'predefinedSchemaApply',
         show: true,
       });
-      setSchemaView('preDefined');
       setPreDefinedNodes(nodes);
       setCombinedNodesVal((prevNodes: OptionType[]) => {
         const combined = [...nodes, ...prevNodes];
@@ -458,9 +462,47 @@ const PageLayout: React.FC = () => {
         const combined = [...rels, ...prevRels];
         return deduplicateByFullPattern(combined);
       });
-      localStorage.setItem(LOCAL_KEYS.source, JSON.stringify(updatedSource));
-      localStorage.setItem(LOCAL_KEYS.type, JSON.stringify(updatedType));
-      localStorage.setItem(LOCAL_KEYS.target, JSON.stringify(updatedTarget));
+      setSourceOptions((prev) => [...prev, ...updatedSource]);
+      setTargetOptions((prev) => [...prev, ...updatedTarget]);
+      setTypeOptions((prev) => [...prev, ...updatedType]);
+    },
+    []
+  );
+
+  const handleImporterApply = useCallback(
+    (
+      newPatterns: string[],
+      nodes: OptionType[],
+      rels: OptionType[],
+      updatedSource: OptionType[],
+      updatedTarget: OptionType[],
+      updatedType: OptionType[]
+    ) => {
+      setImporterPattern((prevPatterns: string[]) => {
+        const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
+        return uniquePatterns;
+      });
+      setCombinedPatternsVal((prevPatterns: string[]) => {
+        const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
+        return uniquePatterns;
+      });
+      setDataImporterSchemaDialog({
+        triggeredFrom: 'importerSchemaApply',
+        show: true,
+      });
+      setImporterNodes(nodes);
+      setCombinedNodesVal((prevNodes: OptionType[]) => {
+        const combined = [...nodes, ...prevNodes];
+        return deduplicateNodeByValue(combined);
+      });
+      setImporterRels(rels);
+      setCombinedRelsVal((prevRels: OptionType[]) => {
+        const combined = [...rels, ...prevRels];
+        return deduplicateByFullPattern(combined);
+      });
+      setSourceOptions((prev) => [...prev, ...updatedSource]);
+      setTargetOptions((prev) => [...prev, ...updatedTarget]);
+      setTypeOptions((prev) => [...prev, ...updatedType]);
     },
     []
   );
@@ -475,6 +517,10 @@ const PageLayout: React.FC = () => {
 
   const openTextSchema = useCallback(() => {
     setShowTextFromSchemaDialog({ triggeredFrom: 'schemadialog', show: true });
+  }, []);
+
+  const openDataImporterSchema = useCallback(() => {
+    setDataImporterSchemaDialog({ triggeredFrom: 'schemadialog', show: true });
   }, []);
 
   const openChatBot = useCallback(() => setShowChatBot(true), []);
@@ -565,6 +611,20 @@ const PageLayout: React.FC = () => {
         }}
         onApply={handlePredinedApply}
       ></PredefinedSchemaDialog>
+      <DataImporterSchemaDialog
+        open={dataImporterSchemaDialog.show}
+        onClose={() => {
+          setDataImporterSchemaDialog({ triggeredFrom: '', show: false });
+          switch (dataImporterSchemaDialog.triggeredFrom) {
+            case 'enhancementtab':
+              toggleEnhancementDialog();
+              break;
+            default:
+              break;
+          }
+        }}
+        onApply={handleImporterApply}
+      ></DataImporterSchemaDialog>
       {isLargeDesktop ? (
         <div
           className={`layout-wrapper ${!isLeftExpanded ? 'drawerdropzoneclosed' : ''} ${
@@ -596,6 +656,7 @@ const PageLayout: React.FC = () => {
             openTextSchema={openTextSchema}
             openLoadSchema={openLoadSchema}
             openPredefinedSchema={openPredefinedSchema}
+            openDataImporterSchema={openDataImporterSchema}
             showEnhancementDialog={showEnhancementDialog}
             toggleEnhancementDialog={toggleEnhancementDialog}
             setOpenConnection={setOpenConnection}
@@ -670,6 +731,7 @@ const PageLayout: React.FC = () => {
               openTextSchema={openTextSchema}
               openLoadSchema={openLoadSchema}
               openPredefinedSchema={openPredefinedSchema}
+              openDataImporterSchema={openDataImporterSchema}
               showEnhancementDialog={showEnhancementDialog}
               toggleEnhancementDialog={toggleEnhancementDialog}
               setOpenConnection={setOpenConnection}

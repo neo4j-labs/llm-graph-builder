@@ -33,6 +33,7 @@ export default function NewEntityExtractionSetting({
   setCombinedNodes,
   combinedRels,
   setCombinedRels,
+  openDataImporterSchema,
 }: {
   view: 'Dialog' | 'Tabs';
   open?: boolean;
@@ -49,6 +50,7 @@ export default function NewEntityExtractionSetting({
   setCombinedNodes: Dispatch<SetStateAction<OptionType[]>>;
   combinedRels: OptionType[];
   setCombinedRels: Dispatch<SetStateAction<OptionType[]>>;
+  openDataImporterSchema: () => void;
 }) {
   const {
     setSelectedRels,
@@ -70,6 +72,10 @@ export default function NewEntityExtractionSetting({
     setPreDefinedRels,
     preDefinedPattern,
     setPreDefinedPattern,
+    setImporterNodes,
+    setImporterRels,
+    setImporterPattern,
+    importerPattern,
   } = useFileContext();
   const { userCredentials } = useCredentials();
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
@@ -122,6 +128,10 @@ export default function NewEntityExtractionSetting({
     updateLocalStorage(userCredentials!, 'selectedRelationshipLabels', []);
     updateLocalStorage(userCredentials!, 'selectedPattern', []);
     showNormalToast(`Successfully Removed the Schema settings`);
+    // Importer clear
+    setImporterNodes([]);
+    setImporterRels([]);
+    setImporterPattern([]);
   };
 
   const handleFinalApply = (pattern: string[], nodeLables: OptionType[], relationshipLabels: OptionType[]) => {
@@ -234,12 +244,6 @@ export default function NewEntityExtractionSetting({
   };
 
   const handleRemovePattern = (patternToRemove: string) => {
-    const match = patternToRemove.match(/(.*?) -\[:(.*?)\]-> (.*)/);
-    if (!match) {
-      return;
-    }
-    const [, source, type, target] = match.map((s) => s.trim());
-
     if (userDefinedPattern.includes(patternToRemove)) {
       updateStore(userDefinedPattern, patternToRemove, setUserDefinedPattern, setUserDefinedNodes, setUserDefinedRels);
     }
@@ -252,9 +256,30 @@ export default function NewEntityExtractionSetting({
     if (schemaTextPattern.includes(patternToRemove)) {
       updateStore(schemaTextPattern, patternToRemove, setSchemaTextPattern, setSchemaValNodes, setSchemaValRels);
     }
-    setCombinedPatterns((prev) => prev.filter((p) => p !== patternToRemove));
-    setCombinedNodes((prev) => prev.filter((n) => n.value !== source && n.value !== target));
-    setCombinedRels((prev) => prev.filter((r) => r.value !== type));
+    if (importerPattern.includes(patternToRemove)) {
+      updateStore(importerPattern, patternToRemove, setImporterPattern, setImporterNodes, setImporterRels);
+    }
+    const updatedCombinedPatterns = combinedPatterns.filter((p) => p !== patternToRemove);
+    setCombinedPatterns(updatedCombinedPatterns);
+    const updatedTuples: TupleType[] = updatedCombinedPatterns
+      .map((item) => {
+        const parts = item.match(/(.*?) -\[:(.*?)\]-> (.*)/);
+        if (!parts) {
+          return null;
+        }
+        const [src, rel, tgt] = parts.slice(1).map((s) => s.trim());
+        return {
+          value: `${src},${rel},${tgt}`,
+          label: `${src} -[:${rel}]-> ${tgt}`,
+          source: src,
+          target: tgt,
+          type: rel,
+        };
+      })
+      .filter(Boolean) as TupleType[];
+    const { nodeLabelOptions, relationshipTypeOptions } = extractOptions(updatedTuples);
+    setCombinedNodes(nodeLabelOptions);
+    setCombinedRels(relationshipTypeOptions);
     setTupleOptions((prev) => prev.filter((t) => t.label !== patternToRemove));
   };
 
@@ -286,6 +311,16 @@ export default function NewEntityExtractionSetting({
       closeEnhanceGraphSchemaDialog();
     }
     openLoadSchema();
+  }, []);
+
+  const onDataImporterSchemaCLick: MouseEventHandler<HTMLButtonElement> = useCallback(async () => {
+    if (view === 'Dialog' && onClose != undefined) {
+      onClose();
+    }
+    if (view === 'Tabs' && closeEnhanceGraphSchemaDialog != undefined) {
+      closeEnhanceGraphSchemaDialog();
+    }
+    openDataImporterSchema();
   }, []);
 
   return (
@@ -362,6 +397,14 @@ export default function NewEntityExtractionSetting({
                   </TooltipWrapper>
                 }
                 onClick={onSchemaFromTextCLick}
+              />
+              <Menu.Item
+                title={
+                  <TooltipWrapper hasButtonWrapper={true} placement='right' tooltip={tooltips.createSchema}>
+                    Data Importer JSON
+                  </TooltipWrapper>
+                }
+                onClick={onDataImporterSchemaCLick}
               />
             </Menu.Items>
           </Menu>

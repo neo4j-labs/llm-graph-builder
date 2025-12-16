@@ -442,8 +442,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                         size='large'
                         source={ChatBotAvatar}
                         status={connectionStatus ? 'online' : 'offline'}
-                        shape='square'
                         type='image'
+                        shape='square'
                       />
                     ) : (
                       <Avatar
@@ -452,8 +452,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                         name='KM'
                         size='large'
                         status={connectionStatus ? 'online' : 'offline'}
-                        shape='square'
                         type='image'
+                        shape='square'
                       />
                     )}
                   </div>
