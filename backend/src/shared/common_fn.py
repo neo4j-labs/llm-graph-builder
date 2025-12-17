@@ -19,6 +19,7 @@ from urllib.parse import urlparse
 import boto3
 from langchain_community.embeddings import BedrockEmbeddings
 from langchain_core.callbacks import BaseCallbackHandler
+from datetime import datetime
 
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 MODEL_PATH = "./local_model"
@@ -256,28 +257,73 @@ class UniversalTokenUsageHandler(BaseCallbackHandler):
            "completion_tokens": self.total_completion_tokens,
            "total_tokens": self.total_prompt_tokens + self.total_completion_tokens,
        }
-def track_token_usage(email: str, usage: int) -> int:
-   if os.getenv("TRACK_TOKEN_USAGE", "False").lower() != "true":
-       logging.info("Token usage tracking is disabled.")
-       return -1
-   uri = os.getenv("NEO4J_TOKEN_TRACK_URI")
-   user = os.getenv("NEO4J_TOKEN_TRACK_USER")
-   password = os.getenv("NEO4J_TOKEN_TRACK_PASSWORD")
-   database = os.getenv("NEO4J_TOKEN_TRACK_DATABASE", "neo4j")
-   if not all([uri, user, password]):
-       raise EnvironmentError("Neo4j credentials are not set properly.")
-   
-   graph = create_graph_database_connection(uri, user, password, database)
-   cypher_query = """
-   MERGE (u:User {email: $email})
-   ON CREATE SET u.tokenUsage = $usage
-   ON MATCH SET u.tokenUsage = coalesce(u.tokenUsage, 0) + $usage
-   RETURN u.tokenUsage AS latestUsage
-   """
-   email = email.strip().replace('"','')
-   params = {"email": email, "usage": usage}
-   result = graph.query(cypher_query, params)
-   if result and len(result) > 0 and "latestUsage" in result[0]:
-       return result[0]["latestUsage"]
-   else:
-       raise RuntimeError("Failed to fetch updated token usage.")
+def track_token_usage(
+    email: str,
+    usage: int,
+    last_used_model: str = None,
+) -> int:
+    """
+    Tracks and saves LLM token usage and metadata for a user, including previous usage.
+    Args:
+        email (str): User email.
+        usage (int): Total tokens used in this operation.
+        last_used_model (str): Name of the LLM model used.
+    Returns:
+        int: Latest total token usage for the user.
+    """
+    try:
+        
+        if not email or not str(email).strip():
+            email = "Unknown_User"
+        
+        if os.getenv("TRACK_TOKEN_USAGE", "False").lower() != "true":
+            logging.info("Token usage tracking is disabled.")
+            return -1
+
+        uri = os.getenv("NEO4J_TOKEN_TRACK_URI")
+        user = os.getenv("NEO4J_TOKEN_TRACK_USER")
+        password = os.getenv("NEO4J_TOKEN_TRACK_PASSWORD")
+        database = os.getenv("NEO4J_TOKEN_TRACK_DATABASE", "neo4j")
+        if not all([uri, user, password]):
+            raise EnvironmentError("Neo4j credentials are not set properly.")
+
+        graph = create_graph_database_connection(uri, user, password, database)
+        now = datetime.now().astimezone().isoformat()
+        email_clean = email.strip().replace('"', '')
+
+        get_query = "MATCH (u:User {email: $email}) RETURN u.tokenUsage AS prevTokenUsage"
+        prev_result = graph.query(get_query, {"email": email_clean})
+        prev_token_usage = prev_result[0].get("prevTokenUsage", 0) if prev_result and prev_result[0].get("prevTokenUsage") is not None else 0
+
+        cypher_query = """
+        MERGE (u:User {email: $email})
+        ON CREATE SET u.tokenUsage = $usage,
+                      u.prevTokenUsage = 0,
+                      u.lastUsedModel = $lastUsedModel,
+                      u.createdAt = $createdAt,
+                      u.updatedAt = $updatedAt
+        ON MATCH SET  u.prevTokenUsage = u.tokenUsage,
+                      u.tokenUsage = coalesce(u.tokenUsage, 0) + $usage,
+                      u.lastUsedModel = $lastUsedModel,
+                      u.updatedAt = $updatedAt
+        RETURN u.tokenUsage AS latestUsage, u.prevTokenUsage AS prevTokenUsage
+        """
+        params = {
+            "email": email_clean,
+            "usage": usage,
+            "lastUsedModel": last_used_model or "",
+            "createdAt": now,
+            "updatedAt": now,
+        }
+        result = graph.query(cypher_query, params)
+        if result and len(result) > 0 and "latestUsage" in result[0]:
+            logging.info(
+                f"Updated token usage for {email_clean}: {result[0]['latestUsage']} (previous: {result[0].get('prevTokenUsage', 0)})"
+            )
+            return result[0]["latestUsage"]
+        else:
+            logging.error(f"Failed to fetch updated token usage for {email_clean}. Result: {result}")
+            raise RuntimeError("Failed to fetch updated token usage.")
+    except Exception as e:
+        logging.error(f"Error in track_token_usage for {email}: {e}", exc_info=True)
+        raise

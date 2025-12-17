@@ -487,8 +487,8 @@ async def processing_chunks(chunkId_chunkDoc_list,graph,uri, userName, password,
   logging.info(f'Time taken to extract enitities from LLM Graph Builder: {elapsed_entity_extraction:.2f} seconds')
   latency_processing_chunk["entity_extraction"] = f'{elapsed_entity_extraction:.2f}'
 
-  start_save_token = time.time())
-  latest_token = track_token_usage(email,token_usage)
+  start_save_token = time.time()
+  latest_token = track_token_usage(email,token_usage,model)
   end_save_token = time.time()
   elapsed_save_token = end_save_token - start_save_token
   logging.info(f'Time taken to save token count: {elapsed_update_embedding:.2f} seconds')

@@ -359,7 +359,7 @@ def create_community_summaries(gds, model, email):
                token_usage = usage.get("total_tokens", 0)
                if email and token_usage > 0:
                    email = email.strip().replace('"', '')
-                   latest_token = track_token_usage(email, token_usage)
+                   latest_token = track_token_usage(email, token_usage, model)
                    logging.info(f"In community : Total token usage {latest_token} for user {email} ")
        except Exception as err:
            logging.warning(f"Failed to track token usage: {err}")
