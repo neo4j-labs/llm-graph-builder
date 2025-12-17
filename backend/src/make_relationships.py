@@ -1,5 +1,5 @@
 from langchain_neo4j import Neo4jGraph
-from langchain.docstore.document import Document
+from langchain_core.documents import Document
 from src.shared.common_fn import load_embedding_model,execute_graph_query
 import logging
 from typing import List
@@ -11,7 +11,6 @@ from langchain_neo4j import Neo4jVector
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
-EMBEDDING_FUNCTION , EMBEDDING_DIMENSION = load_embedding_model(EMBEDDING_MODEL)
 
 def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_documents_chunk_chunk_Id : list):
     batch_data = []
@@ -39,7 +38,7 @@ def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_docume
 def create_chunk_embeddings(graph, chunkId_chunkDoc_list, file_name):
     isEmbedding = os.getenv('IS_EMBEDDING')
     
-    embeddings, dimension = EMBEDDING_FUNCTION , EMBEDDING_DIMENSION
+    embeddings, dimension = load_embedding_model(EMBEDDING_MODEL)
     logging.info(f'embedding model:{embeddings} and dimesion:{dimension}')
     data_for_query = []
     logging.info(f"update embedding and vector index for chunks")
@@ -153,9 +152,10 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
 def create_chunk_vector_index(graph):
     start_time = time.time()
     try:
-        vector_index_query = "SHOW INDEXES YIELD * WHERE labelsOrTypes = ['Chunk'] and type = 'VECTOR' AND name = 'vector' return options"
+        vector_index_query = "SHOW INDEXES YIELD name, type, labelsOrTypes, properties WHERE name = 'vector' AND type = 'VECTOR' AND 'Chunk' IN labelsOrTypes AND 'embedding' IN properties RETURN name"
         vector_index = execute_graph_query(graph,vector_index_query)
         if not vector_index:
+            EMBEDDING_FUNCTION , EMBEDDING_DIMENSION = load_embedding_model(EMBEDDING_MODEL)
             vector_store = Neo4jVector(embedding=EMBEDDING_FUNCTION,
                                     graph=graph,
                                     node_label="Chunk", 
@@ -168,7 +168,7 @@ def create_chunk_vector_index(graph):
         else:
             logging.info(f"Index already exist,Skipping creation. Time taken: {time.time() - start_time:.2f} seconds")
     except Exception as e:
-        if "EquivalentSchemaRuleAlreadyExists" in str(e):
+        if ("EquivalentSchemaRuleAlreadyExists" in str(e) or "An equivalent index already exists" in str(e)):
             logging.info("Vector index already exists, skipping creation.")
         else:
             raise

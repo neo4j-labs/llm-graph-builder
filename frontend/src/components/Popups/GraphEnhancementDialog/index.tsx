@@ -1,19 +1,60 @@
 import { Dialog, Tabs, Typography, Flex, useMediaQuery } from '@neo4j-ndl/react';
 import graphenhancement from '../../../assets/images/graph-enhancements.svg';
-import { useState } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 import DeletePopUpForOrphanNodes from './DeleteTabForOrphanNodes';
 import deleteOrphanAPI from '../../../services/DeleteOrphanNodes';
-import EntityExtractionSettings from './EnitityExtraction/EntityExtractionSetting';
+import NewEntityExtractionSetting from './EnitityExtraction/NewEntityExtractionSetting';
 import { useFileContext } from '../../../context/UsersFiles';
 import DeduplicationTab from './Deduplication';
 import { tokens } from '@neo4j-ndl/base';
 import PostProcessingCheckList from './PostProcessingCheckList';
 import AdditionalInstructionsText from './AdditionalInstructions';
+import { OptionType } from '../../../types';
 
-export default function GraphEnhancementDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+export default function GraphEnhancementDialog({
+  open,
+  onClose,
+  combinedPatterns,
+  setCombinedPatterns,
+  combinedNodes,
+  setCombinedNodes,
+  combinedRels,
+  setCombinedRels,
+}: {
+  open: boolean;
+  onClose: () => void;
+  combinedPatterns: string[];
+  setCombinedPatterns: Dispatch<SetStateAction<string[]>>;
+  combinedNodes: OptionType[];
+  setCombinedNodes: Dispatch<SetStateAction<OptionType[]>>;
+  combinedRels: OptionType[];
+  setCombinedRels: Dispatch<SetStateAction<OptionType[]>>;
+}) {
   const { breakpoints } = tokens;
   const [orphanDeleteAPIloading, setorphanDeleteAPIloading] = useState<boolean>(false);
-  const { setShowTextFromSchemaDialog } = useFileContext();
+  const {
+    setShowTextFromSchemaDialog,
+    setSchemaLoadDialog,
+    setPredefinedSchemaDialog,
+    setUserDefinedPattern,
+    setUserDefinedNodes,
+    setUserDefinedRels,
+    setDbPattern,
+    setDbNodes,
+    setDbRels,
+    setSchemaValNodes,
+    setSchemaValRels,
+    setSchemaTextPattern,
+    setPreDefinedNodes,
+    setPreDefinedRels,
+    setPreDefinedPattern,
+    setSelectedPreDefOption,
+    allPatterns,
+    setDataImporterSchemaDialog,
+    setImporterNodes,
+    setImporterPattern,
+    setImporterRels,
+  } = useFileContext();
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
 
   const orphanNodesDeleteHandler = async (selectedEntities: string[]) => {
@@ -27,6 +68,39 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
     }
   };
 
+  const handleOnclose = () => {
+    if (allPatterns.length > 0) {
+      onClose();
+      return;
+    }
+    // User
+    setUserDefinedPattern([]);
+    setUserDefinedNodes([]);
+    setUserDefinedRels([]);
+    // DB
+    setDbPattern([]);
+    setDbNodes([]);
+    setDbRels([]);
+    // Text
+    setSchemaTextPattern([]);
+    setSchemaValNodes([]);
+    setSchemaValRels([]);
+    // Predefined
+    setPreDefinedNodes([]);
+    setPreDefinedRels([]);
+    setPreDefinedPattern([]);
+    // combined Nodes and rels
+    setCombinedNodes([]);
+    setCombinedRels([]);
+    setCombinedPatterns([]);
+    // Data Importer
+    setImporterNodes([]);
+    setImporterPattern([]);
+    setImporterRels([]);
+    setSelectedPreDefOption(null);
+    onClose();
+  };
+
   const [activeTab, setactiveTab] = useState<number>(0);
   return (
     <Dialog
@@ -37,7 +111,7 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
       isOpen={open}
       size='unset'
       hasDisabledCloseButton={false}
-      onClose={onClose}
+      onClose={handleOnclose}
     >
       <Dialog.Header className='flex justify-between self-end mb-0! '>
         <div className='n-bg-palette-neutral-bg-weak px-4'>
@@ -51,9 +125,10 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
                 objectFit: 'contain',
               }}
               loading='lazy'
+              alt='graph-enhancement-options-logo'
             />
             <div className='flex flex-col'>
-              <Typography variant={isTablet ? 'h5' : 'h2'}>Graph Enhancements</Typography>
+              <Typography variant={isTablet ? 'h5' : 'h2'}>Graph Settings</Typography>
               <Typography variant={isTablet ? 'subheading-small' : 'subheading-medium'} className='mb-2'>
                 {isTablet
                   ? `This set of tools will help you enhance the quality of your Knowledge Graph`
@@ -112,13 +187,26 @@ export default function GraphEnhancementDialog({ open, onClose }: { open: boolea
       <Dialog.Content className='flex flex-col n-gap-token- grow w-[90%] mx-auto'>
         <Tabs.TabPanel className='n-flex n-flex-col n-gap-token-4' value={activeTab} tabId={0}>
           <div className='w-[80%] mx-auto'>
-            <EntityExtractionSettings
+            <NewEntityExtractionSetting
               view='Tabs'
               openTextSchema={() => {
                 setShowTextFromSchemaDialog({ triggeredFrom: 'enhancementtab', show: true });
               }}
+              openLoadSchema={() => setSchemaLoadDialog({ triggeredFrom: 'enhancementtab', show: true })}
+              openPredefinedSchema={() => {
+                setPredefinedSchemaDialog({ triggeredFrom: 'enhancementtab', show: true });
+              }}
               closeEnhanceGraphSchemaDialog={onClose}
               settingView='headerView'
+              combinedPatterns={combinedPatterns}
+              setCombinedPatterns={setCombinedPatterns}
+              combinedNodes={combinedNodes}
+              setCombinedNodes={setCombinedNodes}
+              combinedRels={combinedRels}
+              setCombinedRels={setCombinedRels}
+              openDataImporterSchema={() => {
+                setDataImporterSchemaDialog({ triggeredFrom: 'enhancementtab', show: true });
+              }}
             />
           </div>
         </Tabs.TabPanel>

@@ -152,11 +152,20 @@ export interface ContentProps {
   showChatBot: boolean;
   openChatBot: () => void;
   openTextSchema: () => void;
+  openLoadSchema: () => void;
+  openPredefinedSchema: () => void;
   showEnhancementDialog: boolean;
   toggleEnhancementDialog: () => void;
   setOpenConnection: Dispatch<SetStateAction<connectionState>>;
   showDisconnectButton: boolean;
   connectionStatus: boolean;
+  combinedPatterns: string[];
+  setCombinedPatterns: Dispatch<SetStateAction<string[]>>;
+  combinedNodes: OptionType[];
+  setCombinedNodes: Dispatch<SetStateAction<OptionType[]>>;
+  combinedRels: OptionType[];
+  setCombinedRels: Dispatch<SetStateAction<OptionType[]>>;
+  openDataImporterSchema: () => void;
 }
 
 export interface FileTableProps {
@@ -406,13 +415,16 @@ export interface commonserverresponse {
   message?: string | orphanTotalNodes;
   file_name?: string;
   data?:
-    | labelsAndTypes
-    | labelsAndTypes[]
+    | OptionType
+    | OptionType[]
+    | string
+    | string[]
     | uploadData
     | orphanNodeProps[]
     | dupNodes[]
     | IUserDetails
-    | { pageitems: chunkdata[]; total_pages: number };
+    | { pageitems: chunkdata[]; total_pages: number }
+    | { triplets: string[] };
 }
 export interface dupNodeProps {
   id: string;
@@ -436,11 +448,15 @@ export interface chunkdata {
   pagenumber: null | number;
 }
 export interface ScehmaFromText extends Partial<commonserverresponse> {
-  data: labelsAndTypes;
+  data: {
+    triplets: string[];
+  };
 }
 
 export interface ServerData extends Partial<commonserverresponse> {
-  data: labelsAndTypes[];
+  data: {
+    triplets: string[];
+  };
 }
 export interface duplicateNodesData extends Partial<commonserverresponse> {
   data: dupNodes[];
@@ -631,16 +647,17 @@ export interface SpeechArgs {
   volume?: number;
 }
 
-export interface SettingsModalProps {
-  open: boolean;
-  onClose: () => void;
-  openTextSchema: () => void;
-  onContinue?: () => void;
-  settingView: 'contentView' | 'headerView';
-  isSchema?: boolean;
-  setIsSchema: Dispatch<SetStateAction<boolean>>;
-  onClear?: () => void;
-}
+// export interface SettingsModalProps {
+//   open: boolean;
+//   onClose: () => void;
+//   openTextSchema: () => void;
+//   openLoadSchema: () => void;
+//   onContinue?: () => void;
+//   settingView: 'contentView' | 'headerView';
+//   isSchema?: boolean;
+//   setIsSchema: Dispatch<SetStateAction<boolean>>;
+//   onClear?: () => void;
+// }
 export interface Menuitems {
   id: string;
   title: string | JSX.Element;
@@ -792,6 +809,7 @@ export interface DatabaseStatusProps {
   isConnected: boolean;
   isGdsActive: boolean;
   uri?: string;
+  database?: string;
 }
 
 export type SourcesProps = {
@@ -847,7 +865,27 @@ export type entityProps = {
 export interface showTextFromSchemaDialogType {
   triggeredFrom: string;
   show: boolean;
+  onApply?: (selectedPattern: string[], nodes: OptionType[], rels: OptionType[]) => void;
 }
+
+export interface schemaLoadDialogType {
+  triggeredFrom: string;
+  show: boolean;
+  onApply?: (selectedPattern: string[], nodes: OptionType[], rels: OptionType[]) => void;
+}
+
+export interface predefinedSchemaDialogType {
+  triggeredFrom: string;
+  show: boolean;
+  onApply?: (selectedPattern: string[], nodes: OptionType[], rels: OptionType[]) => void;
+}
+
+export interface dataImporterSchemaDialogType {
+  triggeredFrom: string;
+  show: boolean;
+  onApply?: (selectedPattern: string[], nodes: OptionType[], rels: OptionType[]) => void;
+}
+
 export interface FileContextType {
   files: (File | null)[] | [];
   filesData: CustomFile[] | [];
@@ -857,10 +895,6 @@ export interface FileContextType {
   setModel: Dispatch<SetStateAction<string>>;
   graphType: string;
   setGraphType: Dispatch<SetStateAction<string>>;
-  selectedNodes: readonly OptionType[];
-  setSelectedNodes: Dispatch<SetStateAction<readonly OptionType[]>>;
-  selectedRels: readonly OptionType[];
-  setSelectedRels: Dispatch<SetStateAction<readonly OptionType[]>>;
   selectedTokenChunkSize: number;
   setSelectedTokenChunkSize: Dispatch<SetStateAction<number>>;
   selectedChunk_overlap: number;
@@ -871,12 +905,8 @@ export interface FileContextType {
   setRowSelection: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   selectedRows: string[];
   setSelectedRows: React.Dispatch<React.SetStateAction<string[]>>;
-  selectedSchemas: readonly OptionType[];
-  setSelectedSchemas: Dispatch<SetStateAction<readonly OptionType[]>>;
   chatModes: string[];
   setchatModes: Dispatch<SetStateAction<string[]>>;
-  showTextFromSchemaDialog: showTextFromSchemaDialogType;
-  setShowTextFromSchemaDialog: React.Dispatch<React.SetStateAction<showTextFromSchemaDialogType>>;
   postProcessingTasks: string[];
   setPostProcessingTasks: React.Dispatch<React.SetStateAction<string[]>>;
   queue: Queue<CustomFile>;
@@ -887,6 +917,69 @@ export interface FileContextType {
   setPostProcessingVal: Dispatch<SetStateAction<boolean>>;
   additionalInstructions: string;
   setAdditionalInstructions: Dispatch<SetStateAction<string>>;
+  // all nodes and all patterns
+  allPatterns: string[];
+  setAllPatterns: Dispatch<SetStateAction<string[]>>;
+  selectedNodes: readonly OptionType[] | OptionType[];
+  setSelectedNodes: Dispatch<SetStateAction<readonly OptionType[] | OptionType[]>>;
+  selectedRels: readonly OptionType[] | OptionType[];
+  setSelectedRels: Dispatch<SetStateAction<readonly OptionType[] | OptionType[]>>;
+  selectedSchemas: readonly OptionType[];
+  setSelectedSchemas: Dispatch<SetStateAction<readonly OptionType[]>>;
+  // user defined schema
+  userDefinedNodes: OptionType[];
+  setUserDefinedNodes: Dispatch<SetStateAction<OptionType[] | OptionType[]>>;
+  userDefinedRels: OptionType[];
+  setUserDefinedRels: Dispatch<SetStateAction<OptionType[] | OptionType[]>>;
+  userDefinedPattern: string[];
+  setUserDefinedPattern: Dispatch<SetStateAction<string[]>>;
+  // Load Existing schema from db
+  schemaLoadDialog: schemaLoadDialogType;
+  setSchemaLoadDialog: React.Dispatch<React.SetStateAction<schemaLoadDialogType>>;
+  dbNodes: OptionType[];
+  setDbNodes: Dispatch<SetStateAction<OptionType[]>>;
+  dbRels: OptionType[];
+  setDbRels: Dispatch<SetStateAction<OptionType[]>>;
+  dbPattern: string[];
+  setDbPattern: Dispatch<SetStateAction<string[]>>;
+  // Predefined schema
+  predefinedSchemaDialog: predefinedSchemaDialogType;
+  setPredefinedSchemaDialog: React.Dispatch<React.SetStateAction<predefinedSchemaDialogType>>;
+  preDefinedNodes: OptionType[];
+  setPreDefinedNodes: Dispatch<SetStateAction<OptionType[]>>;
+  preDefinedRels: OptionType[];
+  setPreDefinedRels: Dispatch<SetStateAction<OptionType[]>>;
+  preDefinedPattern: string[];
+  setPreDefinedPattern: Dispatch<SetStateAction<string[]>>;
+  selectedPreDefOption: OptionType | null;
+  setSelectedPreDefOption: Dispatch<SetStateAction<OptionType | null>>;
+  // schema from text
+  showTextFromSchemaDialog: showTextFromSchemaDialogType;
+  setShowTextFromSchemaDialog: React.Dispatch<React.SetStateAction<showTextFromSchemaDialogType>>;
+  schemaValNodes: OptionType[];
+  setSchemaValNodes: Dispatch<SetStateAction<OptionType[]>>;
+  schemaValRels: OptionType[];
+  setSchemaValRels: Dispatch<SetStateAction<OptionType[]>>;
+  schemaTextPattern: string[];
+  setSchemaTextPattern: Dispatch<SetStateAction<string[]>>;
+
+  // source, type,target options
+  sourceOptions: OptionType[];
+  setSourceOptions: Dispatch<SetStateAction<OptionType[]>>;
+  typeOptions: OptionType[];
+  setTypeOptions: Dispatch<SetStateAction<OptionType[]>>;
+  targetOptions: OptionType[];
+  setTargetOptions: Dispatch<SetStateAction<OptionType[]>>;
+
+  // importer defined schema
+  dataImporterSchemaDialog: dataImporterSchemaDialogType;
+  setDataImporterSchemaDialog: React.Dispatch<React.SetStateAction<dataImporterSchemaDialogType>>;
+  importerNodes: OptionType[];
+  setImporterNodes: Dispatch<SetStateAction<OptionType[]>>;
+  importerRels: OptionType[];
+  setImporterRels: Dispatch<SetStateAction<OptionType[]>>;
+  importerPattern: string[];
+  setImporterPattern: Dispatch<SetStateAction<string[]>>;
 }
 export declare type Side = 'top' | 'right' | 'bottom' | 'left';
 
@@ -968,4 +1061,65 @@ export interface HeaderProp {
   deleteOnClick?: () => void;
   setOpenConnection?: Dispatch<SetStateAction<connectionState>>;
   showBackButton?: boolean;
+}
+
+export type PatternOption = {
+  label: string;
+  value: string;
+};
+
+export type TupleCreationProps = {
+  selectedSource: OptionType | null;
+  selectedType: OptionType | null;
+  selectedTarget: OptionType | null;
+  onPatternChange: (
+    source: OptionType | OptionType[] | null,
+    type: OptionType | OptionType[] | null,
+    target: OptionType | OptionType[] | null
+  ) => void;
+  onAddPattern: () => void;
+  selectedTupleOptions: readonly OptionType[];
+};
+
+export interface TupleType {
+  value: string;
+  label: string;
+  source: string;
+  target: string;
+  type: string;
+  sourceType?: string;
+}
+
+export interface SchemaViewModalProps {
+  open: boolean;
+  inspectedName?: string;
+  setGraphViewOpen: Dispatch<SetStateAction<boolean>>;
+  viewPoint: string;
+  nodeValues?: ExtendedNode[] | OptionType[];
+  relationshipValues?: ExtendedRelationship[] | string[] | OptionType[];
+  selectedRows?: CustomFile[] | undefined;
+  schemaLoading?: boolean;
+  view?: string;
+}
+
+export type UserDefinedGraphSchema = {
+  nodes: ExtendedNode[];
+  relationships: ExtendedRelationship[];
+  scheme: Scheme;
+};
+
+export interface SchemaSelectionProps {
+  open: boolean;
+  onClose: () => void;
+  pattern: string[];
+  nodes: OptionType[];
+  rels: OptionType[];
+  handleRemove: (pattern: string) => void;
+  handleSchemaView: (view?: string) => void;
+  loading: boolean;
+  highlightPattern?: string;
+  onApply: () => void;
+  onCancel: () => void;
+  view?: string;
+  message?: string;
 }

@@ -52,6 +52,7 @@ import { useHasSelections } from '../hooks/useHasSelections';
 import { ChevronUpIconOutline, ChevronDownIconOutline } from '@neo4j-ndl/react/icons';
 import { ThemeWrapperContext } from '../context/ThemeWrapper';
 import { useAuth0 } from '@auth0/auth0-react';
+import React from 'react';
 
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
 
@@ -62,6 +63,12 @@ const Content: React.FC<ContentProps> = ({
   setOpenConnection,
   showDisconnectButton,
   connectionStatus,
+  combinedPatterns,
+  setCombinedPatterns,
+  combinedNodes,
+  setCombinedNodes,
+  combinedRels,
+  setCombinedRels,
 }) => {
   const { breakpoints } = tokens;
   const isTablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
@@ -103,6 +110,7 @@ const Content: React.FC<ContentProps> = ({
     selectedChunk_overlap,
     selectedChunks_to_combine,
     setSelectedNodes,
+    setAllPatterns,
     setRowSelection,
     setSelectedRels,
     setSelectedTokenChunkSize,
@@ -167,10 +175,10 @@ const Content: React.FC<ContentProps> = ({
               ? postProcessingTasks.filter((task) => task !== 'graph_schema_consolidation')
               : postProcessingTasks
             : hasSelections
-            ? postProcessingTasks.filter(
-                (task) => task !== 'graph_schema_consolidation' && task !== 'enable_communities'
-              )
-            : postProcessingTasks.filter((task) => task !== 'enable_communities');
+              ? postProcessingTasks.filter(
+                  (task) => task !== 'graph_schema_consolidation' && task !== 'enable_communities'
+                )
+              : postProcessingTasks.filter((task) => task !== 'enable_communities');
           if (payload.length) {
             const response = await postProcessing(payload);
             if (response.data.status === 'Success') {
@@ -235,7 +243,7 @@ const Content: React.FC<ContentProps> = ({
           ...curfile,
           model:
             curfile.status === 'New' || curfile.status === 'Ready to Reprocess'
-              ? selectedOption?.value ?? ''
+              ? (selectedOption?.value ?? '')
               : curfile.model,
         };
       });
@@ -535,7 +543,7 @@ const Content: React.FC<ContentProps> = ({
     }
   };
 
-  const processWaitingFilesOnRefresh = () => {
+  const processWaitingFilesOnRefresh = useCallback(() => {
     let data = [];
     const processingFilesCount = filesData.filter((f) => f.status === 'Processing').length;
 
@@ -555,7 +563,7 @@ const Content: React.FC<ContentProps> = ({
         .filter((f) => f.status === 'New' || f.status == 'Ready to Reprocess');
       addFilesToQueue(selectedNewFiles as CustomFile[]);
     }
-  };
+  }, [filesData, queue]);
 
   const handleOpenGraphClick = () => {
     const bloomUrl = process.env.VITE_BLOOM_URL;
@@ -586,6 +594,7 @@ const Content: React.FC<ContentProps> = ({
     setUserCredentials({ uri: '', password: '', userName: '', database: '', email: '' });
     setSelectedNodes([]);
     setSelectedRels([]);
+    setAllPatterns([]);
     localStorage.removeItem('selectedTokenChunkSize');
     setSelectedTokenChunkSize(tokenchunkSize);
     localStorage.removeItem('selectedChunk_overlap');
@@ -593,6 +602,9 @@ const Content: React.FC<ContentProps> = ({
     localStorage.removeItem('selectedChunks_to_combine');
     setSelectedChunks_to_combine(chunksToCombine);
     localStorage.removeItem('instructions');
+    localStorage.removeItem('selectedNodeLabels');
+    localStorage.removeItem('selectedRelationshipLabels');
+    localStorage.removeItem('selectedPattern');
     setAdditionalInstructions('');
     setMessages([
       {
@@ -862,7 +874,16 @@ const Content: React.FC<ContentProps> = ({
         ></ChunkPopUp>
       )}
       {showEnhancementDialog && (
-        <GraphEnhancementDialog open={showEnhancementDialog} onClose={toggleEnhancementDialog}></GraphEnhancementDialog>
+        <GraphEnhancementDialog
+          open={showEnhancementDialog}
+          onClose={toggleEnhancementDialog}
+          combinedPatterns={combinedPatterns}
+          setCombinedPatterns={setCombinedPatterns}
+          combinedNodes={combinedNodes}
+          setCombinedNodes={setCombinedNodes}
+          combinedRels={combinedRels}
+          setCombinedRels={setCombinedRels}
+        ></GraphEnhancementDialog>
       )}
       <GraphViewModal
         inspectedName={inspectedName}
@@ -882,7 +903,12 @@ const Content: React.FC<ContentProps> = ({
           <div className='connectionstatus__container'>
             <span className='h6 px-1'>Neo4j connection {isReadOnlyUser ? '(Read only Mode)' : ''}</span>
             <Typography variant='body-medium'>
-              <DatabaseStatusIcon isConnected={connectionStatus} isGdsActive={isGdsActive} uri={userCredentials?.uri} />
+              <DatabaseStatusIcon
+                isConnected={connectionStatus}
+                isGdsActive={isGdsActive}
+                uri={userCredentials?.uri}
+                database={userCredentials?.database}
+              />
               <div className='pt-1 flex! gap-1 items-center'>
                 <div>{!hasSelections ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}</div>
                 <div>
@@ -902,13 +928,13 @@ const Content: React.FC<ContentProps> = ({
             <ButtonWithToolTip
               placement='top'
               text='Enhance graph quality'
-              label='Graph Enhancemnet Settings'
+              label='Graph Enhancement Settings'
               className='mr-2!'
               onClick={toggleEnhancementDialog}
               disabled={!connectionStatus || isReadOnlyUser}
               size={isTablet ? 'small' : 'medium'}
             >
-              Graph Enhancement
+              Graph Settings
             </ButtonWithToolTip>
             {!connectionStatus ? (
               <SpotlightTarget
@@ -938,26 +964,29 @@ const Content: React.FC<ContentProps> = ({
         <FileTable
           connectionStatus={connectionStatus}
           setConnectionStatus={setConnectionStatus}
-          onInspect={(name) => {
+          onInspect={useCallback((name) => {
             setInspectedName(name);
             setOpenGraphView(true);
             setViewPoint('tableView');
-          }}
-          onRetry={(id) => {
+          }, [])}
+          onRetry={useCallback((id) => {
             setRetryFile(id);
             toggleRetryPopup();
-          }}
-          onChunkView={async (name) => {
-            setDocumentName(name);
-            if (name != documentName) {
-              toggleChunkPopup();
-              if (totalPageCount) {
-                setTotalPageCount(null);
+          }, [])}
+          onChunkView={useCallback(
+            async (name) => {
+              setDocumentName(name);
+              if (name != documentName) {
+                toggleChunkPopup();
+                if (totalPageCount) {
+                  setTotalPageCount(null);
+                }
+                setCurrentPage(1);
+                await getChunks(name, 1);
               }
-              setCurrentPage(1);
-              await getChunks(name, 1);
-            }
-          }}
+            },
+            [documentName, totalPageCount]
+          )}
           ref={childRef}
           handleGenerateGraph={processWaitingFilesOnRefresh}
         ></FileTable>
@@ -988,7 +1017,6 @@ const Content: React.FC<ContentProps> = ({
                 {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
               </ButtonWithToolTip>
             </SpotlightTarget>
-
             <ButtonWithToolTip
               text={
                 !selectedfileslength ? tooltips.deleteFile : `${selectedfileslength} ${tooltips.deleteSelectedFiles}`
@@ -1034,7 +1062,6 @@ const Content: React.FC<ContentProps> = ({
                 </div>
               </Flex>
             </SpotlightTarget>
-
             <Menu
               placement='top-end-bottom-end'
               isOpen={isGraphBtnMenuOpen}
@@ -1061,4 +1088,4 @@ const Content: React.FC<ContentProps> = ({
   );
 };
 
-export default Content;
+export default React.memo(Content);

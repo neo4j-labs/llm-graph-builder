@@ -40,7 +40,12 @@ export default function GenericModal({
     >
       <Dialog.Header>
         <div className='flex! flex-row pb-6 items-center mb-2'>
-          <img src={Neo4jDataImportFromCloud} style={{ width: 95, height: 95, marginRight: 10 }} loading='lazy' />
+          <img
+            src={Neo4jDataImportFromCloud}
+            style={{ width: 95, height: 95, marginRight: 10 }}
+            loading='lazy'
+            alt='data-source-logo'
+          />
           <div className='flex flex-col'>
             <Typography variant='h2'>Web Sources</Typography>
             <Typography variant='body-medium' className='mb-2'>
@@ -59,6 +64,7 @@ export default function GenericModal({
             >
               <img
                 src={themeUtils.colorMode === 'light' ? youtubelightmodelogo : youtubedarkmodelogo}
+                alt='youtube-source-logo'
                 className={`brandimg`}
               ></img>
             </Tabs.Tab>
@@ -74,6 +80,7 @@ export default function GenericModal({
               <img
                 src={themeUtils.colorMode === 'dark' ? wikipedialogo : wikipediadarkmode}
                 className={`brandimg`}
+                alt='wikipedia-source-logo'
               ></img>
             </Tabs.Tab>
           )}
@@ -85,7 +92,11 @@ export default function GenericModal({
                 'aria-label': 'Inbox',
               }}
             >
-              <img src={themeUtils.colorMode === 'dark' ? webdarkmode : weblogo} className={`brandimg`}></img>
+              <img
+                src={themeUtils.colorMode === 'dark' ? webdarkmode : weblogo}
+                alt='web-source-logo'
+                className={`brandimg`}
+              ></img>
             </Tabs.Tab>
           )}
         </Tabs>

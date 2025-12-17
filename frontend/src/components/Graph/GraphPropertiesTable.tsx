@@ -2,7 +2,6 @@ import { GraphLabel, Typography } from '@neo4j-ndl/react';
 import { GraphPropertiesTableProps } from '../../types';
 
 const GraphPropertiesTable = ({ propertiesWithTypes }: GraphPropertiesTableProps): JSX.Element => {
-  console.log('proerties', propertiesWithTypes);
   return (
     <div className='flex w-full flex-col break-all px-4 text-sm' data-testid='viz-details-pane-properties-table'>
       <div className='mb-1 flex! flex-row pl-2'>

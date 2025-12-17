@@ -11,6 +11,6 @@ def get_documents_from_Wikipedia(wiki_query:str, language:str):
   except Exception as e:
     message="Failed To Process Wikipedia Query"
     error_message = str(e)
-    logging.exception(f'Failed To Process Wikipedia Query: {file_name}, Exception Stack trace: {error_message}')
+    logging.exception(f'Failed To Process Wikipedia Query, Exception Stack trace: {error_message}')
     raise LLMGraphBuilderException(error_message+' '+message)
   

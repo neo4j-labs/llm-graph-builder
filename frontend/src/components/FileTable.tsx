@@ -67,6 +67,7 @@ import { ThemeWrapperContext } from '../context/ThemeWrapper';
 import BreakDownPopOver from './BreakDownPopOver';
 import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
 import { useAuth0 } from '@auth0/auth0-react';
+import React from 'react';
 
 let onlyfortheFirstRender = true;
 
@@ -78,6 +79,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isCancellingQueue, setIsCancellingQueue] = useState<boolean>(false);
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [filetypeFilter, setFiletypeFilter] = useState<string>('');
   const [fileSourceFilter, setFileSourceFilter] = useState<string>('');
@@ -89,7 +91,6 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
   const islargeDesktop = useMediaQuery(`(min-width:1440px )`);
   const tableRef = useRef(null);
   const { isAuthenticated } = useAuth0();
-
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
       showNormalToast(`${fileName} will take approx ${time} ${inMinutes ? 'Min' : 'Sec'}`);
@@ -105,7 +106,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
     setCopyRow(true);
     setTimeout(() => {
       setCopyRow(false);
-    }, 5000);
+    }, 3000);
   };
   const columns = useMemo(
     () => [
@@ -387,7 +388,13 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
             return (
               <Flex>
                 <span>
-                  <TextLink type='external' target='_blank' href={info.row.original.sourceUrl}>
+                  <TextLink
+                    type='external'
+                    href={info.row.original.sourceUrl}
+                    htmlAttributes={{
+                      target: '_blank',
+                    }}
+                  >
                     {info.row.original.fileSource}
                   </TextLink>
                 </span>
@@ -582,7 +589,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
             </IconButtonWithToolTip>
             <IconButtonWithToolTip
               placement='left'
-              text='copy'
+              text={copyRow ? 'Copied' : 'Copy'}
               size='large'
               label='Copy Row'
               disabled={info.getValue() === 'Uploading'}
@@ -593,7 +600,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                 handleCopy(copied);
               }}
             >
-              <ClipboardDocumentIconSolid className={`${copyRow} ? 'cursor-wait': 'cursor`} />
+              <ClipboardDocumentIconSolid className={`${copyRow ? 'cursor-progress!' : 'cursor'} `} />
             </IconButtonWithToolTip>
             <IconButtonWithToolTip
               onClick={() => {
@@ -616,7 +623,16 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
         footer: (info) => info.column.id,
       }),
     ],
-    [filesData.length, statusFilter, filetypeFilter, llmtypeFilter, fileSourceFilter, isReadOnlyUser, colorMode]
+    [
+      filesData.length,
+      statusFilter,
+      filetypeFilter,
+      llmtypeFilter,
+      fileSourceFilter,
+      isReadOnlyUser,
+      colorMode,
+      copyRow,
+    ]
   );
 
   const table = useReactTable({
@@ -729,8 +745,8 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                   name: item?.fileName,
                   size: item?.fileSize ?? 0,
                   type: item?.fileType?.includes('.')
-                    ? item?.fileType?.substring(1)?.toUpperCase() ?? 'None'
-                    : item?.fileType?.toUpperCase() ?? 'None',
+                    ? (item?.fileType?.substring(1)?.toUpperCase() ?? 'None')
+                    : (item?.fileType?.toUpperCase() ?? 'None'),
                   nodesCount: item?.nodeCount ?? 0,
                   processingTotalTime: item?.processingTime ?? 'None',
                   relationshipsCount: item?.relationshipCount ?? 0,
@@ -818,6 +834,73 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
     }
   }, [connectionStatus, filesData.length, isReadOnlyUser]);
 
+  const refreshFileData = async () => {
+    try {
+      const res = await getSourceNodes();
+      if (res.data && res.data.status !== 'Failed' && res.data.data.length) {
+        const updatedFiles = res.data.data
+          .map((item: SourceNode) => {
+            const existingFile = filesData.find((f) => f.name === item.fileName);
+            if (existingFile) {
+              // Check if file is in queue
+              const isInQueue = queue.items.some((f) => f.name === item.fileName);
+              return {
+                ...existingFile,
+                status: isInQueue ? 'Waiting' : getFileSourceStatus(item),
+                nodesCount: item?.nodeCount ?? existingFile.nodesCount,
+                relationshipsCount: item?.relationshipCount ?? existingFile.relationshipsCount,
+                processingTotalTime: item?.processingTime ?? existingFile.processingTotalTime,
+              };
+            }
+            return existingFile;
+          })
+          .filter(Boolean);
+
+        setFilesData(updatedFiles as CustomFile[]);
+        setRowSelection((prev) => {
+          const updated = { ...prev };
+          updatedFiles.forEach((file) => {
+            if (file?.status === 'Cancelled' && updated[file.id]) {
+              delete updated[file.id];
+            }
+          });
+          return updated;
+        });
+      }
+    } catch (error) {
+      console.error('Refresh failed:', error);
+    }
+  };
+
+  const cancelQueue = async () => {
+    if (queue.isEmpty()) {
+      showNormalToast('No files in queue to cancel');
+      return;
+    }
+
+    setIsCancellingQueue(true);
+    try {
+      const queuedFileNames = queue.items.map((f) => f.name as string).filter(Boolean);
+      const queuedFileSources = queue.items.map((f) => f.fileSource as string).filter(Boolean);
+      const res = await cancelAPI(queuedFileNames, queuedFileSources);
+
+      if (res.data.status === 'Success') {
+        queue.clear();
+        await refreshFileData();
+
+        showNormalToast(`Successfully cancelled ${queuedFileNames.length} waiting file(s)`);
+      } else {
+        throw new Error(res.data.error || 'Failed to cancel queue');
+      }
+    } catch (err) {
+      if (err instanceof Error) {
+        showErrorToast(`Failed to cancel queue: ${err.message}`);
+      }
+    } finally {
+      setIsCancellingQueue(false);
+    }
+  };
+
   const cancelHandler = async (fileName: string, id: string, fileSource: string) => {
     setFilesData((prevfiles) =>
       prevfiles.map((curfile) => {
@@ -845,6 +928,11 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
             return curfile;
           })
         );
+        setRowSelection((prev) => {
+          const updated = { ...prev };
+          delete updated[id];
+          return updated;
+        });
         setProcessedCount((prev) => {
           if (prev == batchSize) {
             return batchSize - 1;
@@ -1021,14 +1109,44 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                     </DataGridComponents.TableResults>
                   );
                 } else if (connectionStatus && !isNeo4jUser) {
+                  const queueSize = queue.size();
                   return (
                     <DataGridComponents.TableResults>
-                      <Flex flexDirection='row' gap='0' alignItems='center'>
-                        <span>
-                          <InformationCircleIconOutline className='n-size-token-6' />
-                        </span>
-                        {`Large files may be partially processed up to 10K characters due to resource limit.`}
-                        <span></span>
+                      <Flex flexDirection='row' gap='4' alignItems='center'>
+                        <Flex flexDirection='row' gap='0' alignItems='center'>
+                          <span>
+                            <InformationCircleIconOutline className='n-size-token-6' />
+                          </span>
+                          {`Large files may be partially processed up to 10K characters due to resource limit.`}
+                        </Flex>
+                        {queueSize > 0 && (
+                          <Flex
+                            flexDirection='row'
+                            gap='2'
+                            alignItems='center'
+                            className={`${isCancellingQueue ? 'opacity-50' : 'animate-pulse'} bg-palette-warning-bg-weak rounded-md px-3 py-2 border border-palette-warning-border`}
+                          >
+                            <InformationCircleIconOutline className='n-size-token-5 text-palette-warning-text' />
+                            <Typography variant='body-medium' className='font-semibold text-palette-warning-text'>
+                              {isCancellingQueue
+                                ? 'Cancelling files in waiting queue...'
+                                : `${queueSize} file${queueSize !== 1 ? 's' : ''} waiting in queue`}
+                            </Typography>
+                            {!isReadOnlyUser && (
+                              <IconButtonWithToolTip
+                                placement='right'
+                                text={isCancellingQueue ? 'Cancelling...' : 'Cancel all waiting files'}
+                                size='small'
+                                label='Cancel Queue'
+                                clean
+                                disabled={isCancellingQueue}
+                                onClick={cancelQueue}
+                              >
+                                <XMarkIconOutline className='n-size-token-4' />
+                              </IconButtonWithToolTip>
+                            )}
+                          </Flex>
+                        )}
                       </Flex>
                     </DataGridComponents.TableResults>
                   );
@@ -1061,4 +1179,4 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
   );
 };
 
-export default forwardRef(FileTable);
+export default React.memo(forwardRef(FileTable));

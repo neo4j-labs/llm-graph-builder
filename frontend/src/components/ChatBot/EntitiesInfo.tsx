@@ -15,15 +15,18 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
   const [loadingGraphView, setLoadingGraphView] = useState(false);
 
   const groupedEntities = useMemo<{ [key: string]: GroupedEntity }>(() => {
-    const items = infoEntities.reduce((acc, entity) => {
-      const { label, text } = parseEntity(entity);
-      if (!acc[label]) {
-        const newColor = calcWordColor(label);
-        acc[label] = { texts: new Set(), color: newColor };
-      }
-      acc[label].texts.add(text);
-      return acc;
-    }, {} as Record<string, { texts: Set<string>; color: string }>);
+    const items = infoEntities.reduce(
+      (acc, entity) => {
+        const { label, text } = parseEntity(entity);
+        if (!acc[label]) {
+          const newColor = calcWordColor(label);
+          acc[label] = { texts: new Set(), color: newColor };
+        }
+        acc[label].texts.add(text);
+        return acc;
+      },
+      {} as Record<string, { texts: Set<string>; color: string }>
+    );
     return items;
   }, [infoEntities]);
   const labelCounts = useMemo(() => {

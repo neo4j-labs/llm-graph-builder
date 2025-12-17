@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.main import *
 from src.QA_integration import *
 from src.shared.common_fn import *
+from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 import uvicorn
 import asyncio
 import base64
@@ -32,11 +33,10 @@ from fastapi.middleware.gzip import GZipMiddleware
 from src.ragas_eval import *
 from starlette.types import ASGIApp, Receive, Scope, Send
 from langchain_neo4j import Neo4jGraph
-from src.entities.source_node import sourceNode
 from starlette.middleware.sessions import SessionMiddleware
-from starlette.responses import HTMLResponse, RedirectResponse,JSONResponse
 from starlette.requests import Request
-import secrets
+from dotenv import load_dotenv
+load_dotenv(override=True)
 
 logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
@@ -113,9 +113,9 @@ app.add_middleware(
 )
 app.add_middleware(SessionMiddleware, secret_key=os.urandom(24))
 
-is_gemini_enabled = os.environ.get("GEMINI_ENABLED", "False").lower() in ("true", "1", "yes")
-if is_gemini_enabled:
-    add_routes(app,ChatVertexAI(), path="/vertexai")
+# is_gemini_enabled = os.environ.get("GEMINI_ENABLED", "False").lower() in ("true", "1", "yes")
+# if is_gemini_enabled:
+#     add_routes(app,ChatVertexAI(), path="/vertexai")
 
 app.add_api_route("/health", health([healthy_condition, healthy]))
 
@@ -310,7 +310,8 @@ async def extract_knowledge_graph_from_file(
         node_detail = graphDb_data_Access.get_current_status_document_node(file_name)
         # Set the status "Completed" in logging becuase we are treating these error already handled by application as like custom errors.
         json_obj = {'api_name':'extract','message':error_message,'file_created_at':formatted_time(node_detail[0]['created_time']),'error_message':error_message, 'file_name': file_name,'status':'Completed',
-                    'db_url':uri, 'userName':userName, 'database':database,'success_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':email}
+                    'db_url':uri, 'userName':userName, 'database':database,'success_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':email,
+                    'allowedNodes': allowedNodes, 'allowedRelationship': allowedRelationship}
         logger.log_struct(json_obj, "INFO")
         logging.exception(f'File Failed in extraction: {e}')
         return create_api_response("Failed", message = error_message, error=error_message, file_name=file_name)
@@ -325,7 +326,8 @@ async def extract_knowledge_graph_from_file(
         node_detail = graphDb_data_Access.get_current_status_document_node(file_name)
         
         json_obj = {'api_name':'extract','message':message,'file_created_at':formatted_time(node_detail[0]['created_time']),'error_message':error_message, 'file_name': file_name,'status':'Failed',
-                    'db_url':uri, 'userName':userName, 'database':database,'failed_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':email}
+                    'db_url':uri, 'userName':userName, 'database':database,'failed_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':email,
+                    'allowedNodes': allowedNodes, 'allowedRelationship': allowedRelationship}
         logger.log_struct(json_obj, "ERROR")
         logging.exception(f'File Failed in extraction: {e}')
         return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = file_name)
@@ -344,14 +346,6 @@ async def get_source_list(
     """
     try:
         start = time.time()
-        # if password is not None and password != "null":
-        #     decoded_password = decode_password(password)
-        # else:
-        #     decoded_password = None
-        #     userName = None
-        #     database = None
-        # if " " in uri:
-        #     uri = uri.replace(" ","+")
         result = await asyncio.to_thread(get_source_list_from_graph,uri,userName,password,database)
         end = time.time()
         elapsed_time = end - start
@@ -587,8 +581,11 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
         else:
             return create_api_response('Success', message=result)
     except Exception as e:
-        message="Unable to upload large file into chunks. "
+        message="Unable to upload file in chunks"
         error_message = str(e)
+        graph = create_graph_database_connection(uri, userName, password, database)   
+        graphDb_data_Access = graphDBdataAccess(graph)
+        graphDb_data_Access.update_exception_db(originalname,error_message)
         logging.info(message)
         logging.exception(f'Exception:{error_message}')
         return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = originalname)
@@ -599,8 +596,7 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
 async def get_structured_schema(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None),email=Form(None)):
     try:
         start = time.time()
-        graph = create_graph_database_connection(uri, userName, password, database)
-        result = await asyncio.to_thread(get_labels_and_relationtypes, graph)
+        result = await asyncio.to_thread(get_labels_and_relationtypes, uri, userName, password, database)
         end = time.time()
         elapsed_time = end - start
         logging.info(f'Schema result from DB: {result}')
@@ -767,10 +763,10 @@ async def cancelled_job(uri=Form(None), userName=Form(None), password=Form(None)
         gc.collect()
 
 @app.post("/populate_graph_schema")
-async def populate_graph_schema(input_text=Form(None), model=Form(None), is_schema_description_checked=Form(None),email=Form(None)):
+async def populate_graph_schema(input_text=Form(None), model=Form(None), is_schema_description_checked=Form(None),is_local_storage=Form(None),email=Form(None)):
     try:
         start = time.time()
-        result = populate_graph_schema_from_text(input_text, model, is_schema_description_checked)
+        result = populate_graph_schema_from_text(input_text, model, is_schema_description_checked, is_local_storage)
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name':'populate_graph_schema', 'model':model, 'is_schema_description_checked':is_schema_description_checked, 'input_text':input_text, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
@@ -897,17 +893,14 @@ async def retry_processing(uri=Form(None), userName=Form(None), password=Form(No
     try:
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
-        chunks = execute_graph_query(graph,QUERY_TO_GET_CHUNKS,params={"filename":file_name})
+        # chunks = execute_graph_query(graph,QUERY_TO_GET_CHUNKS,params={"filename":file_name})
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name':'retry_processing', 'db_url':uri, 'userName':userName, 'database':database, 'file_name':file_name,'retry_condition':retry_condition,
                             'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
         logger.log_struct(json_obj, "INFO")
-        if chunks[0]['text'] is None or chunks[0]['text']=="" or not chunks :
-            return create_api_response('Success',message=f"Chunks are not created for the file{file_name}. Please upload again the file to re-process.",data=chunks)
-        else:
-            await asyncio.to_thread(set_status_retry, graph,file_name,retry_condition)
-            return create_api_response('Success',message=f"Status set to Ready to Reprocess for filename : {file_name}")
+        await asyncio.to_thread(set_status_retry, graph,file_name,retry_condition)
+        return create_api_response('Success',message=f"Status set to Ready to Reprocess for filename : {file_name}")
     except Exception as e:
         job_status = "Failed"
         message="Unable to set status to Retry"

@@ -18,8 +18,8 @@ export default function SelectedJobList({
           ? postProcessingTasks.filter((task) => task !== 'graph_checkup')
           : postProcessingTasks
         : isSchema
-        ? postProcessingTasks.filter((task) => task !== 'graph_checkup' && task !== 'enable_communities')
-        : postProcessingTasks.filter((task) => task !== 'enable_communities')),
+          ? postProcessingTasks.filter((task) => task !== 'graph_checkup' && task !== 'enable_communities')
+          : postProcessingTasks.filter((task) => task !== 'enable_communities')),
     [isGdsActive, isSchema, postProcessingTasks]
   );
   return (

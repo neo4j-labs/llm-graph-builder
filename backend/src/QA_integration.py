@@ -11,12 +11,11 @@ from dotenv import load_dotenv
 from langchain_neo4j import Neo4jVector
 from langchain_neo4j import Neo4jChatMessageHistory
 from langchain_neo4j import GraphCypherQAChain
-from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableBranch
-from langchain.retrievers import ContextualCompressionRetriever
-from langchain_community.document_transformers import EmbeddingsRedundantFilter
-from langchain.retrievers.document_compressors import EmbeddingsFilter, DocumentCompressorPipeline
+from langchain_classic.retrievers import ContextualCompressionRetriever
+from langchain_classic.retrievers.document_compressors import EmbeddingsFilter, DocumentCompressorPipeline
 from langchain_text_splitters import TokenTextSplitter
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_community.chat_message_histories import ChatMessageHistory 
@@ -38,7 +37,6 @@ from src.shared.constants import *
 load_dotenv() 
 
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
-EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL) 
 
 class SessionChatHistory:
     history_dict = {}
@@ -304,6 +302,7 @@ def create_document_retriever_chain(llm, retriever):
         output_parser = StrOutputParser()
 
         splitter = TokenTextSplitter(chunk_size=CHAT_DOC_SPLIT_SIZE, chunk_overlap=0)
+        EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL) 
         embeddings_filter = EmbeddingsFilter(
             embeddings=EMBEDDING_FUNCTION,
             similarity_threshold=CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD
@@ -344,7 +343,7 @@ def initialize_neo4j_vector(graph, chat_mode_settings):
 
         if not retrieval_query or not index_name:
             raise ValueError("Required settings 'retrieval_query' or 'index_name' are missing.")
-
+        EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL) 
         if keyword_index:
             neo_db = Neo4jVector.from_existing_graph(
                 embedding=EMBEDDING_FUNCTION,

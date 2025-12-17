@@ -126,7 +126,7 @@ const DropZone: FunctionComponent = () => {
                   if (curfile.name == file.name) {
                     return {
                       ...curfile,
-                      uploadProgress: chunkNumber * chunkProgressIncrement,
+                      uploadProgress: Math.ceil(chunkNumber * chunkProgressIncrement),
                     };
                   }
                   return curfile;
@@ -138,7 +138,7 @@ const DropZone: FunctionComponent = () => {
                 if (curfile.name == file.name) {
                   return {
                     ...curfile,
-                    uploadProgress: chunkNumber * chunkProgressIncrement,
+                    uploadProgress: Math.ceil(chunkNumber * chunkProgressIncrement),
                   };
                 }
                 return curfile;

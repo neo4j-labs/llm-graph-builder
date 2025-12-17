@@ -1,4 +1,4 @@
-import { Checkbox, DataGrid, DataGridComponents, Flex, TextLink, Typography, useMediaQuery } from '@neo4j-ndl/react';
+import { Checkbox, DataGrid, DataGridComponents, Flex, Typography, useMediaQuery, Button } from '@neo4j-ndl/react';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { orphanNodeProps } from '../../../../types';
 import { getOrphanNodes } from '../../../../services/GetOrphanNodes';
@@ -115,15 +115,16 @@ export default function DeletePopUpForOrphanNodes({
         cell: (info) => {
           return (
             <div className='textellipsis'>
-              <TextLink
+              <Button
                 className='cursor-pointer! inline!'
+                fill='text'
+                onClick={() => handleOrphanNodeClick(info.row.id, 'chatInfoView')}
                 htmlAttributes={{
-                  onClick: () => handleOrphanNodeClick(info.row.id, 'chatInfoView'),
                   title: info.getValue() ? info.getValue() : info.row.id,
                 }}
               >
                 {info.getValue() ? info.getValue() : info.row.id}
-              </TextLink>
+              </Button>
             </div>
           );
         },
@@ -298,10 +299,10 @@ export default function DeletePopUpForOrphanNodes({
               isLoading
                 ? 'Fetching Orphan Nodes'
                 : !isLoading && !orphanNodes.length
-                ? 'No Nodes Found'
-                : !table.getSelectedRowModel().rows.length
-                ? 'No Nodes Selected'
-                : `Delete Selected Nodes (${table.getSelectedRowModel().rows.length})`
+                  ? 'No Nodes Found'
+                  : !table.getSelectedRowModel().rows.length
+                    ? 'No Nodes Selected'
+                    : `Delete Selected Nodes (${table.getSelectedRowModel().rows.length})`
             }
             label='Orphan Node deletion button'
             disabled={!table.getSelectedRowModel().rows.length}

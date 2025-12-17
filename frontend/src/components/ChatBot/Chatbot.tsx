@@ -41,6 +41,8 @@ import { downloadClickHandler, getDateTime } from '../../utils/Utils';
 import ChatModesSwitch from './ChatModesSwitch';
 import CommonActions from './CommonChatActions';
 import Loader from '../../utils/Loader';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 const InfoModal = lazy(() => import('./ChatInfoModal'));
 if (typeof window !== 'undefined') {
   if (!sessionStorage.getItem('session_id')) {
@@ -440,8 +442,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                         size='large'
                         source={ChatBotAvatar}
                         status={connectionStatus ? 'online' : 'offline'}
-                        shape='square'
                         type='image'
+                        shape='square'
                       />
                     ) : (
                       <Avatar
@@ -450,8 +452,8 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                         name='KM'
                         size='large'
                         status={connectionStatus ? 'online' : 'offline'}
-                        shape='square'
                         type='image'
+                        shape='square'
                       />
                     )}
                   </div>
@@ -467,9 +469,17 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                         chat.isLoading && index === listMessages.length - 1 && chat.user === 'chatbot' ? 'loader' : ''
                       }`}
                     >
-                      <ReactMarkdown className={!isFullScreen ? 'max-w-[250px]' : ''}>
-                        {chat.modes[chat.currentMode]?.message || ''}
-                      </ReactMarkdown>
+                      <div
+                        className={
+                          !isFullScreen
+                            ? 'max-w-[250px] prose prose-sm sm:prose lg:prose-lg xl:prose-xl'
+                            : 'prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none'
+                        }
+                      >
+                        <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw] as any}>
+                          {chat.modes[chat.currentMode]?.message || ''}
+                        </ReactMarkdown>
+                      </div>
                     </div>
                     <div>
                       <div>

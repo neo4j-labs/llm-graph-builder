@@ -5,7 +5,9 @@ import Loader from '../../../utils/Loader';
 import { useMemo } from 'react';
 import chunklogo from '../../../assets/images/chunks.svg';
 import { tokens } from '@neo4j-ndl/base';
-
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
+import ReactMarkdown from 'react-markdown';
 const ChunkPopUp = ({
   showChunkPopup,
   chunks,
@@ -38,6 +40,7 @@ const ChunkPopUp = ({
             src={chunklogo}
             style={{ width: isTablet ? 100 : 140, height: isTablet ? 100 : 140, marginRight: 10 }}
             loading='lazy'
+            alt='chunks-logo'
           />
           <div className='flex flex-col'>
             <Typography variant='h2'>Text Chunks</Typography>
@@ -71,7 +74,12 @@ const ChunkPopUp = ({
                       <Typography variant='subheading-small'>{c.pagenumber}</Typography>
                     </Flex>
                   ) : null}
-                  <Typography variant='body-medium'>{c.text}</Typography>
+
+                  <div className='prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none'>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw] as any}>
+                      {c.text}
+                    </ReactMarkdown>
+                  </div>
                 </Flex>
               </li>
             ))}
