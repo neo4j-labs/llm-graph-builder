@@ -45,7 +45,7 @@ import retry from '../services/Retry';
 import { showErrorToast, showNormalToast, showSuccessToast } from '../utils/Toasts';
 import { useMessageContext } from '../context/UserMessages';
 import PostProcessingToast from './Popups/GraphEnhancementDialog/PostProcessingCheckList/PostProcessingToast';
-import { getChunkText } from '../services/getChunkText';
+import { getChunkText } from '../services/GetChunkTexts';
 import ChunkPopUp from './Popups/ChunkPopUp';
 import { isExpired, isFileReadyToProcess } from '../utils/Utils';
 import { useHasSelections } from '../hooks/useHasSelections';
@@ -628,7 +628,7 @@ const Content: React.FC<ContentProps> = ({
       setRetryLoading(true);
       const response = await retry(filename, retryoption);
       setRetryLoading(false);
-      if (response.data.status === 'Failure') {
+      if (response.data.status === 'Failed') {
         throw new Error(response.data.error);
       } else if (
         response.data.status === 'Success' &&
@@ -832,32 +832,6 @@ const Content: React.FC<ContentProps> = ({
             loading={extractLoading}
             selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
             isLargeDocumentAlert={true}
-          ></ConfirmationDialog>
-        </Suspense>
-      )}
-      {showExpirationModal && filesForProcessing.length && (
-        <Suspense fallback={<FallBackDialog />}>
-          <ConfirmationDialog
-            open={showExpirationModal}
-            largeFiles={filesForProcessing}
-            extractHandler={handleGenerateGraph}
-            onClose={() => setShowExpirationModal(false)}
-            loading={extractLoading}
-            selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
-            isLargeDocumentAlert={false}
-          ></ConfirmationDialog>
-        </Suspense>
-      )}
-      {showExpirationModal && filesForProcessing.length && (
-        <Suspense fallback={<FallBackDialog />}>
-          <ConfirmationDialog
-            open={showExpirationModal}
-            largeFiles={filesForProcessing}
-            extractHandler={handleGenerateGraph}
-            onClose={() => setShowExpirationModal(false)}
-            loading={extractLoading}
-            selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
-            isLargeDocumentAlert={false}
           ></ConfirmationDialog>
         </Suspense>
       )}
