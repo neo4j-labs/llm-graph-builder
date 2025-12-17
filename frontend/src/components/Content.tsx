@@ -45,7 +45,7 @@ import retry from '../services/Retry';
 import { showErrorToast, showNormalToast, showSuccessToast } from '../utils/Toasts';
 import { useMessageContext } from '../context/UserMessages';
 import PostProcessingToast from './Popups/GraphEnhancementDialog/PostProcessingCheckList/PostProcessingToast';
-import { getChunkText } from '../services/GetChunkTexts';
+import { getChunkText } from '../services/getChunkText';
 import ChunkPopUp from './Popups/ChunkPopUp';
 import { isExpired, isFileReadyToProcess } from '../utils/Utils';
 import { useHasSelections } from '../hooks/useHasSelections';

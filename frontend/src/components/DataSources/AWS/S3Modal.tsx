@@ -5,7 +5,7 @@ import { urlScanAPI } from '../../../services/URLScan';
 import { validation } from '../../../utils/Utils';
 import { useFileContext } from '../../../context/UsersFiles';
 import { v4 as uuidv4 } from 'uuid';
-import CustomModal from '../../UI/CustomModal';
+import CustomModal from '../../../HOC/CustomModal';
 import { buttonCaptions } from '../../../utils/Constants';
 
 const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
