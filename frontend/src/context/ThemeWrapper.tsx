@@ -41,7 +41,7 @@ const ThemeWrapper = ({ children }: ThemeWrapperProps) => {
   };
 
   if (usingPreferredMode) {
-    prefersDarkMode ? themeBodyInjection('light') : themeBodyInjection('dark');
+    prefersDarkMode ? themeBodyInjection('dark') : themeBodyInjection('light');
   }
   return (
     <ThemeWrapperContext.Provider value={themeWrapperUtils}>
