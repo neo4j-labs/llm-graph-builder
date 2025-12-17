@@ -14,6 +14,7 @@ import { useFileContext } from '../../../../context/UsersFiles';
 import { showNormalToast } from '../../../../utils/Toasts';
 import { OnChangeValue } from 'react-select';
 import { OptionType } from '../../../../types';
+import { useCredentials } from '../../../../context/UserCredentials';
 
 export default function AdditionalInstructionsText({
   closeEnhanceGraphSchemaDialog,
@@ -22,6 +23,7 @@ export default function AdditionalInstructionsText({
 }) {
   const { breakpoints } = tokens;
   const tablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
+  const { isNeo4jUser } = useCredentials();
   const {
     additionalInstructions,
     setAdditionalInstructions,
@@ -134,7 +136,11 @@ export default function AdditionalInstructionsText({
                 `,
           }}
           type='creatable'
-          helpText='The maximum token limit is 10,000 for LLM processing. The total number of chunks will be calculated as 10,000 divided by the tokens per chunk you select. For example, selecting 500 tokens per chunk results in 20 chunks (10,000 / 500).'
+          helpText={
+            !isNeo4jUser
+              ? 'The maximum token limit is 10,000 for LLM processing. The total number of chunks will be calculated as 10,000 divided by the tokens per chunk you select. For example, selecting 500 tokens per chunk results in 20 chunks (10,000 / 500).'
+              : null
+          }
         />
         <Select
           label='Chunk Overlap'
