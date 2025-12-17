@@ -128,15 +128,6 @@ def get_llm(model: str):
     logging.info(f"Model created - Model Version: {model}")
     return llm, model_name
 
-def get_llm_model_name(llm):
-    """Extract name of llm model from llm object"""
-    for attr in ["model_name", "model", "model_id"]:
-        model_name = getattr(llm, attr, None)
-        if model_name:
-            return model_name.lower()
-    print("Could not determine model name; defaulting to empty string")
-    return ""
-
 def get_combined_chunks(chunkId_chunkDoc_list, chunks_to_combine):
     combined_chunk_document_list = []
     combined_chunks_page_content = [
@@ -189,7 +180,6 @@ async def get_graph_document_list(
         else:
             node_properties = ["description"]
             relationship_properties = ["description"]
-        model_name = get_llm_model_name(llm)
         llm_transformer = LLMGraphTransformer(
             llm=llm,
             node_properties=node_properties,
