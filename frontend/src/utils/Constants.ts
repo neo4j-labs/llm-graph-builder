@@ -175,7 +175,7 @@ export const tooltips = {
   predinedSchema: 'Predefined Schema',
   dataImporterJson: 'Data Importer JSON',
 };
-export const PRODMODELS = ['openai_5_mini,gemini_2.5_flash,diffbot,anthropic_claude_4.5_haiku'];
+export const PRODMODELS = ['openai_gpt_5_mini', 'gemini_2.5_flash', 'diffbot', 'anthropic_claude_4.5_haiku'];
 export const buttonCaptions = {
   exploreGraphWithBloom: 'Explore Graph',
   showPreviewGraph: 'Preview Graph',
