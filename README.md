@@ -221,46 +221,23 @@ VITE_BACKEND_API_URL=${VITE_BACKEND_API_URL-backendurl}
 | ENABLE_USER_AGENT       | Optional            | true       | Boolean value to enable/disable neo4j user agent                                                   |
 | DUPLICATE_TEXT_DISTANCE | Mandatory            | 5 | This value used to find distance for all node pairs in the graph and calculated based on node properties    |
 | DUPLICATE_SCORE_VALUE   | Mandatory            | 0.97 | Node score value to match duplicate node                                                                 |
-| EFFECTIVE_SEARCH_RATIO  | Mandatory            | 1 |                 |
-| GRAPH_CLEANUP_MODEL     | Optional            | "openai_gpt_5_mini" |  Model name to clean-up graph in post processing                                                           |
-| MAX_TOKEN_CHUNK_SIZE    | Optional            | 10000 | Maximum token size to process file content                                                               |
-| YOUTUBE_TRANSCRIPT_PROXY| Optional            |   | Proxy key to process youtube video for getting transcript                                                   |
-| EMBEDDING_MODEL         | Optional            |               | Model for generating the text embedding (default all-MiniLM-L6-v2 , openai , vertexai, titan)                |
-| IS_EMBEDDING            | Optional            | true          | Flag to enable text embedding                                                                    |
-| KNN_MIN_SCORE           | Optional            | 0.94          | Minimum score for KNN algorithm                                                                  |
-| GEMINI_ENABLED          | Optional            | False         | Flag to enable Gemini                                                                             |
-| GCP_LOG_METRICS_ENABLED | Optional            | False         | Flag to enable Google Cloud logs                                                                 |
-| NUMBER_OF_CHUNKS_TO_COMBINE | Optional        | 5             | Number of chunks to combine when processing embeddings                                           |
-| UPDATE_GRAPH_CHUNKS_PROCESSED | Optional      | 20            | Number of chunks processed before updating progress                                        |
-| NEO4J_URI               | Optional            | neo4j://database:7687 | URI for Neo4j database                                                                  |
-| NEO4J_USERNAME          | Optional            | neo4j         | Username for Neo4j database                                                                       |
-| NEO4J_PASSWORD          | Optional            | password      | Password for Neo4j database                                                                       |
-| LANGCHAIN_API_KEY       | Optional            |               | API key for Langchain                                                                             |
-| LANGCHAIN_PROJECT       | Optional            |               | Project for Langchain                                                                             |
-| LANGCHAIN_TRACING_V2    | Optional            | true          | Flag to enable Langchain tracing                                                                  |
-| GCS_FILE_CACHE          | Optional            | False         | If set to True, will save the files to process into GCS. If set to False, will save the files locally   |
-| LANGCHAIN_ENDPOINT      | Optional            | https://api.smith.langchain.com | Endpoint for Langchain API                                                            |
-| ENTITY_EMBEDDING        | Optional            | False         | If set to True, It will add embeddings for each entity in database |
-| LLM_MODEL_CONFIG_ollama_<model_name>          | Optional      |               | Set ollama config as - model_name,model_local_url for local deployments |
-| RAGAS_EMBEDDING_MODEL         | Optional      |               | embedding model used by ragas evaluation framework                               |
-|                                                                                                                                                                        |
+| EFFECTIVE_SEARCH_RATIO  | Mandatory            | 1 |                 |                                                                                                                                                                            |
+|
+|
+|
+|
 | **FRONTEND ENV** 
+|
 | VITE_BLOOM_URL               | Mandatory           | https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true | URL for Bloom visualization |
 | VITE_REACT_APP_SOURCES       | Mandatory          | local,youtube,wiki,s3 | List of input sources that will be available                                               |
 | VITE_CHAT_MODES              | Mandatory          | vector,graph+vector,graph,hybrid | Chat modes available for Q&A
 | VITE_ENV                     | Mandatory          | DEV or PROD           | Environment variable for the app|
 | VITE_LLM_MODELS              | Mandatory | 'diffbot,openai_gpt_3.5,openai_gpt_4o,openai_gpt_4o_mini,gemini_1.5_pro,gemini_1.5_flash,azure_ai_gpt_35,azure_ai_gpt_4o,ollama_llama3,groq_llama3_70b,anthropic_claude_3_5_sonnet' | Supported Models For the application
 | VITE_BACKEND_API_URL         | Optional           | http://localhost:8000 | URL for backend API    |
-| VITE_TIME_PER_PAGE          | Optional           | 50             | Time per page for processing                                                                    |
-| VITE_CHUNK_SIZE              | Optional           | 5242880       | Size of each chunk of file for upload                                                                |
-| VITE_GOOGLE_CLIENT_ID        | Optional           |               | Client ID for Google authentication                                                              |
-| VITE_LLM_MODELS_PROD         | Optional      | openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash | To Distinguish models based on the Enviornment PROD or DEV |
-| VITE_AUTH0_CLIENT_ID | Mandatory if you are enabling Authentication otherwise it is optional |       |Okta Oauth Client ID for authentication
-| VITE_AUTH0_DOMAIN | Mandatory if you are enabling Authentication otherwise it is optional |           | Okta Oauth Cliend Domain
-| VITE_SKIP_AUTH | Optional | true | Flag to skip the authentication 
-| VITE_CHUNK_OVERLAP | Optional |   20  | variable to configure chunk overlap
-| VITE_TOKENS_PER_CHUNK | Optional |  100  | variable to configure tokens count per chunk.This gives flexibility for users who may require different chunk sizes for various tokenization tasks, especially when working with large datasets or specific language models.
-| VITE_CHUNK_TO_COMBINE | Optional |   1  | variable to configure number of chunks to combine for parllel processing. 
+
+
+### Refer to this link for additional  [Environment Variables.](https://docs.google.com/spreadsheets/d/1DBg3m3hz0PCZNqIjyYJsYALzdWwMlLah706Xvxt62Tk/edit?gid=0#gid=0)
+
 
 
 ## Links
