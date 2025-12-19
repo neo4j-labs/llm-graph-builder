@@ -209,10 +209,10 @@ VITE_BACKEND_API_URL=${VITE_BACKEND_API_URL-backendurl}
 ---
 
 
-## ENV
+## [ENV](https://docs.google.com/spreadsheets/d/1DBg3m3hz0PCZNqIjyYJsYALzdWwMlLah706Xvxt62Tk/edit?gid=184339012#gid=184339012)
 | Env Variable Name       | Mandatory/Optional | Default Value | Description                                                                                      |
 |-------------------------|--------------------|---------------|--------------------------------------------------------------------------------------------------|
-|                                                                                                                                                                 |
+|                                                                                             |
 | **BACKEND ENV** 
 | OPENAI_API_KEY          | Mandatory           |            |An OpenAPI Key is required to use open LLM model to authenticate andn track requests                |
 | DIFFBOT_API_KEY         | Mandatory           |            |API key is required to use Diffbot's NLP service to extraction entities and relatioship from unstructured data|
@@ -221,24 +221,20 @@ VITE_BACKEND_API_URL=${VITE_BACKEND_API_URL-backendurl}
 | ENABLE_USER_AGENT       | Optional            | true       | Boolean value to enable/disable neo4j user agent                                                   |
 | DUPLICATE_TEXT_DISTANCE | Mandatory            | 5 | This value used to find distance for all node pairs in the graph and calculated based on node properties    |
 | DUPLICATE_SCORE_VALUE   | Mandatory            | 0.97 | Node score value to match duplicate node                                                                 |
-| EFFECTIVE_SEARCH_RATIO  | Mandatory            | 1 |                 |                                                                                                                                                                            |
-|
-|
-|
-|
+| EFFECTIVE_SEARCH_RATIO  | Mandatory            | 1 |                 |
+|                                                                                                                                                                        |
 | **FRONTEND ENV** 
-|
 | VITE_BLOOM_URL               | Mandatory           | https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true | URL for Bloom visualization |
 | VITE_REACT_APP_SOURCES       | Mandatory          | local,youtube,wiki,s3 | List of input sources that will be available                                               |
 | VITE_CHAT_MODES              | Mandatory          | vector,graph+vector,graph,hybrid | Chat modes available for Q&A
 | VITE_ENV                     | Mandatory          | DEV or PROD           | Environment variable for the app|
 | VITE_LLM_MODELS              | Mandatory | 'diffbot,openai_gpt_3.5,openai_gpt_4o,openai_gpt_4o_mini,gemini_1.5_pro,gemini_1.5_flash,azure_ai_gpt_35,azure_ai_gpt_4o,ollama_llama3,groq_llama3_70b,anthropic_claude_3_5_sonnet' | Supported Models For the application
-| VITE_BACKEND_API_URL         | Optional           | http://localhost:8000 | URL for backend API    |
-
+| VITE_AUTH0_CLIENT_ID | Mandatory if you are enabling Authentication otherwise it is optional |       |Okta Oauth Client ID for authentication
+| VITE_AUTH0_DOMAIN | Mandatory if you are enabling Authentication otherwise it is optional |           | Okta Oauth Cliend Domain
 
 ### Refer to this link for additional  [Environment Variables.](https://docs.google.com/spreadsheets/d/1DBg3m3hz0PCZNqIjyYJsYALzdWwMlLah706Xvxt62Tk/edit?gid=0#gid=0)
 
-
+---
 
 ## Links
 
