@@ -1,6 +1,7 @@
 import logging
 import os
 import time
+from src.entities.user import user_info
 from neo4j.exceptions import TransientError
 from langchain_neo4j import Neo4jGraph
 from src.shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file, load_embedding_model
@@ -583,3 +584,83 @@ class graphDBdataAccess:
                 """
         param = {"file_name" : file_name}
         return self.execute_query(query, param)
+    
+    def save_user_info(self, email, db_url):
+        is_neo4j_user = False
+        userInfo = user_info()
+        userInfo.db_url = db_url
+        logging.info(f"Saving user info in database and email value is : {email}")
+        if email is not None and email != '':
+            domain = "@neo4j.com"
+            is_neo4j_user = domain in email
+            userInfo.is_neo4j_user = is_neo4j_user
+            userInfo.email_id = email
+            query = """
+            CREATE (u:User {email: $email})
+            SET u.is_neo4j_user = $is_neo4j_user,
+                u.daily_tokens_limit = $daily_tokens_limit,
+                u.daily_tokens_used = $daily_tokens_used,
+                u.monthly_tokens_limit = $monthly_tokens_limit,
+                u.monthly_tokens_used = $monthly_tokens_used,
+                u.total_tokens_used = $total_tokens_used,
+                u.db_url = $db_url,
+                u.lastUsedModel = $lastUsedModel,
+                u.prevTokenUsage = $prevTokenUsage,
+                u.updatedAt = datetime(),
+            RETURN u
+            """
+        else:
+            userInfo.is_neo4j_user = is_neo4j_user
+            userInfo.email = None
+            query = """
+            CREATE (u:User {db_url: $db_url})
+            SET u.is_neo4j_user = $is_neo4j_user,
+                u.daily_tokens_limit = $daily_tokens_limit,
+                u.daily_tokens_used = $daily_tokens_used,
+                u.monthly_tokens_limit = $monthly_tokens_limit,
+                u.monthly_tokens_used = $monthly_tokens_used,
+                u.total_tokens_used = $total_tokens_used,
+                u.lastUsedModel = $lastUsedModel,
+                u.prevTokenUsage = $prevTokenUsage,
+                u.updatedAt = datetime(),
+                u.email = $email
+            RETURN u
+            """
+
+        param = {
+            "email": userInfo.email,
+            "is_neo4j_user": userInfo.is_neo4j_user,
+            "daily_tokens_limit": userInfo.daily_tokens_limit,
+            "daily_tokens_used": userInfo.daily_tokens_used,
+            "monthly_tokens_limit": userInfo.monthly_tokens_limit,
+            "monthly_tokens_used": userInfo.monthly_tokens_used,
+            "total_tokens_used": userInfo.total_tokens_used,
+            "db_url": userInfo.db_url,
+            "lastUsedModel": userInfo.lastUsedModel,
+            "prevTokenUsage": userInfo.prevTokenUsage,
+            "updatedAt": userInfo.updatedAt
+        }
+        logging.info(f"Final query to save user info : {query}")
+        return self.execute_query(query, param)
+
+        
+    
+
+    def get_user_detail(self, email, uri):
+        query = """
+            MATCH (u:User)
+            WHERE ($email IS NOT NULL AND u.email = $email)
+               OR ($email IS NULL AND u.db_url = $db_url)
+            RETURN 
+                u.daily_tokens_limit AS daily_tokens_limit,
+                u.remaining_daily_tokens_limit AS remaining_daily_tokens_limit,
+                u.monthly_tokens_limit AS monthly_tokens_limit,
+                u.remaining_monthly_tokens_limit AS remaining_monthly_tokens_limit,
+                u.is_neo4j_user AS is_neo4j_user,
+                u.email AS email,
+                u.db_url AS db_url,
+                u.lastUsedModel AS lastUsedModel,
+                u.prevTokenUsage AS prevTokenUsage,
+                """
+        param = {"email" : email, "db_url": uri}
+        return self.execute_query(query,param)
