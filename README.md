@@ -8,7 +8,30 @@ Transform unstructured data (PDFs, DOCs, TXT, YouTube videos, web pages, etc.) i
 
 This application allows you to upload files from various sources (local machine, GCS, S3 bucket, or web sources), choose your preferred LLM model, and generate a Knowledge Graph. 
 
----
+## Getting Started
+
+### **Prerequisites**
+- **Python 3.12 or higher** (for local/separate backend deployment)
+- Neo4j Database **5.23 or later** with APOC installed.
+  - **Neo4j Aura** databases (including the free tier) are supported.
+  - If using **Neo4j Desktop**, you will need to deploy the backend and frontend separately (docker-compose is not supported).
+
+#### **Backend Setup**
+1. Create the `.env` file in the `backend` folder by copying `backend/example.env`.
+2. Preconfigure user credentials in the `.env` file to bypass the login dialog:
+   ```bash
+   NEO4J_URI=<your-neo4j-uri>
+   NEO4J_USERNAME=<your-username>
+   NEO4J_PASSWORD=<your-password>
+   NEO4J_DATABASE=<your-database-name>
+   ```
+3. Run:
+   ```bash
+   cd backend
+   python3.12 -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   pip install -r requirements.txt -c constraints.txt
+   uvicorn score:app --reload
 
 ## Key Features
 
@@ -63,7 +86,7 @@ Run the application using the default `docker-compose` configuration.
    - By default, only OpenAI and Diffbot are enabled. Gemini requires additional GCP configurations. 
    - Use the `VITE_LLM_MODELS_PROD` variable to configure the models you need. Example:
      ```bash
-     VITE_LLM_MODELS_PROD="openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash"
+     VITE_LLM_MODELS_PROD="openai_gpt_5_mini,diffbot,gemini_2.5_flash"
      ```
 
 2. **Input Sources**: 
@@ -199,10 +222,10 @@ VITE_BACKEND_API_URL=${VITE_BACKEND_API_URL-backendurl}
 | DUPLICATE_TEXT_DISTANCE | Mandatory            | 5 | This value used to find distance for all node pairs in the graph and calculated based on node properties    |
 | DUPLICATE_SCORE_VALUE   | Mandatory            | 0.97 | Node score value to match duplicate node                                                                 |
 | EFFECTIVE_SEARCH_RATIO  | Mandatory            | 1 |                 |
-| GRAPH_CLEANUP_MODEL     | Optional            | 0.97 |  Model name to clean-up graph in post processing                                                           |
+| GRAPH_CLEANUP_MODEL     | Optional            | "openai_gpt_5_mini" |  Model name to clean-up graph in post processing                                                           |
 | MAX_TOKEN_CHUNK_SIZE    | Optional            | 10000 | Maximum token size to process file content                                                               |
 | YOUTUBE_TRANSCRIPT_PROXY| Optional            |   | Proxy key to process youtube video for getting transcript                                                   |
-| EMBEDDING_MODEL         | Optional            | all-MiniLM-L6-v2 | Model for generating the text embedding (all-MiniLM-L6-v2 , openai , vertexai)                |
+| EMBEDDING_MODEL         | Optional            |               | Model for generating the text embedding (default all-MiniLM-L6-v2 , openai , vertexai, titan)                |
 | IS_EMBEDDING            | Optional            | true          | Flag to enable text embedding                                                                    |
 | KNN_MIN_SCORE           | Optional            | 0.94          | Minimum score for KNN algorithm                                                                  |
 | GEMINI_ENABLED          | Optional            | False         | Flag to enable Gemini                                                                             |
@@ -219,7 +242,7 @@ VITE_BACKEND_API_URL=${VITE_BACKEND_API_URL-backendurl}
 | LANGCHAIN_ENDPOINT      | Optional            | https://api.smith.langchain.com | Endpoint for Langchain API                                                            |
 | ENTITY_EMBEDDING        | Optional            | False         | If set to True, It will add embeddings for each entity in database |
 | LLM_MODEL_CONFIG_ollama_<model_name>          | Optional      |               | Set ollama config as - model_name,model_local_url for local deployments |
-| RAGAS_EMBEDDING_MODEL         | Optional      | openai              | embedding model used by ragas evaluation framework                               |
+| RAGAS_EMBEDDING_MODEL         | Optional      |               | embedding model used by ragas evaluation framework                               |
 |                                                                                                                                                                        |
 | **FRONTEND ENV** 
 | VITE_BLOOM_URL               | Mandatory           | https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true | URL for Bloom visualization |

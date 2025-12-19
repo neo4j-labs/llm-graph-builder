@@ -566,7 +566,7 @@ const Content: React.FC<ContentProps> = ({
   }, [filesData, queue]);
 
   const handleOpenGraphClick = () => {
-    const bloomUrl = process.env.VITE_BLOOM_URL;
+    const bloomUrl = import.meta.env.VITE_BLOOM_URL;
     let finalUrl = bloomUrl;
     if (userCredentials?.database && userCredentials.uri && userCredentials.userName) {
       const uriCoded = userCredentials.uri.replace(/:\d+$/, '');
@@ -954,13 +954,13 @@ const Content: React.FC<ContentProps> = ({
             <ButtonWithToolTip
               placement='top'
               text='Enhance graph quality'
-              label='Graph Enhancemnet Settings'
+              label='Graph Enhancement Settings'
               className='mr-2!'
               onClick={toggleEnhancementDialog}
               disabled={!connectionStatus || isReadOnlyUser}
               size={isTablet ? 'small' : 'medium'}
             >
-              Graph Enhancement
+              Graph Settings
             </ButtonWithToolTip>
             {!connectionStatus ? (
               <SpotlightTarget

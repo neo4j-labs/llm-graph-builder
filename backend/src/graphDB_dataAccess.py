@@ -239,7 +239,6 @@ class graphDBdataAccess:
         
         embedding_model = os.getenv('EMBEDDING_MODEL')
         embeddings, application_dimension = load_embedding_model(embedding_model)
-        logging.info(f'embedding model:{embeddings} and dimesion:{application_dimension}')
 
         gds_status = self.check_gds_version()
         write_access = self.check_account_access(database=database)

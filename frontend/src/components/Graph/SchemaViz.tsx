@@ -1,5 +1,5 @@
 import { Banner, Dialog, IconButtonArray, LoadingSpinner, useDebounceValue } from '@neo4j-ndl/react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   BasicNode,
   BasicRelationship,
@@ -95,9 +95,32 @@ const SchemaViz: React.FunctionComponent<SchemaViewModalProps> = ({
   }, [open]);
 
   useEffect(() => {
-    if (debouncedQuery) {
-      handleSearch(debouncedQuery);
-    }
+    const query = debouncedQuery.toLowerCase();
+    const updatedNodes = nodes.map((node) => {
+      if (query === '') {
+        return {
+          ...node,
+          selected: false,
+          size: graphLabels.nodeSize,
+        };
+      }
+      const { id, properties, caption } = node;
+      const propertiesMatch = properties?.id?.toLowerCase().includes(query);
+      const match = id.toLowerCase().includes(query) || propertiesMatch || caption?.toLowerCase().includes(query);
+      return {
+        ...node,
+        selected: match,
+      };
+    });
+    // deactivating any active relationships
+    const updatedRelationships = relationships.map((rel) => {
+      return {
+        ...rel,
+        selected: false,
+      };
+    });
+    setNodes(updatedNodes);
+    setRelationships(updatedRelationships);
   }, [debouncedQuery]);
 
   const selectedItem = useMemo(() => {
@@ -109,39 +132,6 @@ const SchemaViz: React.FunctionComponent<SchemaViewModalProps> = ({
     }
     return relationships.find((relationship) => relationship.id === selected.id);
   }, [selected, relationships, nodes]);
-
-  // The search and update nodes
-  const handleSearch = useCallback(
-    (value: string) => {
-      const query = value.toLowerCase();
-      const updatedNodes = nodes.map((node) => {
-        if (query === '') {
-          return {
-            ...node,
-            selected: false,
-            size: graphLabels.nodeSize,
-          };
-        }
-        const { id, properties, caption } = node;
-        const propertiesMatch = properties?.id?.toLowerCase().includes(query);
-        const match = id.toLowerCase().includes(query) || propertiesMatch || caption?.toLowerCase().includes(query);
-        return {
-          ...node,
-          selected: match,
-        };
-      });
-      // deactivating any active relationships
-      const updatedRelationships = relationships.map((rel) => {
-        return {
-          ...rel,
-          selected: false,
-        };
-      });
-      setNodes(updatedNodes);
-      setRelationships(updatedRelationships);
-    },
-    [nodes, relationships]
-  );
 
   // Unmounting the component
   if (!open) {
