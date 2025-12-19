@@ -1,7 +1,10 @@
 import hashlib
+import os
+from transformers import AutoTokenizer, AutoModel
+from langchain_huggingface import HuggingFaceEmbeddings
+from threading import Lock
 import logging
 from src.document_sources.youtube import create_youtube_url
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_google_vertexai import VertexAIEmbeddings
 from langchain_openai import OpenAIEmbeddings
 from langchain_neo4j import Neo4jGraph
@@ -15,6 +18,40 @@ from pathlib import Path
 from urllib.parse import urlparse
 import boto3
 from langchain_community.embeddings import BedrockEmbeddings
+
+MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+MODEL_PATH = "./local_model"
+_lock = Lock()
+_embedding_instance = None
+
+def ensure_sentence_transformer_model_downloaded():
+   if os.path.isdir(MODEL_PATH):
+       print("Model already downloaded at:", MODEL_PATH)
+       return
+   else:
+       print("Downloading model to:", MODEL_PATH)
+       tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+       model = AutoModel.from_pretrained(MODEL_NAME)
+       tokenizer.save_pretrained(MODEL_PATH)
+       model.save_pretrained(MODEL_PATH)
+   print("Model downloaded and saved.")
+
+def get_local_sentence_transformer_embedding():
+   """
+   Lazy, threadsafe singleton. Caller does not need to worry about
+   import-time initialization or download race.
+   """
+   global _embedding_instance
+   if _embedding_instance is not None:
+       return _embedding_instance
+   with _lock:
+       if _embedding_instance is not None:
+           return _embedding_instance
+       # Ensure model is present before instantiating
+       ensure_sentence_transformer_model_downloaded()
+       _embedding_instance = HuggingFaceEmbeddings(model_name=MODEL_PATH)
+       print("Embedding model initialized.")
+       return _embedding_instance
 
 def check_url_source(source_type, yt_url:str=None, wiki_query:str=None):
     language=''
@@ -76,18 +113,17 @@ def load_embedding_model(embedding_model_name: str):
         logging.info(f"Embedding: Using OpenAI Embeddings , Dimension:{dimension}")
     elif embedding_model_name == "vertexai":        
         embeddings = VertexAIEmbeddings(
-            model="textembedding-gecko@003"
+            model="gemini-embedding-001"
         )
-        dimension = 768
+        dimension = 3072
         logging.info(f"Embedding: Using Vertex AI Embeddings , Dimension:{dimension}")
     elif embedding_model_name == "titan":
         embeddings = get_bedrock_embeddings()
-        dimension = 1536
+        dimension = 1024
         logging.info(f"Embedding: Using bedrock titan Embeddings , Dimension:{dimension}")
     else:
-        embeddings = HuggingFaceEmbeddings(
-            model_name="all-MiniLM-L6-v2"#, cache_folder="/embedding_model"
-        )
+        # embeddings = HuggingFaceEmbeddings(model_name="./local_model")
+        embeddings = get_local_sentence_transformer_embedding()
         dimension = 384
         logging.info(f"Embedding: Using Langchain HuggingFaceEmbeddings , Dimension:{dimension}")
     return embeddings, dimension

@@ -112,9 +112,9 @@ app.add_middleware(
 )
 app.add_middleware(SessionMiddleware, secret_key=os.urandom(24))
 
-is_gemini_enabled = os.environ.get("GEMINI_ENABLED", "False").lower() in ("true", "1", "yes")
-if is_gemini_enabled:
-    add_routes(app,ChatVertexAI(), path="/vertexai")
+# is_gemini_enabled = os.environ.get("GEMINI_ENABLED", "False").lower() in ("true", "1", "yes")
+# if is_gemini_enabled:
+#     add_routes(app,ChatVertexAI(), path="/vertexai")
 
 app.add_api_route("/health", health([healthy_condition, healthy]))
 
@@ -891,17 +891,14 @@ async def retry_processing(uri=Form(None), userName=Form(None), password=Form(No
     try:
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
-        chunks = execute_graph_query(graph,QUERY_TO_GET_CHUNKS,params={"filename":file_name})
+        # chunks = execute_graph_query(graph,QUERY_TO_GET_CHUNKS,params={"filename":file_name})
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name':'retry_processing', 'db_url':uri, 'userName':userName, 'database':database, 'file_name':file_name,'retry_condition':retry_condition,
                             'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
         logger.log_struct(json_obj, "INFO")
-        if chunks[0]['text'] is None or chunks[0]['text']=="" or not chunks :
-            return create_api_response('Success',message=f"Chunks are not created for the file{file_name}. Please upload again the file to re-process.",data=chunks)
-        else:
-            await asyncio.to_thread(set_status_retry, graph,file_name,retry_condition)
-            return create_api_response('Success',message=f"Status set to Ready to Reprocess for filename : {file_name}")
+        await asyncio.to_thread(set_status_retry, graph,file_name,retry_condition)
+        return create_api_response('Success',message=f"Status set to Ready to Reprocess for filename : {file_name}")
     except Exception as e:
         job_status = "Failed"
         message="Unable to set status to Retry"

@@ -4,84 +4,69 @@ import { getDateTime, getDescriptionForChatMode } from './Utils';
 import chatbotmessages from '../assets/ChatbotMessages.json';
 import schemaExamples from '../assets/newSchema.json';
 export const APP_SOURCES =
-  process.env.VITE_REACT_APP_SOURCES !== ''
-    ? (process.env.VITE_REACT_APP_SOURCES?.split(',') as string[])
+  import.meta.env.VITE_REACT_APP_SOURCES && import.meta.env.VITE_REACT_APP_SOURCES !== ''
+    ? (import.meta.env.VITE_REACT_APP_SOURCES?.split(',') as string[])
     : ['s3', 'local', 'wiki', 'youtube', 'web'];
 
 export const llms =
-  process.env?.VITE_LLM_MODELS?.trim() != ''
-    ? (process.env.VITE_LLM_MODELS?.split(',') as string[])
+  import.meta.env?.VITE_LLM_MODELS?.trim() != ''
+    ? (import.meta.env.VITE_LLM_MODELS?.split(',') as string[])
     : [
-        'openai_gpt_4o',
-        'openai_gpt_4o_mini',
-        'openai_gpt_4.1',
-        'openai_gpt_4.1_mini',
-        'openai_gpt_o3_mini',
-        'gemini_1.5_pro',
-        'gemini_1.5_flash',
-        'gemini_2.0_flash',
+        'openai_gpt_5.2',
+        'openai_gpt_5_mini',
+        'gemini_2.5_flash',
         'gemini_2.5_pro',
         'diffbot',
-        'azure_ai_gpt_35',
-        'azure_ai_gpt_4o',
-        'ollama_llama3',
-        'groq_llama3_70b',
-        'anthropic_claude_4_sonnet',
-        'fireworks_llama4_maverick',
-        'fireworks_llama4_scout',
-        'fireworks_qwen72b_instruct',
+        'groq_llama3.1_8b',
+        'anthropic_claude_4.5_sonnet',
+        'anthropic_claude_4.5_haiku',
+        'llama4_maverick',
         'bedrock_nova_micro_v1',
         'bedrock_nova_lite_v1',
         'bedrock_nova_pro_v1',
-        'fireworks_deepseek_r1',
         'fireworks_deepseek_v3',
-        'llama4_maverick',
         'fireworks_qwen3_30b',
-        'fireworks_qwen3_235b',
+        'fireworks_gpt_oss',
       ];
 
 export const supportedLLmsForRagas = [
-  'openai_gpt_4',
-  'openai_gpt_4o',
-  'openai_gpt_4o_mini',
-  'openai_gpt_4.1',
-  'openai_gpt_4.1_mini',
-  'gemini_1.5_pro',
-  'gemini_1.5_flash',
-  'gemini_2.0_flash',
+  'openai_gpt_5.2',
+  'openai_gpt_5_mini',
+  'gemini_2.5_flash',
   'gemini_2.5_pro',
-  'azure_ai_gpt_35',
-  'azure_ai_gpt_4o',
-  'groq_llama3_70b',
-  'anthropic_claude_4_sonnet',
-  'fireworks_llama4_maverick',
-  'fireworks_llama4_scout',
-  'openai_gpt_o3_mini',
+  'diffbot',
+  'groq_llama3.1_8b',
+  'anthropic_claude_4.5_sonnet',
+  'anthropic_claude_4.5_haiku',
   'llama4_maverick',
+  'bedrock_nova_micro_v1',
+  'bedrock_nova_lite_v1',
+  'bedrock_nova_pro_v1',
+  'fireworks_deepseek_v3',
   'fireworks_qwen3_30b',
-  'fireworks_qwen3_235b',
+  'fireworks_gpt_oss',
 ];
 export const supportedLLmsForGroundTruthMetrics = [
-  'openai_gpt_4',
-  'openai_gpt_4o',
-  'openai_gpt_4o_mini',
-  'openai_gpt_4.1',
-  'openai_gpt_4.1_mini',
-  'azure_ai_gpt_35',
-  'azure_ai_gpt_4o',
-  'groq_llama3_70b',
-  'anthropic_claude_4_sonnet',
-  'fireworks_llama4_maverick',
-  'fireworks_llama4_scout',
-  'openai_gpt_o3_mini',
+  'openai_gpt_5.2',
+  'openai_gpt_5_mini',
+  'gemini_2.5_flash',
+  'gemini_2.5_pro',
+  'diffbot',
+  'groq_llama3.1_8b',
+  'anthropic_claude_4.5_sonnet',
+  'anthropic_claude_4.5_haiku',
   'llama4_maverick',
+  'bedrock_nova_micro_v1',
+  'bedrock_nova_lite_v1',
+  'bedrock_nova_pro_v1',
+  'fireworks_deepseek_v3',
   'fireworks_qwen3_30b',
-  'fireworks_qwen3_235b',
+  'fireworks_gpt_oss',
 ];
 export const prodllms =
-  process.env.VITE_LLM_MODELS_PROD?.trim() != ''
-    ? (process.env.VITE_LLM_MODELS_PROD?.split(',') as string[])
-    : ['openai_gpt_4o', 'openai_gpt_4o_mini', 'diffbot', 'gemini_2.0_flash'];
+  import.meta.env.VITE_LLM_MODELS_PROD?.trim() != ''
+    ? (import.meta.env.VITE_LLM_MODELS_PROD?.split(',') as string[])
+    : ['openai_gpt_5_mini', 'diffbot', 'gemini_2.5_flash', 'anthropic_claude_4.5_haiku'];
 
 export const chatModeLables = {
   vector: 'vector',
@@ -105,55 +90,58 @@ export const chatModeReadableLables: Record<string, string> = {
   selected: 'Selected',
   global_vector: 'global search+vector+fulltext',
 };
-export const chatModes =
-  process.env?.VITE_CHAT_MODES?.trim() != ''
-    ? process.env.VITE_CHAT_MODES?.split(',').map((mode) => ({
-        mode: mode.trim(),
-        description: getDescriptionForChatMode(mode.trim()),
-      }))
-    : [
-        {
-          mode: chatModeLables.vector,
-          description: 'Performs semantic similarity search on text chunks using vector indexing.',
-        },
-        {
-          mode: chatModeLables.graph,
-          description: 'Translates text to Cypher queries for precise data retrieval from a graph database.',
-        },
-        {
-          mode: chatModeLables['graph+vector'],
-          description: 'Combines vector indexing and graph connections for contextually enhanced semantic search.',
-        },
-        {
-          mode: chatModeLables.fulltext,
-          description: 'Conducts fast, keyword-based search using full-text indexing on text chunks.',
-        },
-        {
-          mode: chatModeLables['graph+vector+fulltext'],
-          description: 'Integrates vector, graph, and full-text indexing for comprehensive search results.',
-        },
-        {
-          mode: chatModeLables['entity search+vector'],
-          description: 'Uses vector indexing on entity nodes for highly relevant entity-based search.',
-        },
-        {
-          mode: chatModeLables['global search+vector+fulltext'],
-          description:
-            'Use vector and full-text indexing on community nodes to provide accurate, context-aware answers globally.',
-        },
-      ];
+export const chatModes = import.meta.env?.VITE_CHAT_MODES?.trim()
+  ? import.meta.env.VITE_CHAT_MODES?.split(',').map((mode: string) => ({
+      mode: mode.trim(),
+      description: getDescriptionForChatMode(mode.trim()),
+    }))
+  : [
+      {
+        mode: chatModeLables.vector,
+        description: 'Performs semantic similarity search on text chunks using vector indexing.',
+      },
+      {
+        mode: chatModeLables.graph,
+        description: 'Translates text to Cypher queries for precise data retrieval from a graph database.',
+      },
+      {
+        mode: chatModeLables['graph+vector'],
+        description: 'Combines vector indexing and graph connections for contextually enhanced semantic search.',
+      },
+      {
+        mode: chatModeLables.fulltext,
+        description: 'Conducts fast, keyword-based search using full-text indexing on text chunks.',
+      },
+      {
+        mode: chatModeLables['graph+vector+fulltext'],
+        description: 'Integrates vector, graph, and full-text indexing for comprehensive search results.',
+      },
+      {
+        mode: chatModeLables['entity search+vector'],
+        description: 'Uses vector indexing on entity nodes for highly relevant entity-based search.',
+      },
+      {
+        mode: chatModeLables['global search+vector+fulltext'],
+        description:
+          'Use vector and full-text indexing on community nodes to provide accurate, context-aware answers globally.',
+      },
+    ];
 
-export const chunkSize = process.env.VITE_CHUNK_SIZE ? Number(process.env.VITE_CHUNK_SIZE) : 1 * 1024 * 1024;
-export const tokenchunkSize = process.env.VITE_TOKENS_PER_CHUNK ? Number(process.env.VITE_TOKENS_PER_CHUNK) : 100;
-export const chunkOverlap = process.env.VITE_CHUNK_OVERLAP ? Number(process.env.VITE_CHUNK_OVERLAP) : 20;
-export const chunksToCombine = process.env.VITE_CHUNK_TO_COMBINE ? Number(process.env.VITE_CHUNK_TO_COMBINE) : 1;
+export const chunkSize = import.meta.env.VITE_CHUNK_SIZE ? Number(import.meta.env.VITE_CHUNK_SIZE) : 1 * 1024 * 1024;
+export const tokenchunkSize = import.meta.env.VITE_TOKENS_PER_CHUNK
+  ? Number(import.meta.env.VITE_TOKENS_PER_CHUNK)
+  : 100;
+export const chunkOverlap = import.meta.env.VITE_CHUNK_OVERLAP ? Number(import.meta.env.VITE_CHUNK_OVERLAP) : 20;
+export const chunksToCombine = import.meta.env.VITE_CHUNK_TO_COMBINE
+  ? Number(import.meta.env.VITE_CHUNK_TO_COMBINE)
+  : 1;
 export const defaultTokenChunkSizeOptions = [50, 100, 200, 400, 1000];
 export const defaultChunkOverlapOptions = [10, 20, 30, 40, 50];
 export const defaultChunksToCombineOptions = [1, 2, 3, 4, 5, 6];
-export const timeperpage = process.env.VITE_TIME_PER_PAGE ? Number(process.env.VITE_TIME_PER_PAGE) : 50;
+export const timeperpage = import.meta.env.VITE_TIME_PER_PAGE ? Number(import.meta.env.VITE_TIME_PER_PAGE) : 50;
 export const timePerByte = 0.2;
-export const largeFileSize = process.env.VITE_LARGE_FILE_SIZE
-  ? Number(process.env.VITE_LARGE_FILE_SIZE)
+export const largeFileSize = import.meta.env.VITE_LARGE_FILE_SIZE
+  ? Number(import.meta.env.VITE_LARGE_FILE_SIZE)
   : 5 * 1024 * 1024;
 
 export const tooltips = {
@@ -187,7 +175,7 @@ export const tooltips = {
   predinedSchema: 'Predefined Schema',
   dataImporterJson: 'Data Importer JSON',
 };
-export const PRODMODLES = ['openai_gpt_4o', 'openai_gpt_4o_mini', 'diffbot', 'gemini_1.5_flash'];
+export const PRODMODELS = ['openai_5_mini,gemini_2.5_flash,diffbot,anthropic_claude_4.5_haiku'];
 export const buttonCaptions = {
   exploreGraphWithBloom: 'Explore Graph',
   showPreviewGraph: 'Preview Graph',
@@ -253,7 +241,7 @@ export const RETRY_OPIONS = [
   'delete_entities_and_start_from_beginning',
   'start_from_last_processed_position',
 ];
-export const batchSize: number = Number(process.env.VITE_BATCH_SIZE ?? '2');
+export const batchSize: number = Number(import.meta.env.VITE_BATCH_SIZE ?? '2');
 
 // Graph Constants
 export const document = `+ [docs]`;
@@ -414,7 +402,7 @@ export const metricsinfo: Record<string, string> = {
   context_entity_recall: 'Determines the recall of entities present in both generated answer and retrieved contexts',
 };
 export const EXPIRATION_DAYS = 3;
-export const SKIP_AUTH = (process.env.VITE_SKIP_AUTH ?? 'true') == 'true';
+export const SKIP_AUTH = (import.meta.env.VITE_SKIP_AUTH ?? 'true') == 'true';
 
 export const sourceOptions: PatternOption[] = [{ label: 'Person', value: 'Person' }];
 export const typeOptions: PatternOption[] = [{ label: 'WORKS_FOR', value: 'WORKS_FOR' }];

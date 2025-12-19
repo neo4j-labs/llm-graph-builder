@@ -15,10 +15,11 @@ export const graphQueryAPI = async (
         'Content-Type': 'multipart/form-data',
       },
       signal,
+      timeout: 120000,
     });
     return response;
   } catch (error) {
-    console.log('Error getting the Nodes or Relationships:', error);
+    console.error('Error getting the Nodes or Relationships:', error);
     throw error;
   }
 };
