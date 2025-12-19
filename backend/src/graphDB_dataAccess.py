@@ -653,9 +653,10 @@ class graphDBdataAccess:
                OR ($email IS NULL AND u.db_url = $db_url)
             RETURN 
                 u.daily_tokens_limit AS daily_tokens_limit,
-                u.remaining_daily_tokens_limit AS remaining_daily_tokens_limit,
+                u.daily_tokens_used AS daily_tokens_used,
                 u.monthly_tokens_limit AS monthly_tokens_limit,
-                u.remaining_monthly_tokens_limit AS remaining_monthly_tokens_limit,
+                u.monthly_tokens_used AS monthly_tokens_used,
+                u.total_tokens_used AS total_tokens_used,
                 u.is_neo4j_user AS is_neo4j_user,
                 u.email AS email,
                 u.db_url AS db_url,
