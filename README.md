@@ -210,15 +210,18 @@ VITE_BACKEND_API_URL=${VITE_BACKEND_API_URL-backendurl}
 
 
 ## [ENV](https://docs.google.com/spreadsheets/d/1DBg3m3hz0PCZNqIjyYJsYALzdWwMlLah706Xvxt62Tk/edit?gid=184339012#gid=184339012)
-<table style="border-collapse: collapse; width: 100%;">
+<table style="border-collapse: collapse; width: 100%; table-layout: fixed; overflow:wrap">
   <thead>
     <tr>
-      <th style="border: 1px solid #ccc; padding: 6px; width: 22%;">Env Variable Name</th>
-      <th style="border: 1px solid #ccc; padding: 6px; width: 18%;">Mandatory/Optional</th>
-      <th style="border: 1px solid #ccc; padding: 6px; width: 20%;">Default Value</th>
-      <th style="border: 1px solid #ccc; padding: 6px; width: 40%;">Description</th>
+      <th style="border:1px solid #ccc; padding:6px; width:32%;">Env Variable Name</th>
+      <th style="border:1px solid #ccc; padding:6px; width:18%;">Mandatory/Optional</th>
+      <th style="border:1px solid #ccc; padding:6px; width:40%; word-break:break-word; white-space:normal;">
+        Default Value
+      </th>
+      <th style="border:1px solid #ccc; padding:6px; width:40%;">Description</th>
     </tr>
   </thead>
+
   <tbody>
     <tr>
       <td style="border: 1px solid #ccc; padding: 6px; font-weight: bold;" colspan="4">BACKEND ENV</td>
@@ -277,7 +280,10 @@ VITE_BACKEND_API_URL=${VITE_BACKEND_API_URL-backendurl}
     <tr>
       <td style="border: 1px solid #ccc; padding: 6px;">VITE_BLOOM_URL</td>
       <td style="border: 1px solid #ccc; padding: 6px;">Mandatory</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true</td>
+      <td style="border: 1px solid #ccc; padding: 6px;
+          white-space: normal;
+          overflow-wrap: anywhere;    /* allow breaks anywhere if needed */
+          word-break: break-word;">https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true</td>
       <td style="border: 1px solid #ccc; padding: 6px;">URL for Bloom visualization</td>
     </tr>
     <tr>
@@ -300,8 +306,11 @@ VITE_BACKEND_API_URL=${VITE_BACKEND_API_URL-backendurl}
     </tr>
     <tr>
       <td style="border: 1px solid #ccc; padding: 6px;">VITE_LLM_MODELS</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">Mandatory</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">diffbot,openai_gpt_3.5,openai_gpt_4o,openai_gpt_4o_mini,gemini_1.5_pro,gemini_1.5_flash,azure_ai_gpt_35,azure_ai_gpt_4o,ollama_llama3,groq_llama3_70b,anthropic_claude_3_5_sonnet</td>
+      <td style="border: 1px solid #ccc; padding: 6px;">Optional</td>
+      <td style="border: 1px solid #ccc; padding: 6px;
+           white-space: normal;
+          overflow-wrap: anywhere;
+          word-break: break-word; ">openai_gpt_5.2,openai_gpt_5_mini,gemini_2.5_flash,diffbot</td>
       <td style="border: 1px solid #ccc; padding: 6px;">Supported models for the application</td>
     </tr>
     <tr>
