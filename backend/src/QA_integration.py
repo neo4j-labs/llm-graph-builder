@@ -20,7 +20,7 @@ from langchain_text_splitters import TokenTextSplitter
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_community.chat_message_histories import ChatMessageHistory 
 from langchain_core.callbacks import StdOutCallbackHandler, BaseCallbackHandler
-
+from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 # LangChain chat models
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
 from langchain_google_vertexai import ChatVertexAI
@@ -432,6 +432,12 @@ def setup_chat(model, graph, document_names, chat_mode_settings):
 
 def process_chat_response(messages, history, question, model, graph, document_names, chat_mode_settings, email=None, uri=None):
     try:
+        if os.environ.get("TRACK_TOKEN_USAGE", "false").strip().lower() == "true":
+            try:
+                track_token_usage(email, uri, 0, model)
+            except LLMGraphBuilderException as e:
+                logging.error(str(e))
+                raise RuntimeError(str(e))
         llm, doc_retriever, model_version = setup_chat(model, graph, document_names, chat_mode_settings)
         
         docs,transformed_question = retrieve_documents(doc_retriever, messages)  

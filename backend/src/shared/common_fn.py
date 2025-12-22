@@ -29,10 +29,10 @@ _embedding_instance = None
 
 def ensure_sentence_transformer_model_downloaded():
    if os.path.isdir(MODEL_PATH):
-       logging.info("Model already downloaded at:", MODEL_PATH)
+       logging.info(f"Model already downloaded at: {MODEL_PATH}")
        return
    else:
-       logging.info("Downloading model to:", MODEL_PATH)
+       logging.info(f"Downloading model to: {MODEL_PATH}")
        tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
        model = AutoModel.from_pretrained(MODEL_NAME)
        tokenizer.save_pretrained(MODEL_PATH)
