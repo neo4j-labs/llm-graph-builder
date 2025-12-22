@@ -1,7 +1,6 @@
 import logging
 import os
 import time
-from src.entities.user import user_info
 from neo4j.exceptions import TransientError
 from langchain_neo4j import Neo4jGraph
 from src.shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file, load_embedding_model
@@ -11,6 +10,7 @@ from src.entities.source_node import sourceNode
 from src.communities import MAX_COMMUNITY_LEVELS
 import json
 from dotenv import load_dotenv
+from src.entities.user import UserInfo
 
 load_dotenv()
 
@@ -573,7 +573,7 @@ class graphDBdataAccess:
             relationship_types = [record["relationshipType"] for record in relationship_result]
             return node_labels,relationship_types
         except Exception as e:
-            print(f"Error in getting node labels/relationship types from db: {e}")
+            logging.error(f"Error in getting node labels/relationship types from db: {e}")
             return []
 
     def get_websource_url(self,file_name):
@@ -585,82 +585,101 @@ class graphDBdataAccess:
         param = {"file_name" : file_name}
         return self.execute_query(query, param)
     
-    def save_user_info(self, email, db_url):
-        is_neo4j_user = False
-        userInfo = user_info()
-        userInfo.db_url = db_url
-        logging.info(f"Saving user info in database and email value is : {email}")
-        if email is not None and email != '':
-            domain = "@neo4j.com"
-            is_neo4j_user = domain in email
-            userInfo.is_neo4j_user = is_neo4j_user
-            userInfo.email_id = email
-            query = """
-            CREATE (u:User {email: $email})
-            SET u.is_neo4j_user = $is_neo4j_user,
-                u.daily_tokens_limit = $daily_tokens_limit,
-                u.daily_tokens_used = $daily_tokens_used,
-                u.monthly_tokens_limit = $monthly_tokens_limit,
-                u.monthly_tokens_used = $monthly_tokens_used,
-                u.total_tokens_used = $total_tokens_used,
-                u.db_url = $db_url,
-                u.lastUsedModel = $lastUsedModel,
-                u.prevTokenUsage = $prevTokenUsage,
-                u.updatedAt = datetime(),
-            RETURN u
-            """
+    def save_user_info(self, email: str | None, db_url: str | None):
+        """
+        Create a `User` node with initial quota/metadata for the given identity.
+        Uses `email` as primary key when provided, otherwise falls back to `db_url`.
+        """
+        normalized_email = email.strip().lower() if email else None
+        normalized_db_url = db_url.strip() if db_url else None
+        if not normalized_email and not normalized_db_url:
+            raise ValueError("Either email or db_url must be provided to save user info.")
+
+        user = UserInfo(
+            email=normalized_email,
+            db_url=normalized_db_url,
+            is_neo4j_user=bool(
+                normalized_email and normalized_email.endswith("@neo4j.com")
+            ),
+        )
+
+        if user.email:
+            merge_clause = "MERGE (u:User {email: $email})"
         else:
-            userInfo.is_neo4j_user = is_neo4j_user
-            userInfo.email = None
-            query = """
-            CREATE (u:User {db_url: $db_url})
-            SET u.is_neo4j_user = $is_neo4j_user,
-                u.daily_tokens_limit = $daily_tokens_limit,
-                u.daily_tokens_used = $daily_tokens_used,
-                u.monthly_tokens_limit = $monthly_tokens_limit,
-                u.monthly_tokens_used = $monthly_tokens_used,
-                u.total_tokens_used = $total_tokens_used,
-                u.lastUsedModel = $lastUsedModel,
-                u.prevTokenUsage = $prevTokenUsage,
-                u.updatedAt = datetime(),
-                u.email = $email
-            RETURN u
-            """
+            merge_clause = "MERGE (u:User {db_url: $db_url})"
 
-        param = {
-            "email": userInfo.email,
-            "is_neo4j_user": userInfo.is_neo4j_user,
-            "daily_tokens_limit": userInfo.daily_tokens_limit,
-            "daily_tokens_used": userInfo.daily_tokens_used,
-            "monthly_tokens_limit": userInfo.monthly_tokens_limit,
-            "monthly_tokens_used": userInfo.monthly_tokens_used,
-            "total_tokens_used": userInfo.total_tokens_used,
-            "db_url": userInfo.db_url,
-            "lastUsedModel": userInfo.lastUsedModel,
-            "prevTokenUsage": userInfo.prevTokenUsage,
-            "updatedAt": userInfo.updatedAt
+        query = f"""
+        {merge_clause}
+        ON CREATE SET
+            u.email = coalesce(u.email, $email),
+            u.db_url = coalesce(u.db_url, $db_url),
+            u.is_neo4j_user = $is_neo4j_user,
+            u.daily_tokens_limit = $daily_tokens_limit,
+            u.monthly_tokens_limit = $monthly_tokens_limit,
+            u.daily_tokens_used = 0,
+            u.monthly_tokens_used = 0,
+            u.total_tokens_used = 0,
+            u.lastUsedModel = $last_used_model,
+            u.prevTokenUsage = 0,
+            u.createdAt = coalesce(u.createdAt, datetime()),
+            u.updatedAt = datetime()
+        RETURN u
+        """
+
+        params = {
+            "email": user.email,
+            "db_url": user.db_url,
+            "is_neo4j_user": user.is_neo4j_user,
+            "daily_tokens_limit": user.daily_tokens_limit,
+            "monthly_tokens_limit": user.monthly_tokens_limit,
+            "last_used_model": user.last_used_model or "",
         }
-        logging.info(f"Final query to save user info : {query}")
-        return self.execute_query(query, param)
 
-        
-    
+        saved = self.execute_query(query, params)
+        logging.info("User info saved: %s", saved)
+        return saved
 
     def get_user_detail(self, email, uri):
-        query = """
-            MATCH (u:User)
-            WHERE ($email IS NOT NULL AND u.email = $email)
-               OR ($email IS NULL AND u.db_url = $db_url)
-            RETURN 
-                u.daily_tokens_limit AS daily_tokens_limit,
-                u.remaining_daily_tokens_limit AS remaining_daily_tokens_limit,
-                u.monthly_tokens_limit AS monthly_tokens_limit,
-                u.remaining_monthly_tokens_limit AS remaining_monthly_tokens_limit,
-                u.is_neo4j_user AS is_neo4j_user,
-                u.email AS email,
-                u.db_url AS db_url,
-                u.lastUsedModel AS lastUsedModel,
-                u.prevTokenUsage AS prevTokenUsage,
+        """Fetch user quota/metadata; create a new user if missing.
+
+        If an email is provided, it is used as the primary key.
+        Otherwise, the connection URL (`uri`) is used. When no existing
+        `User` node is found, this will create one via `save_user_info`
+        and return its details.
+        """
+
+        try:
+            normalized_email = email.strip().lower() if email else None
+            normalized_db_url = uri.strip() if uri else None
+
+            query = """
+                MATCH (u:User)
+                WHERE ($email IS NOT NULL AND toLower(u.email) = $email)
+                   OR ($email IS NULL AND u.db_url = $db_url)
+                RETURN 
+                    u.daily_tokens_limit AS daily_tokens_limit,
+                    u.daily_tokens_used AS daily_tokens_used,
+                    u.monthly_tokens_limit AS monthly_tokens_limit,
+                    u.monthly_tokens_used AS monthly_tokens_used,
+                    u.is_neo4j_user AS is_neo4j_user,
+                    u.email AS email,
+                    u.db_url AS db_url,
+                    u.lastUsedModel AS lastUsedModel,
+                    u.prevTokenUsage AS prevTokenUsage,
+                    u.createdAt AS createdAt,
+                    u.updatedAt AS updatedAt
                 """
-        param = {"email" : email, "db_url": uri}
-        return self.execute_query(query,param)
+
+            param = {"email": normalized_email, "db_url": normalized_db_url}
+            result = self.execute_query(query, param)
+            if not result:
+                logging.info("User not found, creating new user record")
+                self.save_user_info(email, uri)
+                result = self.execute_query(query, param)
+
+            return result[0] if result else None
+
+        except Exception as e:
+            error_message = str(e)
+            logging.exception(f"Exception in getting user details: {error_message}")
+            return None

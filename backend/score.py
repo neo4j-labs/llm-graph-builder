@@ -35,7 +35,6 @@ from langchain_neo4j import Neo4jGraph
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.requests import Request
 from dotenv import load_dotenv
-from src.entities.user import user_info
 load_dotenv(override=True)
 
 logger = CustomLogger()
@@ -240,27 +239,25 @@ async def extract_knowledge_graph_from_file(
         graph = create_graph_database_connection(uri, userName, password, database)   
         graphDb_data_Access = graphDBdataAccess(graph)
         
-        userDetails = get_user_detail(email, uri)
-        
         if source_type == 'local file':
             file_name = sanitize_filename(file_name)
             merged_file_path = validate_file_path(MERGED_DIR, file_name)
-            uri_latency, result = await extract_graph_from_file_local_file(uri, userName, password, database, model, merged_file_path, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, userDetails)
+            uri_latency, result = await extract_graph_from_file_local_file(uri, userName, password, database, model, merged_file_path, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email)
 
         elif source_type == 's3 bucket' and source_url:
-            uri_latency, result = await extract_graph_from_file_s3(uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, userDetails)
+            uri_latency, result = await extract_graph_from_file_s3(uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email)
         
         elif source_type == 'web-url':
-            uri_latency, result = await extract_graph_from_web_page(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, userDetails)
+            uri_latency, result = await extract_graph_from_web_page(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email)
 
         elif source_type == 'youtube' and source_url:
-            uri_latency, result = await extract_graph_from_file_youtube(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, userDetails)
+            uri_latency, result = await extract_graph_from_file_youtube(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email)
 
         elif source_type == 'Wikipedia' and wiki_query:
-            uri_latency, result = await extract_graph_from_file_Wikipedia(uri, userName, password, database, model, wiki_query, language, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, userDetails)
+            uri_latency, result = await extract_graph_from_file_Wikipedia(uri, userName, password, database, model, wiki_query, language, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email)
 
         elif source_type == 'gcs bucket' and gcs_bucket_name:
-            uri_latency, result = await extract_graph_from_file_gcs(uri, userName, password, database, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, userDetails)
+            uri_latency, result = await extract_graph_from_file_gcs(uri, userName, password, database, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email)
         else:
             return create_api_response('Failed',message='source_type is other than accepted source')
         extract_api_time = time.time() - start_time
@@ -391,7 +388,7 @@ async def post_processing(uri=Form(None), userName=Form(None), password=Form(Non
             
         if "enable_communities" in tasks:
             api_name = 'create_communities'
-            await asyncio.to_thread(create_communities, uri, userName, password, database)  
+            await asyncio.to_thread(create_communities, uri, userName, password, database,email)  
             
             logging.info(f'created communities')
         graph = create_graph_database_connection(uri, userName, password, database)   
@@ -428,9 +425,9 @@ async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password
         else:
             graph = create_graph_database_connection(uri, userName, password, database)
         
-        graph_DB_dataAccess = graphDBdataAccess(graph)
-        write_access = graph_DB_dataAccess.check_account_access(database=database)
-        result = await asyncio.to_thread(QA_RAG,graph=graph,model=model,question=question,document_names=document_names,session_id=session_id,mode=mode,write_access=write_access)
+        graphDb_data_Access = graphDBdataAccess(graph)
+        write_access = graphDb_data_Access.check_account_access(database=database)
+        result = await asyncio.to_thread(QA_RAG,graph=graph,model=model,question=question,document_names=document_names,session_id=session_id,mode=mode,write_access=write_access, email=email, uri=uri)
 
         total_call_time = time.time() - qa_rag_start_time
         logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
@@ -548,9 +545,9 @@ async def connect(uri=Form(None), userName=Form(None), password=Form(None), data
     try:
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
-        # Check and create user if not exists
-        res = get_user_detail(email, uri)
-        logging.info(f"User details fetched : {res}")
+        graphDb_data_Access = graphDBdataAccess(graph)
+        user_details = graphDb_data_Access.get_user_detail(email, uri)
+        logging.info(f"User details fetched : {user_details}")
         
         result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, database)
         gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
@@ -1095,25 +1092,6 @@ async def get_schema_visualization(uri=Form(None), userName=Form(None), password
         return create_api_response("Failed", message=message, error=error_message)
     finally:
         gc.collect()
-
-def get_user_detail(email, uri):
-    try:
-        uri_user_prod_db = os.getenv('NEO4J_URI_PROD')
-        username_user_prod_db = os.getenv('NEO4J_USERNAME_PROD')
-        database_user_prod_db = os.getenv('NEO4J_DATABASE_PROD')
-        password_user_prod_db = os.getenv('NEO4J_PASSWORD_PROD')
-        graph_user_prod = create_graph_database_connection(uri_user_prod_db, username_user_prod_db, password_user_prod_db, database_user_prod_db)
-        graphDb_data_Access = graphDBdataAccess(graph_user_prod)
-        result = graphDb_data_Access.get_user_detail(email, uri)
-         # If user email not present in user_info table then insert the email
-        if result is None or len(result) == 0:
-            graphDb_data_Access.save_user_info(email, uri)
-        else:
-            return result[0]
-    except Exception as e:
-        error_message = str(e)
-        logging.exception(f'Exception in getting all user details: {error_message}')
-        return None
 
 if __name__ == "__main__":
     uvicorn.run(app)

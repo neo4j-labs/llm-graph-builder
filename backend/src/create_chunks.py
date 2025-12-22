@@ -14,7 +14,7 @@ class CreateChunksofDocument:
         self.pages = pages
         self.graph = graph
 
-    def split_file_into_chunks(self,token_chunk_size, chunk_overlap, userDetails):
+    def split_file_into_chunks(self,token_chunk_size, chunk_overlap, email):
         """
         Split a list of documents(file pages) into chunks of fixed size.
 
@@ -28,7 +28,8 @@ class CreateChunksofDocument:
         text_splitter = TokenTextSplitter(chunk_size=token_chunk_size, chunk_overlap=chunk_overlap)
         MAX_TOKEN_CHUNK_SIZE = int(os.getenv('MAX_TOKEN_CHUNK_SIZE', 10000))
         chunk_to_be_created = int(MAX_TOKEN_CHUNK_SIZE / token_chunk_size)
-        is_neo4j_user = userDetails['is_neo4j_user']
+        normalized_email = (email or "").strip().lower() or None
+        is_neo4j_user = bool(normalized_email and normalized_email.endswith("@neo4j.com"))
         if 'page' in self.pages[0].metadata:
             chunks = []
             for i, document in enumerate(self.pages):

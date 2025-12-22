@@ -17,6 +17,8 @@ from src.shared.constants import ADDITIONAL_INSTRUCTIONS
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 import re
 from typing import List
+from langchain_core.callbacks.manager import CallbackManager
+from src.shared.common_fn import UniversalTokenUsageHandler
 
 def get_llm(model: str):
     """Retrieve the specified language model based on the model name."""
@@ -30,16 +32,18 @@ def get_llm(model: str):
         raise Exception(err)
     
     logging.info("Model: {}".format(env_key))
+    callback_handler = UniversalTokenUsageHandler()
+    callback_manager = CallbackManager([callback_handler])
     try:
         if "gemini" in model:
             model_name = env_value
             credentials, project_id = google.auth.default()
             llm = ChatVertexAI(
                 model_name=model_name,
-                #convert_system_message_to_human=True,
                 credentials=credentials,
                 project=project_id,
                 temperature=0,
+                callbacks=callback_manager,
                 safety_settings={
                     HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE,
                     HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
@@ -47,18 +51,22 @@ def get_llm(model: str):
                     HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
                     HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
                 },
+            
             )
         elif "openai" in model:
             model_name, api_key = env_value.split(",")
             if "mini" in model:
                 llm= ChatOpenAI(
                 api_key=api_key,
-                model=model_name)
+                model=model_name,
+                callbacks=callback_manager,
+                )
             else:
                 llm = ChatOpenAI(
                 api_key=api_key,
                 model=model_name,
                 temperature=0,
+                callbacks=callback_manager,
                 )
 
         elif "azure" in model:
@@ -71,21 +79,22 @@ def get_llm(model: str):
                 temperature=0,
                 max_tokens=None,
                 timeout=None,
+                callbacks=callback_manager,
             )
 
         elif "anthropic" in model:
             model_name, api_key = env_value.split(",")
             llm = ChatAnthropic(
-                api_key=api_key, model=model_name, temperature=0, timeout=None
+                api_key=api_key, model=model_name, temperature=0, timeout=None,callbacks=callback_manager, 
             )
 
         elif "fireworks" in model:
             model_name, api_key = env_value.split(",")
-            llm = ChatFireworks(api_key=api_key, model=model_name)
+            llm = ChatFireworks(api_key=api_key, model=model_name,callbacks=callback_manager)
 
         elif "groq" in model:
             model_name, base_url, api_key = env_value.split(",")
-            llm = ChatGroq(api_key=api_key, model_name=model_name, temperature=0)
+            llm = ChatGroq(api_key=api_key, model_name=model_name, temperature=0,callbacks=callback_manager)
 
         elif "bedrock" in model:
             model_name, aws_access_key, aws_secret_key, region_name = env_value.split(",")
@@ -94,15 +103,16 @@ def get_llm(model: str):
                 region_name=region_name,
                 aws_access_key_id=aws_access_key,
                 aws_secret_access_key=aws_secret_key,
+                callbacks=callback_manager, 
             )
 
             llm = ChatBedrock(
-                client=bedrock_client,region_name=region_name, model_id=model_name, model_kwargs=dict(temperature=0)
+                client=bedrock_client,region_name=region_name, model_id=model_name, model_kwargs=dict(temperature=0),callbacks=callback_manager, 
             )
 
         elif "ollama" in model:
             model_name, base_url = env_value.split(",")
-            llm = ChatOllama(base_url=base_url, model=model_name)
+            llm = ChatOllama(base_url=base_url, model=model_name,callbacks=callback_manager)
 
         elif "diffbot" in model:
             #model_name = "diffbot"
@@ -111,6 +121,7 @@ def get_llm(model: str):
                 diffbot_api_key=api_key,
                 extract_types=["entities", "facts"],
             )
+            callback_handler = None
         
         else: 
             model_name, api_endpoint, api_key = env_value.split(",")
@@ -119,6 +130,7 @@ def get_llm(model: str):
                 base_url=api_endpoint,
                 model=model_name,
                 temperature=0,
+                callbacks=callback_manager,
             )
     except Exception as e:
         err = f"Error while creating LLM '{model}': {str(e)}"
@@ -126,7 +138,7 @@ def get_llm(model: str):
         raise Exception(err)
  
     logging.info(f"Model created - Model Version: {model}")
-    return llm, model_name
+    return llm, model_name,callback_handler
 
 def get_llm_model_name(llm):
     """Extract name of llm model from llm object"""
@@ -134,7 +146,7 @@ def get_llm_model_name(llm):
         model_name = getattr(llm, attr, None)
         if model_name:
             return model_name.lower()
-    print("Could not determine model name; defaulting to empty string")
+    logging.info("Could not determine model name; defaulting to empty string")
     return ""
 
 def get_combined_chunks(chunkId_chunkDoc_list, chunks_to_combine):
@@ -175,40 +187,53 @@ def get_chunk_id_as_doc_metadata(chunkId_chunkDoc_list):
       
 
 async def get_graph_document_list(
-    llm, combined_chunk_document_list, allowedNodes, allowedRelationship, additional_instructions=None
+    llm, combined_chunk_document_list, allowedNodes, allowedRelationship,callback_handler, additional_instructions=None
 ):
     if additional_instructions:
         additional_instructions = sanitize_additional_instruction(additional_instructions)
     graph_document_list = []
-    if "diffbot_api_key" in dir(llm):
-        llm_transformer = llm
-    else:
-        if "get_name" in dir(llm) and llm.get_name() != "ChatOpenAI" or llm.get_name() != "ChatVertexAI" or llm.get_name() != "AzureChatOpenAI":
-            node_properties = False
-            relationship_properties = False
+    token_usage = 0
+    try:
+        if "diffbot_api_key" in dir(llm):
+            llm_transformer = llm
         else:
-            node_properties = ["description"]
-            relationship_properties = ["description"]
-        model_name = get_llm_model_name(llm)
-        llm_transformer = LLMGraphTransformer(
-            llm=llm,
-            node_properties=node_properties,
-            relationship_properties=relationship_properties,
-            allowed_nodes=allowedNodes,
-            allowed_relationships=allowedRelationship,
-            ignore_tool_usage=True,
-            additional_instructions=ADDITIONAL_INSTRUCTIONS+ (additional_instructions if additional_instructions else "")
-        )
-    
-    if isinstance(llm,DiffbotGraphTransformer):
-        graph_document_list = llm_transformer.convert_to_graph_documents(combined_chunk_document_list)
-    else:
-        graph_document_list = await llm_transformer.aconvert_to_graph_documents(combined_chunk_document_list)
-    return graph_document_list
+            if "get_name" in dir(llm) and llm.get_name() != "ChatOpenAI" or llm.get_name() != "ChatVertexAI" or llm.get_name() != "AzureChatOpenAI":
+                node_properties = False
+                relationship_properties = False
+            else:
+                node_properties = ["description"]
+                relationship_properties = ["description"]
+            model_name = get_llm_model_name(llm)
+            llm_transformer = LLMGraphTransformer(
+                llm=llm,
+                node_properties=node_properties,
+                relationship_properties=relationship_properties,
+                allowed_nodes=allowedNodes,
+                allowed_relationships=allowedRelationship,
+                ignore_tool_usage=True,
+                additional_instructions=ADDITIONAL_INSTRUCTIONS+ (additional_instructions if additional_instructions else "")
+            )
+        
+        if isinstance(llm,DiffbotGraphTransformer):
+            graph_document_list = llm_transformer.convert_to_graph_documents(combined_chunk_document_list)
+        else:
+            graph_document_list = await llm_transformer.aconvert_to_graph_documents(combined_chunk_document_list)
+    except Exception as e:
+       logging.error(f"Error in graph transformation: {e}", exc_info=True)
+       raise LLMGraphBuilderException(f"Graph transformation failed: {str(e)}")
+    finally:
+       try:
+           if callback_handler:
+               usage = callback_handler.report()
+               token_usage = usage.get("total_tokens", 0)
+       except Exception as usage_err:
+           logging.warning(f"Error while reporting token usage: {usage_err}", exc_info=True)
+
+    return graph_document_list, token_usage
 
 async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship, chunks_to_combine, additional_instructions=None):
    try:
-       llm, model_name = get_llm(model)
+       llm, model_name,callback_handler = get_llm(model)
        logging.info(f"Using model: {model_name}")
     
        combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list, chunks_to_combine)
@@ -234,15 +259,16 @@ async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowed
        else:
            logging.info("No allowed relationships provided")
 
-       graph_document_list = await get_graph_document_list(
+       graph_document_list,token_usage = await get_graph_document_list(
            llm,
            combined_chunk_document_list,
            allowed_nodes,
            allowed_relationships,
-           additional_instructions
+           callback_handler,
+           additional_instructions,
        )
        logging.info(f"Generated {len(graph_document_list)} graph documents")
-       return graph_document_list
+       return graph_document_list,token_usage
    except Exception as e:
        logging.error(f"Error in get_graph_from_llm: {e}", exc_info=True)
        raise LLMGraphBuilderException(f"Error in getting graph from llm: {e}")

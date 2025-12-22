@@ -5,7 +5,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
-from src.shared.common_fn import load_embedding_model
+from src.shared.common_fn import load_embedding_model,track_token_usage
 
 
 COMMUNITY_PROJECTION_NAME = "communities"
@@ -252,7 +252,7 @@ def get_community_chain(model, is_parent=False,community_template=COMMUNITY_TEMP
         if is_parent:
             community_template=PARENT_COMMUNITY_TEMPLATE
             system_template= PARENT_COMMUNITY_SYSTEM_TEMPLATE
-        llm, model_name = get_llm(model)
+        llm, _, _ = get_llm(model)
         community_prompt = ChatPromptTemplate.from_messages(
             [
                 (
@@ -311,11 +311,14 @@ def process_community_info(community, chain, is_parent=False):
         logging.error(f"Failed to process community {community.get('communityId', 'unknown')}: {e}")
         return None
 
-def create_community_summaries(gds, model):
+def create_community_summaries(gds, model, email, uri):
+    callback_handler = None
+    token_usage = 0
     try:
         community_info_list = gds.run_cypher(GET_COMMUNITY_INFO)
+        llm, model_name,callback_handler = get_llm(model)
         community_chain = get_community_chain(model)
-
+        
         summaries = []
         with ThreadPoolExecutor() as executor:
             futures = [executor.submit(process_community_info, community, community_chain) for community in community_info_list.to_dict(orient="records")]
@@ -348,6 +351,18 @@ def create_community_summaries(gds, model):
     except Exception as e:
         logging.error(f"Failed to create community summaries: {e}")
         raise
+
+    finally:
+       try:
+           if callback_handler:
+               usage = callback_handler.report()
+               token_usage = usage.get("total_tokens", 0)
+               if email and token_usage > 0:
+                   email = email.strip().replace('"', '')
+                   latest_token = track_token_usage(email, uri, token_usage, model)
+                   logging.info(f"In community : Total token usage {latest_token} for user {email} ")
+       except Exception as err:
+           logging.warning(f"Failed to track token usage: {err}")
 
 def create_community_embeddings(gds):
     try:
@@ -444,7 +459,7 @@ def create_fulltext_index(gds, index_type):
         logging.error("An error occurred while creating the full-text index.", exc_info=True)
         logging.error(f"Error details: {str(e)}")
 
-def create_community_properties(gds, model):
+def create_community_properties(gds, model, email, uri):
     commands = [
         (CREATE_COMMUNITY_CONSTRAINT, "created community constraint to the graph."),
         (CREATE_COMMUNITY_LEVELS, "Successfully created community levels."),
@@ -458,7 +473,7 @@ def create_community_properties(gds, model):
             gds.run_cypher(command)
             logging.info(message)
 
-        create_community_summaries(gds, model)
+        create_community_summaries(gds, model, email, uri)
         logging.info("Successfully created community summaries.")
 
         embedding_dimension = create_community_embeddings(gds)
@@ -495,7 +510,7 @@ def clear_communities(gds):
         raise
 
 
-def create_communities(uri, username, password, database,model=COMMUNITY_CREATION_DEFAULT_MODEL):
+def create_communities(uri, username, password, database,email=None,model=COMMUNITY_CREATION_DEFAULT_MODEL):
     try:
         gds = get_gds_driver(uri, username, password, database)
         clear_communities(gds)
@@ -504,7 +519,7 @@ def create_communities(uri, username, password, database,model=COMMUNITY_CREATIO
         write_communities_sucess = write_communities(gds, graph_project)
         if write_communities_sucess:
             logging.info("Starting Community properties creation process.")
-            create_community_properties(gds,model)
+            create_community_properties(gds,model,email,uri)
             logging.info("Communities creation process completed successfully.")
         else:
             logging.warning("Failed to write communities. Constraint was not applied.")

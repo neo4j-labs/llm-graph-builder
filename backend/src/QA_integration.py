@@ -32,7 +32,7 @@ from langchain_community.chat_models import ChatOllama
 
 # Local imports
 from src.llm import get_llm
-from src.shared.common_fn import load_embedding_model
+from src.shared.common_fn import load_embedding_model, track_token_usage
 from src.shared.constants import *
 load_dotenv() 
 
@@ -415,7 +415,7 @@ def setup_chat(model, graph, document_names, chat_mode_settings):
         if model == "diffbot":
             model = os.getenv('DEFAULT_DIFFBOT_CHAT_MODEL')
         
-        llm, model_name = get_llm(model=model)
+        llm, model_name, _ = get_llm(model=model)
         logging.info(f"Model called in chat: {model} (version: {model_name})")
 
         retriever = get_neo4j_retriever(graph=graph, chat_mode_settings=chat_mode_settings, document_names=document_names)
@@ -430,7 +430,7 @@ def setup_chat(model, graph, document_names, chat_mode_settings):
     
     return llm, doc_retriever, model_name
 
-def process_chat_response(messages, history, question, model, graph, document_names, chat_mode_settings):
+def process_chat_response(messages, history, question, model, graph, document_names, chat_mode_settings, email=None, uri=None):
     try:
         llm, doc_retriever, model_version = setup_chat(model, graph, document_names, chat_mode_settings)
         
@@ -438,6 +438,7 @@ def process_chat_response(messages, history, question, model, graph, document_na
 
         if docs:
             content, result, total_tokens,formatted_docs = process_documents(docs, question, messages, llm, model, chat_mode_settings)
+            track_token_usage(email=email, uri=uri, usage=total_tokens, last_used_model=model)
         else:
             content = "I couldn't find any relevant documents to answer your question."
             result = {"sources": list(), "nodedetails": list(), "entities": list()}
@@ -529,8 +530,8 @@ def create_graph_chain(model, graph):
     try:
         logging.info(f"Graph QA Chain using LLM model: {model}")
 
-        cypher_llm,model_name = get_llm(model)
-        qa_llm,model_name = get_llm(model)
+        cypher_llm,model_name, _ = get_llm(model)
+        qa_llm,model_name, _ = get_llm(model)
         graph_chain = GraphCypherQAChain.from_llm(
             cypher_llm=cypher_llm,
             qa_llm=qa_llm,
@@ -652,7 +653,7 @@ def get_chat_mode_settings(mode,settings_map=CHAT_MODE_CONFIG_MAP):
 
     return chat_mode_settings
     
-def QA_RAG(graph,model, question, document_names, session_id, mode, write_access=True):
+def QA_RAG(graph, model, question, document_names, session_id, mode, write_access=True, email=None, uri=None):
     logging.info(f"Chat Mode: {mode}")
 
     history = create_neo4j_chat_message_history(graph, session_id, write_access)
@@ -683,7 +684,7 @@ def QA_RAG(graph,model, question, document_names, session_id, mode, write_access
                 "user": "chatbot"
             }
         else:
-            result = process_chat_response(messages,history, question, model, graph, document_names,chat_mode_settings)
+            result = process_chat_response(messages,history, question, model, graph, document_names,chat_mode_settings, email, uri)
 
     result["session_id"] = session_id
     
