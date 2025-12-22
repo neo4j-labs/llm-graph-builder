@@ -210,123 +210,57 @@ VITE_BACKEND_API_URL=${VITE_BACKEND_API_URL-backendurl}
 
 
 ## [ENV](https://docs.google.com/spreadsheets/d/1DBg3m3hz0PCZNqIjyYJsYALzdWwMlLah706Xvxt62Tk/edit?gid=184339012#gid=184339012)
-<table style="border-collapse: collapse; width: 100%; table-layout: fixed; overflow:wrap">
-  <thead>
-    <tr>
-      <th style="border:1px solid #ccc; padding:6px; width:32%;">Env Variable Name</th>
-      <th style="border:1px solid #ccc; padding:6px; width:18%;">Mandatory/Optional</th>
-      <th style="border:1px solid #ccc; padding:6px; width:40%; word-break:break-word; white-space:normal;">
-        Default Value
-      </th>
-      <th style="border:1px solid #ccc; padding:6px; width:40%;">Description</th>
-    </tr>
-  </thead>
-
-  <tbody>
-    <tr>
-      <td style="border: 1px solid #ccc; padding: 6px; font-weight: bold;" colspan="4">BACKEND ENV</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid #ccc; padding: 6px;">OPENAI_API_KEY</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">Mandatory</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">-</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">OpenAI API key to authenticate and track requests</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid #ccc; padding: 6px;">DIFFBOT_API_KEY</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">Mandatory</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">-</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">Diffbot API key to extract entities and relationships from unstructured data</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid #ccc; padding: 6px;">BUCKET</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">Mandatory</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">-</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">Bucket name to store uploaded files on GCS</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid #ccc; padding: 6px;">NEO4J_USER_AGENT</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">Optional</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">llm-graph-builder</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">User agent name to track Neo4j database activity</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid #ccc; padding: 6px;">ENABLE_USER_AGENT</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">Optional</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">true</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">Boolean flag to enable or disable the Neo4j user agent</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid #ccc; padding: 6px;">DUPLICATE_TEXT_DISTANCE</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">Mandatory</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">5</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">Distance threshold for duplicate detection across node pairs</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid #ccc; padding: 6px;">DUPLICATE_SCORE_VALUE</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">Mandatory</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">0.97</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">Score threshold to match duplicate nodes</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid #ccc; padding: 6px;">EFFECTIVE_SEARCH_RATIO</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">Mandatory</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">1</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">Ratio used to tune search effectiveness</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid #ccc; padding: 6px; font-weight: bold;" colspan="4">FRONTEND ENV</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid #ccc; padding: 6px;">VITE_BLOOM_URL</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">Mandatory</td>
-      <td style="border: 1px solid #ccc; padding: 6px;
-          white-space: normal;
-          overflow-wrap: anywhere;    /* allow breaks anywhere if needed */
-          word-break: break-word;">https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">URL for Bloom visualization</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid #ccc; padding: 6px;">VITE_REACT_APP_SOURCES</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">Mandatory</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">local,youtube,wiki,s3</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">Input sources available in the UI</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid #ccc; padding: 6px;">VITE_CHAT_MODES</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">Mandatory</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">vector,graph+vector,graph,hybrid</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">Chat modes available for Q&A</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid #ccc; padding: 6px;">VITE_ENV</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">Mandatory</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">DEV or PROD</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">Environment indicator for the app</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid #ccc; padding: 6px;">VITE_LLM_MODELS</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">Optional</td>
-      <td style="border: 1px solid #ccc; padding: 6px;
-           white-space: normal;
-          overflow-wrap: anywhere;
-          word-break: break-word; ">openai_gpt_5.2,openai_gpt_5_mini,gemini_2.5_flash,diffbot</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">Supported models for the application</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid #ccc; padding: 6px;">VITE_AUTH0_CLIENT_ID</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">Optional (required if auth enabled)</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">-</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">Okta OAuth client ID for authentication</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid #ccc; padding: 6px;">VITE_AUTH0_DOMAIN</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">Optional (required if auth enabled)</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">-</td>
-      <td style="border: 1px solid #ccc; padding: 6px;">Okta OAuth client domain</td>
-    </tr>
-  </tbody>
-</table>
+| Env Variable Name       | Mandatory/Optional | Default Value | Description                                                                                      |
+|-------------------------|--------------------|---------------|--------------------------------------------------------------------------------------------------|
+|                         |                    |               |                                                                                                  |
+| **BACKEND ENV**         |                    |               |                                                                                                  |
+| OPENAI_API_KEY          | Mandatory          |               | An OpenAI Key is required to use OpenAI LLM model to authenticate and track requests            |
+| DIFFBOT_API_KEY         | Mandatory          |               | API key is required to use Diffbot's NLP service to extract entities and relationships from unstructured data |
+| BUCKET                  | Mandatory          |               | Bucket name to store uploaded files on GCS                                                     |
+| NEO4J_USER_AGENT        | Optional           | llm-graph-builder | Name of the user agent to track Neo4j database activity                                       |
+| ENABLE_USER_AGENT       | Optional           | true           | Boolean value to enable/disable Neo4j user agent                                              |
+| DUPLICATE_TEXT_DISTANCE | Mandatory          | 5              | This value is used to find distance for all node pairs in the graph and is calculated based on node properties |
+| DUPLICATE_SCORE_VALUE   | Mandatory          | 0.97           | Node score value to match duplicate nodes                                                     |
+| EFFECTIVE_SEARCH_RATIO  | Mandatory          | 1              | Ratio used for effective search calculations                                                  |
+| GRAPH_CLEANUP_MODEL     | Optional           | openai_gpt_4o_mini | Model name to clean up graph in post processing                                             |
+| MAX_TOKEN_CHUNK_SIZE    | Optional           | 10000          | Maximum token size to process file content                                                   |
+| YOUTUBE_TRANSCRIPT_PROXY | Optional          |                | Proxy key to process YouTube videos for getting transcripts                                  |
+| EMBEDDING_MODEL         | Optional           |                | Model for generating text embeddings (default: all-MiniLM-L6-v2, openai, vertexai, titan)   |
+| IS_EMBEDDING            | Optional           | true           | Flag to enable text embedding                                                                |
+| KNN_MIN_SCORE           | Optional           | 0.94           | Minimum score for KNN algorithm                                                              |
+| GEMINI_ENABLED          | Optional           | False          | Flag to enable Gemini                                                                        |
+| GCP_LOG_METRICS_ENABLED | Optional           | False          | Flag to enable Google Cloud logs                                                             |
+| NUMBER_OF_CHUNKS_TO_COMBINE | Optional        | 5              | Number of chunks to combine when processing embeddings                                       |
+| UPDATE_GRAPH_CHUNKS_PROCESSED | Optional      | 20             | Number of chunks processed before updating progress                                         |
+| NEO4J_URI               | Optional           | neo4j://database:7687 | URI for Neo4j database                                                                 |
+| NEO4J_USERNAME          | Optional           | neo4j          | Username for Neo4j database                                                                 |
+| NEO4J_PASSWORD          | Optional           | password       | Password for Neo4j database                                                                 |
+| LANGCHAIN_API_KEY       | Optional           |                | API key for Langchain                                                                       |
+| LANGCHAIN_PROJECT       | Optional           |                | Project for Langchain                                                                       |
+| LANGCHAIN_TRACING_V2    | Optional           | true           | Flag to enable Langchain tracing                                                            |
+| GCS_FILE_CACHE          | Optional           | False          | If set to True, will save files to process into GCS. If False, will save files locally      |
+| LANGCHAIN_ENDPOINT      | Optional           | https://api.smith.langchain.com | Endpoint for Langchain API                                                  |
+| ENTITY_EMBEDDING        | Optional           | False          | If set to True, it will add embeddings for each entity in the database                     |
+| LLM_MODEL_CONFIG_ollama_<model_name> | Optional |              | Set ollama config as model_name,model_local_url for local deployments                    |
+| RAGAS_EMBEDDING_MODEL   | Optional           |                | Embedding model used by RAGAS evaluation framework                                         |
+|                         |                    |               |                                                                                                  |
+| **FRONTEND ENV**        |                    |               |                                                                                                  |
+| VITE_BLOOM_URL          | Mandatory          | https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true | URL for Bloom visualization |
+| VITE_REACT_APP_SOURCES  | Mandatory          | local,youtube,wiki,s3 | List of input sources that will be available                                            |
+| VITE_CHAT_MODES         | Mandatory          | vector,graph+vector,graph,hybrid | Chat modes available for Q&A                                               |
+| VITE_ENV                | Mandatory          | DEV or PROD    | Environment variable for the app                                                           |
+| VITE_LLM_MODELS         | Mandatory          | diffbot,openai_gpt_3.5,openai_gpt_4o,openai_gpt_4o_mini,gemini_1.5_pro,gemini_1.5_flash,azure_ai_gpt_35,azure_ai_gpt_4o,ollama_llama3,groq_llama3_70b,anthropic_claude_3_5_sonnet | Supported models for the application |
+| VITE_BACKEND_API_URL    | Optional           | http://localhost:8000 | URL for backend API                                                                    |
+| VITE_TIME_PER_PAGE      | Optional           | 50             | Time per page for processing                                                              |
+| VITE_CHUNK_SIZE         | Optional           | 5242880        | Size of each chunk of file for upload                                                      |
+| VITE_GOOGLE_CLIENT_ID   | Optional           |                | Client ID for Google authentication                                                       |
+| VITE_LLM_MODELS_PROD    | Optional           | openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash | To distinguish models based on environment (PROD or DEV)                        |
+| VITE_AUTH0_CLIENT_ID    | Mandatory if you are enabling Authentication otherwise it is optional |  | Okta OAuth Client ID for authentication                                          |
+| VITE_AUTH0_DOMAIN       | Mandatory if you are enabling Authentication otherwise it is optional |  | Okta OAuth Client Domain                                                         |
+| VITE_SKIP_AUTH          | Optional           | true           | Flag to skip authentication                                                               |
+| VITE_CHUNK_OVERLAP      | Optional           | 20             | Variable to configure chunk overlap                                                       |
+| VITE_TOKENS_PER_CHUNK   | Optional           | 100            | Variable to configure tokens count per chunk. This gives flexibility for users who may require different chunk sizes for various tokenization tasks |
+| VITE_CHUNK_TO_COMBINE   | Optional           | 1              | Variable to configure number of chunks to combine for parallel processing                 |
 
 ### Refer to this link for additional  [Environment Variables.](https://docs.google.com/spreadsheets/d/1DBg3m3hz0PCZNqIjyYJsYALzdWwMlLah706Xvxt62Tk/edit?gid=0#gid=0)
 
