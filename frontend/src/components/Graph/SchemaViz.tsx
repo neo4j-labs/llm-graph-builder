@@ -1,5 +1,5 @@
 import { Banner, Dialog, IconButtonArray, LoadingSpinner, useDebounceValue } from '@neo4j-ndl/react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   BasicNode,
   BasicRelationship,

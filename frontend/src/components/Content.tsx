@@ -566,7 +566,7 @@ const Content: React.FC<ContentProps> = ({
   }, [filesData, queue]);
 
   const handleOpenGraphClick = () => {
-    const bloomUrl = process.env.VITE_BLOOM_URL;
+    const bloomUrl = import.meta.env.VITE_BLOOM_URL;
     let finalUrl = bloomUrl;
     if (userCredentials?.database && userCredentials.uri && userCredentials.userName) {
       const uriCoded = userCredentials.uri.replace(/:\d+$/, '');

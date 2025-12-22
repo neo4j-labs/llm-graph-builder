@@ -14,7 +14,7 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
   isDisabled,
   value,
 }) => {
-  const isProdEnv = process.env.VITE_ENV === 'PROD';
+  const isProdEnv = import.meta.env.VITE_ENV === 'PROD';
   const isLargeDesktop = useMediaQuery(`(min-width:1440px )`);
   const handleChange = (selectedOption: OptionType | null | void) => {
     onSelect(selectedOption);

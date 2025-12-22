@@ -65,7 +65,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
             )}
             <div className='flex flex-col h-full'>
               <div className='relative h-full'>
-                {process.env.VITE_ENV !== 'PROD' && (
+                {import.meta.env.VITE_ENV !== 'PROD' && (
                   <div className='mx-6 flex! items-center justify-between pb-6'>
                     <Typography variant='body-medium' className='flex items-center gap-1'>
                       <StatusIndicator type={isBackendConnected ? 'success' : 'danger'} />
@@ -137,7 +137,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
               <StatusIndicator type={'danger'} />
               <span className='text-center mx-1'>
                 {filesData.length === 0
-                  ? `It seems like you haven't ingested any data yet Please log in to the main application.`
+                  ? `It seems like you haven't ingested any data yet. Please log in to the main application.`
                   : 'You must be logged in to process this data. Please log in to the main application'}
               </span>
             </Typography>

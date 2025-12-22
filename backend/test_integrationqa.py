@@ -360,7 +360,7 @@ def generate_summary_report(summaries: List[Dict[str, Any]], report_path: Path) 
 # Usage in main
 if __name__ == "__main__":
     models = [
-            'openai_gpt_5.1',
+            'openai_gpt_5.2',
             'openai_gpt_5_mini',
             'openai_gpt_4.1',
             'openai_gpt_4.1_mini',

@@ -13,7 +13,7 @@ import {
   chatModeLables,
   getStoredSchema,
   llms,
-  PRODMODLES,
+  PRODMODELS,
   chunkOverlap,
   chunksToCombine,
   tokenchunkSize,
@@ -24,7 +24,7 @@ import Queue from '../utils/Queue';
 const FileContext = createContext<FileContextType | undefined>(undefined);
 
 const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
-  const isProdEnv = process.env.VITE_ENV === 'PROD';
+  const isProdEnv = import.meta.env.VITE_ENV === 'PROD';
   const selectedNodeLabelstr = localStorage.getItem('selectedNodeLabels');
   const selectedNodeRelsstr = localStorage.getItem('selectedRelationshipLabels');
   const selectedTokenChunkSizeStr = localStorage.getItem('selectedTokenChunkSize');
@@ -33,14 +33,14 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const persistedQueue = localStorage.getItem('waitingQueue');
   const selectedModel = localStorage.getItem('selectedModel');
   const selectedInstructstr = localStorage.getItem('instructions');
-  const isProdDefaultModel = isProdEnv && selectedModel && PRODMODLES.includes(selectedModel);
+  const isProdDefaultModel = isProdEnv && selectedModel && PRODMODELS.includes(selectedModel);
   const { userCredentials } = useCredentials();
   const [files, setFiles] = useState<(File | null)[] | []>([]);
   const [filesData, setFilesData] = useState<CustomFile[] | []>([]);
   const [queue, setQueue] = useState<Queue<CustomFile>>(
     new Queue(JSON.parse(persistedQueue ?? JSON.stringify({ queue: [] })).queue)
   );
-  const [model, setModel] = useState<string>(isProdDefaultModel ? selectedModel : isProdEnv ? PRODMODLES[0] : llms[0]);
+  const [model, setModel] = useState<string>(isProdDefaultModel ? selectedModel : isProdEnv ? PRODMODELS[0] : llms[0]);
   const [graphType, setGraphType] = useState<string>('Knowledge Graph Entities');
   const [selectedNodes, setSelectedNodes] = useState<readonly OptionType[]>([]);
   const [selectedRels, setSelectedRels] = useState<readonly OptionType[]>([]);
