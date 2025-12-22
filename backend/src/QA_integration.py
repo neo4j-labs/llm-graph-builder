@@ -438,7 +438,9 @@ def process_chat_response(messages, history, question, model, graph, document_na
 
         if docs:
             content, result, total_tokens,formatted_docs = process_documents(docs, question, messages, llm, model, chat_mode_settings)
-            track_token_usage(email=email, uri=uri, usage=total_tokens, last_used_model=model)
+            if os.environ.get("TRACK_TOKEN_USAGE").strip().lower() == "true":
+                latest_token = track_token_usage(email=email, uri=uri, usage=total_tokens, last_used_model=model)
+                logging.info(f"Total token usage {latest_token} for user {email} ")
         else:
             content = "I couldn't find any relevant documents to answer your question."
             result = {"sources": list(), "nodedetails": list(), "entities": list()}

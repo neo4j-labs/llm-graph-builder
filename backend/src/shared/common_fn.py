@@ -4,6 +4,7 @@ from transformers import AutoTokenizer, AutoModel
 from langchain_huggingface import HuggingFaceEmbeddings
 from threading import Lock
 import logging
+from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from src.document_sources.youtube import create_youtube_url
 from langchain_google_vertexai import VertexAIEmbeddings
 from langchain_openai import OpenAIEmbeddings
@@ -270,6 +271,7 @@ class UniversalTokenUsageHandler(BaseCallbackHandler):
             "total_tokens": self.total_prompt_tokens + self.total_completion_tokens,
         }
     
+
 def track_token_usage(
     email: str,
     uri: str,
@@ -292,10 +294,10 @@ def track_token_usage(
         if not normalized_email and not normalized_db_url:
             raise ValueError("Either email or db_url must be provided for token tracking.")
 
-        uri = os.getenv("NEO4J_URI_PROD")
-        user = os.getenv("NEO4J_USERNAME_PROD")
-        password = os.getenv("NEO4J_PASSWORD_PROD")
-        database = os.getenv("NEO4J_DATABASE_PROD", "neo4j")
+        uri = os.getenv("TOKEN_TRACKER_DB_URI")
+        user = os.getenv("TOKEN_TRACKER_DB_USERNAME")
+        password = os.getenv("TOKEN_TRACKER_DB_PASSWORD")
+        database = os.getenv("TOKEN_TRACKER_DB_DATABASE", "neo4j")
         if not all([uri, user, password]):
             raise EnvironmentError("Neo4j credentials are not set properly.")
 
@@ -355,6 +357,12 @@ def track_token_usage(
 
         result = graph.query(cypher_query, params)
         if result and "latestUsage" in result[0]:
+            daily_tokens_limit = result[0].get("daily_tokens_limit", 0)
+            monthly_tokens_limit = result[0].get("monthly_tokens_limit", 0)
+            if (daily_tokens_limit < 0 or monthly_tokens_limit < 0) and not is_neo4j_user:
+                raise LLMGraphBuilderException(
+                    "Token usage limit exceeded. Please contact the team to increase your limit."
+                )
             logging.info(
                 "Updated token usage for user: "
                 "latest=%s prev=%s daily_used=%s monthly_used=%s",

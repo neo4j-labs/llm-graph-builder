@@ -474,6 +474,14 @@ async def processing_chunks(chunkId_chunkDoc_list,graph,uri, userName, password,
   else:
     graph = create_graph_database_connection(uri, userName, password, database)
   
+  #pre checking if user is allowed to process the file
+  if os.environ.get("TRACK_TOKEN_USAGE", "false").strip().lower() == "true":
+    try:
+      track_token_usage(email, uri, 0, model)
+    except LLMGraphBuilderException as e:
+      logging.error(str(e))
+      raise RuntimeError(str(e))
+    
   start_update_embedding = time.time()
   create_chunk_embeddings( graph, chunkId_chunkDoc_list, file_name)
   end_update_embedding = time.time()
@@ -490,11 +498,12 @@ async def processing_chunks(chunkId_chunkDoc_list,graph,uri, userName, password,
   latency_processing_chunk["entity_extraction"] = f'{elapsed_entity_extraction:.2f}'
   
   start_save_token = time.time()
-  latest_token = track_token_usage(email,uri,token_usage,model)
+  if os.environ.get("TRACK_TOKEN_USAGE").strip().lower() == "true":
+    track_token_usage(email,uri,token_usage,model)
+    logging.info("Token usage for extraction: %s for user: %s", token_usage, email)
   end_save_token = time.time()
   elapsed_save_token = end_save_token - start_save_token
-  logging.info(f'Time taken to save token count: {elapsed_update_embedding:.2f} seconds')
-  logging.info(f"Total token usage {latest_token} for user")
+  logging.info(f'Time taken to save token count: {elapsed_save_token:.2f} seconds')
   cleaned_graph_documents = handle_backticks_nodes_relationship_id_type(graph_documents)
   
   start_save_graphDocuments = time.time()

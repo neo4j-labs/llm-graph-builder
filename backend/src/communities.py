@@ -354,13 +354,14 @@ def create_community_summaries(gds, model, email, uri):
 
     finally:
        try:
-           if callback_handler:
-               usage = callback_handler.report()
-               token_usage = usage.get("total_tokens", 0)
-               if email and token_usage > 0:
-                   email = email.strip().replace('"', '')
-                   latest_token = track_token_usage(email, uri, token_usage, model)
-                   logging.info(f"In community : Total token usage {latest_token} for user {email} ")
+           if os.environ.get("TRACK_TOKEN_USAGE").strip().lower() == "true":
+               if callback_handler:
+                   usage = callback_handler.report()
+                   token_usage = usage.get("total_tokens", 0)
+                   if email and token_usage > 0:
+                       email = email.strip().replace('"', '')
+                       latest_token = track_token_usage(email, uri, token_usage, model)
+                       logging.info(f"In community : Total token usage {latest_token} for user {email} ")
        except Exception as err:
            logging.warning(f"Failed to track token usage: {err}")
 
