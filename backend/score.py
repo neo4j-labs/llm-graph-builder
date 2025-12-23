@@ -555,9 +555,6 @@ async def connect(uri=Form(None), userName=Form(None), password=Form(None), data
     try:
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
-        graphDb_data_Access = graphDBdataAccess(graph)
-        user_details = graphDb_data_Access.get_user_detail(email, uri)
-        logging.info(f"User details fetched : {user_details}")
         
         result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, database)
         gcs_file_cache = os.environ.get('GCS_FILE_CACHE')

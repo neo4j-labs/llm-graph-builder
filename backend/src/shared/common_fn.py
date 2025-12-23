@@ -318,27 +318,25 @@ def track_token_usage(
             u.email = coalesce(u.email, $email),
             u.db_url = coalesce(u.db_url, $db_url),
             u.is_neo4j_user = $is_neo4j_user,
-            u.daily_tokens_limit = $daily_tokens_limit - $usage,
-            u.monthly_tokens_limit = $monthly_tokens_limit - $usage,
+            u.daily_tokens_limit = $daily_tokens_limit,
+            u.monthly_tokens_limit = $monthly_tokens_limit,
             u.daily_tokens_used = $usage,
             u.monthly_tokens_used = $usage,
             u.total_tokens_used = $usage,
             u.lastUsedModel = $lastUsedModel,
-            u.prevTokenUsage = 0,
+            u.lastOperationUsage = $usage,
             u.createdAt = coalesce(u.createdAt, datetime()),
             u.updatedAt = datetime()
         ON MATCH SET
-            u.prevTokenUsage      = coalesce(u.total_tokens_used, 0),
+            u.lastOperationUsage   = $usage,
             u.daily_tokens_used   = coalesce(u.daily_tokens_used, 0) + $usage,
             u.monthly_tokens_used = coalesce(u.monthly_tokens_used, 0) + $usage,
             u.total_tokens_used   = coalesce(u.total_tokens_used, 0) + $usage,
-            u.daily_tokens_limit   = coalesce(u.daily_tokens_limit, $daily_tokens_limit) - $usage,
-            u.monthly_tokens_limit = coalesce(u.monthly_tokens_limit, $monthly_tokens_limit) - $usage,
             u.lastUsedModel       = $lastUsedModel,
             u.updatedAt           = datetime()
         RETURN
             u.total_tokens_used    AS latestUsage,
-            u.prevTokenUsage       AS prevTokenUsage,
+            u.lastOperationUsage   AS lastOperationUsage,
             u.daily_tokens_used    AS daily_tokens_used,
             u.monthly_tokens_used  AS monthly_tokens_used,
             u.daily_tokens_limit   AS daily_tokens_limit,
@@ -359,15 +357,17 @@ def track_token_usage(
         if result and "latestUsage" in result[0]:
             daily_tokens_limit = result[0].get("daily_tokens_limit", 0)
             monthly_tokens_limit = result[0].get("monthly_tokens_limit", 0)
-            if (daily_tokens_limit < 0 or monthly_tokens_limit < 0) and not is_neo4j_user:
+            daily_tokens_used = result[0].get("daily_tokens_used", 0)
+            monthly_tokens_used = result[0].get("monthly_tokens_used", 0)
+            if ((daily_tokens_used > daily_tokens_limit) or (monthly_tokens_used > monthly_tokens_limit)) and not is_neo4j_user:
                 raise LLMGraphBuilderException(
                     "Token usage limit exceeded. Please contact the team to increase your limit."
                 )
             logging.info(
                 "Updated token usage for user: "
-                "latest=%s prev=%s daily_used=%s monthly_used=%s",
+                "latest=%s last_op=%s daily_used=%s monthly_used=%s",
                 result[0]["latestUsage"],
-                result[0].get("prevTokenUsage", 0),
+                result[0].get("lastOperationUsage", 0),
                 result[0].get("daily_tokens_used", 0),
                 result[0].get("monthly_tokens_used", 0),
             )
