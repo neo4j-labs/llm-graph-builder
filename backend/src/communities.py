@@ -6,7 +6,7 @@ from langchain_core.output_parsers import StrOutputParser
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
 from src.shared.common_fn import load_embedding_model,track_token_usage
-
+from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 
 COMMUNITY_PROJECTION_NAME = "communities"
 NODE_PROJECTION = "!Chunk&!Document&!__Community__"
@@ -315,6 +315,13 @@ def create_community_summaries(gds, model, email, uri):
     callback_handler = None
     token_usage = 0
     try:
+        #pre check if user allowed to create community summaries
+        if os.environ.get("TRACK_TOKEN_USAGE", "false").strip().lower() == "true":
+            try:
+                track_token_usage(email, uri, 0, model)
+            except LLMGraphBuilderException as e:
+                logging.error(str(e))
+                raise RuntimeError(str(e))
         community_info_list = gds.run_cypher(GET_COMMUNITY_INFO)
         llm, model_name,callback_handler = get_llm(model)
         community_chain = get_community_chain(model)
