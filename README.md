@@ -222,7 +222,7 @@ VITE_BACKEND_API_URL=${VITE_BACKEND_API_URL-backendurl}
 | DUPLICATE_TEXT_DISTANCE | Mandatory          | 5              | This value is used to find distance for all node pairs in the graph and is calculated based on node properties |
 | DUPLICATE_SCORE_VALUE   | Mandatory          | 0.97           | Node score value to match duplicate nodes                                                     |
 | EFFECTIVE_SEARCH_RATIO  | Mandatory          | 1              | Ratio used for effective search calculations                                                  |
-| GRAPH_CLEANUP_MODEL     | Optional           | openai_gpt_4o_mini | Model name to clean up graph in post processing                                             |
+| GRAPH_CLEANUP_MODEL     | Optional           | openai_gpt_5_mini | Model name to clean up graph in post processing                                             |
 | MAX_TOKEN_CHUNK_SIZE    | Optional           | 10000          | Maximum token size to process file content                                                   |
 | YOUTUBE_TRANSCRIPT_PROXY | Optional          |                | Proxy key to process YouTube videos for getting transcripts                                  |
 | EMBEDDING_MODEL         | Optional           |                | Model for generating text embeddings (default: all-MiniLM-L6-v2, openai, vertexai, titan)   |

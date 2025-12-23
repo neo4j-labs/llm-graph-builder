@@ -362,8 +362,6 @@ if __name__ == "__main__":
     models = [
             'openai_gpt_5.2',
             'openai_gpt_5_mini',
-            'openai_gpt_4.1',
-            'openai_gpt_4.1_mini',
             'gemini_2.5_flash',
             'gemini_2.5_pro',
             'groq_llama3.1_8b',
@@ -371,9 +369,7 @@ if __name__ == "__main__":
             'llama4_maverick',
             'fireworks_gpt_oss',
             'fireworks_deepseek_v3',
-            'bedrock_nova_micro_v1',
             'bedrock_nova_lite_v1',
-            'bedrock_nova_pro_v1'
             ]
     chatbot_modes = [
         "vector",
