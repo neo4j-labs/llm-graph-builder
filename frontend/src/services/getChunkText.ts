@@ -9,7 +9,7 @@ export const getChunkText = async (documentName: string, page_no: number, signal
     const response = await api.post<chunksData>(`/fetch_chunktext`, formData, { signal });
     return response;
   } catch (error) {
-    console.log(`error in userDetails api, ${error}`);
+    console.log(`error in getChunkText api, ${error}`);
     throw error;
   }
 };
