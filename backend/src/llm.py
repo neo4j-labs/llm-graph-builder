@@ -202,7 +202,6 @@ async def get_graph_document_list(
             else:
                 node_properties = ["description"]
                 relationship_properties = ["description"]
-            model_name = get_llm_model_name(llm)
             llm_transformer = LLMGraphTransformer(
                 llm=llm,
                 node_properties=node_properties,
