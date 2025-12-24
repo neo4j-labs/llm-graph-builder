@@ -9,7 +9,7 @@ def reset_all_users_daily_tokens():
     This function connects to the configured Neo4j instance using the
     `NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD`, and optional
     `NEO4J_DATABASE` environment variables. It sets the `daily_tokens_used`
-    property to 0 on all nodes with the `User` label, then prints the number
+    property to 0 on all nodes with the `User` label, then logs the number
     of affected users.
 
     Raises:
@@ -24,9 +24,9 @@ def reset_all_users_daily_tokens():
         username = os.environ["NEO4J_USERNAME"]
         password = os.environ["NEO4J_PASSWORD"]
         database = os.environ.get("NEO4J_DATABASE", "neo4j")
-    except KeyError as exc:
+    except KeyError as e:
         # Missing required environment variable
-        logging.error(f"Failed to reset daily tokens: missing environment variable {exc!r}")
+        logging.error("Failed to reset daily tokens: missing environment variable %s", e.args[0])
         return
     try:
         graph = Neo4jGraph(

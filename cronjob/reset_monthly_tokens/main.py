@@ -8,7 +8,7 @@ def reset_all_users_monthly_tokens():
 
     This function connects to the configured Neo4j database using credentials
     provided via environment variables, executes a Cypher query that sets
-    `u.monthly_tokens_used = 0` for every `User` node, and prints the number
+    `u.monthly_tokens_used = 0` for every `User` node, and logs the number
     of users that were updated.
 
     Environment variables:
