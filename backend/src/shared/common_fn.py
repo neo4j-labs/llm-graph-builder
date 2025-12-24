@@ -4,6 +4,7 @@ from transformers import AutoTokenizer, AutoModel
 from langchain_huggingface import HuggingFaceEmbeddings
 from threading import Lock
 import logging
+from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from src.document_sources.youtube import create_youtube_url
 from langchain_google_vertexai import VertexAIEmbeddings
 from langchain_openai import OpenAIEmbeddings
@@ -18,6 +19,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 import boto3
 from langchain_community.embeddings import BedrockEmbeddings
+from langchain_core.callbacks import BaseCallbackHandler
 
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 MODEL_PATH = "./local_model"
@@ -26,15 +28,15 @@ _embedding_instance = None
 
 def ensure_sentence_transformer_model_downloaded():
    if os.path.isdir(MODEL_PATH):
-       print("Model already downloaded at:", MODEL_PATH)
+       logging.info(f"Model already downloaded at: {MODEL_PATH}")
        return
    else:
-       print("Downloading model to:", MODEL_PATH)
+       logging.info(f"Downloading model to: {MODEL_PATH}")
        tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
        model = AutoModel.from_pretrained(MODEL_NAME)
        tokenizer.save_pretrained(MODEL_PATH)
        model.save_pretrained(MODEL_PATH)
-   print("Model downloaded and saved.")
+   logging.info("Model downloaded and saved.")
 
 def get_local_sentence_transformer_embedding():
    """
@@ -50,7 +52,7 @@ def get_local_sentence_transformer_embedding():
        # Ensure model is present before instantiating
        ensure_sentence_transformer_model_downloaded()
        _embedding_instance = HuggingFaceEmbeddings(model_name=MODEL_PATH)
-       print("Embedding model initialized.")
+       logging.info("Embedding model initialized.")
        return _embedding_instance
 
 def check_url_source(source_type, yt_url:str=None, wiki_query:str=None):
@@ -237,5 +239,147 @@ def get_bedrock_embeddings():
        )
        return bedrock_embeddings
    except Exception as e:
-       print(f"An unexpected error occurred: {e}")
+       logging.error(f"An unexpected error occurred: {e}")
        raise
+
+
+class UniversalTokenUsageHandler(BaseCallbackHandler):
+    def __init__(self):
+        self.total_prompt_tokens = 0
+        self.total_completion_tokens = 0
+
+    def on_llm_end(self, response, **kwargs):
+        for generations in response.generations:
+            for generation in generations:
+                if hasattr(generation, 'message') and hasattr(generation.message, 'usage_metadata'):
+                    usage = generation.message.usage_metadata
+                    if usage:
+                        self.total_prompt_tokens += usage.get("input_tokens", 0)
+                        self.total_completion_tokens += usage.get("output_tokens", 0)
+                        continue
+
+        if not self.total_prompt_tokens:
+            usage = getattr(response, 'llm_output', {}).get('token_usage', {})
+            self.total_prompt_tokens += usage.get('prompt_tokens', 0)
+            self.total_completion_tokens += usage.get('completion_tokens', 0)
+
+    def report(self):
+        return {
+            "prompt_tokens": self.total_prompt_tokens,
+            "completion_tokens": self.total_completion_tokens,
+            "total_tokens": self.total_prompt_tokens + self.total_completion_tokens,
+        }
+    
+
+def track_token_usage(
+    email: str,
+    uri: str,
+    usage: int,
+    last_used_model: str | None = None,
+) -> int:
+    """
+    Track and persist token usage for a user.
+
+    - Assumes a `User` node already exists (created elsewhere).
+    - Matches by `email` or `db_url`.
+    - Increments daily, monthly and total usage.
+    - Stores previous total usage in `prevTokenUsage`.
+    """
+    try:
+        logging.info("inside new function of track_token_usage")
+        normalized_email = (email or "").strip().lower() or None
+        normalized_db_url = (uri or "").strip() or None
+
+        if not normalized_email and not normalized_db_url:
+            raise ValueError("Either email or db_url must be provided for token tracking.")
+
+        uri = os.getenv("TOKEN_TRACKER_DB_URI")
+        user = os.getenv("TOKEN_TRACKER_DB_USERNAME")
+        password = os.getenv("TOKEN_TRACKER_DB_PASSWORD")
+        database = os.getenv("TOKEN_TRACKER_DB_DATABASE", "neo4j")
+        if not all([uri, user, password]):
+            raise EnvironmentError("Neo4j credentials are not set properly.")
+
+        graph = create_graph_database_connection(uri, user, password, database)
+
+        daily_tokens_limit = int(os.getenv("DAILY_TOKENS_LIMIT", "250000"))
+        monthly_tokens_limit = int(os.getenv("MONTHLY_TOKENS_LIMIT", "1000000"))
+        is_neo4j_user = bool(normalized_email and normalized_email.endswith("@neo4j.com"))
+
+        if normalized_email:
+            merge_clause = "MERGE (u:User {email: $email})"
+        else:
+            merge_clause = "MERGE (u:User {db_url: $db_url})"
+
+        cypher_query = f"""
+        {merge_clause}
+        ON CREATE SET
+            u.email = coalesce(u.email, $email),
+            u.db_url = coalesce(u.db_url, $db_url),
+            u.is_neo4j_user = $is_neo4j_user,
+            u.daily_tokens_limit = $daily_tokens_limit,
+            u.monthly_tokens_limit = $monthly_tokens_limit,
+            u.daily_tokens_used = $usage,
+            u.monthly_tokens_used = $usage,
+            u.total_tokens_used = $usage,
+            u.lastUsedModel = $lastUsedModel,
+            u.lastOperationUsage = $usage,
+            u.createdAt = coalesce(u.createdAt, datetime()),
+            u.updatedAt = datetime()
+        ON MATCH SET
+            u.lastOperationUsage   = $usage,
+            u.daily_tokens_used   = coalesce(u.daily_tokens_used, 0) + $usage,
+            u.monthly_tokens_used = coalesce(u.monthly_tokens_used, 0) + $usage,
+            u.total_tokens_used   = coalesce(u.total_tokens_used, 0) + $usage,
+            u.lastUsedModel       = $lastUsedModel,
+            u.updatedAt           = datetime()
+        RETURN
+            u.total_tokens_used    AS latestUsage,
+            u.lastOperationUsage   AS lastOperationUsage,
+            u.daily_tokens_used    AS daily_tokens_used,
+            u.monthly_tokens_used  AS monthly_tokens_used,
+            u.daily_tokens_limit   AS daily_tokens_limit,
+            u.monthly_tokens_limit AS monthly_tokens_limit
+        """
+
+        params = {
+            "email": normalized_email,
+            "db_url": normalized_db_url,
+            "usage": usage,
+            "lastUsedModel": last_used_model or "",
+            "is_neo4j_user": is_neo4j_user,
+            "daily_tokens_limit": daily_tokens_limit,
+            "monthly_tokens_limit": monthly_tokens_limit,
+        }
+
+        result = graph.query(cypher_query, params)
+        if result and "latestUsage" in result[0]:
+            daily_tokens_limit = result[0].get("daily_tokens_limit", 0)
+            monthly_tokens_limit = result[0].get("monthly_tokens_limit", 0)
+            daily_tokens_used = result[0].get("daily_tokens_used", 0)
+            monthly_tokens_used = result[0].get("monthly_tokens_used", 0)
+            if ((daily_tokens_used > daily_tokens_limit) or (monthly_tokens_used > monthly_tokens_limit)) and not is_neo4j_user:
+                raise LLMGraphBuilderException(
+                    "Token usage limit exceeded. Please contact the team to increase your limit."
+                )
+            logging.info(
+                "Updated token usage for user: "
+                "latest=%s last_op=%s daily_used=%s monthly_used=%s",
+                result[0]["latestUsage"],
+                result[0].get("lastOperationUsage", 0),
+                result[0].get("daily_tokens_used", 0),
+                result[0].get("monthly_tokens_used", 0),
+            )
+            return result[0]["latestUsage"]
+
+        logging.error("No matching User found or failed to fetch updated token usage. Result: %s", result)
+        raise RuntimeError("User not found or failed to fetch updated token usage.")
+
+    except Exception as e:
+        logging.error(
+            "Error in track_token_usage for identity %s: %s",
+            email or uri,
+            e,
+            exc_info=True,
+        )
+        raise

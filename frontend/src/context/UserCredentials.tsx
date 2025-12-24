@@ -25,6 +25,8 @@ export const UserConnection = createContext<ContextProps>({
   setIsGCSActive: () => null,
   //  chunksToBeProces: 50,
   // setChunksToBeProces: () => null,
+  isNeo4jUser: false,
+  setNeo4jUser: () => null,
 });
 export const useCredentials = () => {
   const userCredentials = useContext(UserConnection);
@@ -40,6 +42,7 @@ const UserCredentialsWrapper: FunctionComponent<Props> = (props) => {
   const [showDisconnectButton, setShowDisconnectButton] = useState<boolean>(false);
   const [isGCSActive, setIsGCSActive] = useState<boolean>(false);
   // const [chunksToBeProces, setChunksToBeProces] = useState<number>(50);
+  const [isNeo4jUser, setNeo4jUser] = useState<boolean>(false);
   const value = {
     userCredentials,
     setUserCredentials,
@@ -59,6 +62,8 @@ const UserCredentialsWrapper: FunctionComponent<Props> = (props) => {
     setIsGCSActive,
     // chunksToBeProces,
     // setChunksToBeProces,
+    isNeo4jUser,
+    setNeo4jUser,
   };
   const { pathname } = useLocation();
   useEffect(() => {

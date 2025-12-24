@@ -238,25 +238,26 @@ async def extract_knowledge_graph_from_file(
         start_time = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)   
         graphDb_data_Access = graphDBdataAccess(graph)
+        
         if source_type == 'local file':
             file_name = sanitize_filename(file_name)
             merged_file_path = validate_file_path(MERGED_DIR, file_name)
-            uri_latency, result = await extract_graph_from_file_local_file(uri, userName, password, database, model, merged_file_path, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions)
+            uri_latency, result = await extract_graph_from_file_local_file(uri, userName, password, database, model, merged_file_path, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email)
 
         elif source_type == 's3 bucket' and source_url:
-            uri_latency, result = await extract_graph_from_file_s3(uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions)
+            uri_latency, result = await extract_graph_from_file_s3(uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email)
         
         elif source_type == 'web-url':
-            uri_latency, result = await extract_graph_from_web_page(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions)
+            uri_latency, result = await extract_graph_from_web_page(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email)
 
         elif source_type == 'youtube' and source_url:
-            uri_latency, result = await extract_graph_from_file_youtube(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions)
+            uri_latency, result = await extract_graph_from_file_youtube(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email)
 
         elif source_type == 'Wikipedia' and wiki_query:
-            uri_latency, result = await extract_graph_from_file_Wikipedia(uri, userName, password, database, model, wiki_query, language, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions)
+            uri_latency, result = await extract_graph_from_file_Wikipedia(uri, userName, password, database, model, wiki_query, language, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email)
 
         elif source_type == 'gcs bucket' and gcs_bucket_name:
-            uri_latency, result = await extract_graph_from_file_gcs(uri, userName, password, database, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions)
+            uri_latency, result = await extract_graph_from_file_gcs(uri, userName, password, database, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email)
         else:
             return create_api_response('Failed',message='source_type is other than accepted source')
         extract_api_time = time.time() - start_time
@@ -387,7 +388,7 @@ async def post_processing(uri=Form(None), userName=Form(None), password=Form(Non
             
         if "enable_communities" in tasks:
             api_name = 'create_communities'
-            await asyncio.to_thread(create_communities, uri, userName, password, database)  
+            await asyncio.to_thread(create_communities, uri, userName, password, database,email)  
             
             logging.info(f'created communities')
         graph = create_graph_database_connection(uri, userName, password, database)   
@@ -400,8 +401,18 @@ async def post_processing(uri=Form(None), userName=Form(None), password=Form(Non
         
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name': api_name, 'db_url': uri, 'userName':userName, 'database':database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
-        logger.log_struct(json_obj)
+        for task in tasks:
+            api_name = "post_processing/" + task
+            json_obj = {
+                'api_name': api_name,
+                'db_url': uri,
+                'userName': userName,
+                'database': database,
+                'logging_time': formatted_time(datetime.now(timezone.utc)),
+                'elapsed_api_time': f'{elapsed_time:.2f}',
+                'email': email
+            }
+            logger.log_struct(json_obj)
         return create_api_response('Success', data=count_response, message='All tasks completed successfully')
     
     except Exception as e:
@@ -424,9 +435,9 @@ async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password
         else:
             graph = create_graph_database_connection(uri, userName, password, database)
         
-        graph_DB_dataAccess = graphDBdataAccess(graph)
-        write_access = graph_DB_dataAccess.check_account_access(database=database)
-        result = await asyncio.to_thread(QA_RAG,graph=graph,model=model,question=question,document_names=document_names,session_id=session_id,mode=mode,write_access=write_access)
+        graphDb_data_Access = graphDBdataAccess(graph)
+        write_access = graphDb_data_Access.check_account_access(database=database)
+        result = await asyncio.to_thread(QA_RAG,graph=graph,model=model,question=question,document_names=document_names,session_id=session_id,mode=mode,write_access=write_access, email=email, uri=uri)
 
         total_call_time = time.time() - qa_rag_start_time
         logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
@@ -544,6 +555,7 @@ async def connect(uri=Form(None), userName=Form(None), password=Form(None), data
     try:
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
+        
         result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, database)
         gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
         end = time.time()
@@ -1038,8 +1050,7 @@ async def backend_connection_configuration():
             logging.info(f'login connection status of object: {graph}')
             if graph is not None:
                 graph_connection = True        
-                graphDb_data_Access = graphDBdataAccess(graph)
-                result = graphDb_data_Access.connection_check_and_get_vector_dimensions(database)
+                result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, database)
                 result['gcs_file_cache'] = gcs_file_cache
                 result['uri'] = uri
                 end = time.time()
