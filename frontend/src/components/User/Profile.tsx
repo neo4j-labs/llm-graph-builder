@@ -1,15 +1,12 @@
-import { useMemo, useRef, useState, useEffect, useCallback } from 'react';
+import { useMemo, useRef, useState, useCallback } from 'react';
 import { Menu, Typography, IconButton, Avatar } from '@neo4j-ndl/react';
 import { ChevronDownIconOutline } from '@neo4j-ndl/react/icons';
 import { useAuth0 } from '@auth0/auth0-react';
-import { useCredentials } from '../../context/UserCredentials';
-import userDetails from '../../services/UserDetails';
 
 export default function Profile() {
   const [showMenu, setShowOpen] = useState<boolean>(false);
   const iconbtnRef = useRef<HTMLButtonElement | null>(null);
   const { user, isAuthenticated, isLoading, logout } = useAuth0();
-  const { setNeo4jUser, setIsReadOnlyUser, userCredentials } = useCredentials();
   const settings = useMemo(
     () => [
       {
@@ -21,22 +18,6 @@ export default function Profile() {
     ],
     []
   );
-  useEffect(() => {
-    if (!isLoading && isAuthenticated && userCredentials !== null) {
-      (async () => {
-        try {
-          const userdetails = await userDetails();
-          if (userdetails.status === 'Failed') {
-            throw new Error(userdetails.error);
-          }
-          setNeo4jUser(userdetails.data.is_neo4j_user);
-          setIsReadOnlyUser(!userdetails.data.write_access);
-        } catch (error) {
-          console.log(`error in userDetails api, ${error}`);
-        }
-      })();
-    }
-  }, [isLoading, isAuthenticated, userCredentials]);
 
   const handleClick = () => {
     setShowOpen(true);
