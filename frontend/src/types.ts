@@ -414,7 +414,6 @@ export interface commonserverresponse {
     | uploadData
     | orphanNodeProps[]
     | dupNodes[]
-    | IUserDetails
     | { pageitems: chunkdata[]; total_pages: number }
     | { triplets: string[] };
 }
@@ -782,8 +781,6 @@ export interface ContextProps {
   setIsGCSActive: Dispatch<SetStateAction<boolean>>;
   // chunksToBeProces: number;
   // setChunksToBeProces: Dispatch<SetStateAction<number>>;
-  isNeo4jUser: boolean;
-  setNeo4jUser: Dispatch<SetStateAction<boolean>>;
 }
 export interface MessageContextType {
   messages: Messages[] | [];
@@ -1116,12 +1113,4 @@ export interface SchemaSelectionProps {
   onCancel: () => void;
   view?: string;
   message?: string;
-}
-
-interface IUserDetails {
-  is_neo4j_user: boolean;
-  write_access: boolean;
-}
-export interface UserDetailsResponse extends Partial<commonserverresponse> {
-  data: IUserDetails;
 }
