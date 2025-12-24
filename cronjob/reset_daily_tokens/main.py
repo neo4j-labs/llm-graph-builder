@@ -5,11 +5,13 @@ import logging
 def reset_all_users_daily_tokens():
     """
     Reset the daily token usage for all users in the Neo4j database.
+
     This function connects to the configured Neo4j instance using the
     `NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD`, and optional
     `NEO4J_DATABASE` environment variables. It sets the `daily_tokens_used`
     property to 0 on all nodes with the `User` label, then prints the number
     of affected users.
+
     Raises:
         KeyError: If any of the required Neo4j environment variables
             (`NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD`) are missing.
@@ -18,20 +20,20 @@ def reset_all_users_daily_tokens():
             `Neo4jGraph` implementation.
     """
     try:
-        neo4j_uri = os.environ["NEO4J_URI"]
-        neo4j_username = os.environ["NEO4J_USERNAME"]
-        neo4j_password = os.environ["NEO4J_PASSWORD"]
-        neo4j_database = os.environ.get("NEO4J_DATABASE", "neo4j")
+        uri = os.environ["NEO4J_URI"]
+        username = os.environ["NEO4J_USERNAME"]
+        password = os.environ["NEO4J_PASSWORD"]
+        database = os.environ.get("NEO4J_DATABASE", "neo4j")
     except KeyError as exc:
         # Missing required environment variable
         logging.error(f"Failed to reset daily tokens: missing environment variable {exc!r}")
         return
     try:
         graph = Neo4jGraph(
-            url=neo4j_uri,
-            username=neo4j_username,
-            password=neo4j_password,
-            database=neo4j_database,
+            url=uri,
+            username=username,
+            password=password,
+            database=database,
         )
     except Exception as e:
         logging.error("Failed to initialize Neo4jGraph: %s", e)
@@ -52,7 +54,11 @@ def reset_all_users_daily_tokens():
     except (IndexError, KeyError, TypeError) as e:
         logging.error("Unexpected result format from daily token reset query: %s", e)
         return
-    logging.info(f"Updated {updated_count} users")
+    logging.info("Updated %s users", updated_count)
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(message)s",
+    )
     reset_all_users_daily_tokens()

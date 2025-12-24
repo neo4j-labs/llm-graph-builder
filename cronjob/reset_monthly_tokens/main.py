@@ -5,15 +5,18 @@ import logging
 def reset_all_users_monthly_tokens():
     """
     Reset the `monthly_tokens_used` field to zero for all `User` nodes in Neo4j.
+
     This function connects to the configured Neo4j database using credentials
     provided via environment variables, executes a Cypher query that sets
     `u.monthly_tokens_used = 0` for every `User` node, and prints the number
     of users that were updated.
+
     Environment variables:
         NEO4J_URI: The Neo4j connection URI.
         NEO4J_USERNAME: The Neo4j username.
         NEO4J_PASSWORD: The Neo4j password.
         NEO4J_DATABASE: Optional. The Neo4j database name (defaults to "neo4j").
+
     Raises:
         KeyError: If any required environment variable (URI, USERNAME, PASSWORD)
             is not set.
@@ -53,7 +56,10 @@ def reset_all_users_monthly_tokens():
     except (IndexError, KeyError, TypeError) as e:
         logging.error("Unexpected result format from monthly token reset query: %s", e)
         return
-    logging.info(f"Updated {updated_count} users")
+    logging.info("Updated %s users", updated_count)
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(message)s",
+    )
     reset_all_users_monthly_tokens()
