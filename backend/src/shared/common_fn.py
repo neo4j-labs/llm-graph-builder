@@ -20,7 +20,6 @@ from urllib.parse import urlparse
 import boto3
 from langchain_community.embeddings import BedrockEmbeddings
 from langchain_core.callbacks import BaseCallbackHandler
-from datetime import datetime
 
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 MODEL_PATH = "./local_model"
