@@ -361,7 +361,7 @@ def create_community_summaries(gds, model, email, uri):
 
     finally:
        try:
-           if os.environ.get("TRACK_TOKEN_USAGE").strip().lower() == "true":
+           if os.environ.get("TRACK_TOKEN_USAGE", "false").strip().lower() == "true":
                if callback_handler:
                    usage = callback_handler.report()
                    token_usage = usage.get("total_tokens", 0)
