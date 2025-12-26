@@ -1,11 +1,4 @@
-OPENAI_MODELS = ["openai-gpt-3.5", "openai-gpt-4o", "openai-gpt-4o-mini"]
-GEMINI_MODELS = ["gemini-1.0-pro", "gemini-1.5-pro", "gemini-1.5-flash"]
-GROQ_MODELS = ["groq-llama3"]
-BUCKET_UPLOAD = 'llm-graph-builder-upload'
-BUCKET_FAILED_FILE = 'llm-graph-builder-failed'
-PROJECT_ID = 'llm-experiments-387609' 
 GRAPH_CHUNK_LIMIT = 50 
-
 
 #query 
 GRAPH_QUERY = """
