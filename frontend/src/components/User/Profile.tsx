@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, useCallback } from 'react';
 import { Menu, Typography, IconButton, Avatar } from '@neo4j-ndl/react';
 import { ChevronDownIconOutline } from '@neo4j-ndl/react/icons';
 import { useAuth0 } from '@auth0/auth0-react';
@@ -22,9 +22,10 @@ export default function Profile() {
   const handleClick = () => {
     setShowOpen(true);
   };
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setShowOpen(false);
-  };
+  }, []);
+
   if (isLoading) {
     return <Avatar></Avatar>;
   }

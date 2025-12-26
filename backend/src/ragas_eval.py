@@ -37,10 +37,10 @@ def get_ragas_metrics(question: str, context: list, answer: list, model: str):
         if ("diffbot" in model) or ("ollama" in model):
             raise ValueError(f"Unsupported model for evaluation: {model}")
         elif ("gemini" in model):
-            llm, model_name = get_llm(model=model)
+            llm, model_name, _ = get_llm(model=model)
             llm = LangchainLLMWrapper(llm,is_finished_parser=custom_is_finished_parser)
         else:
-            llm, model_name = get_llm(model=model)
+            llm, model_name, _ = get_llm(model=model)
             llm = LangchainLLMWrapper(llm)
     
         logging.info(f"Evaluating with model: {model_name}")
@@ -77,7 +77,7 @@ async def get_additional_metrics(question: str, contexts: list, answers: list, r
    try:
        if ("diffbot" in model_name) or ("ollama" in model_name):
            raise ValueError(f"Unsupported model for evaluation: {model_name}")
-       llm, model_name = get_llm(model=model_name)
+       llm, model_name, _ = get_llm(model=model_name)
        embeddings = EMBEDDING_FUNCTION
        embedding_model = LangchainEmbeddingsWrapper(embeddings=embeddings)
        rouge_scorer = RougeScore()

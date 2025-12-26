@@ -205,7 +205,7 @@ def graph_schema_consolidation(graph):
         partial_variables={"format_instructions": parser.get_format_instructions()}
     )
     graph_cleanup_model = os.getenv("GRAPH_CLEANUP_MODEL")
-    llm, _ = get_llm(graph_cleanup_model)
+    llm, _, _ = get_llm(graph_cleanup_model)
     chain = prompt | llm | parser
 
     nodes_relations_input = {'nodes': node_labels, 'relationships': relation_labels}

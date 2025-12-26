@@ -2,14 +2,14 @@ import { chunksData } from '../types';
 import api from '../API/Index';
 
 export const getChunkText = async (documentName: string, page_no: number, signal: AbortSignal) => {
-  const formData = new FormData();
-  formData.append('document_name', documentName);
-  formData.append('page_no', page_no.toString());
   try {
+    const formData = new FormData();
+    formData.append('document_name', documentName);
+    formData.append('page_no', page_no.toString());
     const response = await api.post<chunksData>(`/fetch_chunktext`, formData, { signal });
     return response;
   } catch (error) {
-    console.log(error);
+    console.log(`error in getChunkText api, ${error}`);
     throw error;
   }
 };
