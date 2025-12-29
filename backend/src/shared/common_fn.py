@@ -7,8 +7,8 @@ from transformers import AutoTokenizer, AutoModel
 from langchain_huggingface import HuggingFaceEmbeddings
 from threading import Lock
 import logging
+from urllib.parse import urlparse,parse_qs
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
-from src.document_sources.youtube import create_youtube_url
 from langchain_google_vertexai import VertexAIEmbeddings
 from langchain_openai import OpenAIEmbeddings
 from langchain_neo4j import Neo4jGraph
@@ -57,6 +57,17 @@ def get_local_sentence_transformer_embedding():
        _embedding_instance = HuggingFaceEmbeddings(model_name=MODEL_PATH)
        logging.info("Embedding model initialized.")
        return _embedding_instance
+   
+def create_youtube_url(url):
+    you_tu_url = "https://www.youtube.com/watch?v="
+    u_pars = urlparse(url)
+    quer_v = parse_qs(u_pars.query).get('v')
+    if quer_v:
+      return  you_tu_url + quer_v[0].strip()
+
+    pth = u_pars.path.split('/')
+    if pth:
+      return you_tu_url + pth[-1].strip()
 
 def check_url_source(source_type, yt_url:str=None, wiki_query:str=None):
     language=''
@@ -331,17 +342,17 @@ def track_token_usage(
         if not normalized_email and not normalized_db_url:
             raise ValueError("Either email or db_url must be provided for token tracking.")
 
-        uri = os.getenv("TOKEN_TRACKER_DB_URI")
-        user = os.getenv("TOKEN_TRACKER_DB_USERNAME")
-        password = os.getenv("TOKEN_TRACKER_DB_PASSWORD")
-        database = os.getenv("TOKEN_TRACKER_DB_DATABASE", "neo4j")
+        uri = get_value_from_env("TOKEN_TRACKER_DB_URI")
+        user = get_value_from_env("TOKEN_TRACKER_DB_USERNAME")
+        password = get_value_from_env("TOKEN_TRACKER_DB_PASSWORD")
+        database = get_value_from_env("TOKEN_TRACKER_DB_DATABASE", "neo4j")
         if not all([uri, user, password]):
             raise EnvironmentError("Neo4j credentials are not set properly.")
 
         graph = create_graph_database_connection(uri, user, password, database)
 
-        daily_tokens_limit = int(os.getenv("DAILY_TOKENS_LIMIT", "250000"))
-        monthly_tokens_limit = int(os.getenv("MONTHLY_TOKENS_LIMIT", "1000000"))
+        daily_tokens_limit = get_value_from_env("DAILY_TOKENS_LIMIT", "250000", "int")
+        monthly_tokens_limit = get_value_from_env("MONTHLY_TOKENS_LIMIT", "1000000", "int")
         is_neo4j_user = bool(normalized_email and normalized_email.endswith("@neo4j.com"))
 
         if normalized_email:

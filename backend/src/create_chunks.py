@@ -27,7 +27,7 @@ class CreateChunksofDocument:
         """
         logging.info("Split file into smaller chunks")
         text_splitter = TokenTextSplitter(chunk_size=token_chunk_size, chunk_overlap=chunk_overlap)
-         MAX_TOKEN_CHUNK_SIZE = get_value_from_env("MAX_TOKEN_CHUNK_SIZE",10000, "int")
+        MAX_TOKEN_CHUNK_SIZE = get_value_from_env("MAX_TOKEN_CHUNK_SIZE",10000, "int")
         chunk_to_be_created = int(MAX_TOKEN_CHUNK_SIZE / token_chunk_size)
         normalized_email = (email or "").strip().lower() or None
         is_neo4j_user = bool(normalized_email and normalized_email.endswith("@neo4j.com"))

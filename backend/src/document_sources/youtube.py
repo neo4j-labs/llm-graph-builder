@@ -4,7 +4,6 @@ from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api.proxies import GenericProxyConfig
 from src.shared.common_fn import get_value_from_env
 import logging
-from urllib.parse import urlparse,parse_qs
 from difflib import SequenceMatcher
 from datetime import timedelta
 from src.shared.constants import YOUTUBE_CHUNK_SIZE_SECONDS
@@ -33,18 +32,6 @@ def get_youtube_combined_transcript(youtube_id):
   except Exception as e:
     message = f"Youtube transcript is not available for youtube Id: {youtube_id}"
     raise LLMGraphBuilderException(message)
-
-
-def create_youtube_url(url):
-    you_tu_url = "https://www.youtube.com/watch?v="
-    u_pars = urlparse(url)
-    quer_v = parse_qs(u_pars.query).get('v')
-    if quer_v:
-      return  you_tu_url + quer_v[0].strip()
-
-    pth = u_pars.path.split('/')
-    if pth:
-      return you_tu_url + pth[-1].strip()
 
   
 def get_documents_from_youtube(url):
