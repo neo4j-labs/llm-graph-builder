@@ -21,14 +21,21 @@ def get_gcs_bucket_files_info(gcs_project_id, gcs_bucket_name, gcs_bucket_folder
         blobs = storage_client.list_blobs(gcs_bucket_name.strip(), prefix=gcs_bucket_folder if gcs_bucket_folder else '')
         lst_file_metadata=[]
         for blob in blobs:
-          if blob.content_type == 'application/pdf':
-            folder_name, file_name = os.path.split(blob.name)
-            file_size = blob.size
-            source_url= blob.media_link
-            gcs_bucket = gcs_bucket_name
-            lst_file_metadata.append({'fileName':file_name,'fileSize':file_size,'url':source_url, 
-                                      'gcsBucket': gcs_bucket, 'gcsBucketFolder':folder_name if folder_name else '',
-                                      'gcsProjectId': gcs_project_id}) 
+          # if blob.content_type == 'application/pdf':
+          folder_name, file_name = os.path.split(blob.name)
+          file_size = blob.size
+          source_url = blob.media_link
+          gcs_bucket = gcs_bucket_name
+          file_ext = os.path.splitext(file_name)[1].lstrip('.').lower()  # Get extension without dot, lowercase
+          lst_file_metadata.append({
+              'fileName': file_name,
+              'fileSize': file_size,
+              'url': source_url,
+              'gcsBucket': gcs_bucket,
+              'gcsBucketFolder': folder_name if folder_name else '',
+              'gcsProjectId': gcs_project_id,
+              'fileExtension': file_ext
+          })
         return lst_file_metadata
       else:
         file_name=''
@@ -167,4 +174,4 @@ def copy_failed_file(source_bucket_name,dest_bucket_name,folder_name, file_name)
       source_bucket.copy_blob(source_blob, dest_bucket, file_name)
       logging.info(f'Failed file {file_name} copied to {dest_bucket_name} from {source_bucket_name} in GCS successfully')
   except Exception as e:
-    raise Exception(e)  
+    raise Exception(e)
