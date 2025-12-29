@@ -30,9 +30,12 @@ def get_s3_files_info(s3_url,aws_access_key_id=None,aws_secret_access_key=None):
           file_name = os.path.basename(file_key)
           logging.info(f'file_name : {file_name}  and file key : {file_key}')
           file_size = obj['Size']
-
-          # Check if file is a PDF
-          # if file_name.endswith('.pdf'):
+          if file_key.endswith('/'):
+              logging.info(f"Skipping directory marker in S3 listing: {file_key}")
+              continue
+          if file_size == 0:
+              logging.info(f"Skipping empty file in S3 listing: {file_key}")
+              continue
           files_info.append({'file_key': file_key, 'file_size_bytes': file_size})
             
       return files_info
@@ -77,7 +80,7 @@ def get_documents_from_s3(s3_url, aws_access_key_id, aws_secret_access_key):
         logging.info(f'bucket : {bucket}, file_name: {file_name}, file key : {file_key}, file size : {file_size}')
 
         # Download file to a temporary location
-        with tempfile.NamedTemporaryFile(delete=True) as tmp_file:
+        with tempfile.NamedTemporaryFile(delete=True, suffix=os.path.splitext(file_name)[1]) as tmp_file:
             download_s3_file(s3, bucket, file_key, tmp_file.name)
             loader, encoding_flag = load_document_content(tmp_file.name)
             pages = loader.load()

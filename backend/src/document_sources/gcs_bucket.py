@@ -21,12 +21,14 @@ def get_gcs_bucket_files_info(gcs_project_id, gcs_bucket_name, gcs_bucket_folder
         blobs = storage_client.list_blobs(gcs_bucket_name.strip(), prefix=gcs_bucket_folder if gcs_bucket_folder else '')
         lst_file_metadata=[]
         for blob in blobs:
-          # if blob.content_type == 'application/pdf':
           folder_name, file_name = os.path.split(blob.name)
           file_size = blob.size
           source_url = blob.media_link
           gcs_bucket = gcs_bucket_name
           file_ext = os.path.splitext(file_name)[1].lstrip('.').lower()  # Get extension without dot, lowercase
+          # Skip directory entries (size 0 or name ends with '/')
+          if file_size == 0 or blob.name.endswith('/'):
+              continue
           lst_file_metadata.append({
               'fileName': file_name,
               'fileSize': file_size,
