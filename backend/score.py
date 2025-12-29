@@ -1,18 +1,26 @@
-from fastapi import FastAPI, File, UploadFile, Form, Request, HTTPException
+from fastapi import FastAPI, File, UploadFile, Form, Request
 from fastapi_health import health
 from fastapi.middleware.cors import CORSMiddleware
-from src.main import *
-from src.QA_integration import *
-from src.shared.common_fn import *
+from src.main import (
+    create_source_node_graph_url_s3, create_source_node_graph_url_gcs, create_source_node_graph_web_url,
+    create_source_node_graph_url_youtube, create_source_node_graph_url_wikipedia, extract_graph_from_file_local_file,
+    extract_graph_from_file_s3, extract_graph_from_web_page, extract_graph_from_file_youtube,
+    extract_graph_from_file_Wikipedia, extract_graph_from_file_gcs, get_source_list_from_graph, failed_file_process,
+    update_graph, connection_check_and_get_vector_dimensions, upload_file, get_labels_and_relationtypes,
+    manually_cancelled_job, populate_graph_schema_from_text, set_status_retry
+)
+from src.QA_integration import QA_RAG, clear_chat_history
+from src.shared.common_fn import create_graph_database_connection, formatted_time, get_value_from_env
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 import uvicorn
 import asyncio
 import base64
-from langserve import add_routes
-from langchain_google_vertexai import ChatVertexAI
+import logging
+# from langserve import add_routes
+# from langchain_google_vertexai import ChatVertexAI
 from src.api_response import create_api_response
 from src.graphDB_dataAccess import graphDBdataAccess
-from src.graph_query import get_graph_results,get_chunktext_results,visualize_schema
+from src.graph_query import get_graph_results, get_chunktext_results, visualize_schema
 from src.chunkid_entities import get_entities_from_chunkids
 from src.post_processing import create_vector_fulltext_indexes, create_entity_embedding, graph_schema_consolidation
 from sse_starlette.sse import EventSourceResponse
@@ -29,12 +37,12 @@ import gc
 from Secweb.XContentTypeOptions import XContentTypeOptions
 from Secweb.XFrameOptions import XFrame
 from fastapi.middleware.gzip import GZipMiddleware
-from src.ragas_eval import *
+from src.ragas_eval import get_ragas_metrics, get_additional_metrics
 from starlette.types import ASGIApp, Receive, Scope, Send
 from langchain_neo4j import Neo4jGraph
 from starlette.middleware.sessions import SessionMiddleware
-from starlette.requests import Request
 from dotenv import load_dotenv
+
 load_dotenv(override=True)
 
 logger = CustomLogger()
@@ -42,68 +50,56 @@ CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
 MERGED_DIR = os.path.join(os.path.dirname(__file__), "merged_files")
 
 def sanitize_filename(filename):
-   """
-   Sanitize the user-provided filename to prevent directory traversal and remove unsafe characters.
-   """
-   # Remove path separators and collapse redundant separators
-   filename = os.path.basename(filename)
-   filename = os.path.normpath(filename)
-   return filename
+    filename = os.path.basename(filename)
+    filename = os.path.normpath(filename)
+    return filename
 
 def validate_file_path(directory, filename):
-   """
-   Construct the full file path and ensure it is within the specified directory.
-   """
-   file_path = os.path.join(directory, filename)
-   abs_directory = os.path.abspath(directory)
-   abs_file_path = os.path.abspath(file_path)
-   # Ensure the file path starts with the intended directory path
-   if not abs_file_path.startswith(abs_directory):
-       raise ValueError("Invalid file path")
-   return abs_file_path
+    file_path = os.path.join(directory, filename)
+    abs_directory = os.path.abspath(directory)
+    abs_file_path = os.path.abspath(file_path)
+    if not abs_file_path.startswith(abs_directory):
+        raise ValueError("Invalid file path")
+    return abs_file_path
 
 def healthy_condition():
-    output = {"healthy": True}
-    return output
+    return {"healthy": True}
 
 def healthy():
     return True
 
 def sick():
     return False
+
 class CustomGZipMiddleware:
-    def __init__(
-        self,
-        app: ASGIApp,
-        paths: List[str],
-        minimum_size: int = 1000,
-        compresslevel: int = 5
-    ):
+    def __init__(self, app: ASGIApp, paths: List[str], minimum_size: int = 1000, compresslevel: int = 5):
         self.app = app
         self.paths = paths
         self.minimum_size = minimum_size
         self.compresslevel = compresslevel
-    
+
     async def __call__(self, scope: Scope, receive: Receive, send: Send):
         if scope["type"] != "http":
             return await self.app(scope, receive, send)
- 
         path = scope["path"]
         should_compress = any(path.startswith(gzip_path) for gzip_path in self.paths)
-        
         if not should_compress:
             return await self.app(scope, receive, send)
-        
         gzip_middleware = GZipMiddleware(
             app=self.app,
             minimum_size=self.minimum_size,
             compresslevel=self.compresslevel
         )
         await gzip_middleware(scope, receive, send)
+
 app = FastAPI()
 app.add_middleware(XContentTypeOptions)
 app.add_middleware(XFrame, Option={'X-Frame-Options': 'DENY'})
-app.add_middleware(CustomGZipMiddleware, minimum_size=1000, compresslevel=5,paths=["/sources_list","/url/scan","/extract","/chat_bot","/chunk_entities","/get_neighbours","/graph_query","/schema","/populate_graph_schema","/get_unconnected_nodes_list","/get_duplicate_nodes","/fetch_chunktext","/schema_visualization"])
+app.add_middleware(CustomGZipMiddleware, minimum_size=1000, compresslevel=5, paths=[
+    "/sources_list", "/url/scan", "/extract", "/chat_bot", "/chunk_entities", "/get_neighbours", "/graph_query",
+    "/schema", "/populate_graph_schema", "/get_unconnected_nodes_list", "/get_duplicate_nodes", "/fetch_chunktext",
+    "/schema_visualization"
+])
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -623,14 +619,10 @@ async def get_structured_schema(uri=Form(None), userName=Form(None), password=Fo
         gc.collect()
             
 def decode_password(pwd):
-    sample_string_bytes = base64.b64decode(pwd)
-    decoded_password = sample_string_bytes.decode("utf-8")
-    return decoded_password
+    return base64.b64decode(pwd).decode("utf-8")
 
 def encode_password(pwd):
-    data_bytes = pwd.encode('ascii')
-    encoded_pwd_bytes = base64.b64encode(data_bytes)
-    return encoded_pwd_bytes
+    return base64.b64encode(pwd.encode('ascii'))
 
 @app.get("/update_extract_status/{file_name}")
 async def update_extract_status(request: Request, file_name: str, uri:str=None, userName:str=None, password:str=None, database:str=None):
