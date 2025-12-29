@@ -4,6 +4,8 @@ from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 import boto3
 import os
 from urllib.parse import urlparse
+import tempfile
+from .local_file import load_document_content
 
 def get_s3_files_info(s3_url,aws_access_key_id=None,aws_secret_access_key=None):
   try:
@@ -28,10 +30,13 @@ def get_s3_files_info(s3_url,aws_access_key_id=None,aws_secret_access_key=None):
           file_name = os.path.basename(file_key)
           logging.info(f'file_name : {file_name}  and file key : {file_key}')
           file_size = obj['Size']
-
-          # Check if file is a PDF
-          if file_name.endswith('.pdf'):
-            files_info.append({'file_key': file_key, 'file_size_bytes': file_size})
+          if file_key.endswith('/'):
+              logging.info(f"Skipping directory marker in S3 listing: {file_key}")
+              continue
+          if file_size == 0:
+              logging.info(f"Skipping empty file in S3 listing: {file_key}")
+              continue
+          files_info.append({'file_key': file_key, 'file_size_bytes': file_size})
             
       return files_info
   except Exception as e:
@@ -59,20 +64,29 @@ def get_s3_pdf_content(s3_url,aws_access_key_id=None,aws_secret_access_key=None)
         raise Exception(e)
 
 
+def download_s3_file(s3_client, bucket, file_key, local_path):
+    s3_client.download_file(bucket, file_key, local_path)
+
 def get_documents_from_s3(s3_url, aws_access_key_id, aws_secret_access_key):
     try:
-      parsed_url = urlparse(s3_url)
-      bucket = parsed_url.netloc
-      file_key = parsed_url.path.lstrip('/')
-      file_name=file_key.split('/')[-1]
-      s3=boto3.client('s3',aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
-      response=s3.head_object(Bucket=bucket,Key=file_key)
-      file_size=response['ContentLength']
-      
-      logging.info(f'bucket : {bucket},file_name:{file_name},  file key : {file_key},  file size : {file_size}')
-      pages=get_s3_pdf_content(s3_url,aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
-      return file_name,pages
+        parsed_url = urlparse(s3_url)
+        bucket = parsed_url.netloc
+        file_key = parsed_url.path.lstrip('/')
+        file_name = os.path.basename(file_key)
+        s3 = boto3.client('s3', aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key)
+        response = s3.head_object(Bucket=bucket, Key=file_key)
+        file_size = response['ContentLength']
+
+        logging.info(f'bucket : {bucket}, file_name: {file_name}, file key : {file_key}, file size : {file_size}')
+
+        # Download file to a temporary location
+        with tempfile.NamedTemporaryFile(delete=True, suffix=os.path.splitext(file_name)[1]) as tmp_file:
+            download_s3_file(s3, bucket, file_key, tmp_file.name)
+            loader, encoding_flag = load_document_content(tmp_file.name)
+            pages = loader.load()
+
+        return file_name, pages
     except Exception as e:
-      error_message = str(e)
-      logging.exception(f'Exception in reading content from S3:{error_message}')
-      raise LLMGraphBuilderException(error_message)    
+        error_message = str(e)
+        logging.exception(f'Exception in reading content from S3: {error_message}')
+        raise LLMGraphBuilderException(error_message)
