@@ -17,10 +17,10 @@ import pandas as pd
 
 # Load environment variables
 load_dotenv()
-URI = os.getenv('NEO4J_URI')
-USERNAME = os.getenv('NEO4J_USERNAME')
-PASSWORD = os.getenv('NEO4J_PASSWORD')
-DATABASE = os.getenv('NEO4J_DATABASE')
+URI = get_value_from_env('NEO4J_URI')
+USERNAME = get_value_from_env('NEO4J_USERNAME')
+PASSWORD = get_value_from_env('NEO4J_PASSWORD')
+DATABASE = get_value_from_env('NEO4J_DATABASE')
 # Logging configuration
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 # Directory Paths

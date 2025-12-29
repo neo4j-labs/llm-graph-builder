@@ -4,7 +4,7 @@ import time
 from langchain_neo4j import Neo4jGraph
 import os
 from src.graph_query import get_graphDB_driver
-from src.shared.common_fn import load_embedding_model,execute_graph_query
+from src.shared.common_fn import load_embedding_model,execute_graph_query,get_value_from_env
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from src.shared.constants import GRAPH_CLEANUP_PROMPT
@@ -131,7 +131,7 @@ def create_fulltext(driver,type):
 
 def create_vector_fulltext_indexes(uri, username, password, database):
     types = ["entities", "hybrid"]
-    embedding_model = os.getenv('EMBEDDING_MODEL')
+    embedding_model = get_value_from_env("EMBEDDING_MODEL", "sentence_transformer")
     embeddings, dimension = load_embedding_model(embedding_model)
     if not dimension:
         dimension = CHUNK_VECTOR_EMBEDDING_DIMENSION
@@ -184,7 +184,7 @@ def fetch_entities_for_embedding(graph):
     return [{"elementId": record["elementId"], "text": record["text"]} for record in result]
 
 def update_embeddings(rows, graph):
-    embedding_model = os.getenv('EMBEDDING_MODEL')
+    embedding_model = get_value_from_env("EMBEDDING_MODEL", "sentence_transformer")
     embeddings, dimension = load_embedding_model(embedding_model)
     logging.info(f"update embedding for entities")
     for row in rows:
@@ -204,7 +204,7 @@ def graph_schema_consolidation(graph):
         messages=[("system", GRAPH_CLEANUP_PROMPT), ("human", "{input}")],
         partial_variables={"format_instructions": parser.get_format_instructions()}
     )
-    graph_cleanup_model = os.getenv("GRAPH_CLEANUP_MODEL")
+    graph_cleanup_model = get_value_from_env("GRAPH_CLEANUP_MODEL", 'openai_gpt_5_mini')
     llm, _, _ = get_llm(graph_cleanup_model)
     chain = prompt | llm | parser
 

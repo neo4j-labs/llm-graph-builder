@@ -2,6 +2,7 @@ from langchain_core.documents import Document
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from youtube_transcript_api import YouTubeTranscriptApi 
 from youtube_transcript_api.proxies import GenericProxyConfig
+from src.shared.common_fn import get_value_from_env
 import logging
 from urllib.parse import urlparse,parse_qs
 from difflib import SequenceMatcher
@@ -12,7 +13,7 @@ import re
 
 def get_youtube_transcript(youtube_id):
   try:
-    proxy = os.environ.get("YOUTUBE_TRANSCRIPT_PROXY") 
+    proxy = get_value_from_env("YOUTUBE_TRANSCRIPT_PROXY")
     proxy_config = GenericProxyConfig(http_url=proxy, https_url=proxy) if proxy else None
     youtube_api = YouTubeTranscriptApi(proxy_config=proxy_config)
     transcript_pieces = youtube_api.fetch(youtube_id, preserve_formatting=True)

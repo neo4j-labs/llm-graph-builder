@@ -1,5 +1,8 @@
 import hashlib
 import os
+import json
+import logging
+from typing import Any
 from transformers import AutoTokenizer, AutoModel
 from langchain_huggingface import HuggingFaceEmbeddings
 from threading import Lock
@@ -69,17 +72,13 @@ def check_url_source(source_type, yt_url:str=None, wiki_query:str=None):
       
       elif  source_type == 'Wikipedia':
         wiki_query_id=''
-        #pattern = r"https?:\/\/([a-zA-Z0-9\.\,\_\-\/]+)\.wikipedia\.([a-zA-Z]{2,3})\/wiki\/([a-zA-Z0-9\.\,\_\-\/]+)"
+
         wikipedia_url_regex = r'https?:\/\/(www\.)?([a-zA-Z]{2,3})\.wikipedia\.org\/wiki\/(.*)'
-        wiki_id_pattern = r'^[a-zA-Z0-9 _\-\.\,\:\(\)\[\]\{\}\/]*$'
         
         match = re.search(wikipedia_url_regex, wiki_query.strip())
         if match:
                 language = match.group(2)
                 wiki_query_id = match.group(3)
-          # else : 
-          #       languages.append("en")
-          #       wiki_query_ids.append(wiki_url.strip())
         else:
             raise Exception(f'Not a valid wikipedia url: {wiki_query} ')
 
@@ -100,9 +99,9 @@ def get_chunk_and_graphDocument(graph_document_list, chunkId_chunkDoc_list):
   return lst_chunk_chunkId_document  
                  
 def create_graph_database_connection(uri, userName, password, database):
-  enable_user_agent = os.environ.get("ENABLE_USER_AGENT", "False").lower() in ("true", "1", "yes")
+  enable_user_agent = get_value_from_env("ENABLE_USER_AGENT", "False" ,"bool")
   if enable_user_agent:
-    graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, refresh_schema=False, sanitize=True,driver_config={'user_agent':os.environ.get('NEO4J_USER_AGENT')})  
+    graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, refresh_schema=False, sanitize=True,driver_config={'user_agent':get_value_from_env("USER_AGENT","LLM-Graph-Builder")}) 
   else:
     graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, refresh_schema=False, sanitize=True)    
   return graph
@@ -217,7 +216,7 @@ def get_bedrock_embeddings():
        BedrockEmbeddings: An instance of the BedrockEmbeddings class.
    """
    try:
-       env_value = os.getenv("BEDROCK_EMBEDDING_MODEL")
+       env_value = get_value_from_env("BEDROCK_EMBEDDING_MODEL")
        if not env_value:
            raise ValueError("Environment variable 'BEDROCK_EMBEDDING_MODEL' is not set.")
        try:
@@ -241,6 +240,45 @@ def get_bedrock_embeddings():
    except Exception as e:
        logging.error(f"An unexpected error occurred: {e}")
        raise
+   
+def get_value_from_env(key_name: str, default_value: Any = None, data_type: type = str):
+  
+  try:
+      value = os.getenv(key_name, None) 
+  except (NotFound, PermissionDenied):
+    try:
+      logging.warning(f"key {key_name} not found in Secret Manager. Checking environment variable.")
+      env_value = os.getenv(key_name, None)
+      if env_value is None and default_value is not None:
+        return convert_type(default_value, data_type)
+      elif env_value is None and default_value is None:
+        raise Exception(f"env {key_name} value not found")
+      else:
+        return convert_type(env_value, data_type)
+    except Exception as e:
+       raise Exception(f"env {key_name} value not found")
+
+  if value is None and default_value is not None:
+    return convert_type(default_value, data_type) # Return the default value when key not found in secret manager not in .env file.
+
+  return convert_type(value, data_type)
+
+
+def convert_type(value: str, data_type: type):
+  """Convert string value to the specified data type."""
+  try:
+    if data_type == "int":
+      return int(value)
+    elif data_type == "float":
+      return float(value)
+    elif data_type == "bool":
+      return value.lower() in ["true", "1", "yes"]
+    elif data_type == "list" or data_type == "dict":
+      return json.loads(value)  # Convert JSON strings to list/dict
+    return value  # Default to string
+  except Exception as e:
+    logging.error(f"Type conversion error: {e}")
+    return None
 
 
 class UniversalTokenUsageHandler(BaseCallbackHandler):
@@ -383,3 +421,5 @@ def track_token_usage(
             exc_info=True,
         )
         raise
+
+
