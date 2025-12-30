@@ -113,6 +113,8 @@ class graphDBdataAccess:
             if obj_source_node.retry_condition is not None :
                 params['retry_condition'] = obj_source_node.retry_condition    
 
+            if obj_source_node.token_usage is not None :
+                params['token_usage'] = obj_source_node.token_usage
             param= {"props":params}
             
             logging.info(f'Base Param value 1 : {param}')
@@ -282,7 +284,8 @@ class graphDBdataAccess:
                 d.entityEntityRelCount AS entityEntityRelCount,
                 d.communityNodeCount AS communityNodeCount,
                 d.communityRelCount AS communityRelCount,
-                d.createdAt AS created_time
+                d.createdAt AS created_time,
+                d.token_usage AS token_usage
                 """
         param = {"file_name" : file_name}
         return self.execute_query(query, param)

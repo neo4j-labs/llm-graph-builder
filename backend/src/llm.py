@@ -137,7 +137,7 @@ def get_llm(model: str):
         raise Exception(err)
  
     logging.info(f"Model created - Model Version: {model}")
-    return llm, model_name,callback_handler
+    return llm, model_name, callback_handler
 
 def get_llm_model_name(llm):
     """Extract name of llm model from llm object"""
@@ -196,7 +196,8 @@ async def get_graph_document_list(
         if "diffbot_api_key" in dir(llm):
             llm_transformer = llm
         else:
-            if "get_name" in dir(llm) and llm.get_name() != "ChatOpenAI" or llm.get_name() != "ChatVertexAI" or llm.get_name() != "AzureChatOpenAI":
+            supported_models = ["ChatOpenAI", "ChatVertexAI", "AzureChatOpenAI"]
+            if hasattr(llm, "get_name") and llm.get_name() in supported_models:
                 node_properties = False
                 relationship_properties = False
             else:
@@ -220,12 +221,12 @@ async def get_graph_document_list(
        logging.error(f"Error in graph transformation: {e}", exc_info=True)
        raise LLMGraphBuilderException(f"Graph transformation failed: {str(e)}")
     finally:
-       try:
-           if callback_handler:
-               usage = callback_handler.report()
-               token_usage = usage.get("total_tokens", 0)
-       except Exception as usage_err:
-           logging.warning(f"Error while reporting token usage: {usage_err}", exc_info=True)
+        try:
+            if callback_handler:
+                usage = callback_handler.report()
+                token_usage = usage.get("total_tokens", 0)
+        except Exception as usage_err:
+            logging.error(f"Error while reporting token usage: {usage_err}")
 
     return graph_document_list, token_usage
 
@@ -266,7 +267,7 @@ async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowed
            additional_instructions,
        )
        logging.info(f"Generated {len(graph_document_list)} graph documents")
-       return graph_document_list,token_usage
+       return graph_document_list, token_usage
    except Exception as e:
        logging.error(f"Error in get_graph_from_llm: {e}", exc_info=True)
        raise LLMGraphBuilderException(f"Error in getting graph from llm: {e}")

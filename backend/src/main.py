@@ -372,6 +372,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
       # selected_chunks = []
       is_cancelled_status = False
       job_status = "Completed"
+      tokens_per_file = 0
       for i in range(0, len(chunkId_chunkDoc_list), update_graph_chunk_processed):
         select_chunks_upto = i+update_graph_chunk_processed
         logging.info(f'Selected Chunks upto: {select_chunks_upto}')
@@ -388,7 +389,10 @@ async def processing_source(uri, userName, password, database, model, file_name,
           break
         else:
           processing_chunks_start_time = time.time()
-          node_count,rel_count,latency_processed_chunk = await processing_chunks(selected_chunks,graph,uri, userName, password, database,file_name,model,allowedNodes,allowedRelationship,chunks_to_combine,node_count, rel_count, additional_instructions,email)
+          node_count,rel_count,latency_processed_chunk,token_usage = await processing_chunks(selected_chunks,graph,uri, userName, password, database,file_name,model,allowedNodes,allowedRelationship,chunks_to_combine,node_count, rel_count, additional_instructions,email)
+          logging.info("Token used in processing chunks: %s", token_usage)
+          tokens_per_file += token_usage
+          logging.info("Total token used per file: %s", tokens_per_file)
           processing_chunks_end_time = time.time()
           processing_chunks_elapsed_end_time = processing_chunks_end_time - processing_chunks_start_time
           logging.info(f"Time taken {update_graph_chunk_processed} chunks processed upto {select_chunks_upto} completed in {processing_chunks_elapsed_end_time:.2f} seconds for file name {file_name}")
@@ -402,6 +406,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
           obj_source_node.updated_at = end_time
           obj_source_node.processing_time = processed_time
           obj_source_node.processed_chunk = select_chunks_upto+select_chunks_with_retry
+          obj_source_node.token_usage = tokens_per_file
           if retry_condition == START_FROM_BEGINNING:
             result = execute_graph_query(graph,QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT, params={"filename":file_name})
             obj_source_node.node_count = result[0]['nodes']
@@ -412,6 +417,13 @@ async def processing_source(uri, userName, password, database, model, file_name,
           graphDb_data_Access.update_source_node(obj_source_node)
           graphDb_data_Access.update_node_relationship_count(file_name)
       
+      start_save_token = time.time()
+      if os.environ.get("TRACK_TOKEN_USAGE").strip().lower() == "true":
+        track_token_usage(email,uri,tokens_per_file,model)
+        logging.info("Token usage for extraction: %s for user: %s", token_usage, email)
+      end_save_token = time.time()
+      elapsed_save_token = end_save_token - start_save_token
+      logging.info(f'Time taken to save token count: {elapsed_save_token:.2f} seconds')
       result = graphDb_data_Access.get_current_status_document_node(file_name)
       is_cancelled_status = result[0]['is_cancelled']
       if bool(is_cancelled_status) == True:
@@ -497,13 +509,6 @@ async def processing_chunks(chunkId_chunkDoc_list,graph,uri, userName, password,
   logging.info(f'Time taken to extract enitities from LLM Graph Builder: {elapsed_entity_extraction:.2f} seconds')
   latency_processing_chunk["entity_extraction"] = f'{elapsed_entity_extraction:.2f}'
   
-  start_save_token = time.time()
-  if os.environ.get("TRACK_TOKEN_USAGE").strip().lower() == "true":
-    track_token_usage(email,uri,token_usage,model)
-    logging.info("Token usage for extraction: %s for user: %s", token_usage, email)
-  end_save_token = time.time()
-  elapsed_save_token = end_save_token - start_save_token
-  logging.info(f'Time taken to save token count: {elapsed_save_token:.2f} seconds')
   cleaned_graph_documents = handle_backticks_nodes_relationship_id_type(graph_documents)
   
   start_save_graphDocuments = time.time()
@@ -526,7 +531,7 @@ async def processing_chunks(chunkId_chunkDoc_list,graph,uri, userName, password,
   count_response = graphDb_data_Access.update_node_relationship_count(file_name)
   node_count = count_response[file_name].get('nodeCount',"0")
   rel_count = count_response[file_name].get('relationshipCount',"0")
-  return node_count,rel_count,latency_processing_chunk
+  return node_count,rel_count,latency_processing_chunk,token_usage
 
 def get_chunkId_chunkDoc_list(graph, file_name, pages, token_chunk_size, chunk_overlap, retry_condition, email):
   if retry_condition in ["", None] or retry_condition not in [DELETE_ENTITIES_AND_START_FROM_BEGINNING, START_FROM_LAST_PROCESSED_POSITION]:

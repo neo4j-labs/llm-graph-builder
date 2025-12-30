@@ -673,7 +673,8 @@ async def update_extract_status(request: Request, file_name: str, uri:str=None, 
                         'entityNodeCount' : result[0]['entityNodeCount'],
                         'entityEntityRelCount' : result[0]['entityEntityRelCount'],
                         'communityNodeCount' : result[0]['communityNodeCount'],
-                        'communityRelCount' : result[0]['communityRelCount']
+                        'communityRelCount' : result[0]['communityRelCount'],
+                        'token_usage' : result[0]['token_usage']
                         })
                     yield status
             except asyncio.CancelledError:
