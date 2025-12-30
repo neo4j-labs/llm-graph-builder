@@ -401,3 +401,74 @@ def track_token_usage(
             exc_info=True,
         )
         raise
+
+
+def get_remaining_token_limits(email: str, uri: str) -> dict:
+    """
+    Returns the remaining daily and monthly token limits for a user, given email and/or uri.
+    Uses the same node lookup logic as track_token_usage.
+    """
+    try:
+        normalized_email = (email or "").strip().lower() or None
+        normalized_db_url = (uri or "").strip() or None
+        if not normalized_email and not normalized_db_url:
+            raise ValueError("Either email or db_url must be provided for token tracking.")
+
+        neo4j_uri = os.getenv("TOKEN_TRACKER_DB_URI")
+        user = os.getenv("TOKEN_TRACKER_DB_USERNAME")
+        password = os.getenv("TOKEN_TRACKER_DB_PASSWORD")
+        database = os.getenv("TOKEN_TRACKER_DB_DATABASE", "neo4j")
+        if not all([neo4j_uri, user, password]):
+            raise EnvironmentError("Neo4j credentials are not set properly.")
+
+        graph = create_graph_database_connection(neo4j_uri, user, password, database)
+
+        params = {
+            "email": normalized_email,
+            "db_url": normalized_db_url,
+        }
+
+        user_node = None
+        if normalized_email:
+            result = graph.query(
+                "MATCH (u:User {email: $email}) RETURN u", {"email": normalized_email}
+            )
+            if result and result[0].get("u"):
+                user_node = result[0]["u"]
+            else:
+                result = graph.query(
+                    "MATCH (u:User {db_url: $db_url}) RETURN u", {"db_url": normalized_db_url}
+                )
+                if result and result[0].get("u"):
+                    user_node = result[0]["u"]
+        else:
+            result = graph.query(
+                "MATCH (u:User {db_url: $db_url}) RETURN u", {"db_url": normalized_db_url}
+            )
+            if result and result[0].get("u"):
+                user_node = result[0]["u"]
+
+        if not user_node:
+            raise RuntimeError("User not found for provided email or db_url.")
+
+        daily_tokens_limit = user_node.get("daily_tokens_limit", int(os.getenv("DAILY_TOKENS_LIMIT", "250000")))
+        monthly_tokens_limit = user_node.get("monthly_tokens_limit", int(os.getenv("MONTHLY_TOKENS_LIMIT", "1000000")))
+        daily_tokens_used = user_node.get("daily_tokens_used", 0)
+        monthly_tokens_used = user_node.get("monthly_tokens_used", 0)
+
+        return {
+            "daily_remaining": max(daily_tokens_limit - daily_tokens_used, 0),
+            "monthly_remaining": max(monthly_tokens_limit - monthly_tokens_used, 0),
+            "daily_limit": daily_tokens_limit,
+            "monthly_limit": monthly_tokens_limit,
+            "daily_used": daily_tokens_used,
+            "monthly_used": monthly_tokens_used,
+        }
+    except Exception as e:
+        logging.error(
+            "Error in get_remaining_token_limits for identity %s: %s",
+            email or uri,
+            e,
+            exc_info=True,
+        )
+        raise
