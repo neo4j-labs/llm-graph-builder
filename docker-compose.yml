@@ -10,10 +10,6 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      - LANGCHAIN_ENDPOINT=${LANGCHAIN_ENDPOINT-}
-      - LANGCHAIN_TRACING_V2=${LANGCHAIN_TRACING_V2-}
-      - LANGCHAIN_PROJECT=${LANGCHAIN_PROJECT-}
-      - LANGCHAIN_API_KEY=${LANGCHAIN_API_KEY-}
       - KNN_MIN_SCORE=${KNN_MIN_SCORE-0.94}
       - IS_EMBEDDING=${IS_EMBEDDING-true}
       - GEMINI_ENABLED=${GEMINI_ENABLED-False}
