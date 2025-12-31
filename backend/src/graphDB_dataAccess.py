@@ -3,7 +3,7 @@ import os
 import time
 from neo4j.exceptions import TransientError
 from langchain_neo4j import Neo4jGraph
-from src.shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file, load_embedding_model
+from src.shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file, load_embedding_model, get_value_from_env
 from src.document_sources.gcs_bucket import delete_file_from_gcs
 from src.shared.constants import NODEREL_COUNT_QUERY_WITH_COMMUNITY, NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY
 from src.entities.source_node import sourceNode
@@ -12,7 +12,6 @@ import json
 from dotenv import load_dotenv
 
 load_dotenv()
-BUCKET_UPLOAD = os.getenv('BUCKET_UPLOAD')
 
 class graphDBdataAccess:
 
@@ -150,7 +149,7 @@ class graphDBdataAccess:
         """
         index = self.graph.query("""show indexes yield * where type = 'VECTOR' and name = 'vector'""",session_params={"database":self.graph._database})
         # logging.info(f'show index vector: {index}')
-        knn_min_score = os.environ.get('KNN_MIN_SCORE')
+        knn_min_score = get_value_from_env("KNN_MIN_SCORE",0.8,"float")
         if len(index) > 0:
             logging.info('update KNN graph')
             self.graph.query("""MATCH (c:Chunk)
@@ -238,7 +237,7 @@ class graphDBdataAccess:
                                                     count(c.embedding) as hasEmbedding
                                 """,session_params={"database":self.graph._database})
         
-        embedding_model = os.getenv('EMBEDDING_MODEL')
+        embedding_model = get_value_from_env("EMBEDDING_MODEL", "sentence_transformer")
         embeddings, application_dimension = load_embedding_model(embedding_model)
 
         gds_status = self.check_gds_version()
@@ -292,13 +291,14 @@ class graphDBdataAccess:
         
         filename_list= list(map(str.strip, json.loads(filenames)))
         source_types_list= list(map(str.strip, json.loads(source_types)))
-        gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
+        gcs_file_cache = get_value_from_env("GCS_FILE_CACHE","False","bool")
         
         for (file_name,source_type) in zip(filename_list, source_types_list):
             merged_file_path = os.path.join(merged_dir, file_name)
-            if source_type == 'local file' and gcs_file_cache == 'True':
+            if source_type == 'local file' and gcs_file_cache:
+                BUCKET_UPLOAD_FILE = get_value_from_env('BUCKET_UPLOAD_FILE', default_value=None, data_type=str)
                 folder_name = create_gcs_bucket_folder_name_hashed(uri, file_name)
-                delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
+                delete_file_from_gcs(BUCKET_UPLOAD_FILE,folder_name,file_name)
             else:
                 logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
                 delete_uploaded_local_file(merged_file_path,file_name)
@@ -396,8 +396,8 @@ class graphDBdataAccess:
         return self.execute_query(query,param)
     
     def get_duplicate_nodes_list(self):
-        score_value = float(os.environ.get('DUPLICATE_SCORE_VALUE'))
-        text_distance = int(os.environ.get('DUPLICATE_TEXT_DISTANCE'))
+        score_value = get_value_from_env("DUPLICATE_SCORE_VALUE",0.97,"float")
+        text_distance = get_value_from_env("DUPLICATE_TEXT_DISTANCE", 3 ,"int")
         query_duplicate_nodes = """
                 MATCH (n:!Chunk&!Session&!Document&!`__Community__`) with n 
                 WHERE n.embedding is not null and n.id is not null // and size(toString(n.id)) > 3
@@ -469,7 +469,7 @@ class graphDBdataAccess:
         """
         drop and create the vector index when vector index dimesion are different.
         """
-        embedding_model = os.getenv('EMBEDDING_MODEL')
+        embedding_model = get_value_from_env("EMBEDDING_MODEL", "sentence_transformer")
         embeddings, dimension = load_embedding_model(embedding_model)
         
         if isVectorIndexExist == 'true':

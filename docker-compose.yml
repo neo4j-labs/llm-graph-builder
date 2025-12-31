@@ -12,10 +12,8 @@ services:
     environment:
       - KNN_MIN_SCORE=${KNN_MIN_SCORE-0.94}
       - IS_EMBEDDING=${IS_EMBEDDING-true}
-      - GEMINI_ENABLED=${GEMINI_ENABLED-False}
       - GCP_LOG_METRICS_ENABLED=${GCP_LOG_METRICS_ENABLED-False}
       - UPDATE_GRAPH_CHUNKS_PROCESSED=${UPDATE_GRAPH_CHUNKS_PROCESSED-20}
-      - NUMBER_OF_CHUNKS_TO_COMBINE=${NUMBER_OF_CHUNKS_TO_COMBINE-6}
       - ENTITY_EMBEDDING=${ENTITY_EMBEDDING-False}
       - GCS_FILE_CACHE=${GCS_FILE_CACHE-False}
 #      - LLM_MODEL_CONFIG_anthropic_claude_35_sonnet=${LLM_MODEL_CONFIG_anthropic_claude_35_sonnet-}
@@ -25,7 +23,11 @@ services:
 #      - LLM_MODEL_CONFIG_groq_llama3_70b=${LLM_MODEL_CONFIG_groq_llama3_70b-}
 #      - LLM_MODEL_CONFIG_bedrock_claude_3_5_sonnet=${LLM_MODEL_CONFIG_bedrock_claude_3_5_sonnet-}
 #     - LLM_MODEL_CONFIG_fireworks_qwen_72b=${LLM_MODEL_CONFIG_fireworks_qwen_72b-}
-      - LLM_MODEL_CONFIG_ollama_llama3=${LLM_MODEL_CONFIG_ollama_llama3-}
+      # - LLM_MODEL_CONFIG_ollama_llama3=${LLM_MODEL_CONFIG_ollama_llama3-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - DIFFBOT_API_KEY=${DIFFBOT_API_KEY}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL}
+      - MAX_TOKEN_CHUNK_SIZE=${MAX_TOKEN_CHUNK_SIZE}
     container_name: backend
     extra_hosts:
       - host.docker.internal:host-gateway

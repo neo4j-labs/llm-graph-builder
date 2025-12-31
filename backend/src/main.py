@@ -10,19 +10,20 @@ from src.shared.constants import (QUERY_TO_GET_CHUNKS,
 from src.shared.schema_extraction import schema_extraction_from_text
 from dotenv import load_dotenv
 from datetime import datetime
+from langchain_core.documents import Document
 import logging
 from src.create_chunks import CreateChunksofDocument
 from src.graphDB_dataAccess import graphDBdataAccess
 from src.document_sources.local_file import get_documents_from_file_by_path
 from src.entities.source_node import sourceNode
 from src.llm import get_graph_from_llm
-from src.document_sources.gcs_bucket import *
-from src.document_sources.s3_bucket import *
-from src.document_sources.wikipedia import *
-from src.document_sources.youtube import *
-from src.shared.common_fn import *
-from src.make_relationships import *
-from src.document_sources.web_pages import *
+from src.document_sources.gcs_bucket import get_gcs_bucket_files_info, copy_failed_file, get_documents_from_gcs, delete_file_from_gcs, upload_file_to_gcs, merge_file_gcs
+from src.document_sources.s3_bucket import get_s3_files_info, get_documents_from_s3
+from src.document_sources.wikipedia import get_documents_from_Wikipedia
+from src.document_sources.youtube import get_youtube_combined_transcript, get_documents_from_youtube
+from src.shared.common_fn import get_value_from_env, last_url_segment, check_url_source, create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file, create_graph_database_connection, track_token_usage, handle_backticks_nodes_relationship_id_type, save_graphDocuments_in_neo4j, get_chunk_and_graphDocument
+from src.make_relationships import create_chunk_vector_index, execute_graph_query, create_chunk_embeddings, merge_relationship_between_chunk_and_entites, create_relation_between_chunks
+from src.document_sources.web_pages import get_documents_from_web_page
 from src.graph_query import get_graphDB_driver
 import re
 from langchain_community.document_loaders import WikipediaLoader, WebBaseLoader
@@ -37,10 +38,13 @@ from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 
 warnings.filterwarnings("ignore")
 load_dotenv()
-BUCKET_UPLOAD = os.getenv('BUCKET_UPLOAD')
-BUCKET_FAILED_FILE = os.getenv('BUCKET_FAILED_FILE')
-PROJECT_ID = os.getenv('PROJECT_ID')
+
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
+GCS_FILE_CACHE = get_value_from_env("GCS_FILE_CACHE","False","bool")
+if GCS_FILE_CACHE:
+  BUCKET_UPLOAD_FILE = get_value_from_env('BUCKET_UPLOAD_FILE', default_value=None, data_type=str)
+  BUCKET_FAILED_FILE = get_value_from_env('BUCKET_FAILED_FILE', default_value=None, data_type=str)
+  PROJECT_ID = get_value_from_env('PROJECT_ID', default_value=None, data_type=str)
 
 def create_source_node_graph_url_s3(graph, model, source_url, aws_access_key_id, aws_secret_access_key, source_type):
     
@@ -185,7 +189,7 @@ def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     logging.info(f"match value: {match}")
     obj_source_node.file_name = match.group(1)
     transcript= get_youtube_combined_transcript(match.group(1))
-    logging.info(f"Youtube transcript : {transcript}")
+    # logging.info(f"Youtube transcript : {transcript}")
     if transcript==None or len(transcript)==0:
       message = f"Youtube transcript is not available for : {obj_source_node.file_name}"
       raise LLMGraphBuilderException(message)
@@ -236,10 +240,9 @@ async def extract_graph_from_file_local_file(uri, userName, password, database, 
 
   logging.info(f'Process file name :{fileName}')
   if retry_condition in ["", None] or retry_condition not in [DELETE_ENTITIES_AND_START_FROM_BEGINNING, START_FROM_LAST_PROCESSED_POSITION]:
-    gcs_file_cache = str(os.environ.get('GCS_FILE_CACHE', 'False')).strip()
-    if gcs_file_cache == 'True':
+    if GCS_FILE_CACHE:
       folder_name = create_gcs_bucket_folder_name_hashed(uri, fileName)
-      file_name, pages = get_documents_from_gcs( PROJECT_ID, BUCKET_UPLOAD, folder_name, fileName)
+      file_name, pages = get_documents_from_gcs( PROJECT_ID, BUCKET_UPLOAD_FILE, folder_name, fileName)
     else:
       file_name, pages, file_extension = get_documents_from_file_by_path(merged_file_path,fileName)
     if pages==None or len(pages)==0:
@@ -371,7 +374,7 @@ async def processing_source(uri, userName, password, database, model, file_name,
       uri_latency["update_source_node"] = f'{elapsed_update_source_node:.2f}'
 
       logging.info('Update the status as Processing')
-      update_graph_chunk_processed = int(os.environ.get('UPDATE_GRAPH_CHUNKS_PROCESSED'))
+      update_graph_chunk_processed = get_value_from_env("UPDATE_GRAPH_CHUNKS_PROCESSED",20,"int")
       # selected_chunks = []
       is_cancelled_status = False
       job_status = "Completed"
@@ -437,10 +440,9 @@ async def processing_source(uri, userName, password, database, model, file_name,
       # merged_file_path have value only when file uploaded from local
       
       if is_uploaded_from_local and bool(is_cancelled_status) == False:
-        gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
-        if gcs_file_cache == 'True':
+        if GCS_FILE_CACHE:
           folder_name = create_gcs_bucket_folder_name_hashed(uri, file_name)
-          delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
+          delete_file_from_gcs(BUCKET_UPLOAD_FILE,folder_name,file_name)
         else:
           delete_uploaded_local_file(merged_file_path, file_name)  
       processing_source_func = time.time() - processing_source_start_time
@@ -478,7 +480,7 @@ async def processing_chunks(chunkId_chunkDoc_list,graph,uri, userName, password,
     graph = create_graph_database_connection(uri, userName, password, database)
   
   #pre checking if user is allowed to process the file
-  if os.environ.get("TRACK_TOKEN_USAGE", "false").strip().lower() == "true":
+  if get_value_from_env("TRACK_TOKEN_USAGE", "false", "bool"):
     try:
       track_token_usage(email, uri, 0, model)
     except LLMGraphBuilderException as e:
@@ -501,7 +503,7 @@ async def processing_chunks(chunkId_chunkDoc_list,graph,uri, userName, password,
   latency_processing_chunk["entity_extraction"] = f'{elapsed_entity_extraction:.2f}'
   
   start_save_token = time.time()
-  if os.environ.get("TRACK_TOKEN_USAGE").strip().lower() == "true":
+  if get_value_from_env("TRACK_TOKEN_USAGE", "false", "bool"):
     track_token_usage(email,uri,token_usage,model)
     logging.info("Token usage for extraction: %s for user: %s", token_usage, email)
   end_save_token = time.time()
@@ -640,13 +642,10 @@ def merge_chunks_local(file_name, total_chunks, chunk_dir, merged_dir):
 
 
 def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, originalname, uri, chunk_dir, merged_dir):
-  
-  gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
-  logging.info(f'gcs file cache: {gcs_file_cache}')
-  
-  if gcs_file_cache == 'True':
+    
+  if GCS_FILE_CACHE:
     folder_name = create_gcs_bucket_folder_name_hashed(uri,originalname)
-    upload_file_to_gcs(chunk, chunk_number, originalname, BUCKET_UPLOAD, folder_name)
+    upload_file_to_gcs(chunk, chunk_number, originalname, BUCKET_UPLOAD_FILE, folder_name)
   else:
     if not os.path.exists(chunk_dir):
       os.mkdir(chunk_dir)
@@ -659,8 +658,8 @@ def upload_file(graph, model, chunk, chunk_number:int, total_chunks:int, origina
 
   if int(chunk_number) == int(total_chunks):
       # If this is the last chunk, merge all chunks into a single file
-      if gcs_file_cache == 'True':
-        file_size = merge_file_gcs(BUCKET_UPLOAD, originalname, folder_name, int(total_chunks))
+      if GCS_FILE_CACHE:
+        file_size = merge_file_gcs(BUCKET_UPLOAD_FILE, originalname, folder_name, int(total_chunks))
       else:
         file_size = merge_chunks_local(originalname, int(total_chunks), chunk_dir, merged_dir)
       
@@ -725,7 +724,6 @@ def manually_cancelled_job(graph, filenames, source_types, merged_dir, uri):
   
   filename_list= list(map(str.strip, json.loads(filenames)))
   source_types_list= list(map(str.strip, json.loads(source_types)))
-  gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
   
   for (file_name,source_type) in zip(filename_list, source_types_list):
       obj_source_node = sourceNode()
@@ -781,12 +779,11 @@ def set_status_retry(graph, file_name, retry_condition):
     graphDb_data_Access.update_source_node(obj_source_node)
 
 def failed_file_process(uri,file_name, merged_file_path):
-  gcs_file_cache = os.environ.get('GCS_FILE_CACHE')
-  if gcs_file_cache == 'True':
+  if GCS_FILE_CACHE:
       folder_name = create_gcs_bucket_folder_name_hashed(uri,file_name)
-      copy_failed_file(BUCKET_UPLOAD, BUCKET_FAILED_FILE, folder_name, file_name)
+      copy_failed_file(BUCKET_UPLOAD_FILE, BUCKET_FAILED_FILE, folder_name, file_name)
       time.sleep(5)
-      delete_file_from_gcs(BUCKET_UPLOAD,folder_name,file_name)
+      delete_file_from_gcs(BUCKET_UPLOAD_FILE,folder_name,file_name)
   else:
       logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
       delete_uploaded_local_file(merged_file_path,file_name)

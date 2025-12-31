@@ -5,6 +5,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
+from src.shared.common_fn import get_value_from_env
 from src.shared.common_fn import load_embedding_model,track_token_usage
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 
@@ -194,9 +195,9 @@ COMMUNITY_INDEX_FULL_TEXT_QUERY = f"CREATE FULLTEXT INDEX {COMMUNITY_FULLTEXT_IN
 def get_gds_driver(uri, username, password, database):
     try:
         if all(v is None for v in [username, password]):
-            username= os.getenv('NEO4J_USERNAME')
-            database= os.getenv('NEO4J_DATABASE')
-            password= os.getenv('NEO4J_PASSWORD')
+            username= get_value_from_env('NEO4J_USERNAME')
+            database= get_value_from_env('NEO4J_DATABASE')
+            password= get_value_from_env('NEO4J_PASSWORD')
             
         gds = GraphDataScience(
             endpoint=uri,
@@ -316,7 +317,7 @@ def create_community_summaries(gds, model, email, uri):
     token_usage = 0
     try:
         #pre check if user allowed to create community summaries
-        if os.environ.get("TRACK_TOKEN_USAGE", "false").strip().lower() == "true":
+        if get_value_from_env("TRACK_TOKEN_USAGE", "false", "bool"):
             try:
                 track_token_usage(email, uri, 0, model)
             except LLMGraphBuilderException as e:
@@ -361,7 +362,7 @@ def create_community_summaries(gds, model, email, uri):
 
     finally:
        try:
-           if os.environ.get("TRACK_TOKEN_USAGE", "false").strip().lower() == "true":
+           if get_value_from_env("TRACK_TOKEN_USAGE", "false", "bool"):
                if callback_handler:
                    usage = callback_handler.report()
                    token_usage = usage.get("total_tokens", 0)
@@ -374,7 +375,7 @@ def create_community_summaries(gds, model, email, uri):
 
 def create_community_embeddings(gds):
     try:
-        embedding_model = os.getenv('EMBEDDING_MODEL')
+        embedding_model = get_value_from_env("EMBEDDING_MODEL","sentence_transformer")
         embeddings, dimension = load_embedding_model(embedding_model)
         logging.info(f"Embedding model '{embedding_model}' loaded successfully.")
         

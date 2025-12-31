@@ -1,11 +1,14 @@
 import hashlib
 import os
+import json
+import logging
+from typing import Any
 from transformers import AutoTokenizer, AutoModel
 from langchain_huggingface import HuggingFaceEmbeddings
 from threading import Lock
 import logging
+from urllib.parse import urlparse,parse_qs
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
-from src.document_sources.youtube import create_youtube_url
 from langchain_google_vertexai import VertexAIEmbeddings
 from langchain_openai import OpenAIEmbeddings
 from langchain_neo4j import Neo4jGraph
@@ -54,6 +57,17 @@ def get_local_sentence_transformer_embedding():
        _embedding_instance = HuggingFaceEmbeddings(model_name=MODEL_PATH)
        logging.info("Embedding model initialized.")
        return _embedding_instance
+   
+def create_youtube_url(url):
+    you_tu_url = "https://www.youtube.com/watch?v="
+    u_pars = urlparse(url)
+    quer_v = parse_qs(u_pars.query).get('v')
+    if quer_v:
+      return  you_tu_url + quer_v[0].strip()
+
+    pth = u_pars.path.split('/')
+    if pth:
+      return you_tu_url + pth[-1].strip()
 
 def check_url_source(source_type, yt_url:str=None, wiki_query:str=None):
     language=''
@@ -69,17 +83,13 @@ def check_url_source(source_type, yt_url:str=None, wiki_query:str=None):
       
       elif  source_type == 'Wikipedia':
         wiki_query_id=''
-        #pattern = r"https?:\/\/([a-zA-Z0-9\.\,\_\-\/]+)\.wikipedia\.([a-zA-Z]{2,3})\/wiki\/([a-zA-Z0-9\.\,\_\-\/]+)"
+
         wikipedia_url_regex = r'https?:\/\/(www\.)?([a-zA-Z]{2,3})\.wikipedia\.org\/wiki\/(.*)'
-        wiki_id_pattern = r'^[a-zA-Z0-9 _\-\.\,\:\(\)\[\]\{\}\/]*$'
         
         match = re.search(wikipedia_url_regex, wiki_query.strip())
         if match:
                 language = match.group(2)
                 wiki_query_id = match.group(3)
-          # else : 
-          #       languages.append("en")
-          #       wiki_query_ids.append(wiki_url.strip())
         else:
             raise Exception(f'Not a valid wikipedia url: {wiki_query} ')
 
@@ -100,9 +110,9 @@ def get_chunk_and_graphDocument(graph_document_list, chunkId_chunkDoc_list):
   return lst_chunk_chunkId_document  
                  
 def create_graph_database_connection(uri, userName, password, database):
-  enable_user_agent = os.environ.get("ENABLE_USER_AGENT", "False").lower() in ("true", "1", "yes")
+  enable_user_agent = get_value_from_env("ENABLE_USER_AGENT", "False" ,"bool")
   if enable_user_agent:
-    graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, refresh_schema=False, sanitize=True,driver_config={'user_agent':os.environ.get('NEO4J_USER_AGENT')})  
+    graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, refresh_schema=False, sanitize=True,driver_config={'user_agent':get_value_from_env("USER_AGENT","LLM-Graph-Builder")}) 
   else:
     graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, refresh_schema=False, sanitize=True)    
   return graph
@@ -217,7 +227,7 @@ def get_bedrock_embeddings():
        BedrockEmbeddings: An instance of the BedrockEmbeddings class.
    """
    try:
-       env_value = os.getenv("BEDROCK_EMBEDDING_MODEL")
+       env_value = get_value_from_env("BEDROCK_EMBEDDING_MODEL")
        if not env_value:
            raise ValueError("Environment variable 'BEDROCK_EMBEDDING_MODEL' is not set.")
        try:
@@ -241,6 +251,44 @@ def get_bedrock_embeddings():
    except Exception as e:
        logging.error(f"An unexpected error occurred: {e}")
        raise
+   
+def get_value_from_env(key_name: str, default_value: Any = None, data_type: type = str):
+  
+  value = os.getenv(key_name, None)
+  if value is not None:
+    return convert_type(value, data_type)
+  elif default_value is not None:
+    return convert_type(default_value, data_type)
+  else:
+    error_msg = f"Environment variable '{key_name}' not found and no default value provided."
+    logging.error(error_msg)
+    raise KeyError(error_msg)
+
+
+def convert_type(value: str, data_type: type):
+    """Convert value to the specified data type."""
+    try:
+        if data_type in (int, "int"):
+            return int(value)
+        elif data_type in (float, "float"):
+            return float(value)
+        elif data_type in (bool, "bool"):
+            if isinstance(value, bool):
+                return value
+            if isinstance(value, (int, float)):
+                return bool(value)
+            if isinstance(value, str):
+                return value.strip().lower() in ["true", "1", "yes"]
+            raise ValueError(f"Cannot convert {value!r} to bool")
+        elif data_type in (list, dict, "list", "dict"):
+            return json.loads(value)
+        elif data_type in (str, "str"):
+            return str(value)
+        else:
+            raise TypeError(f"Unsupported data type for conversion: {data_type}")
+    except Exception as e:
+        logging.error(f"Type conversion error: {e}")
+        raise
 
 
 class UniversalTokenUsageHandler(BaseCallbackHandler):
@@ -293,17 +341,17 @@ def track_token_usage(
         if not normalized_email and not normalized_db_url:
             raise ValueError("Either email or db_url must be provided for token tracking.")
 
-        uri = os.getenv("TOKEN_TRACKER_DB_URI")
-        user = os.getenv("TOKEN_TRACKER_DB_USERNAME")
-        password = os.getenv("TOKEN_TRACKER_DB_PASSWORD")
-        database = os.getenv("TOKEN_TRACKER_DB_DATABASE", "neo4j")
+        uri = get_value_from_env("TOKEN_TRACKER_DB_URI")
+        user = get_value_from_env("TOKEN_TRACKER_DB_USERNAME")
+        password = get_value_from_env("TOKEN_TRACKER_DB_PASSWORD")
+        database = get_value_from_env("TOKEN_TRACKER_DB_DATABASE", "neo4j")
         if not all([uri, user, password]):
             raise EnvironmentError("Neo4j credentials are not set properly.")
 
         graph = create_graph_database_connection(uri, user, password, database)
 
-        daily_tokens_limit = int(os.getenv("DAILY_TOKENS_LIMIT", "250000"))
-        monthly_tokens_limit = int(os.getenv("MONTHLY_TOKENS_LIMIT", "1000000"))
+        daily_tokens_limit = get_value_from_env("DAILY_TOKENS_LIMIT", "250000", "int")
+        monthly_tokens_limit = get_value_from_env("MONTHLY_TOKENS_LIMIT", "1000000", "int")
         is_neo4j_user = bool(normalized_email and normalized_email.endswith("@neo4j.com"))
 
         if normalized_email:
@@ -383,3 +431,5 @@ def track_token_usage(
             exc_info=True,
         )
         raise
+
+
