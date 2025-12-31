@@ -254,42 +254,41 @@ def get_bedrock_embeddings():
    
 def get_value_from_env(key_name: str, default_value: Any = None, data_type: type = str):
   
-  try:
-      value = os.getenv(key_name, None) 
-  except (NotFound, PermissionDenied):
-    try:
-      logging.warning(f"key {key_name} not found in Secret Manager. Checking environment variable.")
-      env_value = os.getenv(key_name, None)
-      if env_value is None and default_value is not None:
-        return convert_type(default_value, data_type)
-      elif env_value is None and default_value is None:
-        raise Exception(f"env {key_name} value not found")
-      else:
-        return convert_type(env_value, data_type)
-    except Exception as e:
-       raise Exception(f"env {key_name} value not found")
-
-  if value is None and default_value is not None:
-    return convert_type(default_value, data_type) # Return the default value when key not found in secret manager not in .env file.
-
-  return convert_type(value, data_type)
+  value = os.getenv(key_name, None)
+  if value is not None:
+    return convert_type(value, data_type)
+  elif default_value is not None:
+    return convert_type(default_value, data_type)
+  else:
+    error_msg = f"Environment variable '{key_name}' not found and no default value provided."
+    logging.error(error_msg)
+    raise KeyError(error_msg)
 
 
 def convert_type(value: str, data_type: type):
-  """Convert string value to the specified data type."""
-  try:
-    if data_type == "int":
-      return int(value)
-    elif data_type == "float":
-      return float(value)
-    elif data_type == "bool":
-      return value.lower() in ["true", "1", "yes"]
-    elif data_type == "list" or data_type == "dict":
-      return json.loads(value)  # Convert JSON strings to list/dict
-    return value  # Default to string
-  except Exception as e:
-    logging.error(f"Type conversion error: {e}")
-    return None
+    """Convert value to the specified data type."""
+    try:
+        if data_type in (int, "int"):
+            return int(value)
+        elif data_type in (float, "float"):
+            return float(value)
+        elif data_type in (bool, "bool"):
+            if isinstance(value, bool):
+                return value
+            if isinstance(value, (int, float)):
+                return bool(value)
+            if isinstance(value, str):
+                return value.strip().lower() in ["true", "1", "yes"]
+            raise ValueError(f"Cannot convert {value!r} to bool")
+        elif data_type in (list, dict, "list", "dict"):
+            return json.loads(value)
+        elif data_type in (str, "str"):
+            return str(value)
+        else:
+            raise TypeError(f"Unsupported data type for conversion: {data_type}")
+    except Exception as e:
+        logging.error(f"Type conversion error: {e}")
+        raise
 
 
 class UniversalTokenUsageHandler(BaseCallbackHandler):

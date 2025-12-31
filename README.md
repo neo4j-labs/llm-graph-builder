@@ -227,14 +227,10 @@ gcloud run deploy dev-backend \
 | EMBEDDING_MODEL         | Optional          |               | Model for generating text embeddings (default: all-MiniLM-L6-v2, openai, vertexai, titan)        |
 | IS_EMBEDDING           | Optional           | true          | Flag to enable text embedding                                                                    |
 | KNN_MIN_SCORE          | Optional           | 0.8           | Minimum score for KNN algorithm                                                                  |
-| GEMINI_ENABLED         | Optional           | False         | Flag to enable Gemini                                                                            |
 | GCP_LOG_METRICS_ENABLED| Optional           | False         | Flag to enable Google Cloud logs                                                                 |
 | NEO4J_URI              | Optional           | neo4j://database:7687 | URI for Neo4j database                                                                  |
 | NEO4J_USERNAME         | Optional           | neo4j         | Username for Neo4j database                                                                      |
 | NEO4J_PASSWORD         | Optional           | password      | Password for Neo4j database                                                                      |
-| LANGCHAIN_API_KEY      | Optional           |               | API key for Langchain                                                                            |
-| LANGCHAIN_PROJECT      | Optional           |               | Project for Langchain                                                                            |
-| LANGCHAIN_TRACING_V2   | Optional           | true          | Flag to enable Langchain tracing                                                                 |
 | GCS_FILE_CACHE         | Optional           | False         | If set to True, will save files to process into GCS. If False, will save files locally           |
 | LANGCHAIN_ENDPOINT     | Optional           | [Langchain Endpoint][langchain-endpoint] | Endpoint for Langchain API                                 |
 | ENTITY_EMBEDDING       | Optional           | False         | If set to True, it will add embeddings for each entity in the database                           |
