@@ -230,9 +230,8 @@ gcloud run deploy dev-backend \
 | GCP_LOG_METRICS_ENABLED| Optional           | False         | Flag to enable Google Cloud logs                                                                 |
 | NEO4J_URI              | Optional           | neo4j://database:7687 | URI for Neo4j database                                                                  |
 | NEO4J_USERNAME         | Optional           | neo4j         | Username for Neo4j database                                                                      |
-| NEO4J_PASSWORD         | Optional           | password      | Password for Neo4j database                                                                      |
-| GCS_FILE_CACHE         | Optional           | False         | If set to True, will save files to process into GCS. If False, will save files locally           |
-| LANGCHAIN_ENDPOINT     | Optional           | [Langchain Endpoint][langchain-endpoint] | Endpoint for Langchain API                                 |
+| NEO4J_PASSWORD         | Optional           | password      | Password for Neo4j database                                                                      |                                               |
+| GCS_FILE_CACHE         | Optional           | False         | If set to True, will save files to process into GCS. If False, will save files locally           |                   |
 | ENTITY_EMBEDDING       | Optional           | False         | If set to True, it will add embeddings for each entity in the database                           |
 | LLM_MODEL_CONFIG_ollama_<model_name> | Optional |           | Set ollama config as model_name,model_local_url for local deployments                            |
 | RAGAS_EMBEDDING_MODEL  | Optional           |               | Embedding model used by RAGAS evaluation framework                                               |
