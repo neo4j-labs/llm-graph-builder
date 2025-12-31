@@ -248,12 +248,11 @@ def write_communities(gds, graph_project, project_name=COMMUNITY_PROJECTION_NAME
         return False
 
 
-def get_community_chain(model, is_parent=False,community_template=COMMUNITY_TEMPLATE,system_template=COMMUNITY_SYSTEM_TEMPLATE):
+def get_community_chain(llm, is_parent=False,community_template=COMMUNITY_TEMPLATE,system_template=COMMUNITY_SYSTEM_TEMPLATE):
     try:
         if is_parent:
             community_template=PARENT_COMMUNITY_TEMPLATE
             system_template= PARENT_COMMUNITY_SYSTEM_TEMPLATE
-        llm, _, _ = get_llm(model)
         community_prompt = ChatPromptTemplate.from_messages(
             [
                 (
@@ -325,7 +324,7 @@ def create_community_summaries(gds, model, email, uri):
                 raise RuntimeError(str(e))
         community_info_list = gds.run_cypher(GET_COMMUNITY_INFO)
         llm, model_name,callback_handler = get_llm(model)
-        community_chain = get_community_chain(model)
+        community_chain = get_community_chain(llm)
         
         summaries = []
         with ThreadPoolExecutor() as executor:
@@ -341,7 +340,7 @@ def create_community_summaries(gds, model, email, uri):
         gds.run_cypher(STORE_COMMUNITY_SUMMARIES, params={"data": summaries})
 
         parent_community_info = gds.run_cypher(GET_PARENT_COMMUNITY_INFO)
-        parent_community_chain = get_community_chain(model, is_parent=True)
+        parent_community_chain = get_community_chain(llm, is_parent=True)
 
         parent_summaries = []
         with ThreadPoolExecutor() as executor:

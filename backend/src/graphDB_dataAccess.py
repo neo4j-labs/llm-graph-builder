@@ -147,7 +147,7 @@ class graphDBdataAccess:
         
     def update_KNN_graph(self):
         """
-        Update the graph node with SIMILAR relationship where embedding scrore match
+        Update the graph node with SIMILAR relationship where embedding score match
         """
         index = self.graph.query("""show indexes yield * where type = 'VECTOR' and name = 'vector'""",session_params={"database":self.graph._database})
         # logging.info(f'show index vector: {index}')
@@ -285,7 +285,7 @@ class graphDBdataAccess:
                 d.communityNodeCount AS communityNodeCount,
                 d.communityRelCount AS communityRelCount,
                 d.createdAt AS created_time,
-                d.token_usage AS token_usage
+                coalesce(d.token_usage, 0) AS token_usage
                 """
         param = {"file_name" : file_name}
         return self.execute_query(query, param)
