@@ -184,7 +184,7 @@ def create_source_node_graph_url_youtube(graph, model, source_url, source_type):
     logging.info(f"match value: {match}")
     obj_source_node.file_name = match.group(1)
     transcript= get_youtube_combined_transcript(match.group(1))
-    logging.info(f"Youtube transcript : {transcript}")
+    # logging.info(f"Youtube transcript : {transcript}")
     if transcript==None or len(transcript)==0:
       message = f"Youtube transcript is not available for : {obj_source_node.file_name}"
       raise LLMGraphBuilderException(message)
