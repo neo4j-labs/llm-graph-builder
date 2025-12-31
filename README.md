@@ -216,13 +216,12 @@ VITE_BACKEND_API_URL=${VITE_BACKEND_API_URL-backendurl}
 | **BACKEND ENV**         |                    |               |                                                                                                  |
 | OPENAI_API_KEY          | Mandatory          |               | An OpenAI Key is required to use OpenAI LLM model to authenticate and track requests            |
 | DIFFBOT_API_KEY         | Mandatory          |               | API key is required to use Diffbot's NLP service to extract entities and relationships from unstructured data |
-| BUCKET                  | Mandatory          |               | Bucket name to store uploaded files on GCS                                                     |
 | NEO4J_USER_AGENT        | Optional           | llm-graph-builder | Name of the user agent to track Neo4j database activity                                       |
 | ENABLE_USER_AGENT       | Optional           | true           | Boolean value to enable/disable Neo4j user agent                                              |
 | DUPLICATE_TEXT_DISTANCE | Mandatory          | 5              | This value is used to find distance for all node pairs in the graph and is calculated based on node properties |
 | DUPLICATE_SCORE_VALUE   | Mandatory          | 0.97           | Node score value to match duplicate nodes                                                     |
 | EFFECTIVE_SEARCH_RATIO  | Mandatory          | 1              | Ratio used for effective search calculations                                                  |
-| GRAPH_CLEANUP_MODEL     | Optional           | openai_gpt_4o_mini | Model name to clean up graph in post processing                                             |
+| GRAPH_CLEANUP_MODEL     | Optional           | openai_gpt_5_mini | Model name to clean up graph in post processing                                             |
 | MAX_TOKEN_CHUNK_SIZE    | Optional           | 10000          | Maximum token size to process file content                                                   |
 | YOUTUBE_TRANSCRIPT_PROXY | Optional          |                | Proxy key to process YouTube videos for getting transcripts                                  |
 | EMBEDDING_MODEL         | Optional           |                | Model for generating text embeddings (default: all-MiniLM-L6-v2, openai, vertexai, titan)   |
@@ -235,11 +234,7 @@ VITE_BACKEND_API_URL=${VITE_BACKEND_API_URL-backendurl}
 | NEO4J_URI               | Optional           | neo4j://database:7687 | URI for Neo4j database                                                                 |
 | NEO4J_USERNAME          | Optional           | neo4j          | Username for Neo4j database                                                                 |
 | NEO4J_PASSWORD          | Optional           | password       | Password for Neo4j database                                                                 |
-| LANGCHAIN_API_KEY       | Optional           |                | API key for Langchain                                                                       |
-| LANGCHAIN_PROJECT       | Optional           |                | Project for Langchain                                                                       |
-| LANGCHAIN_TRACING_V2    | Optional           | true           | Flag to enable Langchain tracing                                                            |
 | GCS_FILE_CACHE          | Optional           | False          | If set to True, will save files to process into GCS. If False, will save files locally      |
-| LANGCHAIN_ENDPOINT      | Optional           | [Langchain Endpoint][langchain-endpoint] | Endpoint for Langchain API                                                  |
 | ENTITY_EMBEDDING        | Optional           | False          | If set to True, it will add embeddings for each entity in the database                     |
 | LLM_MODEL_CONFIG_ollama_<model_name> | Optional |              | Set ollama config as model_name,model_local_url for local deployments                    |
 | RAGAS_EMBEDDING_MODEL   | Optional           |                | Embedding model used by RAGAS evaluation framework                                         |
