@@ -1,5 +1,5 @@
 from langchain_neo4j import Neo4jGraph
-from src.shared.constants import (BUCKET_UPLOAD,BUCKET_FAILED_FILE, PROJECT_ID, QUERY_TO_GET_CHUNKS, 
+from src.shared.constants import (QUERY_TO_GET_CHUNKS, 
                                   QUERY_TO_DELETE_EXISTING_ENTITIES, 
                                   QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION,
                                   QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY,
@@ -38,6 +38,9 @@ from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 
 warnings.filterwarnings("ignore")
 load_dotenv()
+BUCKET_UPLOAD = os.getenv('BUCKET_UPLOAD')
+BUCKET_FAILED_FILE = os.getenv('BUCKET_FAILED_FILE')
+PROJECT_ID = os.getenv('PROJECT_ID')
 logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
 GCS_FILE_CACHE = get_value_from_env("GCS_FILE_CACHE","False","bool")
 
