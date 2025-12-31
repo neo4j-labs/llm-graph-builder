@@ -19,7 +19,7 @@ from src.entities.source_node import sourceNode
 from src.llm import get_graph_from_llm
 from src.document_sources.gcs_bucket import get_gcs_bucket_files_info, copy_failed_file, get_documents_from_gcs, delete_file_from_gcs, upload_file_to_gcs, merge_file_gcs
 from src.document_sources.s3_bucket import get_s3_files_info, get_documents_from_s3
-from src.document_sources.wikipedia import get_documents_from_Wikipedia
+from src.document_sources.wikipedia import get_documents_from_wikipedia
 from src.document_sources.youtube import get_youtube_combined_transcript, get_documents_from_youtube
 from src.shared.common_fn import get_value_from_env, last_url_segment, check_url_source, create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file, create_graph_database_connection, track_token_usage, handle_backticks_nodes_relationship_id_type, save_graphDocuments_in_neo4j, get_chunk_and_graphDocument
 from src.make_relationships import create_chunk_vector_index, execute_graph_query, create_chunk_embeddings, merge_relationship_between_chunk_and_entites, create_relation_between_chunks
@@ -286,7 +286,7 @@ async def extract_graph_from_file_youtube(uri, userName, password, database, mod
     
 async def extract_graph_from_file_Wikipedia(uri, userName, password, database, model, wiki_query, language, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email):
   if retry_condition in ["", None] or retry_condition not in [DELETE_ENTITIES_AND_START_FROM_BEGINNING, START_FROM_LAST_PROCESSED_POSITION]:
-    file_name, pages = get_documents_from_Wikipedia(wiki_query, language)
+    file_name, pages = get_documents_from_wikipedia(wiki_query, language)
     if pages==None or len(pages)==0:
       raise LLMGraphBuilderException(f'Wikipedia page is not available for file : {file_name}')
     return await processing_source(uri, userName, password, database, model, file_name, pages, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, email, additional_instructions=additional_instructions)

@@ -262,7 +262,7 @@ def get_value_from_env(key_name: str, default_value: Any = None, data_type: type
   else:
     error_msg = f"Environment variable '{key_name}' not found and no default value provided."
     logging.error(error_msg)
-    raise KeyError(error_msg)
+    return None
 
 
 def convert_type(value: str, data_type: type):
