@@ -22,7 +22,7 @@
     "@neo4j-ndl/react": "^3.2.18",
     "@neo4j-nvl/base": "^0.3.6",
     "@neo4j-nvl/react": "^0.3.8",
-    "@react-oauth/google": "^0.12.1",
+    "@react-oauth/google": "^0.13.4",
     "@tanstack/react-table": "^8.20.5",
     "@types/uuid": "^10.0.0",
     "axios": "^1.8.4",
