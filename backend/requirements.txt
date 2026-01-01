@@ -54,7 +54,7 @@ youtube-transcript-api==1.2.2
 zipp==3.23.0
 sentence-transformers==5.1.0
 google-cloud-logging==3.12.1
-pypandoc==1.15
+pypandoc==1.16.2
 graphdatascience==1.18a1
 Secweb==1.25.2
 ragas==0.4.0
