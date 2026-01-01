@@ -60,5 +60,5 @@ Secweb==1.25.2
 ragas==0.4.0
 rouge_score==0.1.2
 langchain-neo4j==0.6.0
-pypandoc-binary==1.15
+pypandoc-binary==1.16.2
 chardet==5.2.0
