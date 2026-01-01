@@ -48,7 +48,7 @@ urllib3==2.6.2
 uvicorn==0.35.0
 gunicorn==23.0.0
 wikipedia==1.4.0
-wrapt==1.17.3
+wrapt==2.0.1
 yarl==1.20.1
 youtube-transcript-api==1.2.2
 zipp==3.23.0
