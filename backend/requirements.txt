@@ -24,7 +24,7 @@ langchain-groq==1.1.0
 langchain-openai==1.1.0
 langchain-text-splitters==1.0.0
 langchain-huggingface==1.1.0
-langchain-classic==1.0.0
+langchain-classic==1.0.1
 langdetect==1.0.9
 langsmith==0.4.55
 langserve==0.3.3
