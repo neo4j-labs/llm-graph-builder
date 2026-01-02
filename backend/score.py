@@ -26,6 +26,7 @@ from src.post_processing import create_vector_fulltext_indexes, create_entity_em
 from sse_starlette.sse import EventSourceResponse
 from src.communities import create_communities
 from src.neighbours import get_neighbour_nodes
+from src.entities.user_credential import Neo4jCredentials
 import json
 from typing import List, Optional
 from google.oauth2.credentials import Credentials
@@ -42,6 +43,7 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 from langchain_neo4j import Neo4jGraph
 from starlette.middleware.sessions import SessionMiddleware
 from dotenv import load_dotenv
+from fastapi import Depends
 
 load_dotenv(override=True)
 
@@ -112,11 +114,8 @@ app.add_api_route("/health", health([healthy_condition, healthy]))
 
 @app.post("/url/scan")
 async def create_source_knowledge_graph_url(
-    uri=Form(None),
-    userName=Form(None),
-    password=Form(None),
+    credentials: Neo4jCredentials = Depends(),
     source_url=Form(None),
-    database=Form(None),
     aws_access_key_id=Form(None),
     aws_secret_access_key=Form(None),
     wiki_query=Form(None),
@@ -125,8 +124,7 @@ async def create_source_knowledge_graph_url(
     gcs_bucket_folder=Form(None),
     source_type=Form(None),
     gcs_project_id=Form(None),
-    access_token=Form(None),
-    email=Form(None)
+    access_token=Form(None)
     ):
     
     try:
@@ -136,7 +134,11 @@ async def create_source_knowledge_graph_url(
         else:
             source = wiki_query
             
-        graph = create_graph_database_connection(uri, userName, password, database)
+        graph = create_graph_database_connection(
+            credentials.uri,
+            credentials.userName,
+            credentials.password,
+            credentials.database)
         if source_type == 's3 bucket' and aws_access_key_id and aws_secret_access_key:
             lst_file_name,success_count,failed_count = await asyncio.to_thread(create_source_node_graph_url_s3,graph, model, source_url, aws_access_key_id, aws_secret_access_key, source_type
             )
@@ -158,9 +160,9 @@ async def create_source_knowledge_graph_url(
         message = f"Source Node created successfully for source type: {source_type} and source: {source}"
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'url_scan','db_url':uri,'url_scanned_file':lst_file_name, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','userName':userName, 'database':database, 'aws_access_key_id':aws_access_key_id,
+        json_obj = {'api_name':'url_scan','db_url':credentials.uri,'url_scanned_file':lst_file_name, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','userName':credentials.userName, 'database':credentials.database, 'aws_access_key_id':aws_access_key_id,
                             'model':model, 'gcs_bucket_name':gcs_bucket_name, 'gcs_bucket_folder':gcs_bucket_folder, 'source_type':source_type,
-                            'gcs_project_id':gcs_project_id, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':email}
+                            'gcs_project_id':gcs_project_id, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         result ={'elapsed_api_time' : f'{elapsed_time:.2f}'}
         return create_api_response("Success",message=message,success_count=success_count,failed_count=failed_count,file_name=lst_file_name,data=result)
@@ -168,14 +170,14 @@ async def create_source_knowledge_graph_url(
         error_message = str(e)
         message = f" Unable to create source node for source type: {source_type} and source: {source}"
         # Set the status "Success" becuase we are treating these error already handled by application as like custom errors.
-        json_obj = {'error_message':error_message, 'status':'Success','db_url':uri, 'userName':userName, 'database':database,'success_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':email}
+        json_obj = {'error_message':error_message, 'status':'Success','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,'success_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         logging.exception(f'File Failed in upload: {e}')
         return create_api_response('Failed',message=message + error_message[:80],error=error_message,file_source=source_type)
     except Exception as e:
         error_message = str(e)
         message = f" Unable to create source node for source type: {source_type} and source: {source}"
-        json_obj = {'error_message':error_message, 'status':'Failed','db_url':uri, 'userName':userName, 'database':database,'failed_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':email}
+        json_obj = {'error_message':error_message, 'status':'Failed','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,'failed_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email}
         logger.log_struct(json_obj, "ERROR")
         logging.exception(f'Exception Stack trace upload:{e}')
         return create_api_response('Failed',message=message + error_message[:80],error=error_message,file_source=source_type)
@@ -324,21 +326,16 @@ async def extract_knowledge_graph_from_file(
         gc.collect()
             
 @app.post("/sources_list")
-async def get_source_list(
-    uri=Form(None),
-    userName=Form(None),
-    password=Form(None),
-    database=Form(None),
-    email=Form(None)):
+async def get_source_list(credentials: Neo4jCredentials = Depends()):
     """
     Calls 'get_source_list_from_graph' which returns list of sources which already exist in databse
     """
     try:
         start = time.time()
-        result = await asyncio.to_thread(get_source_list_from_graph,uri,userName,password,database)
+        result = await asyncio.to_thread(get_source_list_from_graph,credentials.uri,credentials.userName,credentials.password,credentials.database)
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'sources_list','db_url':uri, 'userName':userName, 'database':database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
+        json_obj = {'api_name':'sources_list','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response("Success",data=result, message=f"Total elapsed API time {elapsed_time:.2f}")
     except Exception as e:
@@ -541,16 +538,16 @@ async def clear_chat_bot(uri=Form(None),userName=Form(None), password=Form(None)
         gc.collect()
             
 @app.post("/connect")
-async def connect(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None),email=Form(None)):
+async def connect(credentials: Neo4jCredentials = Depends()):
     try:
         start = time.time()
-        graph = create_graph_database_connection(uri, userName, password, database)
+        graph = create_graph_database_connection(credentials.uri, credentials.userName, credentials.password, credentials.database)
         
-        result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, database)
+        result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, credentials.database)
         gcs_cache = get_value_from_env("GCS_FILE_CACHE","False","bool")
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'connect','db_url':uri, 'userName':userName, 'database':database, 'count':1, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
+        json_obj = {'api_name':'connect','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'count':1, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         result['elapsed_api_time'] = f'{elapsed_time:.2f}'
         result['gcs_file_cache'] = gcs_cache

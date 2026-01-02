@@ -1,5 +1,9 @@
-class user_credential:
-    uri:str
-    user_name:str
-    password:str
-    database:str
+from pydantic import BaseModel
+from typing import Optional
+
+class Neo4jCredentials(BaseModel):
+    uri: Optional[str] = None
+    userName: Optional[str] = None
+    password: Optional[str] = None
+    database: Optional[str] = None
+    email: Optional[str] = None
