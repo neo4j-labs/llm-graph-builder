@@ -897,3 +897,14 @@ export const deduplicateByFullPattern = (arrays: { value: string; label: string 
 export const importerValidation = (url: string) => {
   return url.trim() !== '' && /^https:\/\/console-preview\.neo4j\.io\/tools\/import\/models(\/.*)?$/i.test(url);
 };
+
+export const isNeo4jUser = (email?: string): boolean => {
+  if (!email) {
+    return false;
+  }
+  return email.toLowerCase().endsWith('@neo4j.com');
+};
+
+export const shouldShowTokenTracking = (email?: string): boolean => {
+  return isNeo4jUser(email);
+};

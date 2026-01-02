@@ -40,7 +40,7 @@ import { buttonCaptions, chatModeLables } from '../../utils/Constants';
 import useSpeechSynthesis from '../../hooks/useSpeech';
 import ButtonWithToolTip from '../UI/ButtonWithToolTip';
 import FallBackDialog from '../UI/FallBackDialog';
-import { downloadClickHandler, getDateTime } from '../../utils/Utils';
+import { downloadClickHandler, getDateTime, shouldShowTokenTracking } from '../../utils/Utils';
 import ChatModesSwitch from './ChatModesSwitch';
 import CommonActions from './CommonChatActions';
 import Loader from '../../utils/Loader';
@@ -195,7 +195,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     if (!inputMessage.trim()) {
       return;
     }
-    if (userCredentials) {
+    if (userCredentials && shouldShowTokenTracking(userCredentials.email)) {
       const tokenCheck = await checkTokenLimits(userCredentials);
       if (tokenCheck.shouldWarn) {
         showNormalToast(tokenCheck.message);

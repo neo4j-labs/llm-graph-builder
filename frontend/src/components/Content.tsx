@@ -47,7 +47,7 @@ import { useMessageContext } from '../context/UserMessages';
 import PostProcessingToast from './Popups/GraphEnhancementDialog/PostProcessingCheckList/PostProcessingToast';
 import { getChunkText } from '../services/getChunkText';
 import ChunkPopUp from './Popups/ChunkPopUp';
-import { isExpired, isFileReadyToProcess } from '../utils/Utils';
+import { isExpired, isFileReadyToProcess, shouldShowTokenTracking } from '../utils/Utils';
 import { checkTokenLimits } from '../utils/TokenWarning';
 import { useHasSelections } from '../hooks/useHasSelections';
 import { ChevronUpIconOutline, ChevronDownIconOutline } from '@neo4j-ndl/react/icons';
@@ -171,7 +171,7 @@ const Content: React.FC<ContentProps> = ({
           />
         );
         try {
-          if (userCredentials) {
+          if (userCredentials && shouldShowTokenTracking(userCredentials.email)) {
             const tokenCheck = await checkTokenLimits(userCredentials);
             if (tokenCheck.shouldWarn) {
               showNormalToast(tokenCheck.message);
@@ -287,7 +287,7 @@ const Content: React.FC<ContentProps> = ({
   const extractHandler = async (fileItem: CustomFile, uid: string) => {
     queue.remove((item) => item.name === fileItem.name);
     try {
-      if (userCredentials) {
+      if (userCredentials && shouldShowTokenTracking(userCredentials.email)) {
         const tokenCheck = await checkTokenLimits(userCredentials);
         if (tokenCheck.shouldWarn) {
           showNormalToast(tokenCheck.message);
@@ -435,7 +435,7 @@ const Content: React.FC<ContentProps> = ({
         />
       );
       try {
-        if (userCredentials) {
+        if (userCredentials && shouldShowTokenTracking(userCredentials.email)) {
           const tokenCheck = await checkTokenLimits(userCredentials);
           if (tokenCheck.shouldWarn) {
             showNormalToast(tokenCheck.message);

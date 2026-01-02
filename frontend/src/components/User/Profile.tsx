@@ -4,6 +4,7 @@ import { ChevronDownIconOutline } from '@neo4j-ndl/react/icons';
 import { useAuth0 } from '@auth0/auth0-react';
 import { getTokenLimits, TokenLimitsResponse } from '../../services/TokenLimits';
 import { useCredentials } from '../../context/UserCredentials';
+import { shouldShowTokenTracking } from '../../utils/Utils';
 
 export default function Profile() {
   const [showMenu, setShowOpen] = useState<boolean>(false);
@@ -17,6 +18,9 @@ export default function Profile() {
   const fetchTokenLimits = useCallback(async () => {
     if (!userCredentials?.uri && !userCredentials?.email) {
       setTokenError('User credentials not available');
+      return;
+    }
+    if (!shouldShowTokenTracking(user?.email)) {
       return;
     }
     setIsLoadingTokens(true);
@@ -44,42 +48,48 @@ export default function Profile() {
     }
   }, [isAuthenticated, fetchTokenLimits]);
 
-  const settings = useMemo(
-    () => [
-      {
-        title: isLoadingTokens
-          ? 'Daily Tokens: Loading...'
-          : tokenError
-            ? 'Daily Tokens: Error'
-            : `Daily Tokens: ${tokenLimits?.daily_remaining.toLocaleString() ?? 'N/A'} / ${tokenLimits?.daily_limit.toLocaleString() ?? 'N/A'}`,
-        onClick: () => {},
-        disabled: true,
-      },
-      {
-        title: isLoadingTokens
-          ? 'Monthly Tokens: Loading...'
-          : tokenError
-            ? 'Monthly Tokens: Error'
-            : `Monthly Tokens: ${tokenLimits?.monthly_remaining.toLocaleString() ?? 'N/A'} / ${tokenLimits?.monthly_limit.toLocaleString() ?? 'N/A'}`,
-        onClick: () => {},
-        disabled: true,
-      },
-      {
-        title: 'Refresh Token Limits',
-        onClick: () => {
-          fetchTokenLimits();
-        },
-        disabled: isLoadingTokens,
-      },
+  const settings = useMemo(() => {
+    const showTokens = shouldShowTokenTracking(user?.email);
+    const tokenItems = showTokens
+      ? [
+          {
+            title: isLoadingTokens
+              ? 'Daily Tokens: Loading...'
+              : tokenError
+                ? 'Daily Tokens: Error'
+                : `Daily Tokens: ${tokenLimits?.daily_remaining.toLocaleString() ?? 'N/A'} / ${tokenLimits?.daily_limit.toLocaleString() ?? 'N/A'}`,
+            onClick: () => {},
+            disabled: true,
+          },
+          {
+            title: isLoadingTokens
+              ? 'Monthly Tokens: Loading...'
+              : tokenError
+                ? 'Monthly Tokens: Error'
+                : `Monthly Tokens: ${tokenLimits?.monthly_remaining.toLocaleString() ?? 'N/A'} / ${tokenLimits?.monthly_limit.toLocaleString() ?? 'N/A'}`,
+            onClick: () => {},
+            disabled: true,
+          },
+          {
+            title: 'Refresh Token Limits',
+            onClick: () => {
+              fetchTokenLimits();
+            },
+            disabled: isLoadingTokens,
+          },
+        ]
+      : [];
+
+    return [
+      ...tokenItems,
       {
         title: 'Logout',
         onClick: () => {
           logout({ logoutParams: { returnTo: `${window.location.origin}/readonly` } });
         },
       },
-    ],
-    [tokenLimits, isLoadingTokens, tokenError, fetchTokenLimits, logout]
-  );
+    ];
+  }, [tokenLimits, isLoadingTokens, tokenError, fetchTokenLimits, logout, user?.email]);
 
   const handleClick = () => {
     setShowOpen(true);
@@ -119,9 +129,9 @@ export default function Profile() {
               {settings.map((setting, index) => (
                 <Menu.Item
                   key={`${setting.title}-${index}`}
-                  onClick={() => !setting.disabled && setting.onClick()}
+                  onClick={() => !('disabled' in setting && setting.disabled) && setting.onClick()}
                   title={setting.title}
-                  isDisabled={setting.disabled}
+                  isDisabled={'disabled' in setting ? setting.disabled : false}
                 />
               ))}
             </Menu.Items>
