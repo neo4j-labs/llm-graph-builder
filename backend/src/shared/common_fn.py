@@ -297,27 +297,28 @@ class UniversalTokenUsageHandler(BaseCallbackHandler):
         self.total_completion_tokens = 0
 
     def on_llm_end(self, response, **kwargs):
+        usage = response.llm_output.get("token_usage") if response.llm_output else None
+       
+        if usage:
+            self.total_prompt_tokens += usage.get("prompt_tokens") or usage.get("input_tokens") or 0
+            self.total_completion_tokens += usage.get("completion_tokens") or usage.get("output_tokens") or 0
+            return
+
         for generations in response.generations:
             for generation in generations:
-                if hasattr(generation, 'message') and hasattr(generation.message, 'usage_metadata'):
-                    usage = generation.message.usage_metadata
-                    if usage:
-                        self.total_prompt_tokens += usage.get("input_tokens", 0)
-                        self.total_completion_tokens += usage.get("output_tokens", 0)
-                        continue
-
-        if not self.total_prompt_tokens:
-            usage = getattr(response, 'llm_output', {}).get('token_usage', {})
-            self.total_prompt_tokens += usage.get('prompt_tokens', 0)
-            self.total_completion_tokens += usage.get('completion_tokens', 0)
+                if hasattr(generation, 'message'):
+                    metadata = getattr(generation.message, 'usage_metadata', {})
+                    if metadata:
+                        self.total_prompt_tokens += metadata.get("input_tokens", 0)
+                        self.total_completion_tokens += metadata.get("output_tokens", 0)
 
     def report(self):
+        print(f"Reporting tokens: prompt={self.total_prompt_tokens}, completion={self.total_completion_tokens}, total={self.total_prompt_tokens + self.total_completion_tokens}")
         return {
             "prompt_tokens": self.total_prompt_tokens,
             "completion_tokens": self.total_completion_tokens,
             "total_tokens": self.total_prompt_tokens + self.total_completion_tokens,
         }
-    
 
 def track_token_usage(
     email: str,
@@ -354,42 +355,7 @@ def track_token_usage(
         monthly_tokens_limit = get_value_from_env("MONTHLY_TOKENS_LIMIT", "1000000", "int")
         is_neo4j_user = bool(normalized_email and normalized_email.endswith("@neo4j.com"))
 
-        if normalized_email:
-            merge_clause = "MERGE (u:User {email: $email})"
-        else:
-            merge_clause = "MERGE (u:User {db_url: $db_url})"
-
-        cypher_query = f"""
-        {merge_clause}
-        ON CREATE SET
-            u.email = coalesce(u.email, $email),
-            u.db_url = coalesce(u.db_url, $db_url),
-            u.is_neo4j_user = $is_neo4j_user,
-            u.daily_tokens_limit = $daily_tokens_limit,
-            u.monthly_tokens_limit = $monthly_tokens_limit,
-            u.daily_tokens_used = $usage,
-            u.monthly_tokens_used = $usage,
-            u.total_tokens_used = $usage,
-            u.lastUsedModel = $lastUsedModel,
-            u.lastOperationUsage = $usage,
-            u.createdAt = coalesce(u.createdAt, datetime()),
-            u.updatedAt = datetime()
-        ON MATCH SET
-            u.lastOperationUsage   = $usage,
-            u.daily_tokens_used   = coalesce(u.daily_tokens_used, 0) + $usage,
-            u.monthly_tokens_used = coalesce(u.monthly_tokens_used, 0) + $usage,
-            u.total_tokens_used   = coalesce(u.total_tokens_used, 0) + $usage,
-            u.lastUsedModel       = $lastUsedModel,
-            u.updatedAt           = datetime()
-        RETURN
-            u.total_tokens_used    AS latestUsage,
-            u.lastOperationUsage   AS lastOperationUsage,
-            u.daily_tokens_used    AS daily_tokens_used,
-            u.monthly_tokens_used  AS monthly_tokens_used,
-            u.daily_tokens_limit   AS daily_tokens_limit,
-            u.monthly_tokens_limit AS monthly_tokens_limit
-        """
-
+        user_node = None
         params = {
             "email": normalized_email,
             "db_url": normalized_db_url,
@@ -400,7 +366,59 @@ def track_token_usage(
             "monthly_tokens_limit": monthly_tokens_limit,
         }
 
-        result = graph.query(cypher_query, params)
+        if normalized_email:
+            result = graph.query(
+                "MATCH (u:User {email: $email}) RETURN u", {"email": normalized_email}
+            )
+            if result and result[0].get("u"):
+                user_node = result[0]["u"]
+                graph.query(
+                    "MATCH (u:User {email: $email}) SET u.db_url = $db_url", {"email": normalized_email, "db_url": normalized_db_url}
+                )
+            else:
+                result = graph.query(
+                    "MATCH (u:User {db_url: $db_url}) RETURN u", {"db_url": normalized_db_url}
+                )
+                if result and result[0].get("u"):
+                    user_node = result[0]["u"]
+                    graph.query(
+                        "MATCH (u:User {db_url: $db_url}) SET u.email = $email", {"db_url": normalized_db_url, "email": normalized_email}
+                    )
+                else:
+                    graph.query(
+                        "CREATE (u:User {email: $email, db_url: $db_url, is_neo4j_user: $is_neo4j_user, daily_tokens_limit: $daily_tokens_limit, monthly_tokens_limit: $monthly_tokens_limit, daily_tokens_used: $usage, monthly_tokens_used: $usage, total_tokens_used: $usage, lastUsedModel: $lastUsedModel, lastOperationUsage: $usage, createdAt: datetime(), updatedAt: datetime()}) RETURN u",
+                        params
+                    )
+        else:
+            result = graph.query(
+                "MATCH (u:User {db_url: $db_url}) RETURN u", {"db_url": normalized_db_url}
+            )
+            if not (result and result[0].get("u")):
+                graph.query(
+                    "CREATE (u:User {db_url: $db_url, is_neo4j_user: $is_neo4j_user, daily_tokens_limit: $daily_tokens_limit, monthly_tokens_limit: $monthly_tokens_limit, daily_tokens_used: $usage, monthly_tokens_used: $usage, total_tokens_used: $usage, lastUsedModel: $lastUsedModel, lastOperationUsage: $usage, createdAt: datetime(), updatedAt: datetime()}) RETURN u",
+                    params
+                )
+        update_query = """
+        MATCH (u:User)
+        WHERE (u.email = $email AND $email IS NOT NULL) OR (u.db_url = $db_url AND $db_url IS NOT NULL)
+        SET u.lastOperationUsage   = $usage,
+            u.daily_tokens_used   = coalesce(u.daily_tokens_used, 0) + $usage,
+            u.monthly_tokens_used = coalesce(u.monthly_tokens_used, 0) + $usage,
+            u.total_tokens_used   = coalesce(u.total_tokens_used, 0) + $usage,
+            u.lastUsedModel       = $lastUsedModel,
+            u.is_neo4j_user       = $is_neo4j_user,
+            u.daily_tokens_limit  = $daily_tokens_limit,
+            u.monthly_tokens_limit= $monthly_tokens_limit,
+            u.updatedAt           = datetime()
+        RETURN
+            u.total_tokens_used    AS latestUsage,
+            u.lastOperationUsage   AS lastOperationUsage,
+            u.daily_tokens_used    AS daily_tokens_used,
+            u.monthly_tokens_used  AS monthly_tokens_used,
+            u.daily_tokens_limit   AS daily_tokens_limit,
+            u.monthly_tokens_limit AS monthly_tokens_limit
+        """
+        result = graph.query(update_query, params)
         if result and "latestUsage" in result[0]:
             daily_tokens_limit = result[0].get("daily_tokens_limit", 0)
             monthly_tokens_limit = result[0].get("monthly_tokens_limit", 0)
@@ -433,3 +451,72 @@ def track_token_usage(
         raise
 
 
+def get_remaining_token_limits(email: str, uri: str) -> dict:
+    """
+    Returns the remaining daily and monthly token limits for a user, given email and/or uri.
+    Uses the same node lookup logic as track_token_usage.
+    """
+    try:
+        normalized_email = (email or "").strip().lower() or None
+        normalized_db_url = (uri or "").strip() or None
+        if not normalized_email and not normalized_db_url:
+            raise ValueError("Either email or db_url must be provided for token tracking.")
+
+        neo4j_uri = os.getenv("TOKEN_TRACKER_DB_URI")
+        user = os.getenv("TOKEN_TRACKER_DB_USERNAME")
+        password = os.getenv("TOKEN_TRACKER_DB_PASSWORD")
+        database = os.getenv("TOKEN_TRACKER_DB_DATABASE", "neo4j")
+        if not all([neo4j_uri, user, password]):
+            raise EnvironmentError("Neo4j credentials are not set properly.")
+
+        graph = create_graph_database_connection(neo4j_uri, user, password, database)
+
+        params = {
+            "email": normalized_email,
+            "db_url": normalized_db_url,
+        }
+
+        user_node = None
+        if normalized_email:
+            result = graph.query(
+                "MATCH (u:User {email: $email}) RETURN u", {"email": normalized_email}
+            )
+            if result and result[0].get("u"):
+                user_node = result[0]["u"]
+            else:
+                result = graph.query(
+                    "MATCH (u:User {db_url: $db_url}) RETURN u", {"db_url": normalized_db_url}
+                )
+                if result and result[0].get("u"):
+                    user_node = result[0]["u"]
+        else:
+            result = graph.query(
+                "MATCH (u:User {db_url: $db_url}) RETURN u", {"db_url": normalized_db_url}
+            )
+            if result and result[0].get("u"):
+                user_node = result[0]["u"]
+
+        if not user_node:
+            raise RuntimeError("User not found for provided email or db_url.")
+
+        daily_tokens_limit = user_node.get("daily_tokens_limit", int(os.getenv("DAILY_TOKENS_LIMIT", "250000")))
+        monthly_tokens_limit = user_node.get("monthly_tokens_limit", int(os.getenv("MONTHLY_TOKENS_LIMIT", "1000000")))
+        daily_tokens_used = user_node.get("daily_tokens_used", 0)
+        monthly_tokens_used = user_node.get("monthly_tokens_used", 0)
+
+        return {
+            "daily_remaining": max(daily_tokens_limit - daily_tokens_used, 0),
+            "monthly_remaining": max(monthly_tokens_limit - monthly_tokens_used, 0),
+            "daily_limit": daily_tokens_limit,
+            "monthly_limit": monthly_tokens_limit,
+            "daily_used": daily_tokens_used,
+            "monthly_used": monthly_tokens_used,
+        }
+    except Exception as e:
+        logging.error(
+            "Error in get_remaining_token_limits for identity %s: %s",
+            email or uri,
+            e,
+            exc_info=True,
+        )
+        raise

@@ -10,7 +10,7 @@ from src.main import (
     manually_cancelled_job, populate_graph_schema_from_text, set_status_retry
 )
 from src.QA_integration import QA_RAG, clear_chat_history
-from src.shared.common_fn import create_graph_database_connection, formatted_time, get_value_from_env
+from src.shared.common_fn import create_graph_database_connection, formatted_time, get_value_from_env, get_remaining_token_limits
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 import uvicorn
 import asyncio
@@ -222,7 +222,7 @@ async def extract_knowledge_graph_from_file(
           model: Type of model to use ('Diffbot'or'OpenAI GPT')
 
     Returns:
-          Nodes and Relations created in Neo4j databse for the pdf file
+          Nodes and Relations created in Neo4j database for the pdf file
     """
     try:
         start_time = time.time()
@@ -331,7 +331,7 @@ async def get_source_list(
     database=Form(None),
     email=Form(None)):
     """
-    Calls 'get_source_list_from_graph' which returns list of sources which already exist in databse
+    Calls 'get_source_list_from_graph' which returns list of sources which already exist in database
     """
     try:
         start = time.time()
@@ -659,7 +659,8 @@ async def update_extract_status(request: Request, file_name: str, uri:str=None, 
                         'entityNodeCount' : result[0]['entityNodeCount'],
                         'entityEntityRelCount' : result[0]['entityEntityRelCount'],
                         'communityNodeCount' : result[0]['communityNodeCount'],
-                        'communityRelCount' : result[0]['communityRelCount']
+                        'communityRelCount' : result[0]['communityRelCount'],
+                        'token_usage' : result[0]['token_usage']
                         })
                     yield status
             except asyncio.CancelledError:
@@ -1086,5 +1087,41 @@ async def get_schema_visualization(uri=Form(None), userName=Form(None), password
     finally:
         gc.collect()
 
+
+
+@app.post("/get_token_limits")
+async def get_token_limits(uri: str = Form(None), email: str = Form(None)):
+    """
+    Returns the remaining daily and monthly token limits for a user, given email and/or uri.
+    Only enabled if TRACK_TOKEN_USAGE env variable is set to 'true'.
+    """
+    job_status = "Success"
+    message = "Token limits fetched successfully"
+    try:
+        if os.environ.get("TRACK_TOKEN_USAGE", "false").strip().lower() != "true":
+            message = "Token tracking is not enabled."
+            return create_api_response(job_status, data=None, message=message)
+        start = time.time()
+        limits = get_remaining_token_limits(email=email, uri=uri)
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {
+            'api_name': 'get_token_limits',
+            'db_url': uri,
+            'email': email,
+            'logging_time': formatted_time(datetime.now(timezone.utc)),
+            'elapsed_api_time': f'{elapsed_time:.2f}'
+        }
+        logger.log_struct(json_obj, "INFO")
+        return create_api_response(job_status, data=limits, message=message)
+    except Exception as e:
+        job_status = "Failed"
+        error_message = str(e)
+        message = "Unable to fetch token limits"
+        logger.log_struct({'api_name': 'get_token_limits', 'db_url': uri, 'email': email, 'error_message': error_message, 'logging_time': formatted_time(datetime.now(timezone.utc))}, "ERROR")
+        logging.exception(f'Exception in get_token_limits: {error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+        
 if __name__ == "__main__":
     uvicorn.run(app)
+
