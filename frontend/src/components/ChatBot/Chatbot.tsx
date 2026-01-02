@@ -29,8 +29,11 @@ import {
   nodeDetailsProps,
 } from '../../types';
 import { chatBotAPI } from '../../services/QnaAPI';
+import { checkTokenLimits } from '../../utils/TokenWarning';
+import { showNormalToast } from '../../utils/Toasts';
 import { v4 as uuidv4 } from 'uuid';
 import { useFileContext } from '../../context/UsersFiles';
+import { useCredentials } from '../../context/UserCredentials';
 import clsx from 'clsx';
 import ReactMarkdown from 'react-markdown';
 import { buttonCaptions, chatModeLables } from '../../utils/Constants';
@@ -65,6 +68,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState<boolean>(isLoading);
   const { model, chatModes, selectedRows, filesData } = useFileContext();
+  const { userCredentials } = useCredentials();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
   const [sourcesModal, setSourcesModal] = useState<string[]>([]);
@@ -191,6 +195,13 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     if (!inputMessage.trim()) {
       return;
     }
+    if (userCredentials) {
+      const tokenCheck = await checkTokenLimits(userCredentials);
+      if (tokenCheck.shouldWarn) {
+        showNormalToast(tokenCheck.message);
+      }
+    }
+
     const datetime = getDateTime();
     const userMessage: Messages = {
       id: Date.now(),
