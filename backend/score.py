@@ -208,7 +208,8 @@ async def extract_knowledge_graph_from_file(
     access_token=Form(None),
     retry_condition=Form(None),
     additional_instructions=Form(None),
-    email=Form(None)
+    email=Form(None),
+    embedding_model=Form(None)
 ):
     """
     Calls 'extract_graph_from_file' in a new thread to create Neo4jGraph from a
@@ -232,22 +233,22 @@ async def extract_knowledge_graph_from_file(
         if source_type == 'local file':
             file_name = sanitize_filename(file_name)
             merged_file_path = validate_file_path(MERGED_DIR, file_name)
-            uri_latency, result = await extract_graph_from_file_local_file(uri, userName, password, database, model, merged_file_path, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email)
+            uri_latency, result = await extract_graph_from_file_local_file(uri, userName, password, database, model, merged_file_path, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email, embedding_model)
 
         elif source_type == 's3 bucket' and source_url:
-            uri_latency, result = await extract_graph_from_file_s3(uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email)
+            uri_latency, result = await extract_graph_from_file_s3(uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email, embedding_model)
         
         elif source_type == 'web-url':
-            uri_latency, result = await extract_graph_from_web_page(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email)
+            uri_latency, result = await extract_graph_from_web_page(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email, embedding_model)
 
         elif source_type == 'youtube' and source_url:
-            uri_latency, result = await extract_graph_from_file_youtube(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email)
+            uri_latency, result = await extract_graph_from_file_youtube(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email, embedding_model)
 
         elif source_type == 'Wikipedia' and wiki_query:
-            uri_latency, result = await extract_graph_from_file_Wikipedia(uri, userName, password, database, model, wiki_query, language, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email)
+            uri_latency, result = await extract_graph_from_file_Wikipedia(uri, userName, password, database, model, wiki_query, language, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email, embedding_model)
 
         elif source_type == 'gcs bucket' and gcs_bucket_name:
-            uri_latency, result = await extract_graph_from_file_gcs(uri, userName, password, database, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email)
+            uri_latency, result = await extract_graph_from_file_gcs(uri, userName, password, database, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email, embedding_model)
         else:
             return create_api_response('Failed',message='source_type is other than accepted source')
         extract_api_time = time.time() - start_time
@@ -349,7 +350,13 @@ async def get_source_list(
         return create_api_response(job_status, message=message, error=error_message)
 
 @app.post("/post_processing")
-async def post_processing(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None), tasks=Form(None), email=Form(None)):
+async def post_processing(uri=Form(None), 
+                          userName=Form(None), 
+                          password=Form(None), 
+                          database=Form(None), 
+                          tasks=Form(None), 
+                          email=Form(None),
+                          embedding_model=Form(None)):
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
         tasks = set(map(str.strip, json.loads(tasks)))
@@ -362,12 +369,12 @@ async def post_processing(uri=Form(None), userName=Form(None), password=Form(Non
             logging.info(f'Updated KNN Graph')
 
         if "enable_hybrid_search_and_fulltext_search_in_bloom" in tasks:
-            await asyncio.to_thread(create_vector_fulltext_indexes, uri=uri, username=userName, password=password, database=database)
+            await asyncio.to_thread(create_vector_fulltext_indexes, uri=uri, username=userName, password=password, database=database, embedding_model=embedding_model)
             api_name = 'post_processing/enable_hybrid_search_and_fulltext_search_in_bloom'
             logging.info(f'Full Text index created')
 
         if get_value_from_env("ENTITY_EMBEDDING","False","bool") and "materialize_entity_similarities" in tasks:
-            await asyncio.to_thread(create_entity_embedding, graph)
+            await asyncio.to_thread(create_entity_embedding, graph, embedding_model)
             api_name = 'post_processing/create_entity_embedding'
             logging.info(f'Entity Embeddings created')
 
@@ -378,7 +385,7 @@ async def post_processing(uri=Form(None), userName=Form(None), password=Form(Non
             
         if "enable_communities" in tasks:
             api_name = 'create_communities'
-            await asyncio.to_thread(create_communities, uri, userName, password, database,email)  
+            await asyncio.to_thread(create_communities, uri, userName, password, database, email, embedding_model)  
             
             logging.info(f'created communities')
         graph = create_graph_database_connection(uri, userName, password, database)   
@@ -416,7 +423,17 @@ async def post_processing(uri=Form(None), userName=Form(None), password=Form(Non
         gc.collect()
                 
 @app.post("/chat_bot")
-async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password=Form(None), database=Form(None),question=Form(None), document_names=Form(None),session_id=Form(None),mode=Form(None),email=Form(None)):
+async def chat_bot(uri=Form(None),
+                   model=Form(None),
+                   userName=Form(None), 
+                   password=Form(None), 
+                   database=Form(None),
+                   question=Form(None), 
+                   document_names=Form(None),
+                   session_id=Form(None),
+                   mode=Form(None),
+                   email=Form(None),
+                   embedding_model=Form(None)):
     logging.info(f"QA_RAG called at {datetime.now()}")
     qa_rag_start_time = time.time()
     try:
@@ -427,7 +444,7 @@ async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password
         
         graphDb_data_Access = graphDBdataAccess(graph)
         write_access = graphDb_data_Access.check_account_access(database=database)
-        result = await asyncio.to_thread(QA_RAG,graph=graph,model=model,question=question,document_names=document_names,session_id=session_id,mode=mode,write_access=write_access, email=email, uri=uri)
+        result = await asyncio.to_thread(QA_RAG,graph=graph,model=model,question=question,document_names=document_names,session_id=session_id,mode=mode,write_access=write_access, email=email, uri=uri, embedding_model=embedding_model)
 
         total_call_time = time.time() - qa_rag_start_time
         logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
@@ -541,12 +558,17 @@ async def clear_chat_bot(uri=Form(None),userName=Form(None), password=Form(None)
         gc.collect()
             
 @app.post("/connect")
-async def connect(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None),email=Form(None)):
+async def connect(uri=Form(None), 
+                  userName=Form(None), 
+                  password=Form(None), 
+                  database=Form(None), 
+                  email=Form(None),
+                  embedding_model=Form(None)):
     try:
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
         
-        result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, database)
+        result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, database, embedding_model)
         gcs_cache = get_value_from_env("GCS_FILE_CACHE","False","bool")
         end = time.time()
         elapsed_time = end - start
@@ -863,12 +885,18 @@ async def merge_duplicate_nodes(uri=Form(None), userName=Form(None), password=Fo
         gc.collect()
         
 @app.post("/drop_create_vector_index")
-async def drop_create_vector_index(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None), isVectorIndexExist=Form(),email=Form(None)):
+async def drop_create_vector_index(uri=Form(None), 
+                                   userName=Form(None), 
+                                   password=Form(None), 
+                                   database=Form(None), 
+                                   isVectorIndexExist=Form(),
+                                   email=Form(None),
+                                   embedding_model=Form(None)):
     try:
         start = time.time()
         graph = create_graph_database_connection(uri, userName, password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
-        result = graphDb_data_Access.drop_create_vector_index(isVectorIndexExist)
+        result = graphDb_data_Access.drop_create_vector_index(isVectorIndexExist, embedding_model)
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name':'drop_create_vector_index', 'db_url':uri, 'userName':userName, 'database':database,
@@ -1023,7 +1051,9 @@ async def fetch_chunktext(
 
 
 @app.post("/backend_connection_configuration")
-async def backend_connection_configuration():
+async def backend_connection_configuration(
+    embedding_model: str = Form(None)
+):
     try:
         start = time.time()
         uri = get_value_from_env("NEO4J_URI")
@@ -1036,7 +1066,7 @@ async def backend_connection_configuration():
             logging.info(f'login connection status of object: {graph}')
             if graph is not None:
                 graph_connection = True        
-                result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, database)
+                result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, database, embedding_model)
                 result['gcs_file_cache'] = gcs_cache
                 result['uri'] = uri
                 end = time.time()

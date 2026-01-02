@@ -123,7 +123,7 @@ def load_embedding_model(embedding_model_name: str):
         embeddings = OpenAIEmbeddings()
         dimension = 1536
         logging.info(f"Embedding: Using OpenAI Embeddings , Dimension:{dimension}")
-    elif embedding_model_name == "vertexai":        
+    elif embedding_model_name == "gemini":        
         embeddings = VertexAIEmbeddings(
             model="gemini-embedding-001"
         )

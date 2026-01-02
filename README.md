@@ -224,7 +224,6 @@ gcloud run deploy dev-backend \
 | GRAPH_CLEANUP_MODEL     | Optional          | openai_gpt_4o_mini | Model name to clean up graph in post processing                                            |
 | MAX_TOKEN_CHUNK_SIZE    | Optional          | 10000         | Maximum token size to process file content                                                       |
 | YOUTUBE_TRANSCRIPT_PROXY| Mandatory         |               | Proxy key to process YouTube videos for getting transcripts                                      |
-| EMBEDDING_MODEL         | Optional          |               | Model for generating text embeddings (default: all-MiniLM-L6-v2, openai, vertexai, titan)        |
 | IS_EMBEDDING           | Optional           | true          | Flag to enable text embedding                                                                    |
 | KNN_MIN_SCORE          | Optional           | 0.8           | Minimum score for KNN algorithm                                                                  |
 | GCP_LOG_METRICS_ENABLED| Optional           | False         | Flag to enable Google Cloud logs                                                                 |

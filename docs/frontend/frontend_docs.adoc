@@ -843,6 +843,7 @@ The API is used to drop and create the vector index when vector index dimesion a
 * `password`= Neo4j db password, 
 * `database`= Neo4j database name,
 * `isVectorIndexExist`= True or False based on whether vector index exist in database,
+* `embedding_model`= Embedding model selected by user
 
 === 23) Reprocessing of sources
 ----

@@ -215,7 +215,7 @@ class graphDBdataAccess:
             logging.error(f"An error occurred while checking GDS version: {e}")
             return False
             
-    def connection_check_and_get_vector_dimensions(self,database):
+    def connection_check_and_get_vector_dimensions(self,database, embedding_model='local'):
         """
         Get the vector index dimension from database and application configuration and DB connection status
         
@@ -237,7 +237,6 @@ class graphDBdataAccess:
                                                     count(c.embedding) as hasEmbedding
                                 """,session_params={"database":self.graph._database})
         
-        embedding_model = get_value_from_env("EMBEDDING_MODEL", "sentence_transformer")
         embeddings, application_dimension = load_embedding_model(embedding_model)
 
         gds_status = self.check_gds_version()
@@ -465,11 +464,10 @@ class graphDBdataAccess:
         param = {"rows":nodes_list}
         return self.execute_query(query,param)
     
-    def drop_create_vector_index(self, isVectorIndexExist):
+    def drop_create_vector_index(self, isVectorIndexExist, embedding_model='local'):
         """
         drop and create the vector index when vector index dimesion are different.
         """
-        embedding_model = get_value_from_env("EMBEDDING_MODEL", "sentence_transformer")
         embeddings, dimension = load_embedding_model(embedding_model)
         
         if isVectorIndexExist == 'true':

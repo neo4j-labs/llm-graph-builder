@@ -26,7 +26,6 @@ services:
       # - LLM_MODEL_CONFIG_ollama_llama3=${LLM_MODEL_CONFIG_ollama_llama3-}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - DIFFBOT_API_KEY=${DIFFBOT_API_KEY}
-      - EMBEDDING_MODEL=${EMBEDDING_MODEL}
       - MAX_TOKEN_CHUNK_SIZE=${MAX_TOKEN_CHUNK_SIZE}
     container_name: backend
     extra_hosts:
