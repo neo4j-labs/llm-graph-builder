@@ -906,5 +906,5 @@ export const isNeo4jUser = (email?: string): boolean => {
 };
 
 export const shouldShowTokenTracking = (email?: string): boolean => {
-  return isNeo4jUser(email);
+  return !isNeo4jUser(email);
 };
