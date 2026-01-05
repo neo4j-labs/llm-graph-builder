@@ -13,7 +13,7 @@ export default function Profile() {
   const [tokenError, setTokenError] = useState<string | null>(null);
   const iconbtnRef = useRef<HTMLButtonElement | null>(null);
   const { user, isAuthenticated, isLoading, logout } = useAuth0();
-  const { userCredentials } = useCredentials();
+  const { userCredentials, connectionStatus } = useCredentials();
 
   const fetchTokenLimits = useCallback(async () => {
     if (!userCredentials?.uri && !userCredentials?.email) {
@@ -55,18 +55,22 @@ export default function Profile() {
           {
             title: isLoadingTokens
               ? 'Daily Tokens: Loading...'
-              : tokenError
-                ? 'Daily Tokens: Error'
-                : `Daily Tokens: ${tokenLimits?.daily_remaining.toLocaleString() ?? 'N/A'} / ${tokenLimits?.daily_limit.toLocaleString() ?? 'N/A'}`,
+              : !connectionStatus
+                ? 'Daily Tokens: No DB connection'
+                : tokenError
+                  ? 'Daily Tokens: N/A'
+                  : `Daily Tokens: ${tokenLimits?.daily_remaining.toLocaleString() ?? 'N/A'} / ${tokenLimits?.daily_limit.toLocaleString() ?? 'N/A'}`,
             onClick: () => {},
             disabled: true,
           },
           {
             title: isLoadingTokens
               ? 'Monthly Tokens: Loading...'
-              : tokenError
-                ? 'Monthly Tokens: Error'
-                : `Monthly Tokens: ${tokenLimits?.monthly_remaining.toLocaleString() ?? 'N/A'} / ${tokenLimits?.monthly_limit.toLocaleString() ?? 'N/A'}`,
+              : !connectionStatus
+                ? 'Monthly Tokens: No DB connection'
+                : tokenError
+                  ? 'Monthly Tokens: N/A'
+                  : `Monthly Tokens: ${tokenLimits?.monthly_remaining.toLocaleString() ?? 'N/A'} / ${tokenLimits?.monthly_limit.toLocaleString() ?? 'N/A'}`,
             onClick: () => {},
             disabled: true,
           },
