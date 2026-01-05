@@ -26,7 +26,7 @@ from src.post_processing import create_vector_fulltext_indexes, create_entity_em
 from sse_starlette.sse import EventSourceResponse
 from src.communities import create_communities
 from src.neighbours import get_neighbour_nodes
-from src.entities.user_credential import Neo4jCredentials
+from src.entities.user_credential import Neo4jCredentials, get_neo4j_credentials
 import json
 from typing import List, Optional
 from google.oauth2.credentials import Credentials
@@ -114,7 +114,11 @@ app.add_api_route("/health", health([healthy_condition, healthy]))
 
 @app.post("/url/scan")
 async def create_source_knowledge_graph_url(
-    credentials: Neo4jCredentials = Depends(),
+    uri=Form(None),
+    userName=Form(None),
+    password=Form(None),
+    database=Form(None),
+    email=Form(None),
     source_url=Form(None),
     aws_access_key_id=Form(None),
     aws_secret_access_key=Form(None),
@@ -128,7 +132,7 @@ async def create_source_knowledge_graph_url(
     ):
     
     try:
-        if not credentials.uri or not credentials.userName or not credentials.password:
+        if not uri or not userName or not password:
             return create_api_response("Failed", message="Missing required credentials (uri, userName, password)", error="Invalid credentials", file_source=source_type)
         start = time.time()
         if source_url is not None:
@@ -137,10 +141,10 @@ async def create_source_knowledge_graph_url(
             source = wiki_query
             
         graph = create_graph_database_connection(
-            credentials.uri,
-            credentials.userName,
-            credentials.password,
-            credentials.database)
+            uri,
+            userName,
+            password,
+            database)
         if source_type == 's3 bucket' and aws_access_key_id and aws_secret_access_key:
             lst_file_name,success_count,failed_count = await asyncio.to_thread(create_source_node_graph_url_s3,graph, model, source_url, aws_access_key_id, aws_secret_access_key, source_type
             )
@@ -162,9 +166,9 @@ async def create_source_knowledge_graph_url(
         message = f"Source Node created successfully for source type: {source_type} and source: {source}"
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'url_scan','db_url':credentials.uri,'url_scanned_file':lst_file_name, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','userName':credentials.userName, 'database':credentials.database, 'aws_access_key_id':aws_access_key_id,
+        json_obj = {'api_name':'url_scan','db_url':uri,'url_scanned_file':lst_file_name, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','userName':userName, 'database':database, 'aws_access_key_id':aws_access_key_id,
                             'model':model, 'gcs_bucket_name':gcs_bucket_name, 'gcs_bucket_folder':gcs_bucket_folder, 'source_type':source_type,
-                            'gcs_project_id':gcs_project_id, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email}
+                            'gcs_project_id':gcs_project_id, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':email}
         logger.log_struct(json_obj, "INFO")
         result ={'elapsed_api_time' : f'{elapsed_time:.2f}'}
         return create_api_response("Success",message=message,success_count=success_count,failed_count=failed_count,file_name=lst_file_name,data=result)
@@ -172,14 +176,14 @@ async def create_source_knowledge_graph_url(
         error_message = str(e)
         message = f" Unable to create source node for source type: {source_type} and source: {source}"
         # Set the status "Success" becuase we are treating these error already handled by application as like custom errors.
-        json_obj = {'error_message':error_message, 'status':'Success','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,'success_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email}
+        json_obj = {'error_message':error_message, 'status':'Success','db_url':uri, 'userName':userName, 'database':database,'success_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':email}
         logger.log_struct(json_obj, "INFO")
         logging.exception(f'File Failed in upload: {e}')
         return create_api_response('Failed',message=message + error_message[:80],error=error_message,file_source=source_type)
     except Exception as e:
         error_message = str(e)
         message = f" Unable to create source node for source type: {source_type} and source: {source}"
-        json_obj = {'error_message':error_message, 'status':'Failed','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,'failed_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email}
+        json_obj = {'error_message':error_message, 'status':'Failed','db_url':uri, 'userName':userName, 'database':database,'failed_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':email}
         logger.log_struct(json_obj, "ERROR")
         logging.exception(f'Exception Stack trace upload:{e}')
         return create_api_response('Failed',message=message + error_message[:80],error=error_message,file_source=source_type)
@@ -328,18 +332,24 @@ async def extract_knowledge_graph_from_file(
         gc.collect()
             
 @app.post("/sources_list")
-async def get_source_list(credentials: Neo4jCredentials = Depends()):
+async def get_source_list(
+    uri=Form(None),
+    userName=Form(None),
+    password=Form(None),
+    database=Form(None),
+    email=Form(None)
+):
     """
     Calls 'get_source_list_from_graph' which returns list of sources which already exist in databse
     """
     try:
-        if not credentials.uri or not credentials.userName or not credentials.password:
+        if not uri or not userName or not password:
             return create_api_response("Failed", message="Missing required credentials (uri, userName, password)", error="Invalid credentials")
         start = time.time()
-        result = await asyncio.to_thread(get_source_list_from_graph,credentials.uri,credentials.userName,credentials.password,credentials.database)
+        result = await asyncio.to_thread(get_source_list_from_graph,uri,userName,password,database)
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'sources_list','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
+        json_obj = {'api_name':'sources_list','db_url':uri, 'userName':userName, 'database':database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response("Success",data=result, message=f"Total elapsed API time {elapsed_time:.2f}")
     except Exception as e:
@@ -350,9 +360,9 @@ async def get_source_list(credentials: Neo4jCredentials = Depends()):
         return create_api_response(job_status, message=message, error=error_message)
 
 @app.post("/post_processing")
-async def post_processing(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None), tasks=Form(None), email=Form(None)):
+async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), tasks=Form(None)):
     try:
-        graph = create_graph_database_connection(uri, userName, password, database)
+        graph = create_graph_database_connection(credentials.uri, credentials.userName, credentials.password, credentials.database)
         tasks = set(map(str.strip, json.loads(tasks)))
         api_name = 'post_processing'
         count_response = []
@@ -363,7 +373,7 @@ async def post_processing(uri=Form(None), userName=Form(None), password=Form(Non
             logging.info(f'Updated KNN Graph')
 
         if "enable_hybrid_search_and_fulltext_search_in_bloom" in tasks:
-            await asyncio.to_thread(create_vector_fulltext_indexes, uri=uri, username=userName, password=password, database=database)
+            await asyncio.to_thread(create_vector_fulltext_indexes, uri=credentials.uri, username=credentials.userName, password=credentials.password, database=credentials.database)
             api_name = 'post_processing/enable_hybrid_search_and_fulltext_search_in_bloom'
             logging.info(f'Full Text index created')
 
@@ -379,10 +389,10 @@ async def post_processing(uri=Form(None), userName=Form(None), password=Form(Non
             
         if "enable_communities" in tasks:
             api_name = 'create_communities'
-            await asyncio.to_thread(create_communities, uri, userName, password, database,email)  
+            await asyncio.to_thread(create_communities, credentials.uri, credentials.userName, credentials.password, credentials.database, credentials.email)  
             
             logging.info(f'created communities')
-        graph = create_graph_database_connection(uri, userName, password, database)   
+        graph = create_graph_database_connection(credentials.uri, credentials.userName, credentials.password, credentials.database)   
         graphDb_data_Access = graphDBdataAccess(graph)
         document_name = ""
         count_response = graphDb_data_Access.update_node_relationship_count(document_name)
@@ -396,12 +406,12 @@ async def post_processing(uri=Form(None), userName=Form(None), password=Form(Non
             api_name = "post_processing/" + task
             json_obj = {
                 'api_name': api_name,
-                'db_url': uri,
-                'userName': userName,
-                'database': database,
+                'db_url': credentials.uri,
+                'userName': credentials.userName,
+                'database': credentials.database,
                 'logging_time': formatted_time(datetime.now(timezone.utc)),
                 'elapsed_api_time': f'{elapsed_time:.2f}',
-                'email': email
+                'email': credentials.email
             }
             logger.log_struct(json_obj)
         return create_api_response('Success', data=count_response, message='All tasks completed successfully')
@@ -417,25 +427,25 @@ async def post_processing(uri=Form(None), userName=Form(None), password=Form(Non
         gc.collect()
                 
 @app.post("/chat_bot")
-async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password=Form(None), database=Form(None),question=Form(None), document_names=Form(None),session_id=Form(None),mode=Form(None),email=Form(None)):
+async def chat_bot(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), model=Form(None), question=Form(None), document_names=Form(None), session_id=Form(None), mode=Form(None)):
     logging.info(f"QA_RAG called at {datetime.now()}")
     qa_rag_start_time = time.time()
     try:
         if mode == "graph":
-            graph = Neo4jGraph( url=uri,username=userName,password=password,database=database,sanitize = True, refresh_schema=True)
+            graph = Neo4jGraph(url=credentials.uri, username=credentials.userName, password=credentials.password, database=credentials.database, sanitize=True, refresh_schema=True)
         else:
-            graph = create_graph_database_connection(uri, userName, password, database)
+            graph = create_graph_database_connection(credentials.uri, credentials.userName, credentials.password, credentials.database)
         
         graphDb_data_Access = graphDBdataAccess(graph)
-        write_access = graphDb_data_Access.check_account_access(database=database)
-        result = await asyncio.to_thread(QA_RAG,graph=graph,model=model,question=question,document_names=document_names,session_id=session_id,mode=mode,write_access=write_access, email=email, uri=uri)
+        write_access = graphDb_data_Access.check_account_access(database=credentials.database)
+        result = await asyncio.to_thread(QA_RAG, graph=graph, model=model, question=question, document_names=document_names, session_id=session_id, mode=mode, write_access=write_access, email=credentials.email, uri=credentials.uri)
 
         total_call_time = time.time() - qa_rag_start_time
         logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
         result["info"]["response_time"] = round(total_call_time, 2)
         
-        json_obj = {'api_name':'chat_bot','db_url':uri, 'userName':userName, 'database':database, 'question':question,'document_names':document_names,
-                             'session_id':session_id, 'mode':mode, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{total_call_time:.2f}','email':email}
+        json_obj = {'api_name':'chat_bot','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'question':question,'document_names':document_names,
+                             'session_id':session_id, 'mode':mode, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{total_call_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         
         return create_api_response('Success',data=result)
@@ -449,14 +459,14 @@ async def chat_bot(uri=Form(None),model=Form(None),userName=Form(None), password
         gc.collect()
 
 @app.post("/chunk_entities")
-async def chunk_entities(uri=Form(None),userName=Form(None), password=Form(None), database=Form(None), nodedetails=Form(None),entities=Form(),mode=Form(),email=Form(None)):
+async def chunk_entities(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), nodedetails=Form(None), entities=Form(), mode=Form()):
     try:
         start = time.time()
-        result = await asyncio.to_thread(get_entities_from_chunkids,nodedetails=nodedetails,entities=entities,mode=mode,uri=uri, username=userName, password=password, database=database)
+        result = await asyncio.to_thread(get_entities_from_chunkids, nodedetails=nodedetails, entities=entities, mode=mode, uri=credentials.uri, username=credentials.userName, password=credentials.password, database=credentials.database)
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'chunk_entities','db_url':uri, 'userName':userName, 'database':database, 'nodedetails':nodedetails,'entities':entities,
-                            'mode':mode, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
+        json_obj = {'api_name':'chunk_entities','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'nodedetails':nodedetails,'entities':entities,
+                            'mode':mode, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result,message=f"Total elapsed API time {elapsed_time:.2f}")
     except Exception as e:
@@ -469,13 +479,13 @@ async def chunk_entities(uri=Form(None),userName=Form(None), password=Form(None)
         gc.collect()
 
 @app.post("/get_neighbours")
-async def get_neighbours(uri=Form(None),userName=Form(None), password=Form(None), database=Form(None), elementId=Form(None),email=Form(None)):
+async def get_neighbours(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), elementId=Form(None)):
     try:
         start = time.time()
-        result = await asyncio.to_thread(get_neighbour_nodes,uri=uri, username=userName, password=password,database=database, element_id=elementId)
+        result = await asyncio.to_thread(get_neighbour_nodes, uri=credentials.uri, username=credentials.userName, password=credentials.password, database=credentials.database, element_id=elementId)
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'get_neighbours', 'userName':userName, 'database':database,'db_url':uri, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
+        json_obj = {'api_name':'get_neighbours', 'userName':credentials.userName, 'database':credentials.database,'db_url':credentials.uri, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result,message=f"Total elapsed API time {elapsed_time:.2f}")
     except Exception as e:
@@ -489,26 +499,22 @@ async def get_neighbours(uri=Form(None),userName=Form(None), password=Form(None)
 
 @app.post("/graph_query")
 async def graph_query(
-    uri: str = Form(None),
-    database: str = Form(None),
-    userName: str = Form(None),
-    password: str = Form(None),
-    document_names: str = Form(None),
-    email=Form(None)
+    credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
+    document_names: str = Form(None)
 ):
     try:
         start = time.time()
         result = await asyncio.to_thread(
             get_graph_results,
-            uri=uri,
-            username=userName,
-            password=password,
-            database=database,
+            uri=credentials.uri,
+            username=credentials.userName,
+            password=credentials.password,
+            database=credentials.database,
             document_names=document_names
         )
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'graph_query','db_url':uri, 'userName':userName, 'database':database, 'document_names':document_names, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
+        json_obj = {'api_name':'graph_query','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'document_names':document_names, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success', data=result,message=f"Total elapsed API time {elapsed_time:.2f}")
     except Exception as e:
@@ -522,14 +528,14 @@ async def graph_query(
     
 
 @app.post("/clear_chat_bot")
-async def clear_chat_bot(uri=Form(None),userName=Form(None), password=Form(None), database=Form(None), session_id=Form(None),email=Form(None)):
+async def clear_chat_bot(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), session_id=Form(None)):
     try:
         start = time.time()
-        graph = create_graph_database_connection(uri, userName, password, database)
+        graph = create_graph_database_connection(credentials.uri, credentials.userName, credentials.password, credentials.database)
         result = await asyncio.to_thread(clear_chat_history,graph=graph,session_id=session_id)
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'clear_chat_bot', 'db_url':uri, 'userName':userName, 'database':database, 'session_id':session_id, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
+        json_obj = {'api_name':'clear_chat_bot', 'db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'session_id':session_id, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result)
     except Exception as e:
@@ -542,7 +548,8 @@ async def clear_chat_bot(uri=Form(None),userName=Form(None), password=Form(None)
         gc.collect()
             
 @app.post("/connect")
-async def connect(credentials: Neo4jCredentials = Depends()):
+async def connect(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
+    print(f"Connect API called uri={credentials.uri} userName={credentials.userName} database={credentials.database}")
     try:
         if not credentials.uri or not credentials.userName or not credentials.password:
             return create_api_response("Failed", message="Missing required credentials (uri, userName, password)", error="Invalid credentials")
@@ -596,14 +603,14 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
         gc.collect()
             
 @app.post("/schema")
-async def get_structured_schema(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None),email=Form(None)):
+async def get_structured_schema(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
     try:
         start = time.time()
-        result = await asyncio.to_thread(get_labels_and_relationtypes, uri, userName, password, database)
+        result = await asyncio.to_thread(get_labels_and_relationtypes, credentials.uri, credentials.userName, credentials.password, credentials.database)
         end = time.time()
         elapsed_time = end - start
         logging.info(f'Schema result from DB: {result}')
-        json_obj = {'api_name':'schema','db_url':uri, 'userName':userName, 'database':database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
+        json_obj = {'api_name':'schema','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success', data=result,message=f"Total elapsed API time {elapsed_time:.2f}")
     except Exception as e:
@@ -671,24 +678,22 @@ async def update_extract_status(request: Request, file_name: str, uri:str=None, 
     return EventSourceResponse(generate(),ping=60)
 
 @app.post("/delete_document_and_entities")
-async def delete_document_and_entities(uri=Form(None), 
-                                       userName=Form(None), 
-                                       password=Form(None), 
-                                       database=Form(None), 
-                                       filenames=Form(),
-                                       source_types=Form(),
-                                       deleteEntities=Form(),
-                                       email=Form(None)):
+async def delete_document_and_entities(
+    credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
+    filenames=Form(),
+    source_types=Form(),
+    deleteEntities=Form()
+):
     try:
         start = time.time()
-        graph = create_graph_database_connection(uri, userName, password, database)
+        graph = create_graph_database_connection(credentials.uri, credentials.userName, credentials.password, credentials.database)
         graphDb_data_Access = graphDBdataAccess(graph)
-        files_list_size = await asyncio.to_thread(graphDb_data_Access.delete_file_from_graph, filenames, source_types, deleteEntities, MERGED_DIR, uri)
+        files_list_size = await asyncio.to_thread(graphDb_data_Access.delete_file_from_graph, filenames, source_types, deleteEntities, MERGED_DIR, credentials.uri)
         message = f"Deleted {files_list_size} documents with entities from database"
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'delete_document_and_entities','db_url':uri, 'userName':userName, 'database':database, 'filenames':filenames,'deleteEntities':deleteEntities,
-                            'source_types':source_types, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
+        json_obj = {'api_name':'delete_document_and_entities','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'filenames':filenames,'deleteEntities':deleteEntities,
+                            'source_types':source_types, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',message=message)
     except Exception as e:
@@ -741,15 +746,15 @@ async def get_document_status(file_name, url, userName, password, database):
         return create_api_response('Failed',message=message)
     
 @app.post("/cancelled_job")
-async def cancelled_job(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None), filenames=Form(None), source_types=Form(None),email=Form(None)):
+async def cancelled_job(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), filenames=Form(None), source_types=Form(None)):
     try:
         start = time.time()
-        graph = create_graph_database_connection(uri, userName, password, database)
-        result = manually_cancelled_job(graph,filenames, source_types, MERGED_DIR, uri)
+        graph = create_graph_database_connection(credentials.uri, credentials.userName, credentials.password, credentials.database)
+        result = manually_cancelled_job(graph, filenames, source_types, MERGED_DIR, credentials.uri)
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'cancelled_job','db_url':uri, 'userName':userName, 'database':database, 'filenames':filenames,
-                            'source_types':source_types, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
+        json_obj = {'api_name':'cancelled_job','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'filenames':filenames,
+                            'source_types':source_types, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',message=result)
     except Exception as e:
@@ -781,15 +786,15 @@ async def populate_graph_schema(input_text=Form(None), model=Form(None), is_sche
         gc.collect()
         
 @app.post("/get_unconnected_nodes_list")
-async def get_unconnected_nodes_list(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None),email=Form(None)):
+async def get_unconnected_nodes_list(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
     try:
         start = time.time()
-        graph = create_graph_database_connection(uri, userName, password, database)
+        graph = create_graph_database_connection(credentials.uri, credentials.userName, credentials.password, credentials.database)
         graphDb_data_Access = graphDBdataAccess(graph)
         nodes_list, total_nodes = graphDb_data_Access.list_unconnected_nodes()
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'get_unconnected_nodes_list','db_url':uri, 'userName':userName, 'database':database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
+        json_obj = {'api_name':'get_unconnected_nodes_list','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=nodes_list,message=total_nodes)
     except Exception as e:
@@ -802,15 +807,15 @@ async def get_unconnected_nodes_list(uri=Form(None), userName=Form(None), passwo
         gc.collect()
         
 @app.post("/delete_unconnected_nodes")
-async def delete_orphan_nodes(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None),unconnected_entities_list=Form(),email=Form(None)):
+async def delete_orphan_nodes(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), unconnected_entities_list=Form()):
     try:
         start = time.time()
-        graph = create_graph_database_connection(uri, userName, password, database)
+        graph = create_graph_database_connection(credentials.uri, credentials.userName, credentials.password, credentials.database)
         graphDb_data_Access = graphDBdataAccess(graph)
         result = graphDb_data_Access.delete_unconnected_nodes(unconnected_entities_list)
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'delete_unconnected_nodes','db_url':uri, 'userName':userName, 'database':database,'unconnected_entities_list':unconnected_entities_list, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
+        json_obj = {'api_name':'delete_unconnected_nodes','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,'unconnected_entities_list':unconnected_entities_list, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result,message="Unconnected entities delete successfully")
     except Exception as e:
@@ -823,15 +828,15 @@ async def delete_orphan_nodes(uri=Form(None), userName=Form(None), password=Form
         gc.collect()
         
 @app.post("/get_duplicate_nodes")
-async def get_duplicate_nodes(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None),email=Form(None)):
+async def get_duplicate_nodes(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
     try:
         start = time.time()
-        graph = create_graph_database_connection(uri, userName, password, database)
+        graph = create_graph_database_connection(credentials.uri, credentials.userName, credentials.password, credentials.database)
         graphDb_data_Access = graphDBdataAccess(graph)
         nodes_list, total_nodes = graphDb_data_Access.get_duplicate_nodes_list()
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'get_duplicate_nodes','db_url':uri,'userName':userName, 'database':database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
+        json_obj = {'api_name':'get_duplicate_nodes','db_url':credentials.uri,'userName':credentials.userName, 'database':credentials.database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=nodes_list, message=total_nodes)
     except Exception as e:
@@ -844,16 +849,16 @@ async def get_duplicate_nodes(uri=Form(None), userName=Form(None), password=Form
         gc.collect()
         
 @app.post("/merge_duplicate_nodes")
-async def merge_duplicate_nodes(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None),duplicate_nodes_list=Form(),email=Form(None)):
+async def merge_duplicate_nodes(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), duplicate_nodes_list=Form()):
     try:
         start = time.time()
-        graph = create_graph_database_connection(uri, userName, password, database)
+        graph = create_graph_database_connection(credentials.uri, credentials.userName, credentials.password, credentials.database)
         graphDb_data_Access = graphDBdataAccess(graph)
         result = graphDb_data_Access.merge_duplicate_nodes(duplicate_nodes_list)
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'merge_duplicate_nodes','db_url':uri, 'userName':userName, 'database':database,
-                            'duplicate_nodes_list':duplicate_nodes_list, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
+        json_obj = {'api_name':'merge_duplicate_nodes','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,
+                            'duplicate_nodes_list':duplicate_nodes_list, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result,message="Duplicate entities merged successfully")
     except Exception as e:
@@ -866,16 +871,16 @@ async def merge_duplicate_nodes(uri=Form(None), userName=Form(None), password=Fo
         gc.collect()
         
 @app.post("/drop_create_vector_index")
-async def drop_create_vector_index(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None), isVectorIndexExist=Form(),email=Form(None)):
+async def drop_create_vector_index(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), isVectorIndexExist=Form()):
     try:
         start = time.time()
-        graph = create_graph_database_connection(uri, userName, password, database)
+        graph = create_graph_database_connection(credentials.uri, credentials.userName, credentials.password, credentials.database)
         graphDb_data_Access = graphDBdataAccess(graph)
         result = graphDb_data_Access.drop_create_vector_index(isVectorIndexExist)
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'drop_create_vector_index', 'db_url':uri, 'userName':userName, 'database':database,
-                            'isVectorIndexExist':isVectorIndexExist, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
+        json_obj = {'api_name':'drop_create_vector_index', 'db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,
+                            'isVectorIndexExist':isVectorIndexExist, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',message=result)
     except Exception as e:
@@ -888,15 +893,15 @@ async def drop_create_vector_index(uri=Form(None), userName=Form(None), password
         gc.collect()
         
 @app.post("/retry_processing")
-async def retry_processing(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None), file_name=Form(), retry_condition=Form(), email=Form(None)):
+async def retry_processing(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), file_name=Form(), retry_condition=Form()):
     try:
         start = time.time()
-        graph = create_graph_database_connection(uri, userName, password, database)
+        graph = create_graph_database_connection(credentials.uri, credentials.userName, credentials.password, credentials.database)
         # chunks = execute_graph_query(graph,QUERY_TO_GET_CHUNKS,params={"filename":file_name})
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'retry_processing', 'db_url':uri, 'userName':userName, 'database':database, 'file_name':file_name,'retry_condition':retry_condition,
-                            'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
+        json_obj = {'api_name':'retry_processing', 'db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'file_name':file_name,'retry_condition':retry_condition,
+                            'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         await asyncio.to_thread(set_status_retry, graph,file_name,retry_condition)
         return create_api_response('Success',message=f"Status set to Ready to Reprocess for filename : {file_name}")
@@ -1064,20 +1069,20 @@ async def backend_connection_configuration():
         gc.collect()
     
 @app.post("/schema_visualization")
-async def get_schema_visualization(uri=Form(None), userName=Form(None), password=Form(None), database=Form(None)):
+async def get_schema_visualization(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
     try:
         start = time.time()
         result = await asyncio.to_thread(visualize_schema,
-           uri=uri,
-           userName=userName,
-           password=password,
-           database=database)
+           uri=credentials.uri,
+           userName=credentials.userName,
+           password=credentials.password,
+           database=credentials.database)
         if result:
             logging.info("Graph schema visualization query successful")
         end = time.time()
         elapsed_time = end - start
         logging.info(f'Schema result from DB: {result}')
-        json_obj = {'api_name':'schema_visualization','db_url':uri, 'userName':userName, 'database':database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
+        json_obj = {'api_name':'schema_visualization','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success', data=result,message=f"Total elapsed API time {elapsed_time:.2f}")
     except Exception as e:
