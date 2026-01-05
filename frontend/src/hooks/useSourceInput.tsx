@@ -3,6 +3,7 @@ import { CustomFile, CustomFileBase, ScanProps } from '../types';
 import { useFileContext } from '../context/UsersFiles';
 import { urlScanAPI } from '../services/URLScan';
 import { v4 as uuidv4 } from 'uuid';
+import { useCredentials } from '../context/UserCredentials';
 
 export default function useSourceInput(
   validator: (e: string) => boolean,
@@ -18,6 +19,7 @@ export default function useSourceInput(
   const [status, setStatus] = useState<'unknown' | 'success' | 'info' | 'warning' | 'danger'>('unknown');
   const [statusMessage, setStatusMessage] = useState<string>('');
   const { setFilesData, model, filesData } = useFileContext();
+  const { userCredentials } = useCredentials();
 
   const onChangeHandler: React.ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     setIsFocused(true);
@@ -66,6 +68,11 @@ export default function useSourceInput(
         setIsValid(validator(url) && isFocused);
       }
       if (isValid) {
+        if (!userCredentials) {
+          setStatus('danger');
+          setStatusMessage('Please connect to database first');
+          return;
+        }
         try {
           setStatus('info');
           setIsLoading(true);
@@ -79,7 +86,7 @@ export default function useSourceInput(
           } else if (isYoutubeLink || isWebLink) {
             params.urlParam = url.trim();
           }
-          const apiResponse = await urlScanAPI(params);
+          const apiResponse = await urlScanAPI(params, userCredentials);
           setIsLoading(false);
           setStatus('success');
           if (apiResponse?.data.status == 'Failed' || !apiResponse.data) {

@@ -128,6 +128,8 @@ async def create_source_knowledge_graph_url(
     ):
     
     try:
+        if not credentials.uri or not credentials.userName or not credentials.password:
+            return create_api_response("Failed", message="Missing required credentials (uri, userName, password)", error="Invalid credentials", file_source=source_type)
         start = time.time()
         if source_url is not None:
             source = source_url
@@ -331,6 +333,8 @@ async def get_source_list(credentials: Neo4jCredentials = Depends()):
     Calls 'get_source_list_from_graph' which returns list of sources which already exist in databse
     """
     try:
+        if not credentials.uri or not credentials.userName or not credentials.password:
+            return create_api_response("Failed", message="Missing required credentials (uri, userName, password)", error="Invalid credentials")
         start = time.time()
         result = await asyncio.to_thread(get_source_list_from_graph,credentials.uri,credentials.userName,credentials.password,credentials.database)
         end = time.time()
@@ -540,6 +544,8 @@ async def clear_chat_bot(uri=Form(None),userName=Form(None), password=Form(None)
 @app.post("/connect")
 async def connect(credentials: Neo4jCredentials = Depends()):
     try:
+        if not credentials.uri or not credentials.userName or not credentials.password:
+            return create_api_response("Failed", message="Missing required credentials (uri, userName, password)", error="Invalid credentials")
         start = time.time()
         graph = create_graph_database_connection(credentials.uri, credentials.userName, credentials.password, credentials.database)
         

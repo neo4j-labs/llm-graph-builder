@@ -7,6 +7,7 @@ import { useFileContext } from '../../../context/UsersFiles';
 import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../../../HOC/CustomModal';
 import { buttonCaptions } from '../../../utils/Constants';
+import { useCredentials } from '../../../context/UserCredentials';
 
 const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [bucketUrl, setBucketUrl] = useState<string>('');
@@ -17,6 +18,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [isFocused, setIsFocused] = useState<boolean>(false);
   const [isValid, setValid] = useState<boolean>(false);
   const { setFilesData, model, filesData } = useFileContext();
+  const { userCredentials } = useCredentials();
 
   const reset = () => {
     setBucketUrl('');
@@ -55,16 +57,24 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       localStorage.setItem('secretkey', btoa(secretKey));
     }
     if (isValid && accessKey.trim() != '' && secretKey.trim() != '') {
+      if (!userCredentials) {
+        setStatus('danger');
+        setStatusMessage('Please connect to database first');
+        return;
+      }
       try {
         setStatus('info');
         setStatusMessage('Scanning...');
-        const apiResponse = await urlScanAPI({
-          urlParam: url.trim(),
-          model: model,
-          accessKey: accessKey.trim(),
-          secretKey: secretKey.trim(),
-          source_type: 's3 bucket',
-        });
+        const apiResponse = await urlScanAPI(
+          {
+            urlParam: url.trim(),
+            model: model,
+            accessKey: accessKey.trim(),
+            secretKey: secretKey.trim(),
+            source_type: 's3 bucket',
+          },
+          userCredentials
+        );
         setStatus('success');
         if (apiResponse?.data.status == 'Failed' || !apiResponse.data) {
           setStatus('danger');

@@ -52,4 +52,24 @@ export const createDefaultFormData = (userCredentials: UserCredentials) => {
   return formData;
 };
 
+export const createCredentialsFormData = (userCredentials: UserCredentials): FormData => {
+  const formData = new FormData();
+  if (userCredentials?.uri) {
+    formData.append('uri', userCredentials.uri);
+  }
+  if (userCredentials?.database) {
+    formData.append('database', userCredentials.database);
+  }
+  if (userCredentials?.userName) {
+    formData.append('userName', userCredentials.userName);
+  }
+  if (userCredentials?.password) {
+    formData.append('password', userCredentials.password);
+  }
+  if (userCredentials?.email) {
+    formData.append('email', userCredentials.email);
+  }
+  return formData;
+};
+
 export default api;

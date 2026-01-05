@@ -1,9 +1,9 @@
-import { ScanProps, ServerResponse } from '../types';
-import api from '../API/Index';
+import { ScanProps, ServerResponse, UserCredentials } from '../types';
+import api, { createCredentialsFormData } from '../API/Index';
 
-const urlScanAPI = async (props: ScanProps) => {
+const urlScanAPI = async (props: ScanProps, userCredentials: UserCredentials) => {
   try {
-    const formData = new FormData();
+    const formData = createCredentialsFormData(userCredentials);
     let s3url: string = '';
     if (props.source_type === 's3 bucket') {
       if (!props.urlParam?.endsWith('/')) {
