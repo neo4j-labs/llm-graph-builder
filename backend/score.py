@@ -31,9 +31,9 @@ from src.graph_query import get_chunktext_results, get_graph_results, visualize_
 from src.logger import CustomLogger
 from src.main import (
     connection_check_and_get_vector_dimensions, create_source_node_graph_url_gcs, create_source_node_graph_url_s3,
-    create_source_node_graph_url_wikipedia, create_source_node_graph_url_youtube,create_source_node_graph_web_url,
-    create_graph_database_connection, create_source_node_graph_url_wikipedia, create_source_node_graph_url_youtube,
-    create_source_node_graph_url_wikipedia, extract_graph_from_file_Wikipedia, extract_graph_from_file_gcs,
+    create_source_node_graph_url_youtube,create_source_node_graph_web_url,
+    create_graph_database_connection, create_source_node_graph_url_wikipedia,
+    extract_graph_from_file_Wikipedia, extract_graph_from_file_gcs,
     extract_graph_from_file_local_file, extract_graph_from_file_s3, extract_graph_from_file_youtube,
     extract_graph_from_web_page, failed_file_process, get_labels_and_relationtypes, get_source_list_from_graph,
     manually_cancelled_job, populate_graph_schema_from_text, set_status_retry, update_graph, upload_file
@@ -217,7 +217,8 @@ async def extract_knowledge_graph_from_file(
 
         if params.source_type == 'local file':
             file_name = sanitize_filename(params.file_name)
-            merged_file_path = validate_file_path(MERGED_DIR, params.file_name)
+            params.file_name = file_name
+            merged_file_path = validate_file_path(MERGED_DIR, file_name)
             uri_latency, result = await extract_graph_from_file_local_file(credentials, params, merged_file_path)
         elif params.source_type == 's3 bucket' and params.source_url:
             uri_latency, result = await extract_graph_from_file_s3(credentials, params)
