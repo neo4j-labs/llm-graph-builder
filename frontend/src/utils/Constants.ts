@@ -104,6 +104,12 @@ export const chunksToCombine = import.meta.env.VITE_CHUNK_TO_COMBINE
 export const defaultTokenChunkSizeOptions = [50, 100, 200, 400, 1000];
 export const defaultChunkOverlapOptions = [10, 20, 30, 40, 50];
 export const defaultChunksToCombineOptions = [1, 2, 3, 4, 5, 6];
+export const embeddingModels = [
+  { label: 'Local', value: 'local' },
+  { label: 'OpenAI', value: 'openai' },
+  { label: 'Gemini', value: 'gemini' },
+  { label: 'Titan', value: 'titan' },
+];
 export const timeperpage = import.meta.env.VITE_TIME_PER_PAGE ? Number(import.meta.env.VITE_TIME_PER_PAGE) : 50;
 export const timePerByte = 0.2;
 export const largeFileSize = import.meta.env.VITE_LARGE_FILE_SIZE

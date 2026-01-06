@@ -4,6 +4,8 @@ const postProcessing = async (taskParam: string[]) => {
   try {
     const formData = new FormData();
     formData.append('tasks', JSON.stringify(taskParam));
+    const embeddingModel = localStorage.getItem('embeddingModel') || 'local';
+    formData.append('embedding_model', embeddingModel);
     const response = await api.post(`/post_processing`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',

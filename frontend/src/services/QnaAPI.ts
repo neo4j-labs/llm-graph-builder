@@ -14,6 +14,8 @@ export const chatBotAPI = async (
     formData.append('model', model);
     formData.append('mode', mode);
     formData.append('document_names', JSON.stringify(document_names));
+    const embeddingModel = localStorage.getItem('embeddingModel') || 'local';
+    formData.append('embedding_model', embeddingModel);
     const startTime = Date.now();
     const response = await api.post(`/chat_bot`, formData, {
       headers: {

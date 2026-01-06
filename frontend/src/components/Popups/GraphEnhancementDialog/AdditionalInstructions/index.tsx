@@ -6,10 +6,11 @@ import {
   defaultTokenChunkSizeOptions,
   defaultChunksToCombineOptions,
   tooltips,
+  embeddingModels,
 } from '../../../../utils/Constants';
 import { tokens } from '@neo4j-ndl/base';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useFileContext } from '../../../../context/UsersFiles';
 import { showNormalToast } from '../../../../utils/Toasts';
 import { OnChangeValue } from 'react-select';
@@ -32,6 +33,14 @@ export default function AdditionalInstructionsText({
     selectedChunks_to_combine,
     setSelectedChunks_to_combine,
   } = useFileContext();
+
+  const [selectedEmbeddingModel, setSelectedEmbeddingModel] = useState<OptionType>(() => {
+    const storedModel = localStorage.getItem('embeddingModel');
+    return storedModel
+      ? embeddingModels.find((opt) => opt.value === storedModel) || embeddingModels[0]
+      : embeddingModels[0];
+  });
+
   const clickAnalyzeInstructHandler = useCallback(async () => {
     localStorage.setItem('instructions', additionalInstructions);
     closeEnhanceGraphSchemaDialog();
@@ -70,6 +79,16 @@ export default function AdditionalInstructionsText({
       localStorage.setItem('selectedChunks_to_combine', JSON.stringify({ selectedOption: parsedValue }));
     }
   };
+
+  const onChangeEmbeddingModel = (newValue: unknown) => {
+    const value = newValue as OptionType | null;
+    if (value !== null) {
+      setSelectedEmbeddingModel(value);
+      localStorage.setItem('embeddingModel', value.value);
+      showNormalToast(`Embedding model set to ${value.label}`);
+    }
+  };
+
   return (
     <div>
       <Flex flexDirection='column'>
@@ -111,6 +130,18 @@ export default function AdditionalInstructionsText({
         <div className='flex align-self-center justify-left'>
           <h5>{appLabels.chunkingConfiguration}</h5>
         </div>
+        <Select
+          label='Embedding Model'
+          size='medium'
+          type='creatable'
+          selectProps={{
+            isMulti: false,
+            options: embeddingModels,
+            onChange: onChangeEmbeddingModel,
+            value: selectedEmbeddingModel,
+          }}
+          helpText='Select the embedding model to use for vector indexing and similarity searches'
+        />
         <Select
           label='Token Count Per Chunk'
           size='medium'

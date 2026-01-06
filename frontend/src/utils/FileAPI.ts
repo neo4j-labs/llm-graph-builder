@@ -41,6 +41,7 @@ export const extractAPI = async (
 ): Promise<any> => {
   const urlExtract = `${url()}/extract`;
   const method: Method = 'post';
+  const embeddingModel = localStorage.getItem('embeddingModel') || 'local';
   let additionalParams: ExtractParams;
   if (source_type === 's3 bucket') {
     additionalParams = {
@@ -57,6 +58,7 @@ export const extractAPI = async (
       chunks_to_combine,
       retry_condition,
       additional_instructions,
+      embedding_model: embeddingModel,
     };
   } else if (source_type === 'Wikipedia') {
     additionalParams = {
@@ -72,6 +74,7 @@ export const extractAPI = async (
       language,
       retry_condition,
       additional_instructions,
+      embedding_model: embeddingModel,
     };
   } else if (source_type === 'gcs bucket') {
     additionalParams = {
@@ -90,6 +93,7 @@ export const extractAPI = async (
       access_token,
       retry_condition,
       additional_instructions,
+      embedding_model: embeddingModel,
     };
   } else if (source_type === 'youtube') {
     additionalParams = {
@@ -104,6 +108,7 @@ export const extractAPI = async (
       chunks_to_combine,
       retry_condition,
       additional_instructions,
+      embedding_model: embeddingModel,
     };
   } else if (source_type === 'web-url') {
     additionalParams = {
@@ -118,6 +123,7 @@ export const extractAPI = async (
       chunks_to_combine,
       retry_condition,
       additional_instructions,
+      embedding_model: embeddingModel,
     };
   } else {
     additionalParams = {
@@ -131,6 +137,7 @@ export const extractAPI = async (
       chunks_to_combine,
       retry_condition,
       additional_instructions,
+      embedding_model: embeddingModel,
     };
   }
   const response = await apiCall(urlExtract, method, additionalParams);

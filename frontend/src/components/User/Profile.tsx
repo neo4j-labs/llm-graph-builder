@@ -12,6 +12,11 @@ export default function Profile() {
       {
         title: 'Logout',
         onClick: () => {
+          localStorage.removeItem('embeddingModel');
+          localStorage.removeItem('instructions');
+          localStorage.removeItem('selectedChunk_size');
+          localStorage.removeItem('selectedChunk_overlap');
+          localStorage.removeItem('selectedChunks_to_combine');
           logout({ logoutParams: { returnTo: `${window.location.origin}/readonly` } });
         },
       },
