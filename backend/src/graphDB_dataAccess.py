@@ -113,6 +113,8 @@ class graphDBdataAccess:
             if obj_source_node.retry_condition is not None :
                 params['retry_condition'] = obj_source_node.retry_condition    
 
+            if obj_source_node.token_usage is not None :
+                params['token_usage'] = obj_source_node.token_usage
             param= {"props":params}
             
             logging.info(f'Base Param value 1 : {param}')
@@ -145,7 +147,7 @@ class graphDBdataAccess:
         
     def update_KNN_graph(self):
         """
-        Update the graph node with SIMILAR relationship where embedding scrore match
+        Update the graph node with SIMILAR relationship where embedding score match
         """
         index = self.graph.query("""show indexes yield * where type = 'VECTOR' and name = 'vector'""",session_params={"database":self.graph._database})
         # logging.info(f'show index vector: {index}')
@@ -281,7 +283,8 @@ class graphDBdataAccess:
                 d.entityEntityRelCount AS entityEntityRelCount,
                 d.communityNodeCount AS communityNodeCount,
                 d.communityRelCount AS communityRelCount,
-                d.createdAt AS created_time
+                d.createdAt AS created_time,
+                coalesce(d.token_usage, 0) AS token_usage
                 """
         param = {"file_name" : file_name}
         return self.execute_query(query, param)
