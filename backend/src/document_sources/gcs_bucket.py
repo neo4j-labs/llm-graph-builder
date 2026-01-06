@@ -201,7 +201,7 @@ def merge_file_gcs(bucket_name, file_name: str, folder_name_sha1_hashed, total_c
 
     Args:
         bucket_name (str): GCS bucket name.
-        original_file_name (str): Original file name.
+        file_name (str): Original file name.
         folder_name_sha1_hashed (str): Hashed folder name in GCS.
         total_chunks (int): Total number of chunks.
 

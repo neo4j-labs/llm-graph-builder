@@ -17,16 +17,25 @@ def get_graphDB_driver(credentials):
     """
     try:
         logging.info(f"Attempting to connect to the Neo4j database at {credentials.uri}")
-        if all(v is None for v in [credentials.userName, credentials.password]):
-            username= get_value_from_env('NEO4J_USERNAME')
-            database= get_value_from_env('NEO4J_DATABASE')
-            password= get_value_from_env('NEO4J_PASSWORD')
+        # Prefer credentials values, fallback to env if missing
+        username = credentials.userName if credentials.userName is not None else get_value_from_env('NEO4J_USERNAME')
+        password = credentials.password if credentials.password is not None else get_value_from_env('NEO4J_PASSWORD')
+        database = credentials.database if hasattr(credentials, 'database') and credentials.database is not None else get_value_from_env('NEO4J_DATABASE')
 
         enable_user_agent = get_value_from_env("ENABLE_USER_AGENT", "False", "bool")
         if enable_user_agent:
-            driver = GraphDatabase.driver(credentials.uri, auth=(username, password),database=database, user_agent= get_value_from_env("USER_AGENT","LLM-Graph-Builder"))
+            driver = GraphDatabase.driver(
+                credentials.uri,
+                auth=(username, password),
+                database=database,
+                user_agent=get_value_from_env("USER_AGENT", "LLM-Graph-Builder")
+            )
         else:
-            driver = GraphDatabase.driver(credentials.uri, auth=(username, password),database=database)
+            driver = GraphDatabase.driver(
+                credentials.uri,
+                auth=(username, password),
+                database=database
+            )
         logging.info("Connection successful")
         return driver
     except Exception as e:
@@ -258,12 +267,12 @@ def get_chunktext_results(credentials, document_name, page_no):
            driver.close()
 
 
-def visualize_schema(uri, userName, password, database):
+def visualize_schema(credentials):
    """Retrieves graph schema"""
    driver = None
    try:
        logging.info("Starting visualizing graph schema")
-       driver = get_graphDB_driver(uri, userName, password,database)  
+       driver = get_graphDB_driver(credentials)  
        records, summary, keys = driver.execute_query(SCHEMA_VISUALIZATION_QUERY)
        nodes = records[0].get("nodes", [])
        relationships = records[0].get("relationships", [])

@@ -262,10 +262,9 @@ def process_communityids(driver, community_ids):
         )
         raise
 
-def get_entities_from_chunkids(uri, username, password, database ,nodedetails,entities,mode):   
+def get_entities_from_chunkids(credentials,nodedetails,entities,mode):   
     try:
-
-        driver = get_graphDB_driver(uri, username, password,database)
+        driver = get_graphDB_driver(credentials)
         default_response = {"nodes": list(),"relationships": list(),"chunk_data": list(),"community_data": list(),}
 
         nodedetails = json.loads(nodedetails)

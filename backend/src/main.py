@@ -857,7 +857,7 @@ def upload_file(graph, model, chunk, chunk_number: int, total_chunks: int, file_
         return {'file_size': file_size, 'file_name': safe_file_name, 'file_extension': file_extension, 'message': f"Chunk {chunk_number}/{total_chunks} saved"}
     return f"Chunk {chunk_number}/{total_chunks} saved"
 
-def get_labels_and_relationtypes(uri, userName, password, database):
+def get_labels_and_relationtypes(credentials):
   """
   Get distinct labels and relationship types from the graph.
 
@@ -875,9 +875,9 @@ def get_labels_and_relationtypes(uri, userName, password, database):
        'NEXT_CHUNK', '_Bloom_Perspective_', 'FIRST_CHUNK',
        'SIMILAR', 'IN_COMMUNITY', 'PARENT_COMMUNITY', 'NEXT', 'LAST_MESSAGE'
    }
-  driver = get_graphDB_driver(uri, userName, password,database) 
+  driver = get_graphDB_driver(credentials) 
   triples = set()
-  with driver.session(database=database) as session:
+  with driver.session(database=credentials.database) as session:
     result = session.run("""
            MATCH (n)-[r]->(m)
            RETURN DISTINCT labels(n) AS fromLabels, type(r) AS relType, labels(m) AS toLabels

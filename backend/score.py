@@ -339,7 +339,7 @@ async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_cred
             logging.info(f'Updated KNN Graph')
 
         if "enable_hybrid_search_and_fulltext_search_in_bloom" in tasks:
-            await asyncio.to_thread(create_vector_fulltext_indexes, uri=credentials.uri, username=credentials.userName, password=credentials.password, database=credentials.database)
+            await asyncio.to_thread(create_vector_fulltext_indexes, credentials)
             api_name = 'post_processing/enable_hybrid_search_and_fulltext_search_in_bloom'
             logging.info(f'Full Text index created')
 
@@ -441,7 +441,7 @@ async def chunk_entities(
     """Extract entities from chunk IDs."""
     try:
         start = time.time()
-        result = await asyncio.to_thread(get_entities_from_chunkids, nodedetails=nodedetails, entities=entities, mode=mode, uri=credentials.uri, username=credentials.userName, password=credentials.password, database=credentials.database)
+        result = await asyncio.to_thread(get_entities_from_chunkids,credentials, nodedetails, entities, mode)
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name':'chunk_entities','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'nodedetails':nodedetails,'entities':entities,
@@ -465,7 +465,7 @@ async def get_neighbours(
     """Get neighbour nodes for a given element ID."""
     try:
         start = time.time()
-        result = await asyncio.to_thread(get_neighbour_nodes, uri=credentials.uri, username=credentials.userName, password=credentials.password, database=credentials.database, element_id=elementId)
+        result = await asyncio.to_thread(get_neighbour_nodes, credentials, element_id=elementId)
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name':'get_neighbours', 'userName':credentials.userName, 'database':credentials.database,'db_url':credentials.uri, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
@@ -598,7 +598,7 @@ async def get_structured_schema(credentials: Neo4jCredentials = Depends(get_neo4
     """Get the structured schema (labels and relation types) from Neo4j."""
     try:
         start = time.time()
-        result = await asyncio.to_thread(get_labels_and_relationtypes, credentials.uri, credentials.userName, credentials.password, credentials.database)
+        result = await asyncio.to_thread(get_labels_and_relationtypes, credentials)
         end = time.time()
         elapsed_time = end - start
         logging.info(f'Schema result from DB: {result}')
@@ -1100,11 +1100,7 @@ async def backend_connection_configuration():
 async def get_schema_visualization(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
     try:
         start = time.time()
-        result = await asyncio.to_thread(visualize_schema,
-           uri=credentials.uri,
-           userName=credentials.userName,
-           password=credentials.password,
-           database=credentials.database)
+        result = await asyncio.to_thread(visualize_schema,credentials)
         if result:
             logging.info("Graph schema visualization query successful")
         end = time.time()

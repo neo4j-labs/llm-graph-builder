@@ -77,7 +77,18 @@ def test_graph_from_file_local(model_name):
        create_source_node_local(graph, model_name, file_name)
        result = asyncio.run(
            extract_graph_from_file_local_file(
-               credentials, model_name, str(merged_file_path), file_name, '', '',100,20,1, None,''
+               credentials, {
+                   "model": model_name,
+                   "source_url": "",
+                   "file_name": file_name,
+                   "allowedNodes": "",
+                   "allowedRelationship": "",
+                   "token_chunk_size": 100,
+                   "chunk_overlap": 20,
+                   "chunks_to_combine": 1,
+                   "retry_condition": None,
+                   "additional_instructions": "",
+               }, str(merged_file_path)
            )
        )
        logging.info(f"Local file test result: {result}")
@@ -95,7 +106,19 @@ def test_graph_from_wikipedia(model_name):
        create_source_node_graph_url_wikipedia(graph, model_name, wiki_query, "Wikipedia")
        result = asyncio.run(
            extract_graph_from_file_Wikipedia(
-               credentials, model_name, file_name, 'en', file_name, '', '', 100,20,1,None,''
+               credentials,{
+                   "model": model_name,
+                   "source_url": "",
+                   "file_name": file_name,
+                   "allowedNodes": "",
+                   "allowedRelationship": "",
+                   "token_chunk_size": 100,
+                   "chunk_overlap": 20,
+                   "language": "en",
+                   "chunks_to_combine": 1,
+                   "retry_condition": None,
+                   "additional_instructions": "",
+               }
            )
        )
        logging.info(f"Wikipedia test result: {result}")
@@ -113,7 +136,19 @@ def test_graph_from_youtube_video(model_name):
        create_source_node_graph_url_youtube(graph, model_name, source_url, "youtube")
        result = asyncio.run(
            extract_graph_from_file_youtube(
-               credentials, model_name, source_url, file_name, '', '',100,20,1, None,''
+               credentials,{
+                   "model": model_name,
+                   "source_url": source_url,
+                   "file_name": file_name,
+                   "allowedNodes": "",
+                   "allowedRelationship": "",
+                   "token_chunk_size": 100,
+                   "chunk_overlap": 20,
+                   "language": "en",
+                   "chunks_to_combine": 1,
+                   "retry_condition": None,
+                   "additional_instructions": "",
+               }
            )
       )
        logging.info(f"YouTube video test result: {result}")
@@ -133,7 +168,19 @@ def test_graph_website(model_name):
        create_source_node_graph_web_url(graph, model_name, source_url, "web-url")
        result = asyncio.run(
            extract_graph_from_web_page(
-               credentials, model_name, source_url, file_name, '', '', 100, 20, 1, None, ''
+               credentials,
+               {
+                   "model": model_name,
+                   "source_url": source_url,
+                   "file_name": file_name,
+                   "allowedNodes": "",
+                   "allowedRelationship": "",
+                   "token_chunk_size": 100,
+                   "chunk_overlap": 20,
+                   "chunks_to_combine": 1,
+                   "retry_condition": None,
+                   "additional_instructions": "",
+               },
            )
        )
        logging.info(f"Web URL test result: {result}")
