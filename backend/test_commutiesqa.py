@@ -5,7 +5,7 @@ import logging
 import pandas as pd
 from datetime import datetime as dt
 from dotenv import load_dotenv
-from src.shared.common_fn import create_graph_database_connection
+from src.shared.common_fn import Neo4jCredentials, create_graph_database_connection
 from src.main import extract_graph_from_file_local_file, extract_graph_from_file_Wikipedia, extract_graph_from_web_page, create_source_node_graph_url_wikipedia, create_source_node_graph_url_youtube, create_source_node_graph_web_url, populate_graph_schema_from_text, extract_graph_from_file_youtube
 from src.graphDB_dataAccess import graphDBdataAccess
 from src.QA_integration import QA_RAG
@@ -24,7 +24,9 @@ CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
 MERGED_DIR = os.path.join(os.path.dirname(__file__), "merged_files")
 
 # Initialize database connection
-graph = create_graph_database_connection(URI, USERNAME, PASSWORD, DATABASE)
+
+credentials = Neo4jCredentials(uri=URI, userName=USERNAME, password=PASSWORD, database=DATABASE)
+graph = create_graph_database_connection(credentials)
 
 def create_source_node_local(graph, model, file_name):
    """Creates a source node for a local file."""
@@ -146,7 +148,6 @@ def test_chatbot_qna(model_name, mode='vector'):
   
 #Get Test disconnected_nodes list
 def disconected_nodes():
-   #graph = create_graph_database_connection(uri, userName, password, database)
    graphDb_data_Access = graphDBdataAccess(graph)
    nodes_list, total_nodes = graphDb_data_Access.list_unconnected_nodes()
    print(nodes_list[0]["e"]["elementId"])
@@ -160,7 +161,6 @@ def disconected_nodes():
 #Test Delete delete_disconnected_nodes list
 def delete_disconected_nodes(lst_element_id):
    print(f'disconnect elementid list {lst_element_id}')
-   #graph = create_graph_database_connection(uri, userName, password, database)
    graphDb_data_Access = graphDBdataAccess(graph)
    result = graphDb_data_Access.delete_unconnected_nodes(json.dumps(lst_element_id))
    print(f'delete disconnect api result {result}')
@@ -171,7 +171,6 @@ def delete_disconected_nodes(lst_element_id):
 
 #Test Get Duplicate_nodes
 def get_duplicate_nodes():
-       #graph = create_graph_database_connection(uri, userName, password, database)
        graphDb_data_Access = graphDBdataAccess(graph)
        nodes_list, total_nodes = graphDb_data_Access.get_duplicate_nodes_list()
        if total_nodes['total']>0:

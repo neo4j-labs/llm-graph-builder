@@ -3,6 +3,7 @@ import os
 import json
 import logging
 from typing import Any
+from src.entities.user_credential import Neo4jCredentials
 from transformers import AutoTokenizer, AutoModel
 from langchain_huggingface import HuggingFaceEmbeddings
 from threading import Lock
@@ -109,12 +110,12 @@ def get_chunk_and_graphDocument(graph_document_list, chunkId_chunkDoc_list):
                   
   return lst_chunk_chunkId_document  
                  
-def create_graph_database_connection(uri, userName, password, database):
+def create_graph_database_connection(credentials):
   enable_user_agent = get_value_from_env("ENABLE_USER_AGENT", "False" ,"bool")
   if enable_user_agent:
-    graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, refresh_schema=False, sanitize=True,driver_config={'user_agent':get_value_from_env("USER_AGENT","LLM-Graph-Builder")}) 
+    graph = Neo4jGraph(url=credentials.uri, database=credentials.database, username=credentials.userName, password=credentials.password, refresh_schema=False, sanitize=True,driver_config={'user_agent':get_value_from_env("USER_AGENT","LLM-Graph-Builder")}) 
   else:
-    graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, refresh_schema=False, sanitize=True)    
+    graph = Neo4jGraph(url=credentials.uri, database=credentials.database, username=credentials.userName, password=credentials.password, refresh_schema=False, sanitize=True)    
   return graph
 
 
@@ -345,11 +346,11 @@ def track_token_usage(
         user = get_value_from_env("TOKEN_TRACKER_DB_USERNAME")
         password = get_value_from_env("TOKEN_TRACKER_DB_PASSWORD")
         database = get_value_from_env("TOKEN_TRACKER_DB_DATABASE", "neo4j")
+        credentials= Neo4jCredentials(uri=uri, userName=user, password=password, database=database)
         if not all([uri, user, password]):
             raise EnvironmentError("Neo4j credentials are not set properly.")
 
-        graph = create_graph_database_connection(uri, user, password, database)
-
+        graph = create_graph_database_connection(credentials)
         daily_tokens_limit = get_value_from_env("DAILY_TOKENS_LIMIT", "250000", "int")
         monthly_tokens_limit = get_value_from_env("MONTHLY_TOKENS_LIMIT", "1000000", "int")
         is_neo4j_user = bool(normalized_email and normalized_email.endswith("@neo4j.com"))

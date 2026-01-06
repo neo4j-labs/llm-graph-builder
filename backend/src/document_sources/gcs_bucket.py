@@ -1,3 +1,4 @@
+
 import os
 import logging
 import io
@@ -151,14 +152,14 @@ def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, g
     except Exception as exc:
         raise LLMGraphBuilderException(str(exc)) from exc
 
-def upload_file_to_gcs(file_chunk, chunk_number, original_file_name, bucket_name, folder_name_sha1_hashed):
+def upload_file_to_gcs(file_chunk, chunk_number, file_name, bucket_name, folder_name_sha1_hashed):
     """
     Uploads a file chunk to a GCS bucket.
 
     Args:
         file_chunk: File-like object containing the chunk.
         chunk_number (int): Chunk number.
-        original_file_name (str): Original file name.
+        file_name (str): Original file name.
         bucket_name (str): GCS bucket name.
         folder_name_sha1_hashed (str): Hashed folder name in GCS.
 
@@ -167,7 +168,7 @@ def upload_file_to_gcs(file_chunk, chunk_number, original_file_name, bucket_name
     """
     try:
         storage_client = storage.Client()
-        file_name = f'{original_file_name}_part_{chunk_number}'
+        file_name = f'{file_name}_part_{chunk_number}'
         bucket = storage_client.bucket(bucket_name)
         file_data = file_chunk.file.read()
         file_name_with_hashed_folder = f"{folder_name_sha1_hashed}/{file_name}"
@@ -180,7 +181,7 @@ def upload_file_to_gcs(file_chunk, chunk_number, original_file_name, bucket_name
     except Exception as exc:
         raise Exception('Error in while uploading the file chunks on GCS') from exc
 
-def merge_file_gcs(bucket_name, original_file_name: str, folder_name_sha1_hashed, total_chunks):
+def merge_file_gcs(bucket_name, file_name: str, folder_name_sha1_hashed, total_chunks):
     """
     Merges file chunks in a GCS bucket into a single file.
 
@@ -201,14 +202,14 @@ def merge_file_gcs(bucket_name, original_file_name: str, folder_name_sha1_hashed
         bucket = storage_client.bucket(bucket_name)
         chunks = []
         for i in range(1, total_chunks + 1):
-            blob_name = f"{folder_name_sha1_hashed}/{original_file_name}_part_{i}"
+            blob_name = f"{folder_name_sha1_hashed}/{file_name}_part_{i}"
             blob = bucket.blob(blob_name)
             if blob.exists():
                 logger.info('Blob Name: %s', blob.name)
                 chunks.append(blob.download_as_bytes())
                 blob.delete()
         merged_file = b"".join(chunks)
-        file_name_with_hashed_folder = f"{folder_name_sha1_hashed}/{original_file_name}"
+        file_name_with_hashed_folder = f"{folder_name_sha1_hashed}/{file_name}"
         logger.info('GCS folder path in merge: %s', file_name_with_hashed_folder)
         blob = storage_client.bucket(bucket_name).blob(file_name_with_hashed_folder)
         logger.info('save the merged file from chunks in gcs')

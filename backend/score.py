@@ -14,6 +14,7 @@ from src.shared.common_fn import create_graph_database_connection, formatted_tim
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 import uvicorn
 import asyncio
+from src.entities.source_extract_params import SourceScanExtractParams, get_source_scan_extract_params
 import base64
 import logging
 # from langserve import add_routes
@@ -114,242 +115,187 @@ app.add_api_route("/health", health([healthy_condition, healthy]))
 
 @app.post("/url/scan")
 async def create_source_knowledge_graph_url(
-    uri=Form(None),
-    userName=Form(None),
-    password=Form(None),
-    database=Form(None),
-    email=Form(None),
-    source_url=Form(None),
-    aws_access_key_id=Form(None),
-    aws_secret_access_key=Form(None),
-    wiki_query=Form(None),
-    model=Form(),
-    gcs_bucket_name=Form(None),
-    gcs_bucket_folder=Form(None),
-    source_type=Form(None),
-    gcs_project_id=Form(None),
-    access_token=Form(None)
-    ):
-    
+    credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
+    params: SourceScanExtractParams = Depends(get_source_scan_extract_params)
+):
     try:
-        if not uri or not userName or not password:
-            return create_api_response("Failed", message="Missing required credentials (uri, userName, password)", error="Invalid credentials", file_source=source_type)
+        if not credentials.uri or not credentials.userName or not credentials.password:
+            return create_api_response("Failed", message="Missing required credentials (uri, userName, password)", error="Invalid credentials", file_source=params.source_type)
         start = time.time()
-        if source_url is not None:
-            source = source_url
+        source = params.source_url if params.source_url is not None else params.wiki_query
+        graph = create_graph_database_connection(credentials)
+        if params.source_type == 's3 bucket' and params.aws_access_key_id and params.aws_secret_access_key:
+            lst_file_name, success_count, failed_count = await asyncio.to_thread(create_source_node_graph_url_s3, graph, params)
+        elif params.source_type == 'gcs bucket':
+            lst_file_name, success_count, failed_count = create_source_node_graph_url_gcs(
+                graph, params, Credentials(params.access_token)
+            )
+        elif params.source_type == 'web-url':
+            lst_file_name, success_count, failed_count = await asyncio.to_thread(
+                create_source_node_graph_web_url, graph, params)
+        elif params.source_type == 'youtube':
+            lst_file_name, success_count, failed_count = await asyncio.to_thread(
+                create_source_node_graph_url_youtube, graph, params)
+        elif params.source_type == 'Wikipedia':
+            lst_file_name, success_count, failed_count = await asyncio.to_thread(
+                create_source_node_graph_url_wikipedia, graph, params)
         else:
-            source = wiki_query
-            
-        graph = create_graph_database_connection(
-            uri,
-            userName,
-            password,
-            database)
-        if source_type == 's3 bucket' and aws_access_key_id and aws_secret_access_key:
-            lst_file_name,success_count,failed_count = await asyncio.to_thread(create_source_node_graph_url_s3,graph, model, source_url, aws_access_key_id, aws_secret_access_key, source_type
-            )
-        elif source_type == 'gcs bucket':
-            lst_file_name,success_count,failed_count = create_source_node_graph_url_gcs(graph, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, source_type,Credentials(access_token)
-            )
-        elif source_type == 'web-url':
-            lst_file_name,success_count,failed_count = await asyncio.to_thread(create_source_node_graph_web_url,graph, model, source_url, source_type
-            )  
-        elif source_type == 'youtube':
-            lst_file_name,success_count,failed_count = await asyncio.to_thread(create_source_node_graph_url_youtube,graph, model, source_url, source_type
-            )
-        elif source_type == 'Wikipedia':
-            lst_file_name,success_count,failed_count = await asyncio.to_thread(create_source_node_graph_url_wikipedia,graph, model, wiki_query, source_type
-            )
-        else:
-            return create_api_response('Failed',message='source_type is other than accepted source')
+            return create_api_response('Failed', message='source_type is other than accepted source')
 
-        message = f"Source Node created successfully for source type: {source_type} and source: {source}"
+        message = f"Source Node created successfully for source type: {params.source_type} and source: {source}"
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'url_scan','db_url':uri,'url_scanned_file':lst_file_name, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','userName':userName, 'database':database, 'aws_access_key_id':aws_access_key_id,
-                            'model':model, 'gcs_bucket_name':gcs_bucket_name, 'gcs_bucket_folder':gcs_bucket_folder, 'source_type':source_type,
-                            'gcs_project_id':gcs_project_id, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':email}
+        json_obj = {
+            'api_name': 'url_scan',
+            'db_url': credentials.uri,
+            'url_scanned_file': lst_file_name,
+            'source_url': params.source_url,
+            'wiki_query': params.wiki_query,
+            'logging_time': formatted_time(datetime.now(timezone.utc)),
+            'elapsed_api_time': f'{elapsed_time:.2f}',
+            'userName': credentials.userName,
+            'database': credentials.database,
+            'aws_access_key_id': params.aws_access_key_id,
+            'model': params.model,
+            'gcs_bucket_name': params.gcs_bucket_name,
+            'gcs_bucket_folder': params.gcs_bucket_folder,
+            'source_type': params.source_type,
+            'gcs_project_id': params.gcs_project_id,
+            'email': credentials.email
+        }
         logger.log_struct(json_obj, "INFO")
-        result ={'elapsed_api_time' : f'{elapsed_time:.2f}'}
-        return create_api_response("Success",message=message,success_count=success_count,failed_count=failed_count,file_name=lst_file_name,data=result)
+        result = {'elapsed_api_time': f'{elapsed_time:.2f}'}
+        return create_api_response("Success", message=message, success_count=success_count, failed_count=failed_count, file_name=lst_file_name, data=result)
     except LLMGraphBuilderException as e:
         error_message = str(e)
-        message = f" Unable to create source node for source type: {source_type} and source: {source}"
+        message = f" Unable to create source node for source type: {params.source_type} and source: {source}"
         # Set the status "Success" becuase we are treating these error already handled by application as like custom errors.
-        json_obj = {'error_message':error_message, 'status':'Success','db_url':uri, 'userName':userName, 'database':database,'success_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':email}
+        json_obj = {'error_message':error_message, 'status':'Success','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,'success_count':1, 'source_type': params.source_type, 'source_url':params.source_url, 'wiki_query':params.wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         logging.exception(f'File Failed in upload: {e}')
-        return create_api_response('Failed',message=message + error_message[:80],error=error_message,file_source=source_type)
+        return create_api_response('Failed',message=message + error_message[:80],error=error_message,file_source=params.source_type)
     except Exception as e:
         error_message = str(e)
-        message = f" Unable to create source node for source type: {source_type} and source: {source}"
-        json_obj = {'error_message':error_message, 'status':'Failed','db_url':uri, 'userName':userName, 'database':database,'failed_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':email}
+        message = f" Unable to create source node for source type: {params.source_type} and source: {source}"
+        json_obj = {'error_message':error_message, 'status':'Failed','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,'failed_count':1, 'source_type': params.source_type, 'source_url':params.source_url, 'wiki_query':params.wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email}
         logger.log_struct(json_obj, "ERROR")
         logging.exception(f'Exception Stack trace upload:{e}')
-        return create_api_response('Failed',message=message + error_message[:80],error=error_message,file_source=source_type)
+        return create_api_response('Failed',message=message + error_message[:80],error=error_message,file_source=params.source_type)
     finally:
         gc.collect()
 
 @app.post("/extract")
 async def extract_knowledge_graph_from_file(
-    uri=Form(None),
-    userName=Form(None),
-    password=Form(None),
-    model=Form(),
-    database=Form(None),
-    source_url=Form(None),
-    aws_access_key_id=Form(None),
-    aws_secret_access_key=Form(None),
-    wiki_query=Form(None),
-    gcs_project_id=Form(None),
-    gcs_bucket_name=Form(None),
-    gcs_bucket_folder=Form(None),
-    gcs_blob_filename=Form(None),
-    source_type=Form(None),
-    file_name=Form(None),
-    allowedNodes=Form(None),
-    allowedRelationship=Form(None),
-    token_chunk_size: Optional[int] = Form(None),
-    chunk_overlap: Optional[int] = Form(None),
-    chunks_to_combine: Optional[int] = Form(None),
-    language=Form(None),
-    access_token=Form(None),
-    retry_condition=Form(None),
-    additional_instructions=Form(None),
-    email=Form(None)
+    credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
+    params: SourceScanExtractParams = Depends(get_source_scan_extract_params)
 ):
-    """
-    Calls 'extract_graph_from_file' in a new thread to create Neo4jGraph from a
-    PDF file based on the model.
-
-    Args:
-          uri: URI of the graph to extract
-          userName: Username to use for graph creation
-          password: Password to use for graph creation
-          file: File object containing the PDF file
-          model: Type of model to use ('Diffbot'or'OpenAI GPT')
-
-    Returns:
-          Nodes and Relations created in Neo4j databse for the pdf file
-    """
     try:
         start_time = time.time()
-        graph = create_graph_database_connection(uri, userName, password, database)   
+        graph = create_graph_database_connection(credentials)
         graphDb_data_Access = graphDBdataAccess(graph)
-        
-        if source_type == 'local file':
-            file_name = sanitize_filename(file_name)
-            merged_file_path = validate_file_path(MERGED_DIR, file_name)
-            uri_latency, result = await extract_graph_from_file_local_file(uri, userName, password, database, model, merged_file_path, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email)
 
-        elif source_type == 's3 bucket' and source_url:
-            uri_latency, result = await extract_graph_from_file_s3(uri, userName, password, database, model, source_url, aws_access_key_id, aws_secret_access_key, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email)
-        
-        elif source_type == 'web-url':
-            uri_latency, result = await extract_graph_from_web_page(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email)
-
-        elif source_type == 'youtube' and source_url:
-            uri_latency, result = await extract_graph_from_file_youtube(uri, userName, password, database, model, source_url, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email)
-
-        elif source_type == 'Wikipedia' and wiki_query:
-            uri_latency, result = await extract_graph_from_file_Wikipedia(uri, userName, password, database, model, wiki_query, language, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email)
-
-        elif source_type == 'gcs bucket' and gcs_bucket_name:
-            uri_latency, result = await extract_graph_from_file_gcs(uri, userName, password, database, model, gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token, file_name, allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, retry_condition, additional_instructions, email)
+        if params.source_type == 'local file':
+            file_name = sanitize_filename(params.file_name)
+            merged_file_path = validate_file_path(MERGED_DIR, params.file_name)
+            uri_latency, result = await extract_graph_from_file_local_file(credentials, params, merged_file_path)
+        elif params.source_type == 's3 bucket' and params.source_url:
+            uri_latency, result = await extract_graph_from_file_s3(credentials, params)
+        elif params.source_type == 'web-url':
+            uri_latency, result = await extract_graph_from_web_page(credentials, params)
+        elif params.source_type == 'youtube' and params.source_url:
+            uri_latency, result = await extract_graph_from_file_youtube(credentials, params)
+        elif params.source_type == 'Wikipedia' and params.wiki_query:
+            uri_latency, result = await extract_graph_from_file_Wikipedia(credentials, params)
+        elif params.source_type == 'gcs bucket' and params.gcs_bucket_name:
+            uri_latency, result = await extract_graph_from_file_gcs(credentials, params)
         else:
-            return create_api_response('Failed',message='source_type is other than accepted source')
+            return create_api_response('Failed', message='source_type is other than accepted source')
         extract_api_time = time.time() - start_time
         if result is not None:
             logging.info("Going for counting nodes and relationships in extract")
             count_node_time = time.time()
-            graph = create_graph_database_connection(uri, userName, password, database)   
+            graph = create_graph_database_connection(credentials)   
             graphDb_data_Access = graphDBdataAccess(graph)
-            count_response = graphDb_data_Access.update_node_relationship_count(file_name)
+            count_response = graphDb_data_Access.update_node_relationship_count(params.file_name)
             logging.info("Nodes and Relationship Counts updated")
             if count_response :
-                result['chunkNodeCount'] = count_response[file_name].get('chunkNodeCount',"0")
-                result['chunkRelCount'] =  count_response[file_name].get('chunkRelCount',"0")
-                result['entityNodeCount']=  count_response[file_name].get('entityNodeCount',"0")
-                result['entityEntityRelCount']=  count_response[file_name].get('entityEntityRelCount',"0")
-                result['communityNodeCount']=  count_response[file_name].get('communityNodeCount',"0")
-                result['communityRelCount']= count_response[file_name].get('communityRelCount',"0")
-                result['nodeCount'] = count_response[file_name].get('nodeCount',"0")
-                result['relationshipCount']  = count_response[file_name].get('relationshipCount',"0")
+                result['chunkNodeCount'] = count_response[params.file_name].get('chunkNodeCount',"0")
+                result['chunkRelCount'] =  count_response[params.file_name].get('chunkRelCount',"0")
+                result['entityNodeCount']=  count_response[params.file_name].get('entityNodeCount',"0")
+                result['entityEntityRelCount']=  count_response[params.file_name].get('entityEntityRelCount',"0")
+                result['communityNodeCount']=  count_response[params.file_name].get('communityNodeCount',"0")
+                result['communityRelCount']= count_response[params.file_name].get('communityRelCount',"0")
+                result['nodeCount'] = count_response[params.file_name].get('nodeCount',"0")
+                result['relationshipCount']  = count_response[params.file_name].get('relationshipCount',"0")
                 logging.info(f"counting completed in {(time.time()-count_node_time):.2f}")
-            result['db_url'] = uri
+            result['db_url'] = credentials.uri
             result['api_name'] = 'extract'
-            result['source_url'] = source_url
-            result['wiki_query'] = wiki_query
-            result['source_type'] = source_type
+            result['source_url'] = params.source_url
+            result['wiki_query'] = params.wiki_query
+            result['source_type'] = params.source_type
             result['logging_time'] = formatted_time(datetime.now(timezone.utc))
             result['elapsed_api_time'] = f'{extract_api_time:.2f}'
-            result['userName'] = userName
-            result['database'] = database
-            result['aws_access_key_id'] = aws_access_key_id
-            result['gcs_bucket_name'] = gcs_bucket_name
-            result['gcs_bucket_folder'] = gcs_bucket_folder
-            result['gcs_blob_filename'] = gcs_blob_filename
-            result['gcs_project_id'] = gcs_project_id
-            result['language'] = language
-            result['retry_condition'] = retry_condition
-            result['email'] = email
+            result['userName'] = credentials.userName
+            result['database'] = credentials.database
+            result['aws_access_key_id'] = params.aws_access_key_id
+            result['gcs_bucket_name'] = params.gcs_bucket_name
+            result['gcs_bucket_folder'] = params.gcs_bucket_folder
+            result['gcs_blob_filename'] = params.gcs_blob_filename
+            result['gcs_project_id'] = params.gcs_project_id
+            result['language'] = params.language
+            result['retry_condition'] = params.retry_condition
+            result['email'] = credentials.email
         logger.log_struct(result, "INFO")
         result.update(uri_latency)
-        logging.info(f"extraction completed in {extract_api_time:.2f} seconds for file name {file_name}")
-        return create_api_response('Success', data=result, file_source= source_type)
+        logging.info(f"extraction completed in {extract_api_time:.2f} seconds for file name {params.file_name}")
+        return create_api_response('Success', data=result, file_source= params.source_type)
     except LLMGraphBuilderException as e:
         error_message = str(e)
-        graph = create_graph_database_connection(uri, userName, password, database)   
+        graph = create_graph_database_connection(credentials)   
         graphDb_data_Access = graphDBdataAccess(graph)
-        graphDb_data_Access.update_exception_db(file_name,error_message, retry_condition)
-        if source_type == 'local file':
-            failed_file_process(uri,file_name, merged_file_path)
-        node_detail = graphDb_data_Access.get_current_status_document_node(file_name)
+        graphDb_data_Access.update_exception_db(params.file_name,error_message, params.retry_condition)
+        if params.source_type == 'local file':
+            failed_file_process(credentials.uri,params.file_name, merged_file_path)
+        node_detail = graphDb_data_Access.get_current_status_document_node(params.file_name)
         # Set the status "Completed" in logging becuase we are treating these error already handled by application as like custom errors.
-        json_obj = {'api_name':'extract','message':error_message,'file_created_at':formatted_time(node_detail[0]['created_time']),'error_message':error_message, 'file_name': file_name,'status':'Completed',
-                    'db_url':uri, 'userName':userName, 'database':database,'success_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':email,
-                    'allowedNodes': allowedNodes, 'allowedRelationship': allowedRelationship}
+        json_obj = {'api_name':'extract','message':error_message,'file_created_at':formatted_time(node_detail[0]['created_time']),'error_message':error_message, 'file_name': params.file_name,'status':'Completed',
+                    'db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,'success_count':1, 'source_type': params.source_type, 'source_url':params.source_url, 'wiki_query':params.wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email,
+                    'allowedNodes': params.allowedNodes, 'allowedRelationship': params.allowedRelationship}
         logger.log_struct(json_obj, "INFO")
         logging.exception(f'File Failed in extraction: {e}')
-        return create_api_response("Failed", message = error_message, error=error_message, file_name=file_name)
+        return create_api_response("Failed", message = error_message, error=error_message, file_name=params.file_name)
     except Exception as e:
-        message=f"Failed To Process File:{file_name} or LLM Unable To Parse Content "
+        message=f"Failed To Process File:{params.file_name} or LLM Unable To Parse Content "
         error_message = str(e)
-        graph = create_graph_database_connection(uri, userName, password, database)   
+        graph = create_graph_database_connection(credentials)   
         graphDb_data_Access = graphDBdataAccess(graph)
-        graphDb_data_Access.update_exception_db(file_name,error_message, retry_condition)
-        if source_type == 'local file':
-            failed_file_process(uri,file_name, merged_file_path)
-        node_detail = graphDb_data_Access.get_current_status_document_node(file_name)
+        graphDb_data_Access.update_exception_db(params.file_name,error_message, params.retry_condition)
+        if params.source_type == 'local file':
+            failed_file_process(credentials.uri,params.file_name, merged_file_path)
+        node_detail = graphDb_data_Access.get_current_status_document_node(params.file_name)
         
-        json_obj = {'api_name':'extract','message':message,'file_created_at':formatted_time(node_detail[0]['created_time']),'error_message':error_message, 'file_name': file_name,'status':'Failed',
-                    'db_url':uri, 'userName':userName, 'database':database,'failed_count':1, 'source_type': source_type, 'source_url':source_url, 'wiki_query':wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':email,
-                    'allowedNodes': allowedNodes, 'allowedRelationship': allowedRelationship}
+        json_obj = {'api_name':'extract','message':message,'file_created_at':formatted_time(node_detail[0]['created_time']),'error_message':error_message, 'file_name': params.file_name,'status':'Failed',
+                    'db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,'failed_count':1, 'source_type': params.source_type, 'source_url':params.source_url, 'wiki_query':params.wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email,
+                    'allowedNodes': params.allowedNodes, 'allowedRelationship': params.allowedRelationship}
         logger.log_struct(json_obj, "ERROR")
         logging.exception(f'File Failed in extraction: {e}')
-        return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = file_name)
+        return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = params.file_name)
     finally:
         gc.collect()
             
 @app.post("/sources_list")
-async def get_source_list(
-    uri=Form(None),
-    userName=Form(None),
-    password=Form(None),
-    database=Form(None),
-    email=Form(None)
-):
+async def get_source_list(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
     """
     Calls 'get_source_list_from_graph' which returns list of sources which already exist in databse
     """
     try:
-        if not uri or not userName or not password:
+        if not credentials.uri or not credentials.userName or not credentials.password:
             return create_api_response("Failed", message="Missing required credentials (uri, userName, password)", error="Invalid credentials")
         start = time.time()
-        result = await asyncio.to_thread(get_source_list_from_graph,uri,userName,password,database)
+        result = await asyncio.to_thread(get_source_list_from_graph,credentials)
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'sources_list','db_url':uri, 'userName':userName, 'database':database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
+        json_obj = {'api_name':'sources_list','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response("Success",data=result, message=f"Total elapsed API time {elapsed_time:.2f}")
     except Exception as e:
@@ -362,7 +308,7 @@ async def get_source_list(
 @app.post("/post_processing")
 async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), tasks=Form(None)):
     try:
-        graph = create_graph_database_connection(credentials.uri, credentials.userName, credentials.password, credentials.database)
+        graph = create_graph_database_connection(credentials)
         tasks = set(map(str.strip, json.loads(tasks)))
         api_name = 'post_processing'
         count_response = []
@@ -389,10 +335,9 @@ async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_cred
             
         if "enable_communities" in tasks:
             api_name = 'create_communities'
-            await asyncio.to_thread(create_communities, credentials.uri, credentials.userName, credentials.password, credentials.database, credentials.email)  
-            
-            logging.info(f'created communities')
-        graph = create_graph_database_connection(credentials.uri, credentials.userName, credentials.password, credentials.database)   
+            await asyncio.to_thread(create_communities, credentials.uri, credentials.userName, credentials.password, credentials.database, credentials.email)
+            logging.info(f'created communities') 
+
         graphDb_data_Access = graphDBdataAccess(graph)
         document_name = ""
         count_response = graphDb_data_Access.update_node_relationship_count(document_name)
@@ -434,7 +379,7 @@ async def chat_bot(credentials: Neo4jCredentials = Depends(get_neo4j_credentials
         if mode == "graph":
             graph = Neo4jGraph(url=credentials.uri, username=credentials.userName, password=credentials.password, database=credentials.database, sanitize=True, refresh_schema=True)
         else:
-            graph = create_graph_database_connection(credentials.uri, credentials.userName, credentials.password, credentials.database)
+            graph = create_graph_database_connection(credentials)
         
         graphDb_data_Access = graphDBdataAccess(graph)
         write_access = graphDb_data_Access.check_account_access(database=credentials.database)
@@ -498,18 +443,12 @@ async def get_neighbours(credentials: Neo4jCredentials = Depends(get_neo4j_crede
         gc.collect()
 
 @app.post("/graph_query")
-async def graph_query(
-    credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
-    document_names: str = Form(None)
-):
+async def graph_query(credentials: Neo4jCredentials = Depends(get_neo4j_credentials),document_names: str = Form(None)):
     try:
         start = time.time()
         result = await asyncio.to_thread(
             get_graph_results,
-            uri=credentials.uri,
-            username=credentials.userName,
-            password=credentials.password,
-            database=credentials.database,
+            credentials,
             document_names=document_names
         )
         end = time.time()
@@ -531,7 +470,7 @@ async def graph_query(
 async def clear_chat_bot(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), session_id=Form(None)):
     try:
         start = time.time()
-        graph = create_graph_database_connection(credentials.uri, credentials.userName, credentials.password, credentials.database)
+        graph = create_graph_database_connection(credentials)
         result = await asyncio.to_thread(clear_chat_history,graph=graph,session_id=session_id)
         end = time.time()
         elapsed_time = end - start
@@ -549,12 +488,11 @@ async def clear_chat_bot(credentials: Neo4jCredentials = Depends(get_neo4j_crede
             
 @app.post("/connect")
 async def connect(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
-    print(f"Connect API called uri={credentials.uri} userName={credentials.userName} database={credentials.database}")
     try:
         if not credentials.uri or not credentials.userName or not credentials.password:
             return create_api_response("Failed", message="Missing required credentials (uri, userName, password)", error="Invalid credentials")
         start = time.time()
-        graph = create_graph_database_connection(credentials.uri, credentials.userName, credentials.password, credentials.database)
+        graph = create_graph_database_connection(credentials)
         
         result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, credentials.database)
         gcs_cache = get_value_from_env("GCS_FILE_CACHE","False","bool")
@@ -574,17 +512,16 @@ async def connect(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)
 
 @app.post("/upload")
 async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber=Form(None), totalChunks=Form(None), 
-                                        originalname=Form(None), model=Form(None), uri=Form(None), userName=Form(None), 
-                                        password=Form(None), database=Form(None),email=Form(None)):
+                                        originalname=Form(None), model=Form(None), credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
     try:
         start = time.time()
-        graph = create_graph_database_connection(uri, userName, password, database)
-        result = await asyncio.to_thread(upload_file, graph, model, file, chunkNumber, totalChunks, originalname, uri, CHUNK_DIR, MERGED_DIR)
+        graph = create_graph_database_connection(credentials)
+        result = await asyncio.to_thread(upload_file, graph, model, file, chunkNumber, totalChunks, originalname, credentials.uri, CHUNK_DIR, MERGED_DIR)
         end = time.time()
         elapsed_time = end - start
         if int(chunkNumber) == int(totalChunks):
-            json_obj = {'api_name':'upload','db_url':uri,'userName':userName, 'database':database, 'chunkNumber':chunkNumber,'totalChunks':totalChunks,
-                                'original_file_name':originalname,'model':model, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
+            json_obj = {'api_name':'upload','db_url':credentials.uri,'userName':credentials.userName, 'database':credentials.database, 'chunkNumber':chunkNumber,'totalChunks':totalChunks,
+                                'original_file_name':originalname,'model':model, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
             logger.log_struct(json_obj, "INFO")
         if int(chunkNumber) == int(totalChunks):
             return create_api_response('Success',data=result, message='Source Node Created Successfully')
@@ -593,7 +530,7 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
     except Exception as e:
         message="Unable to upload file in chunks"
         error_message = str(e)
-        graph = create_graph_database_connection(uri, userName, password, database)   
+        graph = create_graph_database_connection(credentials)   
         graphDb_data_Access = graphDBdataAccess(graph)
         graphDb_data_Access.update_exception_db(originalname,error_message)
         logging.info(message)
@@ -641,8 +578,8 @@ async def update_extract_status(request: Request, file_name: str, uri:str=None, 
         url = uri
         if url and " " in url:
             url= url.replace(" ","+")
-            
-        graph = create_graph_database_connection(url, userName, decoded_password, database)
+        credentials= Neo4jCredentials(uri=url, userName=userName, password=decoded_password, database=database)
+        graph = create_graph_database_connection(credentials)
         graphDb_data_Access = graphDBdataAccess(graph)
         while True:
             try:
@@ -686,7 +623,7 @@ async def delete_document_and_entities(
 ):
     try:
         start = time.time()
-        graph = create_graph_database_connection(credentials.uri, credentials.userName, credentials.password, credentials.database)
+        graph = create_graph_database_connection(credentials)
         graphDb_data_Access = graphDBdataAccess(graph)
         files_list_size = await asyncio.to_thread(graphDb_data_Access.delete_file_from_graph, filenames, source_types, deleteEntities, MERGED_DIR, credentials.uri)
         message = f"Deleted {files_list_size} documents with entities from database"
@@ -714,7 +651,8 @@ async def get_document_status(file_name, url, userName, password, database):
             uri= url.replace(" ","+")
         else:
             uri=url
-        graph = create_graph_database_connection(uri, userName, decoded_password, database)
+        credentials= Neo4jCredentials(uri=url, userName=userName, password=decoded_password, database=database)
+        graph = create_graph_database_connection(credentials)
         graphDb_data_Access = graphDBdataAccess(graph)
         result = graphDb_data_Access.get_current_status_document_node(file_name)
         if len(result) > 0:
@@ -749,7 +687,7 @@ async def get_document_status(file_name, url, userName, password, database):
 async def cancelled_job(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), filenames=Form(None), source_types=Form(None)):
     try:
         start = time.time()
-        graph = create_graph_database_connection(credentials.uri, credentials.userName, credentials.password, credentials.database)
+        graph = create_graph_database_connection(credentials)
         result = manually_cancelled_job(graph, filenames, source_types, MERGED_DIR, credentials.uri)
         end = time.time()
         elapsed_time = end - start
@@ -789,7 +727,7 @@ async def populate_graph_schema(input_text=Form(None), model=Form(None), is_sche
 async def get_unconnected_nodes_list(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
     try:
         start = time.time()
-        graph = create_graph_database_connection(credentials.uri, credentials.userName, credentials.password, credentials.database)
+        graph = create_graph_database_connection(credentials)
         graphDb_data_Access = graphDBdataAccess(graph)
         nodes_list, total_nodes = graphDb_data_Access.list_unconnected_nodes()
         end = time.time()
@@ -810,7 +748,7 @@ async def get_unconnected_nodes_list(credentials: Neo4jCredentials = Depends(get
 async def delete_orphan_nodes(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), unconnected_entities_list=Form()):
     try:
         start = time.time()
-        graph = create_graph_database_connection(credentials.uri, credentials.userName, credentials.password, credentials.database)
+        graph = create_graph_database_connection(credentials)
         graphDb_data_Access = graphDBdataAccess(graph)
         result = graphDb_data_Access.delete_unconnected_nodes(unconnected_entities_list)
         end = time.time()
@@ -831,7 +769,7 @@ async def delete_orphan_nodes(credentials: Neo4jCredentials = Depends(get_neo4j_
 async def get_duplicate_nodes(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
     try:
         start = time.time()
-        graph = create_graph_database_connection(credentials.uri, credentials.userName, credentials.password, credentials.database)
+        graph = create_graph_database_connection(credentials)
         graphDb_data_Access = graphDBdataAccess(graph)
         nodes_list, total_nodes = graphDb_data_Access.get_duplicate_nodes_list()
         end = time.time()
@@ -852,7 +790,7 @@ async def get_duplicate_nodes(credentials: Neo4jCredentials = Depends(get_neo4j_
 async def merge_duplicate_nodes(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), duplicate_nodes_list=Form()):
     try:
         start = time.time()
-        graph = create_graph_database_connection(credentials.uri, credentials.userName, credentials.password, credentials.database)
+        graph = create_graph_database_connection(credentials)
         graphDb_data_Access = graphDBdataAccess(graph)
         result = graphDb_data_Access.merge_duplicate_nodes(duplicate_nodes_list)
         end = time.time()
@@ -874,7 +812,7 @@ async def merge_duplicate_nodes(credentials: Neo4jCredentials = Depends(get_neo4
 async def drop_create_vector_index(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), isVectorIndexExist=Form()):
     try:
         start = time.time()
-        graph = create_graph_database_connection(credentials.uri, credentials.userName, credentials.password, credentials.database)
+        graph = create_graph_database_connection(credentials)
         graphDb_data_Access = graphDBdataAccess(graph)
         result = graphDb_data_Access.drop_create_vector_index(isVectorIndexExist)
         end = time.time()
@@ -896,7 +834,7 @@ async def drop_create_vector_index(credentials: Neo4jCredentials = Depends(get_n
 async def retry_processing(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), file_name=Form(), retry_condition=Form()):
     try:
         start = time.time()
-        graph = create_graph_database_connection(credentials.uri, credentials.userName, credentials.password, credentials.database)
+        graph = create_graph_database_connection(credentials)
         # chunks = execute_graph_query(graph,QUERY_TO_GET_CHUNKS,params={"filename":file_name})
         end = time.time()
         elapsed_time = end - start
@@ -986,22 +924,13 @@ async def calculate_additional_metrics(question: str = Form(),
 
 @app.post("/fetch_chunktext")
 async def fetch_chunktext(
-   uri: str = Form(None),
-   database: str = Form(None),
-   userName: str = Form(None),
-   password: str = Form(None),
-   document_name: str = Form(),
-   page_no: int = Form(1),
-   email=Form(None)
+   credentials: Neo4jCredentials = Depends(get_neo4j_credentials),document_name: str = Form(),page_no: int = Form(1)
 ):
    try:
        start = time.time()
        result = await asyncio.to_thread(
            get_chunktext_results,
-           uri=uri,
-           username=userName,
-           password=password,
-           database=database,
+           credentials,
            document_name=document_name,
            page_no=page_no
        )
@@ -1009,14 +938,14 @@ async def fetch_chunktext(
        elapsed_time = end - start
        json_obj = {
            'api_name': 'fetch_chunktext',
-           'db_url': uri,
-           'userName': userName,
-           'database': database,
+           'db_url': credentials.uri,
+           'userName': credentials.userName,
+           'database': credentials.database,
            'document_name': document_name,
            'page_no': page_no,
            'logging_time': formatted_time(datetime.now(timezone.utc)),
            'elapsed_api_time': f'{elapsed_time:.2f}',
-           'email': email
+           'email': credentials.email
        }
        logger.log_struct(json_obj, "INFO")
        return create_api_response('Success', data=result, message=f"Total elapsed API time {elapsed_time:.2f}")
