@@ -497,12 +497,15 @@ def get_remaining_token_limits(email: str, uri: str) -> dict:
                 user_node = result[0]["u"]
 
         if not user_node:
-            raise RuntimeError("User not found for provided email or db_url.")
-
-        daily_tokens_limit = user_node.get("daily_tokens_limit", int(os.getenv("DAILY_TOKENS_LIMIT", "250000")))
-        monthly_tokens_limit = user_node.get("monthly_tokens_limit", int(os.getenv("MONTHLY_TOKENS_LIMIT", "1000000")))
-        daily_tokens_used = user_node.get("daily_tokens_used", 0)
-        monthly_tokens_used = user_node.get("monthly_tokens_used", 0)
+            daily_tokens_limit = int(os.getenv("DAILY_TOKENS_LIMIT", "250000"))
+            monthly_tokens_limit = int(os.getenv("MONTHLY_TOKENS_LIMIT", "1000000"))
+            daily_tokens_used = 0
+            monthly_tokens_used = 0
+        else:
+            daily_tokens_limit = user_node.get("daily_tokens_limit", int(os.getenv("DAILY_TOKENS_LIMIT", "250000")))
+            monthly_tokens_limit = user_node.get("monthly_tokens_limit", int(os.getenv("MONTHLY_TOKENS_LIMIT", "1000000")))
+            daily_tokens_used = user_node.get("daily_tokens_used", 0)
+            monthly_tokens_used = user_node.get("monthly_tokens_used", 0)
 
         return {
             "daily_remaining": max(daily_tokens_limit - daily_tokens_used, 0),
