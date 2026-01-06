@@ -12,9 +12,9 @@ export const llms =
   import.meta.env?.VITE_LLM_MODELS?.trim() != ''
     ? (import.meta.env.VITE_LLM_MODELS?.split(',') as string[])
     : [
+        'gemini_2.5_flash',
         'openai_gpt_5.2',
         'openai_gpt_5_mini',
-        'gemini_2.5_flash',
         'gemini_2.5_pro',
         'diffbot',
         'groq_llama3.1_8b',
