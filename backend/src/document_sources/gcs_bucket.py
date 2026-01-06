@@ -1,4 +1,3 @@
-
 import os
 import logging
 import io
@@ -13,6 +12,35 @@ import nltk
 from .local_file import load_document_content
 
 logger = logging.getLogger(__name__)
+
+def get_nltk_download_dir():
+    """
+    Returns a directory for NLTK data that is writable by the current user.
+    Prefers /usr/local/nltk_data if writable, else falls back to ~/.nltk_data.
+    """
+    system_dir = "/usr/local/nltk_data"
+    user_dir = os.path.expanduser("~/.nltk_data")
+    if os.access(system_dir, os.W_OK):
+        return system_dir
+    return user_dir
+
+def ensure_nltk_resources():
+    """
+    Ensures required NLTK resources are available, downloading if necessary.
+    """
+    download_dir = get_nltk_download_dir()
+    if download_dir not in nltk.data.path:
+        nltk.data.path.append(download_dir)
+    resources = [
+        ("punkt", "tokenizers"),
+        ("averaged_perceptron_tagger", "taggers"),
+    ]
+    for res, res_type in resources:
+        try:
+            nltk.data.find(f"{res_type}/{res}")
+        except LookupError:
+            logger.info("NLTK resource '%s' not found; downloading to %s", res, download_dir)
+            nltk.download(res, download_dir=download_dir)
 
 def get_gcs_bucket_files_info(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, creds):
     """
@@ -95,21 +123,7 @@ def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, g
     Raises:
         LLMGraphBuilderException: If file does not exist or loading fails.
     """
-    nltk_data_dirs = ["/usr/local/nltk_data", os.path.expanduser("~/.nltk_data")]
-    for d in nltk_data_dirs:
-        if d not in nltk.data.path:
-            nltk.data.path.append(d)
-
-    resources = [
-        ("punkt", "tokenizers"),
-        ("averaged_perceptron_tagger", "taggers"),
-    ]
-    for res, res_type in resources:
-        try:
-            nltk.data.find(f"{res_type}/{res}")
-        except LookupError:
-            logger.info("NLTK resource '%s' not found; downloading to /usr/local/nltk_data", res)
-            nltk.download(res, download_dir="/usr/local/nltk_data")
+    ensure_nltk_resources()
 
     if gcs_bucket_folder and gcs_bucket_folder.strip():
         blob_name = f"{gcs_bucket_folder.rstrip('/')}/{gcs_blob_filename}"
