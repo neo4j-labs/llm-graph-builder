@@ -163,7 +163,12 @@ export function extractPdfFileName(url: string): string {
 export const processGraphData = (neoNodes: ExtendedNode[], neoRels: ExtendedRelationship[]) => {
   const schemeVal: Scheme = {};
   let iterator = 0;
-  const labels: string[] = neoNodes.flatMap((f: any) => f.labels);
+  const filteredNeoNodes = neoNodes.filter((node: any) => {
+    const labels = node.labels || [];
+    return !labels.includes('*') && !labels.includes('__Entity__');
+  });
+
+  const labels: string[] = filteredNeoNodes.flatMap((f: any) => f.labels);
   for (let index = 0; index < labels.length; index++) {
     const label = labels[index];
     if (schemeVal[label] == undefined) {
@@ -171,7 +176,7 @@ export const processGraphData = (neoNodes: ExtendedNode[], neoRels: ExtendedRela
       iterator += 1;
     }
   }
-  const newNodes: ExtendedNode[] = neoNodes.map((g: any) => {
+  const newNodes: ExtendedNode[] = filteredNeoNodes.map((g: any) => {
     return {
       id: g.element_id,
       size: getSize(g),
@@ -185,15 +190,20 @@ export const processGraphData = (neoNodes: ExtendedNode[], neoRels: ExtendedRela
     };
   });
   const finalNodes = newNodes.flat();
-  // Process relationships
-  const newRels: Relationship[] = neoRels.map((relations: any) => {
-    return {
-      id: relations.element_id,
-      from: relations.start_node_element_id,
-      to: relations.end_node_element_id,
-      caption: relations.type,
-    };
-  });
+  const validNodeIds = new Set(finalNodes.map((node) => node.id));
+  const newRels: Relationship[] = neoRels
+    .filter(
+      (relations: any) =>
+        validNodeIds.has(relations.start_node_element_id) && validNodeIds.has(relations.end_node_element_id)
+    )
+    .map((relations: any) => {
+      return {
+        id: relations.element_id,
+        from: relations.start_node_element_id,
+        to: relations.end_node_element_id,
+        caption: relations.type,
+      };
+    });
   const finalRels = newRels.flat();
   return { finalNodes, finalRels, schemeVal };
 };
@@ -896,4 +906,15 @@ export const deduplicateByFullPattern = (arrays: { value: string; label: string 
 
 export const importerValidation = (url: string) => {
   return url.trim() !== '' && /^https:\/\/console-preview\.neo4j\.io\/tools\/import\/models(\/.*)?$/i.test(url);
+};
+
+export const isNeo4jUser = (email?: string): boolean => {
+  if (!email) {
+    return false;
+  }
+  return email.toLowerCase().endsWith('@neo4j.com');
+};
+
+export const shouldShowTokenTracking = (email?: string): boolean => {
+  return !isNeo4jUser(email);
 };

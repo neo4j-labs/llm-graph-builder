@@ -524,6 +524,7 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
       # selected_chunks = []
       is_cancelled_status = False
       job_status = "Completed"
+      tokens_per_file = 0
       for i in range(0, len(chunkId_chunkDoc_list), update_graph_chunk_processed):
         select_chunks_upto = i+update_graph_chunk_processed
         logging.info(f'Selected Chunks upto: {select_chunks_upto}')
@@ -576,6 +577,7 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
       obj_source_node.file_name = params.file_name.strip() if isinstance(params.file_name, str) else params.file_name
       obj_source_node.status = job_status
       obj_source_node.processing_time = processed_time
+      obj_source_node.token_usage = tokens_per_file
 
       graphDb_data_Access.update_source_node(obj_source_node)
       graphDb_data_Access.update_node_relationship_count(params.file_name)
@@ -677,7 +679,7 @@ async def processing_chunks(chunkId_chunkDoc_list,graph,credentials,file_name,mo
   count_response = graphDb_data_Access.update_node_relationship_count(file_name)
   node_count = count_response[file_name].get('nodeCount',"0")
   rel_count = count_response[file_name].get('relationshipCount',"0")
-  return node_count,rel_count,latency_processing_chunk
+  return node_count,rel_count,latency_processing_chunk,token_usage
 
 def get_chunkId_chunkDoc_list(graph, file_name, pages, token_chunk_size, chunk_overlap, retry_condition, email):
   """
