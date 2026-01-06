@@ -1,117 +1,165 @@
-from langchain_neo4j import Neo4jGraph
-from src.shared.constants import (QUERY_TO_GET_CHUNKS, 
-                                  QUERY_TO_DELETE_EXISTING_ENTITIES, 
-                                  QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION,
-                                  QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY,
-                                  START_FROM_BEGINNING,
-                                  START_FROM_LAST_PROCESSED_POSITION,
-                                  DELETE_ENTITIES_AND_START_FROM_BEGINNING,
-                                  QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT)
-from src.shared.schema_extraction import schema_extraction_from_text
-from dotenv import load_dotenv
-from datetime import datetime
-from langchain_core.documents import Document
-import logging
-from src.create_chunks import CreateChunksofDocument
-from src.graphDB_dataAccess import graphDBdataAccess
-from src.document_sources.local_file import get_documents_from_file_by_path
-from src.entities.source_node import sourceNode
-from src.llm import get_graph_from_llm
-from src.document_sources.gcs_bucket import get_gcs_bucket_files_info, copy_failed_file, get_documents_from_gcs, delete_file_from_gcs, upload_file_to_gcs, merge_file_gcs
-from src.document_sources.s3_bucket import get_s3_files_info, get_documents_from_s3
-from src.document_sources.wikipedia import get_documents_from_wikipedia
-from src.document_sources.youtube import get_youtube_combined_transcript, get_documents_from_youtube
-from src.shared.common_fn import get_value_from_env, last_url_segment, check_url_source, create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file, create_graph_database_connection, track_token_usage, handle_backticks_nodes_relationship_id_type, save_graphDocuments_in_neo4j, get_chunk_and_graphDocument
-from src.make_relationships import create_chunk_vector_index, execute_graph_query, create_chunk_embeddings, merge_relationship_between_chunk_and_entites, create_relation_between_chunks
-from src.document_sources.web_pages import get_documents_from_web_page
-from src.graph_query import get_graphDB_driver
-import re
-from langchain_community.document_loaders import WikipediaLoader, WebBaseLoader
-import warnings
-import sys
-import shutil
-import urllib.parse
-import json
-import os
-import time
 import hashlib
+import json
+import logging
+import os
+import re
+import shutil
+import sys
+import time
 import unicodedata
+import urllib.parse
+import warnings
+from datetime import datetime
+
+from dotenv import load_dotenv
+from langchain_core.documents import Document
+from langchain_community.document_loaders import WikipediaLoader, WebBaseLoader
+from langchain_neo4j import Neo4jGraph
+
+from src.create_chunks import CreateChunksofDocument
+from src.document_sources.gcs_bucket import (
+    copy_failed_file, delete_file_from_gcs, get_documents_from_gcs,
+    get_gcs_bucket_files_info, merge_file_gcs, upload_file_to_gcs
+)
+from src.document_sources.local_file import get_documents_from_file_by_path
+from src.document_sources.s3_bucket import get_documents_from_s3, get_s3_files_info
+from src.document_sources.web_pages import get_documents_from_web_page
+from src.document_sources.wikipedia import get_documents_from_wikipedia
+from src.document_sources.youtube import get_documents_from_youtube, get_youtube_combined_transcript
+from src.entities.source_node import sourceNode
+from src.graph_query import get_graphDB_driver
+from src.graphDB_dataAccess import graphDBdataAccess
+from src.llm import get_graph_from_llm
+from src.make_relationships import (
+    create_chunk_embeddings, create_chunk_vector_index, create_relation_between_chunks,
+    execute_graph_query, merge_relationship_between_chunk_and_entites
+)
+from src.shared.common_fn import (
+    check_url_source, create_gcs_bucket_folder_name_hashed, create_graph_database_connection,
+    delete_uploaded_local_file, get_chunk_and_graphDocument, get_value_from_env,
+    handle_backticks_nodes_relationship_id_type, last_url_segment, save_graphDocuments_in_neo4j, track_token_usage
+)
+from src.shared.constants import (
+    DELETE_ENTITIES_AND_START_FROM_BEGINNING, QUERY_TO_DELETE_EXISTING_ENTITIES,
+    QUERY_TO_GET_CHUNKS, QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION,
+    QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY, QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT,
+    START_FROM_BEGINNING, START_FROM_LAST_PROCESSED_POSITION
+)
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
-def sanitize_uploaded_fileName(filename, max_length=100):
-  """
-  Sanitize filename to remove problematic characters and limit length.
-  If filename is too long or contains non-ASCII, use a hash for uniqueness.
-  """
-  # Normalize unicode to NFKD and encode to ASCII, ignore errors
-  safe_name = unicodedata.normalize('NFKD', filename).encode('ascii', 'ignore').decode('ascii')
-  # Remove any remaining problematic characters
-  safe_name = re.sub(r'[^A-Za-z0-9._-]', '_', safe_name)
-  # Split extension
-  if '.' in filename:
-    base, ext = os.path.splitext(filename)
-  else:
-    base, ext = filename, ''
-  # If base is too long or empty after sanitization, use hash
-  if len(safe_name) == 0 or len(safe_name) > max_length:
-    hash_part = hashlib.sha256(filename.encode('utf-8')).hexdigest()[:16]
-    safe_name = (safe_name[:max_length] if len(safe_name) > 0 else 'file') + '_' + hash_part + ext
-    # Ensure final length
-    if len(safe_name) > max_length:
-      safe_name = safe_name[:max_length-len(ext)-17] + '_' + hash_part + ext
-  return safe_name
+from src.shared.schema_extraction import schema_extraction_from_text
 
 warnings.filterwarnings("ignore")
 load_dotenv()
 
-logging.basicConfig(format='%(asctime)s - %(message)s',level='INFO')
-GCS_FILE_CACHE = get_value_from_env("GCS_FILE_CACHE","False","bool")
+logging.basicConfig(format='%(asctime)s - %(message)s', level='INFO')
+GCS_FILE_CACHE = get_value_from_env("GCS_FILE_CACHE", "False", "bool")
 if GCS_FILE_CACHE:
-  BUCKET_UPLOAD_FILE = get_value_from_env('BUCKET_UPLOAD_FILE', default_value=None, data_type=str)
-  BUCKET_FAILED_FILE = get_value_from_env('BUCKET_FAILED_FILE', default_value=None, data_type=str)
-  PROJECT_ID = get_value_from_env('PROJECT_ID', default_value=None, data_type=str)
+    BUCKET_UPLOAD_FILE = get_value_from_env('BUCKET_UPLOAD_FILE', default_value=None, data_type=str)
+    BUCKET_FAILED_FILE = get_value_from_env('BUCKET_FAILED_FILE', default_value=None, data_type=str)
+    PROJECT_ID = get_value_from_env('PROJECT_ID', default_value=None, data_type=str)
+
+
+def sanitize_uploaded_fileName(filename, max_length=100):
+    """
+    Sanitize filename to remove problematic characters and limit length.
+    If filename is too long or contains non-ASCII, use a hash for uniqueness.
+
+    Args:
+        filename (str): The original filename.
+        max_length (int): Maximum allowed length for the filename.
+
+    Returns:
+        str: Sanitized filename.
+    """
+    safe_name = unicodedata.normalize('NFKD', filename).encode('ascii', 'ignore').decode('ascii')
+    safe_name = re.sub(r'[^A-Za-z0-9._-]', '_', safe_name)
+    if '.' in filename:
+        base, ext = os.path.splitext(filename)
+    else:
+        base, ext = filename, ''
+    if len(safe_name) == 0 or len(safe_name) > max_length:
+        hash_part = hashlib.sha256(filename.encode('utf-8')).hexdigest()[:16]
+        safe_name = (safe_name[:max_length] if len(safe_name) > 0 else 'file') + '_' + hash_part + ext
+        if len(safe_name) > max_length:
+            safe_name = safe_name[:max_length - len(ext) - 17] + '_' + hash_part + ext
+    return safe_name
+
 
 def create_source_node_graph_url_s3(graph, params):
-    
+    """
+    Create source nodes in the graph for files in an S3 bucket.
+
+    Args:
+        graph: Neo4j graph connection.
+        params: SourceScanExtractParams object.
+
+    Returns:
+        tuple: (list of file info dicts, success_count, failed_count)
+    """
     lst_file_name = []
-    files_info = get_s3_files_info(params.source_url,aws_access_key_id=params.aws_access_key_id,aws_secret_access_key=params.aws_secret_access_key)
-    if len(files_info)==0:
-      raise LLMGraphBuilderException('No pdf files found.')
-    logging.info(f'files info : {files_info}')
-    success_count=0
-    failed_count=0
-    
+    files_info = get_s3_files_info(
+        params.source_url,
+        aws_access_key_id=params.aws_access_key_id,
+        aws_secret_access_key=params.aws_secret_access_key
+    )
+    if not files_info:
+        raise LLMGraphBuilderException('No pdf files found.')
+    logging.info('files info : %s', files_info)
+    success_count = 0
+    failed_count = 0
+
     for file_info in files_info:
-        file_name=file_info['file_key'] 
+        file_name = file_info['file_key']
         obj_source_node = sourceNode()
         obj_source_node.file_name = file_name.split('/')[-1].strip() if isinstance(file_name.split('/')[-1], str) else file_name.split('/')[-1]
         obj_source_node.file_type = 'pdf'
         obj_source_node.file_size = file_info['file_size_bytes']
         obj_source_node.file_source = params.source_type
         obj_source_node.model = params.model
-        obj_source_node.url = str(params.source_url+file_name)
+        obj_source_node.url = str(params.source_url + file_name)
         obj_source_node.awsAccessKeyId = params.aws_access_key_id
         obj_source_node.created_at = datetime.now()
-        obj_source_node.chunkNodeCount=0
-        obj_source_node.chunkRelCount=0
-        obj_source_node.entityNodeCount=0
-        obj_source_node.entityEntityRelCount=0
-        obj_source_node.communityNodeCount=0
-        obj_source_node.communityRelCount=0
+        obj_source_node.chunkNodeCount = 0
+        obj_source_node.chunkRelCount = 0
+        obj_source_node.entityNodeCount = 0
+        obj_source_node.entityEntityRelCount = 0
+        obj_source_node.communityNodeCount = 0
+        obj_source_node.communityRelCount = 0
         try:
-          graphDb_data_Access = graphDBdataAccess(graph)
-          graphDb_data_Access.create_source_node(obj_source_node)
-          success_count+=1
-          lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url,'status':'Success'})
+            graphDb_data_Access = graphDBdataAccess(graph)
+            graphDb_data_Access.create_source_node(obj_source_node)
+            success_count += 1
+            lst_file_name.append({
+                'fileName': obj_source_node.file_name,
+                'fileSize': obj_source_node.file_size,
+                'url': obj_source_node.url,
+                'status': 'Success'
+            })
+        except Exception:
+            failed_count += 1
+            lst_file_name.append({
+                'fileName': obj_source_node.file_name,
+                'fileSize': obj_source_node.file_size,
+                'url': obj_source_node.url,
+                'status': 'Failed'
+            })
+    return lst_file_name, success_count, failed_count
 
-        except Exception as e:
-          failed_count+=1
-          lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url,'status':'Failed'})
-    return lst_file_name,success_count,failed_count
 
 def create_source_node_graph_url_gcs(graph, params, credentials):
+    """
+    Create source nodes in the graph for files in a GCS bucket.
 
-    success_count=0
-    failed_count=0
+    Args:
+        graph: Neo4j graph connection.
+        params: SourceScanExtractParams object.
+        credentials: Google OAuth2 credentials.
+
+    Returns:
+        tuple: (list of file info dicts, success_count, failed_count)
+    """
+    success_count = 0
+    failed_count = 0
     lst_file_name = []
     
     lst_file_metadata= get_gcs_bucket_files_info(params.gcs_project_id, params.gcs_bucket_name, params.gcs_bucket_folder, credentials)
@@ -148,6 +196,16 @@ def create_source_node_graph_url_gcs(graph, params, credentials):
     return lst_file_name,success_count,failed_count
 
 def create_source_node_graph_web_url(graph, params):
+    """
+    Create a source node in the graph for a web page.
+
+    Args:
+        graph: Neo4j graph connection.
+        params: SourceScanExtractParams object.
+
+    Returns:
+        tuple: (list of file info dicts, success_count, failed_count)
+    """
     success_count=0
     failed_count=0
     lst_file_name = []
@@ -192,7 +250,16 @@ def create_source_node_graph_web_url(graph, params):
     return lst_file_name,success_count,failed_count
   
 def create_source_node_graph_url_youtube(graph, params):
-    
+    """
+    Create a source node in the graph for a YouTube video.
+
+    Args:
+        graph: Neo4j graph connection.
+        params: SourceScanExtractParams object.
+
+    Returns:
+        tuple: (list of file info dicts, success_count, failed_count)
+    """
     youtube_url, language = check_url_source(source_type=params.source_type, yt_url=params.source_url)
     success_count=0
     failed_count=0
@@ -227,7 +294,16 @@ def create_source_node_graph_url_youtube(graph, params):
     return lst_file_name,success_count,failed_count
 
 def create_source_node_graph_url_wikipedia(graph, params):
-  
+    """
+    Create a source node in the graph for a Wikipedia page.
+
+    Args:
+        graph: Neo4j graph connection.
+        params: SourceScanExtractParams object.
+
+    Returns:
+        tuple: (list of file info dicts, success_count, failed_count)
+    """
     success_count=0
     failed_count=0
     lst_file_name=[]
@@ -276,6 +352,16 @@ async def extract_graph_from_file_local_file(credentials, params, merged_file_pa
     return await processing_source(credentials, params, [], merged_file_path, True)
   
 async def extract_graph_from_file_s3(credentials, params):
+  """
+  Extract graph data from a file in S3.
+
+  Args:
+      credentials: Database credentials.
+      params: SourceScanExtractParams object.
+
+  Returns:
+      dict: Processing latency and response details.
+  """
   if params.retry_condition in ["", None] or params.retry_condition not in [DELETE_ENTITIES_AND_START_FROM_BEGINNING, START_FROM_LAST_PROCESSED_POSITION]:
     if(params.aws_access_key_id==None or params.aws_secret_access_key==None):
       raise LLMGraphBuilderException('Please provide AWS access and secret keys')
@@ -289,6 +375,16 @@ async def extract_graph_from_file_s3(credentials, params):
     return await processing_source(credentials, params, [])
   
 async def extract_graph_from_web_page(credentials, params):
+  """
+  Extract graph data from a web page.
+
+  Args:
+      credentials: Database credentials.
+      params: SourceScanExtractParams object.
+
+  Returns:
+      dict: Processing latency and response details.
+  """
   if params.retry_condition in ["", None] or params.retry_condition not in [DELETE_ENTITIES_AND_START_FROM_BEGINNING, START_FROM_LAST_PROCESSED_POSITION]:
     pages = get_documents_from_web_page(params.source_url)
     if pages==None or len(pages)==0:
@@ -298,6 +394,16 @@ async def extract_graph_from_web_page(credentials, params):
     return await processing_source(credentials, params, [])
   
 async def extract_graph_from_file_youtube(credentials, params):
+  """
+  Extract graph data from a YouTube video.
+
+  Args:
+      credentials: Database credentials.
+      params: SourceScanExtractParams object.
+
+  Returns:
+      dict: Processing latency and response details.
+  """
   if params.retry_condition in ["", None] or params.retry_condition not in [DELETE_ENTITIES_AND_START_FROM_BEGINNING, START_FROM_LAST_PROCESSED_POSITION]:
     file_name, pages = get_documents_from_youtube(params.source_url)
 
@@ -308,6 +414,16 @@ async def extract_graph_from_file_youtube(credentials, params):
      return await processing_source(credentials, params, [])
     
 async def extract_graph_from_file_Wikipedia(credentials, params):
+  """
+  Extract graph data from a Wikipedia page.
+
+  Args:
+      credentials: Database credentials.
+      params: SourceScanExtractParams object.
+
+  Returns:
+      dict: Processing latency and response details.
+  """
   if params.retry_condition in ["", None] or params.retry_condition not in [DELETE_ENTITIES_AND_START_FROM_BEGINNING, START_FROM_LAST_PROCESSED_POSITION]:
     file_name, pages = get_documents_from_wikipedia(params.wiki_query, params.language)
     if pages==None or len(pages)==0:
@@ -317,6 +433,16 @@ async def extract_graph_from_file_Wikipedia(credentials, params):
     return await processing_source(credentials, params,[])
 
 async def extract_graph_from_file_gcs(credentials, params):
+  """
+  Extract graph data from a file in GCS.
+
+  Args:
+      credentials: Database credentials.
+      params: SourceScanExtractParams object.
+
+  Returns:
+      dict: Processing latency and response details.
+  """
   if params.retry_condition in ["", None] or params.retry_condition not in [DELETE_ENTITIES_AND_START_FROM_BEGINNING, START_FROM_LAST_PROCESSED_POSITION]:
     file_name, pages = get_documents_from_gcs(params.gcs_project_id, params.gcs_bucket_name, params.gcs_bucket_folder, params.gcs_blob_filename, params.access_token)
     if pages==None or len(pages)==0:
@@ -554,6 +680,21 @@ async def processing_chunks(chunkId_chunkDoc_list,graph,credentials,file_name,mo
   return node_count,rel_count,latency_processing_chunk
 
 def get_chunkId_chunkDoc_list(graph, file_name, pages, token_chunk_size, chunk_overlap, retry_condition, email):
+  """
+  Get chunk IDs and corresponding document chunks for a file.
+
+  Args:
+      graph: Neo4j graph connection.
+      file_name (str): Name of the file.
+      pages (list): List of document pages.
+      token_chunk_size (int): Token size for chunking.
+      chunk_overlap (int): Overlap size for chunks.
+      retry_condition (str): Condition for retrying chunk creation.
+      email (str): User email for tracking.
+
+  Returns:
+      tuple: (total_chunks, chunkId_chunkDoc_list)
+  """
   if retry_condition in ["", None] or retry_condition not in [DELETE_ENTITIES_AND_START_FROM_BEGINNING, START_FROM_LAST_PROCESSED_POSITION]:
     logging.info("Break down file into chunks")
     bad_chars = ['"', "\n", "'"]
@@ -632,6 +773,18 @@ def connection_check_and_get_vector_dimensions(graph,database):
 
 
 def merge_chunks_local(file_name, total_chunks, chunk_dir, merged_dir):
+  """
+  Merge file chunks into a single file locally.
+
+  Args:
+      file_name (str): Name of the original file.
+      total_chunks (int): Total number of chunks.
+      chunk_dir (str): Directory where chunks are stored.
+      merged_dir (str): Directory where the merged file will be saved.
+
+  Returns:
+      int: Size of the merged file.
+  """
   if not os.path.exists(merged_dir):
     os.mkdir(merged_dir)
   logging.info(f'Merged File Path: {merged_dir}')
@@ -648,6 +801,23 @@ def merge_chunks_local(file_name, total_chunks, chunk_dir, merged_dir):
   return file_size
 
 def upload_file(graph, model, chunk, chunk_number: int, total_chunks: int, file_name, uri, chunk_dir, merged_dir):
+    """
+    Upload a file or its chunk to the specified destination (GCS or local).
+
+    Args:
+        graph: Neo4j graph connection.
+        model: Model name used for processing.
+        chunk: File chunk to be uploaded.
+        chunk_number (int): Chunk number.
+        total_chunks (int): Total number of chunks.
+        file_name (str): Original file name.
+        uri: Database URI.
+        chunk_dir (str): Directory for storing chunks.
+        merged_dir (str): Directory for storing merged files.
+
+    Returns:
+        str: Status message indicating the result of the upload operation.
+    """
     # Use sanitized filename for chunk operations
     safe_file_name = sanitize_uploaded_fileName(file_name)
     if GCS_FILE_CACHE:
@@ -688,6 +858,18 @@ def upload_file(graph, model, chunk, chunk_number: int, total_chunks: int, file_
     return f"Chunk {chunk_number}/{total_chunks} saved"
 
 def get_labels_and_relationtypes(uri, userName, password, database):
+  """
+  Get distinct labels and relationship types from the graph.
+
+  Args:
+      uri (str): URI of the graph database.
+      userName (str): Username for the graph database.
+      password (str): Password for the graph database.
+      database (str): Database name.
+
+  Returns:
+      dict: A dictionary containing a list of distinct triplets (label1-relation-label2).
+  """
   excluded_labels = {'Document', 'Chunk', '_Bloom_Perspective_', '__Community__', '__Entity__', 'Session', 'Message'}
   excluded_relationships = {
        'NEXT_CHUNK', '_Bloom_Perspective_', 'FIRST_CHUNK',
@@ -756,6 +938,17 @@ def populate_graph_schema_from_text(text, model, is_schema_description_checked, 
   return result
 
 def set_status_retry(graph, file_name, retry_condition):
+    """
+    Set the status of a file processing job to 'Ready to Reprocess' in the graph.
+
+    Args:
+        graph: Neo4j graph connection.
+        file_name (str): Name of the file.
+        retry_condition (str): Condition for retrying the job.
+
+    Returns:
+        None
+    """
     graphDb_data_Access = graphDBdataAccess(graph)
     obj_source_node = sourceNode()
     status = "Ready to Reprocess"
@@ -782,6 +975,17 @@ def set_status_retry(graph, file_name, retry_condition):
     graphDb_data_Access.update_source_node(obj_source_node)
 
 def failed_file_process(uri,file_name, merged_file_path):
+  """
+  Handle the processing of a failed file by moving it to a failed directory.
+
+  Args:
+      uri (str): The URI of the Neo4j database.
+      file_name (str): The name of the file that failed to process.
+      merged_file_path (str): The path of the merged file.
+
+  Returns:
+      None
+  """
   if GCS_FILE_CACHE:
       folder_name = create_gcs_bucket_folder_name_hashed(uri,file_name)
       copy_failed_file(BUCKET_UPLOAD_FILE, BUCKET_FAILED_FILE, folder_name, file_name)

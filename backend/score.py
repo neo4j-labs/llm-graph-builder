@@ -1,50 +1,50 @@
-from fastapi import FastAPI, File, UploadFile, Form, Request
-from fastapi_health import health
-from fastapi.middleware.cors import CORSMiddleware
-from src.main import (
-    create_source_node_graph_url_s3, create_source_node_graph_url_gcs, create_source_node_graph_web_url,
-    create_source_node_graph_url_youtube, create_source_node_graph_url_wikipedia, extract_graph_from_file_local_file,
-    extract_graph_from_file_s3, extract_graph_from_web_page, extract_graph_from_file_youtube,
-    extract_graph_from_file_Wikipedia, extract_graph_from_file_gcs, get_source_list_from_graph, failed_file_process,
-    update_graph, connection_check_and_get_vector_dimensions, upload_file, get_labels_and_relationtypes,
-    manually_cancelled_job, populate_graph_schema_from_text, set_status_retry
-)
-from src.QA_integration import QA_RAG, clear_chat_history
-from src.shared.common_fn import create_graph_database_connection, formatted_time, get_value_from_env
-from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
-import uvicorn
 import asyncio
-from src.entities.source_extract_params import SourceScanExtractParams, get_source_scan_extract_params
 import base64
-import logging
-# from langserve import add_routes
-# from langchain_google_vertexai import ChatVertexAI
-from src.api_response import create_api_response
-from src.graphDB_dataAccess import graphDBdataAccess
-from src.graph_query import get_graph_results, get_chunktext_results, visualize_schema
-from src.chunkid_entities import get_entities_from_chunkids
-from src.post_processing import create_vector_fulltext_indexes, create_entity_embedding, graph_schema_consolidation
-from sse_starlette.sse import EventSourceResponse
-from src.communities import create_communities
-from src.neighbours import get_neighbour_nodes
-from src.entities.user_credential import Neo4jCredentials, get_neo4j_credentials
-import json
-from typing import List, Optional
-from google.oauth2.credentials import Credentials
-import os
-from src.logger import CustomLogger
-from datetime import datetime, timezone
-import time
 import gc
+import json
+import logging
+import os
+import time
+from datetime import datetime, timezone
+from typing import List
+
+import uvicorn
+from dotenv import load_dotenv
+from fastapi import Depends, FastAPI, File, Form, Request, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
+from fastapi_health import health
+from google.oauth2.credentials import Credentials
+from langchain_neo4j import Neo4jGraph
+from sse_starlette.sse import EventSourceResponse
+from starlette.middleware.sessions import SessionMiddleware
+from starlette.types import ASGIApp, Receive, Scope, Send
+
+from src.QA_integration import QA_RAG, clear_chat_history
+from src.api_response import create_api_response
+from src.chunkid_entities import get_entities_from_chunkids
+from src.communities import create_communities
+from src.entities.source_extract_params import SourceScanExtractParams, get_source_scan_extract_params
+from src.entities.user_credential import Neo4jCredentials, get_neo4j_credentials
+from src.graphDB_dataAccess import graphDBdataAccess
+from src.graph_query import get_chunktext_results, get_graph_results, visualize_schema
+from src.logger import CustomLogger
+from src.main import (
+    connection_check_and_get_vector_dimensions, create_source_node_graph_url_gcs, create_source_node_graph_url_s3,
+    create_source_node_graph_url_wikipedia, create_source_node_graph_url_youtube,create_source_node_graph_web_url,
+    create_graph_database_connection, create_source_node_graph_url_wikipedia, create_source_node_graph_url_youtube,
+    create_source_node_graph_url_wikipedia, extract_graph_from_file_Wikipedia, extract_graph_from_file_gcs,
+    extract_graph_from_file_local_file, extract_graph_from_file_s3, extract_graph_from_file_youtube,
+    extract_graph_from_web_page, failed_file_process, get_labels_and_relationtypes, get_source_list_from_graph,
+    manually_cancelled_job, populate_graph_schema_from_text, set_status_retry, update_graph, upload_file
+)
+from src.neighbours import get_neighbour_nodes
+from src.post_processing import create_entity_embedding, create_vector_fulltext_indexes, graph_schema_consolidation
+from src.ragas_eval import get_additional_metrics, get_ragas_metrics
+from src.shared.common_fn import formatted_time, get_value_from_env
+from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from Secweb.XContentTypeOptions import XContentTypeOptions
 from Secweb.XFrameOptions import XFrame
-from fastapi.middleware.gzip import GZipMiddleware
-from src.ragas_eval import get_ragas_metrics, get_additional_metrics
-from starlette.types import ASGIApp, Receive, Scope, Send
-from langchain_neo4j import Neo4jGraph
-from starlette.middleware.sessions import SessionMiddleware
-from dotenv import load_dotenv
-from fastapi import Depends
 
 load_dotenv(override=True)
 
@@ -52,12 +52,16 @@ logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
 MERGED_DIR = os.path.join(os.path.dirname(__file__), "merged_files")
 
-def sanitize_filename(filename):
+
+def sanitize_filename(filename: str) -> str:
+    """Sanitize a filename to prevent directory traversal."""
     filename = os.path.basename(filename)
     filename = os.path.normpath(filename)
     return filename
 
-def validate_file_path(directory, filename):
+
+def validate_file_path(directory: str, filename: str) -> str:
+    """Validate that the file path is within the given directory."""
     file_path = os.path.join(directory, filename)
     abs_directory = os.path.abspath(directory)
     abs_file_path = os.path.abspath(file_path)
@@ -65,16 +69,25 @@ def validate_file_path(directory, filename):
         raise ValueError("Invalid file path")
     return abs_file_path
 
-def healthy_condition():
+
+def healthy_condition() -> dict:
+    """Return a healthy status for health check."""
     return {"healthy": True}
 
-def healthy():
+
+def healthy() -> bool:
+    """Return True for health check."""
     return True
 
-def sick():
+
+def sick() -> bool:
+    """Return False for health check."""
     return False
 
+
 class CustomGZipMiddleware:
+    """Custom GZip middleware to compress responses for specific paths."""
+
     def __init__(self, app: ASGIApp, paths: List[str], minimum_size: int = 1000, compresslevel: int = 5):
         self.app = app
         self.paths = paths
@@ -95,14 +108,20 @@ class CustomGZipMiddleware:
         )
         await gzip_middleware(scope, receive, send)
 
+
 app = FastAPI()
 app.add_middleware(XContentTypeOptions)
 app.add_middleware(XFrame, Option={'X-Frame-Options': 'DENY'})
-app.add_middleware(CustomGZipMiddleware, minimum_size=1000, compresslevel=5, paths=[
-    "/sources_list", "/url/scan", "/extract", "/chat_bot", "/chunk_entities", "/get_neighbours", "/graph_query",
-    "/schema", "/populate_graph_schema", "/get_unconnected_nodes_list", "/get_duplicate_nodes", "/fetch_chunktext",
-    "/schema_visualization"
-])
+app.add_middleware(
+    CustomGZipMiddleware,
+    minimum_size=1000,
+    compresslevel=5,
+    paths=[
+        "/sources_list", "/url/scan", "/extract", "/chat_bot", "/chunk_entities", "/get_neighbours", "/graph_query",
+        "/schema", "/populate_graph_schema", "/get_unconnected_nodes_list", "/get_duplicate_nodes", "/fetch_chunktext",
+        "/schema_visualization"
+    ]
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -118,6 +137,7 @@ async def create_source_knowledge_graph_url(
     credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
     params: SourceScanExtractParams = Depends(get_source_scan_extract_params)
 ):
+    """Create a source node in the knowledge graph from a given URL or bucket."""
     try:
         if not credentials.uri or not credentials.userName or not credentials.password:
             return create_api_response("Failed", message="Missing required credentials (uri, userName, password)", error="Invalid credentials", file_source=params.source_type)
@@ -189,6 +209,7 @@ async def extract_knowledge_graph_from_file(
     credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
     params: SourceScanExtractParams = Depends(get_source_scan_extract_params)
 ):
+    """Extract a knowledge graph from a file or URL source."""
     try:
         start_time = time.time()
         graph = create_graph_database_connection(credentials)
@@ -285,9 +306,7 @@ async def extract_knowledge_graph_from_file(
             
 @app.post("/sources_list")
 async def get_source_list(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
-    """
-    Calls 'get_source_list_from_graph' which returns list of sources which already exist in databse
-    """
+    """Get the list of sources already present in the database."""
     try:
         if not credentials.uri or not credentials.userName or not credentials.password:
             return create_api_response("Failed", message="Missing required credentials (uri, userName, password)", error="Invalid credentials")
@@ -307,6 +326,7 @@ async def get_source_list(credentials: Neo4jCredentials = Depends(get_neo4j_cred
 
 @app.post("/post_processing")
 async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), tasks=Form(None)):
+    """Run post-processing tasks on the graph database."""
     try:
         graph = create_graph_database_connection(credentials)
         tasks = set(map(str.strip, json.loads(tasks)))
@@ -372,7 +392,15 @@ async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_cred
         gc.collect()
                 
 @app.post("/chat_bot")
-async def chat_bot(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), model=Form(None), question=Form(None), document_names=Form(None), session_id=Form(None), mode=Form(None)):
+async def chat_bot(
+    credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
+    model=Form(None),
+    question=Form(None),
+    document_names=Form(None),
+    session_id=Form(None),
+    mode=Form(None)
+):
+    """Run QA chat bot on the graph database."""
     logging.info(f"QA_RAG called at {datetime.now()}")
     qa_rag_start_time = time.time()
     try:
@@ -404,7 +432,13 @@ async def chat_bot(credentials: Neo4jCredentials = Depends(get_neo4j_credentials
         gc.collect()
 
 @app.post("/chunk_entities")
-async def chunk_entities(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), nodedetails=Form(None), entities=Form(), mode=Form()):
+async def chunk_entities(
+    credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
+    nodedetails=Form(None),
+    entities=Form(),
+    mode=Form()
+):
+    """Extract entities from chunk IDs."""
     try:
         start = time.time()
         result = await asyncio.to_thread(get_entities_from_chunkids, nodedetails=nodedetails, entities=entities, mode=mode, uri=credentials.uri, username=credentials.userName, password=credentials.password, database=credentials.database)
@@ -424,7 +458,11 @@ async def chunk_entities(credentials: Neo4jCredentials = Depends(get_neo4j_crede
         gc.collect()
 
 @app.post("/get_neighbours")
-async def get_neighbours(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), elementId=Form(None)):
+async def get_neighbours(
+    credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
+    elementId=Form(None)
+):
+    """Get neighbour nodes for a given element ID."""
     try:
         start = time.time()
         result = await asyncio.to_thread(get_neighbour_nodes, uri=credentials.uri, username=credentials.userName, password=credentials.password, database=credentials.database, element_id=elementId)
@@ -443,7 +481,11 @@ async def get_neighbours(credentials: Neo4jCredentials = Depends(get_neo4j_crede
         gc.collect()
 
 @app.post("/graph_query")
-async def graph_query(credentials: Neo4jCredentials = Depends(get_neo4j_credentials),document_names: str = Form(None)):
+async def graph_query(
+    credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
+    document_names: str = Form(None)
+):
+    """Query the graph for results based on document names."""
     try:
         start = time.time()
         result = await asyncio.to_thread(
@@ -467,7 +509,11 @@ async def graph_query(credentials: Neo4jCredentials = Depends(get_neo4j_credenti
     
 
 @app.post("/clear_chat_bot")
-async def clear_chat_bot(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), session_id=Form(None)):
+async def clear_chat_bot(
+    credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
+    session_id=Form(None)
+):
+    """Clear chat history for a given session."""
     try:
         start = time.time()
         graph = create_graph_database_connection(credentials)
@@ -488,6 +534,7 @@ async def clear_chat_bot(credentials: Neo4jCredentials = Depends(get_neo4j_crede
             
 @app.post("/connect")
 async def connect(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
+    """Connect to the Neo4j database and check vector dimensions."""
     try:
         if not credentials.uri or not credentials.userName or not credentials.password:
             return create_api_response("Failed", message="Missing required credentials (uri, userName, password)", error="Invalid credentials")
@@ -511,8 +558,15 @@ async def connect(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)
         return create_api_response(job_status, message=message, error=error_message)
 
 @app.post("/upload")
-async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber=Form(None), totalChunks=Form(None), 
-                                        originalname=Form(None), model=Form(None), credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
+async def upload_large_file_into_chunks(
+    file: UploadFile = File(...),
+    chunkNumber=Form(None),
+    totalChunks=Form(None),
+    originalname=Form(None),
+    model=Form(None),
+    credentials: Neo4jCredentials = Depends(get_neo4j_credentials)
+):
+    """Upload a large file in chunks and create a source node."""
     try:
         start = time.time()
         graph = create_graph_database_connection(credentials)
@@ -541,6 +595,7 @@ async def upload_large_file_into_chunks(file:UploadFile = File(...), chunkNumber
             
 @app.post("/schema")
 async def get_structured_schema(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
+    """Get the structured schema (labels and relation types) from Neo4j."""
     try:
         start = time.time()
         result = await asyncio.to_thread(get_labels_and_relationtypes, credentials.uri, credentials.userName, credentials.password, credentials.database)
@@ -566,7 +621,15 @@ def encode_password(pwd):
     return base64.b64encode(pwd.encode('ascii'))
 
 @app.get("/update_extract_status/{file_name}")
-async def update_extract_status(request: Request, file_name: str, uri:str=None, userName:str=None, password:str=None, database:str=None):
+async def update_extract_status(
+    request: Request,
+    file_name: str,
+    uri: str = None,
+    userName: str = None,
+    password: str = None,
+    database: str = None
+):
+    """Stream updates on extract status for a given file name."""
     async def generate():
         status = ''
         
@@ -621,6 +684,7 @@ async def delete_document_and_entities(
     source_types=Form(),
     deleteEntities=Form()
 ):
+    """Delete documents and their entities from the graph database."""
     try:
         start = time.time()
         graph = create_graph_database_connection(credentials)
@@ -644,6 +708,7 @@ async def delete_document_and_entities(
 
 @app.get('/document_status/{file_name}')
 async def get_document_status(file_name, url, userName, password, database):
+    """Get the status of a document in the graph database."""
     decoded_password = decode_password(password)
    
     try:
@@ -684,7 +749,12 @@ async def get_document_status(file_name, url, userName, password, database):
         return create_api_response('Failed',message=message)
     
 @app.post("/cancelled_job")
-async def cancelled_job(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), filenames=Form(None), source_types=Form(None)):
+async def cancelled_job(
+    credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
+    filenames=Form(None),
+    source_types=Form(None)
+):
+    """Cancel a running job for the given filenames and source types."""
     try:
         start = time.time()
         graph = create_graph_database_connection(credentials)
@@ -705,7 +775,14 @@ async def cancelled_job(credentials: Neo4jCredentials = Depends(get_neo4j_creden
         gc.collect()
 
 @app.post("/populate_graph_schema")
-async def populate_graph_schema(input_text=Form(None), model=Form(None), is_schema_description_checked=Form(None),is_local_storage=Form(None),email=Form(None)):
+async def populate_graph_schema(
+    input_text=Form(None),
+    model=Form(None),
+    is_schema_description_checked=Form(None),
+    is_local_storage=Form(None),
+    email=Form(None)
+):
+    """Populate the graph schema from input text."""
     try:
         start = time.time()
         result = populate_graph_schema_from_text(input_text, model, is_schema_description_checked, is_local_storage)
@@ -725,6 +802,7 @@ async def populate_graph_schema(input_text=Form(None), model=Form(None), is_sche
         
 @app.post("/get_unconnected_nodes_list")
 async def get_unconnected_nodes_list(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
+    """Get the list of unconnected nodes in the graph database."""
     try:
         start = time.time()
         graph = create_graph_database_connection(credentials)
@@ -745,7 +823,11 @@ async def get_unconnected_nodes_list(credentials: Neo4jCredentials = Depends(get
         gc.collect()
         
 @app.post("/delete_unconnected_nodes")
-async def delete_orphan_nodes(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), unconnected_entities_list=Form()):
+async def delete_orphan_nodes(
+    credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
+    unconnected_entities_list=Form()
+):
+    """Delete unconnected (orphan) nodes from the graph database."""
     try:
         start = time.time()
         graph = create_graph_database_connection(credentials)
@@ -767,6 +849,7 @@ async def delete_orphan_nodes(credentials: Neo4jCredentials = Depends(get_neo4j_
         
 @app.post("/get_duplicate_nodes")
 async def get_duplicate_nodes(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
+    """Get the list of duplicate nodes in the graph database."""
     try:
         start = time.time()
         graph = create_graph_database_connection(credentials)
@@ -787,7 +870,11 @@ async def get_duplicate_nodes(credentials: Neo4jCredentials = Depends(get_neo4j_
         gc.collect()
         
 @app.post("/merge_duplicate_nodes")
-async def merge_duplicate_nodes(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), duplicate_nodes_list=Form()):
+async def merge_duplicate_nodes(
+    credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
+    duplicate_nodes_list=Form()
+):
+    """Merge duplicate nodes in the graph database."""
     try:
         start = time.time()
         graph = create_graph_database_connection(credentials)
@@ -809,7 +896,11 @@ async def merge_duplicate_nodes(credentials: Neo4jCredentials = Depends(get_neo4
         gc.collect()
         
 @app.post("/drop_create_vector_index")
-async def drop_create_vector_index(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), isVectorIndexExist=Form()):
+async def drop_create_vector_index(
+    credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
+    isVectorIndexExist=Form()
+):
+    """Drop and re-create the vector index in the graph database."""
     try:
         start = time.time()
         graph = create_graph_database_connection(credentials)
@@ -831,7 +922,12 @@ async def drop_create_vector_index(credentials: Neo4jCredentials = Depends(get_n
         gc.collect()
         
 @app.post("/retry_processing")
-async def retry_processing(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), file_name=Form(), retry_condition=Form()):
+async def retry_processing(
+    credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
+    file_name=Form(),
+    retry_condition=Form()
+):
+    """Set status to retry for a given file name and condition."""
     try:
         start = time.time()
         graph = create_graph_database_connection(credentials)
@@ -853,11 +949,14 @@ async def retry_processing(credentials: Neo4jCredentials = Depends(get_neo4j_cre
         gc.collect()    
 
 @app.post('/metric')
-async def calculate_metric(question: str = Form(),
-                           context: str = Form(),
-                           answer: str = Form(),
-                           model: str = Form(),
-                           mode: str = Form()):
+async def calculate_metric(
+    question: str = Form(),
+    context: str = Form(),
+    answer: str = Form(),
+    model: str = Form(),
+    mode: str = Form()
+):
+    """Calculate RAGAS metrics for a given question, context, and answer."""
     try:
         start = time.time()
         context_list = [str(item).strip() for item in json.loads(context)] if context else []
