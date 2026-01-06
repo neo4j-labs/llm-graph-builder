@@ -3,9 +3,10 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-green)
 ![React](https://img.shields.io/badge/React-blue)
 
-Transform unstructured data (PDFs, DOCs, TXT, YouTube videos, web pages, etc.) into a structured Knowledge Graph stored in Neo4j using the power of Large Language Models (LLMs) and the LangChain framework.
 
-This application allows you to upload files from various sources (local machine, GCS, S3 bucket, or web sources), choose your preferred LLM model, and generate a Knowledge Graph. 
+Transform unstructured data (PDFs, DOCs, TXTs, YouTube videos, web pages, etc.) into a structured Knowledge Graph stored in Neo4j using the power of Large Language Models (LLMs) and the LangChain framework.
+
+This application allows you to upload files from various sources (local machine, GCS, S3 bucket, or web sources), choose your preferred LLM model, and generate a Knowledge Graph.
 
 ## Getting Started
 
@@ -16,8 +17,8 @@ This application allows you to upload files from various sources (local machine,
   - If using **Neo4j Desktop**, you will need to deploy the backend and frontend separately (docker-compose is not supported).
 
 #### **Backend Setup**
-1. Create the `.env` file in the `backend` folder by copying `backend/example.env`.
-2. Preconfigure user credentials in the `.env` file to bypass the login dialog:
+1. Create a `.env` file in the `backend` folder by copying `backend/example.env`.
+2. Pre-configure user credentials in the `.env` file to bypass the login dialog:
    ```bash
    NEO4J_URI=<your-neo4j-uri>
    NEO4J_USERNAME=<your-username>
@@ -32,6 +33,7 @@ This application allows you to upload files from various sources (local machine,
    pip install -r requirements.txt -c constraints.txt
    uvicorn score:app --reload
    ```
+
 
 ## Key Features
 
@@ -48,7 +50,7 @@ This application allows you to upload files from various sources (local machine,
 ### **Chat with Data**
 - Interact with your data in the Neo4j database through conversational queries.
 - Retrieve metadata about the source of responses to your queries.
-- For a dedicated chat interface, use the standalone chat application with **[/chat-only](/chat-only) route.** 
+- For a dedicated chat interface, use the standalone chat application with the **[/chat-only](/chat-only) route.**
 
 ### **LLMs Supported**
 1. OpenAI
@@ -61,8 +63,16 @@ This application allows you to upload files from various sources (local machine,
 8. Amazon Bedrock (dev deployed version)
 9. Ollama (dev deployed version)
 10. Deepseek (dev deployed version)
-11. Other OpenAI Compatible baseurl models (dev deployed version)
-    
+11. Other OpenAI-compatible base URL models (dev deployed version)
+
+
+### **Token Usage Tracking**
+- Easily monitor and track your LLM token usage for each user and database connection.
+- Enable this feature by setting the `TRACK_TOKEN_USAGE` environment variable to `true` in your backend configuration.
+- View your daily and monthly token consumption and limits, helping you manage usage and avoid overages.
+- You can check your remaining token limits at any time using the provided API endpoint.
+
+
 ---
 
 ## Getting Started
@@ -111,18 +121,18 @@ Configure chat modes using the `VITE_CHAT_MODES` variable:
 For development, you can run the backend and frontend independently.
 
 #### **Frontend Setup**
-1. Create the `.env` file in the `frontend` folder by copying `frontend/example.env`.
+1. Create a `.env` file in the `frontend` folder by copying `frontend/example.env`.
 2. Update environment variables as needed.
 3. Run:
    ```bash
    cd frontend
-   yarn
-   yarn run dev
+  yarn
+  yarn run dev
    ```
 
 #### **Backend Setup**
-1. Create the `.env` file in the `backend` folder by copying `backend/example.env`.
-2. Preconfigure user credentials in the `.env` file to bypass the login dialog:
+1. Create a `.env` file in the `backend` folder by copying `backend/example.env`.
+2. Pre-configure user credentials in the `.env` file to bypass the login dialog:
    ```bash
    NEO4J_URI=<your-neo4j-uri>
    NEO4J_USERNAME=<your-username>
@@ -132,10 +142,10 @@ For development, you can run the backend and frontend independently.
 3. Run:
    ```bash
    cd backend
-   python -m venv envName
-   source envName/bin/activate
-   pip install -r requirements.txt
-   uvicorn score:app --reload
+  python -m venv envName
+  source envName/bin/activate
+  pip install -r requirements.txt
+  uvicorn score:app --reload
    ```
 
 ---
@@ -195,72 +205,81 @@ gcloud run deploy dev-backend \
 ---
 
 ## Usage
-1. Connect to Neo4j Aura Instance which can be both AURA DS or AURA DB by passing URI and password through Backend env, fill using login dialog or drag and drop the Neo4j credentials file.
-2. To differentiate we have added different icons. For AURA DB we have a database icon and for AURA DS we have scientific molecule icon right under Neo4j Connection details label.
-3. Choose your source from a list of Unstructured sources to create graph.
-4. Change the LLM (if required) from drop down, which will be used to generate graph.
-5. Optionally, define schema (nodes and relationship labels) in entity graph extraction settings.
-6. Either select multiple files to 'Generate Graph' or all the files in 'New' status will be processed for graph creation.
-7. Have a look at the graph for individual files using 'View' in grid or select one or more files and 'Preview Graph'.
-8. Ask questions related to the processed/completed sources to chat-bot. Also get detailed information about your answers generated by LLM.
+1. Connect to a Neo4j Aura Instance, which can be either AURA DS or AURA DB, by passing the URI and password through the backend environment, filling in the login dialog, or dragging and dropping the Neo4j credentials file.
+2. To differentiate, we have added different icons. For AURA DB, there is a database icon, and for AURA DS, there is a scientific molecule icon right under the Neo4j Connection details label.
+3. Choose your source from a list of unstructured sources to create a graph.
+4. Change the LLM (if required) from the dropdown, which will be used to generate the graph.
+5. Optionally, define the schema (nodes and relationship labels) in the entity graph extraction settings.
+6. Either select multiple files to 'Generate Graph', or all the files in 'New' status will be processed for graph creation.
+7. View the graph for individual files using 'View' in the grid, or select one or more files and 'Preview Graph'.
+8. Ask questions related to the processed/completed sources to the chatbot. Also, get detailed information about your answers generated by the LLM.
 
 ---
 
 ## [ENV][env-sheet]
 
+## [ENV][env-sheet]
 | Env Variable Name       | Mandatory/Optional | Default Value | Description                                                                                      |
-|------------------------ |-------------------|---------------|--------------------------------------------------------------------------------------------------|
-|                        |                   |               |                                                                                                  |
-| **BACKEND ENV**         |                   |               |                                                                                                  |
-| OPENAI_API_KEY          | Optional          |               | An OpenAI Key is required to use OpenAI LLM model to authenticate and track requests             |
-| DIFFBOT_API_KEY         | Mandatory         |               | API key is required to use Diffbot's NLP service to extract entities and relationships from unstructured data |
-| BUCKET_UPLOAD_FILE      | Optional          |               | Bucket name to store uploaded file on GCS                                                        |
-| BUCKET_FAILED_FILE      | Optional          |               | Bucket name to store failed file on GCS while extraction                                         |
-| NEO4J_USER_AGENT        | Optional          | llm-graph-builder | Name of the user agent to track Neo4j database activity                                      |
-| ENABLE_USER_AGENT       | Optional          | true          | Boolean value to enable/disable Neo4j user agent                                                 |
-| DUPLICATE_TEXT_DISTANCE | Optional          | 5             | This value is used to find distance for all node pairs in the graph and is calculated based on node properties |
-| DUPLICATE_SCORE_VALUE   | Optional          | 0.97          | Node score value to match duplicate nodes                                                        |
-| EFFECTIVE_SEARCH_RATIO  | Optional          | 1             | Ratio used for effective search calculations                                                     |
-| GRAPH_CLEANUP_MODEL     | Optional          | openai_gpt_4o_mini | Model name to clean up graph in post processing                                            |
-| MAX_TOKEN_CHUNK_SIZE    | Optional          | 10000         | Maximum token size to process file content                                                       |
-| YOUTUBE_TRANSCRIPT_PROXY| Mandatory         |               | Proxy key to process YouTube videos for getting transcripts                                      |
-| EMBEDDING_MODEL         | Optional          |               | Model for generating text embeddings (default: all-MiniLM-L6-v2, openai, vertexai, titan)        |
-| IS_EMBEDDING           | Optional           | true          | Flag to enable text embedding                                                                    |
-| KNN_MIN_SCORE          | Optional           | 0.8           | Minimum score for KNN algorithm                                                                  |
-| GCP_LOG_METRICS_ENABLED| Optional           | False         | Flag to enable Google Cloud logs                                                                 |
-| NEO4J_URI              | Optional           | neo4j://database:7687 | URI for Neo4j database                                                                  |
-| NEO4J_USERNAME         | Optional           | neo4j         | Username for Neo4j database                                                                      |
-| NEO4J_PASSWORD         | Optional           | password      | Password for Neo4j database                                                                      |                                               |
-| GCS_FILE_CACHE         | Optional           | False         | If set to True, will save files to process into GCS. If False, will save files locally           |                   |
-| ENTITY_EMBEDDING       | Optional           | False         | If set to True, it will add embeddings for each entity in the database                           |
-| LLM_MODEL_CONFIG_ollama_<model_name> | Optional |           | Set ollama config as model_name,model_local_url for local deployments                            |
-| RAGAS_EMBEDDING_MODEL  | Optional           |               | Embedding model used by RAGAS evaluation framework                                               |
-|                        |                   |               |                                                                                                  |
-| **FRONTEND ENV**        |                   |               |                                                                                                  |
-| VITE_BLOOM_URL         | Mandatory          | [Bloom URL][bloom-url] | URL for Bloom visualization                                |
-| VITE_REACT_APP_SOURCES | Mandatory          | local,youtube,wiki,s3 | List of input sources that will be available                                 |
-| VITE_CHAT_MODES        | Mandatory          | vector,graph+vector,graph,hybrid | Chat modes available for Q&A                                |
-| VITE_ENV               | Mandatory          | DEV or PROD   | Environment variable for the app                                                                 |
-| VITE_LLM_MODELS        | Optional           | openai_gpt_5_mini,gemini_2.5_flash,anthropic_claude_4.5_haiku | Supported models for the application |
-| VITE_BACKEND_API_URL   | Optional           | [localhost][backend-url] | URL for backend API                                        |
-| VITE_TIME_PER_PAGE     | Optional           | 50            | Time per page for processing                                                                     |
-| VITE_CHUNK_SIZE        | Optional           | 5242880       | Size of each chunk of file for upload                                                            |
-| VITE_GOOGLE_CLIENT_ID  | Optional           |               | Client ID for Google authentication                                                              |
-| VITE_LLM_MODELS_PROD   | Optional           | openai_gpt_5_mini,gemini_2.5_flash,anthropic_claude_4.5_haiku | To distinguish models based on environment (PROD or DEV) |
-| VITE_AUTH0_CLIENT_ID   | Mandatory if you are enabling Authentication otherwise it is optional |  | Okta OAuth Client ID for authentication |
-| VITE_AUTH0_DOMAIN      | Mandatory if you are enabling Authentication otherwise it is optional |  | Okta OAuth Client Domain                                  |
-| VITE_SKIP_AUTH         | Optional           | true          | Flag to skip authentication                                                                      |
-| VITE_CHUNK_OVERLAP     | Optional           | 20            | Variable to configure chunk overlap                                                              |
-| VITE_TOKENS_PER_CHUNK  | Optional           | 100           | Variable to configure tokens count per chunk. This gives flexibility for users who may require different chunk sizes for various tokenization tasks |
-| VITE_CHUNK_TO_COMBINE  | Optional           | 1             | Variable to configure number of chunks to combine for parallel processing                        |
+|-------------------------|--------------------|---------------|--------------------------------------------------------------------------------------------------|
+|                         |                    |               |                                                                                                  |
+| **BACKEND ENV**         |                    |               |                                                                                                  |
+| OPENAI_API_KEY          | Mandatory          |               | An OpenAI Key is required to use OpenAI LLM model to authenticate and track requests            |
+| DIFFBOT_API_KEY         | Mandatory          |               | API key is required to use Diffbot's NLP service to extract entities and relationships from unstructured data |
+| BUCKET                  | Mandatory          |               | Bucket name to store uploaded files on GCS                                                     |
+| NEO4J_USER_AGENT        | Optional           | llm-graph-builder | Name of the user agent to track Neo4j database activity                                       |
+| ENABLE_USER_AGENT       | Optional           | true           | Boolean value to enable/disable Neo4j user agent                                              |
+| DUPLICATE_TEXT_DISTANCE | Mandatory          | 5              | This value is used to find distance for all node pairs in the graph and is calculated based on node properties |
+| DUPLICATE_SCORE_VALUE   | Mandatory          | 0.97           | Node score value to match duplicate nodes                                                     |
+| EFFECTIVE_SEARCH_RATIO  | Mandatory          | 1              | Ratio used for effective search calculations                                                  |
+| GRAPH_CLEANUP_MODEL     | Optional           | openai_gpt_4o_mini | Model name to clean up graph in post processing                                             |
+| MAX_TOKEN_CHUNK_SIZE    | Optional           | 10000          | Maximum token size to process file content                                                   |
+| YOUTUBE_TRANSCRIPT_PROXY | Optional          |                | Proxy key to process YouTube videos for getting transcripts                                  |
+| EMBEDDING_MODEL         | Optional           |                | Model for generating text embeddings (default: all-MiniLM-L6-v2, openai, vertexai, titan)   |
+| IS_EMBEDDING            | Optional           | true           | Flag to enable text embedding                                                                |
+| KNN_MIN_SCORE           | Optional           | 0.94           | Minimum score for KNN algorithm                                                              |
+| GEMINI_ENABLED          | Optional           | False          | Flag to enable Gemini                                                                        |
+| GCP_LOG_METRICS_ENABLED | Optional           | False          | Flag to enable Google Cloud logs                                                             |
+| NUMBER_OF_CHUNKS_TO_COMBINE | Optional        | 5              | Number of chunks to combine when processing embeddings                                       |
+| UPDATE_GRAPH_CHUNKS_PROCESSED | Optional      | 20             | Number of chunks processed before updating progress                                         |
+| NEO4J_URI               | Optional           | neo4j://database:7687 | URI for Neo4j database                                                                 |
+| NEO4J_USERNAME          | Optional           | neo4j          | Username for Neo4j database                                                                 |
+| NEO4J_PASSWORD          | Optional           | password       | Password for Neo4j database                                                                 |
+| LANGCHAIN_API_KEY       | Optional           |                | API key for Langchain                                                                       |
+| LANGCHAIN_PROJECT       | Optional           |                | Project for Langchain                                                                       |
+| LANGCHAIN_TRACING_V2    | Optional           | true           | Flag to enable Langchain tracing                                                            |
+| GCS_FILE_CACHE          | Optional           | False          | If set to True, will save files to process into GCS. If False, will save files locally      |
+| LANGCHAIN_ENDPOINT      | Optional           | [Langchain Endpoint][langchain-endpoint] | Endpoint for Langchain API                                                  |
+| ENTITY_EMBEDDING        | Optional           | False          | If set to True, it will add embeddings for each entity in the database                     |
+| LLM_MODEL_CONFIG_ollama_<model_name> | Optional |              | Set ollama config as model_name,model_local_url for local deployments                    |
+| RAGAS_EMBEDDING_MODEL   | Optional           |                | Embedding model used by RAGAS evaluation framework                                         |
+|                         |                    |               |                                                                                                  |
+| **FRONTEND ENV**        |                    |               |                                                                                                  |
+| VITE_BLOOM_URL          | Mandatory          | [Bloom URL][bloom-url] | URL for Bloom visualization |
+| VITE_REACT_APP_SOURCES  | Mandatory          | local,youtube,wiki,s3 | List of input sources that will be available                                            |
+| VITE_CHAT_MODES         | Mandatory          | vector,graph+vector,graph,hybrid | Chat modes available for Q&A                                               |
+| VITE_ENV                | Mandatory          | DEV or PROD    | Environment variable for the app                                                           |
+| VITE_LLM_MODELS         | Optional          |openai_gpt_5_mini,gemini_2.5_flash,anthropic_claude_4.5_haiku
+| Supported models for the application |
+| VITE_BACKEND_API_URL    | Optional           | [localhost][backend-url] | URL for backend API                                                                    |
+| VITE_TIME_PER_PAGE      | Optional           | 50             | Time per page for processing                                                              |
+| VITE_CHUNK_SIZE         | Optional           | 5242880        | Size of each chunk of file for upload                                                      |
+| VITE_GOOGLE_CLIENT_ID   | Optional           |                | Client ID for Google authentication                                                       |
+| VITE_LLM_MODELS_PROD    | Optional           | openai_gpt_5_mini,gemini_2.5_flash,anthropic_claude_4.5_haiku | To distinguish models based on environment (PROD or DEV)                        |
+| VITE_AUTH0_CLIENT_ID    | Mandatory if you are enabling Authentication otherwise it is optional |  | Okta OAuth Client ID for authentication                                          |
+| VITE_AUTH0_DOMAIN       | Mandatory if you are enabling Authentication otherwise it is optional |  | Okta OAuth Client Domain                                                         |
+| VITE_SKIP_AUTH          | Optional           | true           | Flag to skip authentication                                                               |
+| VITE_CHUNK_OVERLAP      | Optional           | 20             | Variable to configure chunk overlap                                                       |
+| VITE_TOKENS_PER_CHUNK   | Optional           | 100            | Variable to configure tokens count per chunk. This gives flexibility for users who may require different chunk sizes for various tokenization tasks |
+| VITE_CHUNK_TO_COMBINE   | Optional           | 1              | Variable to configure number of chunks to combine for parallel processing                 |
 
-### Refer to this link for additional [Environment Variables][env-vars].
+### Refer to this link for additional  [Environment Variables][env-vars].
 
 ---
 
 ## Links
 
-[LLM Knowledge Graph Builder Application][app-link]  
+[LLM Knowledge Graph Builder Application][app-link]
+
 [Neo4j Workspace][neo4j-workspace]
 
 ## Reference

@@ -669,7 +669,8 @@ async def update_extract_status(
                         'entityNodeCount' : result[0]['entityNodeCount'],
                         'entityEntityRelCount' : result[0]['entityEntityRelCount'],
                         'communityNodeCount' : result[0]['communityNodeCount'],
-                        'communityRelCount' : result[0]['communityRelCount']
+                        'communityRelCount' : result[0]['communityRelCount'],
+                        'token_usage' : result[0]['token_usage']
                         })
                     yield status
             except asyncio.CancelledError:
@@ -1122,5 +1123,41 @@ async def get_schema_visualization(credentials: Neo4jCredentials = Depends(get_n
     finally:
         gc.collect()
 
+
+
+@app.post("/get_token_limits")
+async def get_token_limits(uri: str = Form(None), email: str = Form(None)):
+    """
+    Returns the remaining daily and monthly token limits for a user, given email and/or uri.
+    Only enabled if TRACK_TOKEN_USAGE env variable is set to 'true'.
+    """
+    job_status = "Success"
+    message = "Token limits fetched successfully"
+    try:
+        if os.environ.get("TRACK_TOKEN_USAGE", "false").strip().lower() != "true":
+            message = "Token tracking is not enabled."
+            return create_api_response(job_status, data=None, message=message)
+        start = time.time()
+        limits = get_remaining_token_limits(email=email, uri=uri)
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {
+            'api_name': 'get_token_limits',
+            'db_url': uri,
+            'email': email,
+            'logging_time': formatted_time(datetime.now(timezone.utc)),
+            'elapsed_api_time': f'{elapsed_time:.2f}'
+        }
+        logger.log_struct(json_obj, "INFO")
+        return create_api_response(job_status, data=limits, message=message)
+    except Exception as e:
+        job_status = "Failed"
+        error_message = str(e)
+        message = "Unable to fetch token limits"
+        logger.log_struct({'api_name': 'get_token_limits', 'db_url': uri, 'email': email, 'error_message': error_message, 'logging_time': formatted_time(datetime.now(timezone.utc))}, "ERROR")
+        logging.exception(f'Exception in get_token_limits: {error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+        
 if __name__ == "__main__":
     uvicorn.run(app)
+
