@@ -59,7 +59,7 @@ export default function Profile() {
                 ? 'Daily Tokens: No DB connection'
                 : tokenError
                   ? 'Daily Tokens: N/A'
-                  : `Daily Tokens: ${tokenLimits?.daily_remaining.toLocaleString() ?? 'N/A'} / ${tokenLimits?.daily_limit.toLocaleString() ?? 'N/A'}`,
+                  : `Daily Tokens: ${tokenLimits?.daily_used.toLocaleString() ?? 'N/A'} / ${tokenLimits?.daily_limit.toLocaleString() ?? 'N/A'}`,
             onClick: () => {},
             disabled: true,
           },
@@ -70,12 +70,12 @@ export default function Profile() {
                 ? 'Monthly Tokens: No DB connection'
                 : tokenError
                   ? 'Monthly Tokens: N/A'
-                  : `Monthly Tokens: ${tokenLimits?.monthly_remaining.toLocaleString() ?? 'N/A'} / ${tokenLimits?.monthly_limit.toLocaleString() ?? 'N/A'}`,
+                  : `Monthly Tokens: ${tokenLimits?.monthly_used.toLocaleString() ?? 'N/A'} / ${tokenLimits?.monthly_limit.toLocaleString() ?? 'N/A'}`,
             onClick: () => {},
             disabled: true,
           },
           {
-            title: 'Refresh Token Limits',
+            title: 'Get Latest Usage',
             onClick: () => {
               fetchTokenLimits();
             },
