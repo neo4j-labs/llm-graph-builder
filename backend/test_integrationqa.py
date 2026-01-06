@@ -103,7 +103,7 @@ def test_graph_from_wikipedia(model_name):
        wiki_query = 'https://en.wikipedia.org/wiki/Apollo_program'
        file_name = 'Apollo_program'
        graph = create_graph_database_connection(credentials)
-       create_source_node_graph_url_wikipedia(graph, model_name, wiki_query, "Wikipedia")
+       create_source_node_graph_url_wikipedia(graph, {"model": model_name, "source_url": wiki_query, "source_type": "Wikipedia"})
        result = asyncio.run(
            extract_graph_from_file_Wikipedia(
                credentials,{
@@ -133,7 +133,7 @@ def test_graph_from_youtube_video(model_name):
        source_url = 'https://www.youtube.com/watch?v=T-qy-zPWgqA'
        file_name = 'NKc8Tr5_L3w'
        graph = create_graph_database_connection(credentials)
-       create_source_node_graph_url_youtube(graph, model_name, source_url, "youtube")
+       create_source_node_graph_url_youtube(graph,{"model": model_name, "source_url": source_url, "source_type": "youtube"})
        result = asyncio.run(
            extract_graph_from_file_youtube(
                credentials,{
@@ -165,7 +165,7 @@ def test_graph_website(model_name):
        source_url = 'https://www.scrapethissite.com/pages/simple/'
        file_name = 'Countries of the World: A Simple Example | Scrape This Site | A public sandbox for learning web scraping-simple'
        graph = create_graph_database_connection(credentials)
-       create_source_node_graph_web_url(graph, model_name, source_url, "web-url")
+       create_source_node_graph_web_url(graph,{"model": model_name, "source_url": source_url, "source_type": "web-url"})
        result = asyncio.run(
            extract_graph_from_web_page(
                credentials,
