@@ -309,8 +309,6 @@ async def extract_knowledge_graph_from_file(
 async def get_source_list(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
     """Get the list of sources already present in the database."""
     try:
-        if not credentials.uri or not credentials.userName or not credentials.password:
-            return create_api_response("Failed", message="Missing required credentials (uri, userName, password)", error="Invalid credentials")
         start = time.time()
         result = await asyncio.to_thread(get_source_list_from_graph,credentials)
         end = time.time()
