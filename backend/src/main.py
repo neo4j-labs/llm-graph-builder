@@ -363,7 +363,7 @@ async def extract_graph_from_file_s3(credentials, params):
       dict: Processing latency and response details.
   """
   if params.retry_condition in ["", None] or params.retry_condition not in [DELETE_ENTITIES_AND_START_FROM_BEGINNING, START_FROM_LAST_PROCESSED_POSITION]:
-    if(params.aws_access_key_id==None or params.aws_secret_access_key==None):
+    if params.aws_access_key_id is None or params.aws_secret_access_key is None:
       raise LLMGraphBuilderException('Please provide AWS access and secret keys')
     else:
       logging.info("Insert in S3 Block")
@@ -541,7 +541,10 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
           break
         else:
           processing_chunks_start_time = time.time()
-          node_count,rel_count,latency_processed_chunk = await processing_chunks(selected_chunks,graph,credentials,params.file_name,params.model,params.allowedNodes,params.allowedRelationship,params.chunks_to_combine,node_count, rel_count, params.additional_instructions)
+          node_count,rel_count,latency_processed_chunk,token_usage = await processing_chunks(selected_chunks,graph,credentials,params.file_name,params.model,params.allowedNodes,params.allowedRelationship,params.chunks_to_combine,node_count, rel_count, params.additional_instructions)
+          logging.info("Token used in processing chunks: %s", token_usage)
+          tokens_per_file += token_usage
+          logging.info("Total token used per file: %s", tokens_per_file)
           processing_chunks_end_time = time.time()
           processing_chunks_elapsed_end_time = processing_chunks_end_time - processing_chunks_start_time
           logging.info(f"Time taken {update_graph_chunk_processed} chunks processed upto {select_chunks_upto} completed in {processing_chunks_elapsed_end_time:.2f} seconds for file name {params.file_name}")
@@ -555,6 +558,7 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
           obj_source_node.updated_at = end_time
           obj_source_node.processing_time = processed_time
           obj_source_node.processed_chunk = select_chunks_upto+select_chunks_with_retry
+          obj_source_node.token_usage = tokens_per_file
           if params.retry_condition == START_FROM_BEGINNING:
             result = execute_graph_query(graph,QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT, params={"filename":params.file_name})
             obj_source_node.node_count = result[0]['nodes']
@@ -565,6 +569,13 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
           graphDb_data_Access.update_source_node(obj_source_node)
           graphDb_data_Access.update_node_relationship_count(params.file_name)
       
+      start_save_token = time.time()
+      if get_value_from_env("TRACK_TOKEN_USAGE", "false", "bool"):
+        track_token_usage(credentials.email,credentials.uri,tokens_per_file, params.model)
+        logging.info("Token usage for extraction: %s for user: %s", tokens_per_file, credentials.email)
+      end_save_token = time.time()
+      elapsed_save_token = end_save_token - start_save_token
+      logging.info(f'Time taken to save token count: {elapsed_save_token:.2f} seconds')
       result = graphDb_data_Access.get_current_status_document_node(params.file_name)
       is_cancelled_status = result[0]['is_cancelled']
       if bool(is_cancelled_status) == True:
@@ -618,7 +629,7 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
     logging.error(error_message)
     raise LLMGraphBuilderException(error_message)
 
-async def processing_chunks(chunkId_chunkDoc_list,graph,credentials,file_name,model,allowedNodes,allowedRelationship, chunks_to_combine, node_count, rel_count, additional_instructions=None):
+async def processing_chunks(chunkId_chunkDoc_list,graph,credentials,file_name,model,allowedNodes,allowedRelationship, chunks_to_combine, node_count, rel_count, additional_instructions):
   #create vector index and update chunk node with embedding
   latency_processing_chunk = {}
   if graph is not None:
@@ -652,7 +663,7 @@ async def processing_chunks(chunkId_chunkDoc_list,graph,credentials,file_name,mo
   
   start_save_token = time.time()
   if get_value_from_env("TRACK_TOKEN_USAGE", "false", "bool"):
-    track_token_usage(credentials.email,credentials.uri,token_usage,model)
+    track_token_usage(credentials.email, credentials.uri, token_usage, model)
     logging.info("Token usage for extraction: %s for user: %s", token_usage, credentials.email)
   end_save_token = time.time()
   elapsed_save_token = end_save_token - start_save_token

@@ -13,13 +13,6 @@ class Neo4jCredentials(BaseModel):
     database: Optional[str] = Field(None, description="Neo4j database name")
     email: Optional[str] = Field(None, description="User email for logging")
 
-    @validator('uri')
-    def validate_uri(cls, v):
-        """Validate that URI starts with neo4j:// or neo4j+s:// or bolt://"""
-        if v and not any(v.startswith(prefix) for prefix in ['neo4j://', 'neo4j+s://', 'neo4j+ssc://', 'bolt://', 'bolt+s://', 'bolt+ssc://']):
-            raise ValueError('URI must start with neo4j://, neo4j+s://, bolt://, or bolt+s://')
-        return v
-
     def validate_required(self) -> None:
         """Validate that required credentials are present"""
         if not self.uri or not self.userName or not self.password:

@@ -470,7 +470,8 @@ def get_remaining_token_limits(email: str, uri: str) -> dict:
         if not all([neo4j_uri, user, password]):
             raise EnvironmentError("Neo4j credentials are not set properly.")
 
-        graph = create_graph_database_connection(neo4j_uri, user, password, database)
+        credentials= Neo4jCredentials(uri=neo4j_uri, userName=user, password=password, database=database)
+        graph = create_graph_database_connection(credentials)
 
         params = {
             "email": normalized_email,
