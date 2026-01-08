@@ -71,18 +71,20 @@ def sanitize_uploaded_fileName(filename, max_length=100):
     Returns:
         str: Sanitized filename.
     """
-    safe_name = unicodedata.normalize('NFKD', filename).encode('ascii', 'ignore').decode('ascii')
-    safe_name = re.sub(r'[^A-Za-z0-9._-]', '_', safe_name)
-    if '.' in filename:
-        base, ext = os.path.splitext(filename)
-    else:
-        base, ext = filename, ''
-    if len(safe_name) == 0 or len(safe_name) > max_length:
-        hash_part = hashlib.sha256(filename.encode('utf-8')).hexdigest()[:16]
-        safe_name = (safe_name[:max_length] if len(safe_name) > 0 else 'file') + '_' + hash_part + ext
-        if len(safe_name) > max_length:
-            safe_name = safe_name[:max_length - len(ext) - 17] + '_' + hash_part + ext
-    return safe_name
+    print("Original filename or incoming file Name:", filename)
+    # safe_name = unicodedata.normalize('NFKD', filename).encode('ascii', 'ignore').decode('ascii')
+    # safe_name = re.sub(r'[^A-Za-z0-9._-]', '_', safe_name)
+    # if '.' in filename:
+    #     base, ext = os.path.splitext(filename)
+    # else:
+    #     base, ext = filename, ''
+    # if len(safe_name) == 0 or len(safe_name) > max_length:
+    #     hash_part = hashlib.sha256(filename.encode('utf-8')).hexdigest()[:16]
+    #     safe_name = (safe_name[:max_length] if len(safe_name) > 0 else 'file') + '_' + hash_part + ext
+    #     if len(safe_name) > max_length:
+    #         safe_name = safe_name[:max_length - len(ext) - 17] + '_' + hash_part + ext
+    # print("Sanitized filename:", safe_name)
+    return filename
 
 
 def create_source_node_graph_url_s3(graph, params):
