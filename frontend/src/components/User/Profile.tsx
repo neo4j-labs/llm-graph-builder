@@ -40,7 +40,7 @@ export default function Profile() {
     } finally {
       setIsLoadingTokens(false);
     }
-  }, [userCredentials]);
+  }, [userCredentials, user?.email]);
 
   useEffect(() => {
     if (isAuthenticated) {
