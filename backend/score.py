@@ -278,7 +278,7 @@ async def extract_knowledge_graph_from_file(
             failed_file_process(credentials.uri,params.file_name, merged_file_path)
         node_detail = graphDb_data_Access.get_current_status_document_node(params.file_name)
         # Set the status "Completed" in logging becuase we are treating these error already handled by application as like custom errors.
-        json_obj = {'api_name':'extract','message':error_message,'file_created_at':formatted_time(node_detail[0]['created_time']),'error_message':error_message, 'file_name': params.file_name,'status':'Completed',
+        json_obj = {'api_name':'extract','message':error_message,'file_created_at':formatted_time(node_detail[0]['created_time']),'error_message':error_message, 'filename': params.file_name,'status':'Completed',
                     'db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,'success_count':1, 'source_type': params.source_type, 'source_url':params.source_url, 'wiki_query':params.wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email,
                     'allowedNodes': params.allowedNodes, 'allowedRelationship': params.allowedRelationship}
         logger.log_struct(json_obj, "INFO")
@@ -294,7 +294,7 @@ async def extract_knowledge_graph_from_file(
             failed_file_process(credentials.uri,params.file_name, merged_file_path)
         node_detail = graphDb_data_Access.get_current_status_document_node(params.file_name)
         
-        json_obj = {'api_name':'extract','message':message,'file_created_at':formatted_time(node_detail[0]['created_time']),'error_message':error_message, 'file_name': params.file_name,'status':'Failed',
+        json_obj = {'api_name':'extract','message':message,'file_created_at':formatted_time(node_detail[0]['created_time']),'error_message':error_message, 'filename': params.file_name,'status':'Failed',
                     'db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,'failed_count':1, 'source_type': params.source_type, 'source_url':params.source_url, 'wiki_query':params.wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email,
                     'allowedNodes': params.allowedNodes, 'allowedRelationship': params.allowedRelationship}
         logger.log_struct(json_obj, "ERROR")
@@ -570,8 +570,9 @@ async def upload_large_file_into_chunks(
         elapsed_time = end - start
         if int(chunkNumber) == int(totalChunks):
             json_obj = {'api_name':'upload','db_url':credentials.uri,'userName':credentials.userName, 'database':credentials.database, 'chunkNumber':chunkNumber,'totalChunks':totalChunks,
-                                'original_file_name':originalname,'model':model, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
+                                'filename':originalname,'model':model, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
             logger.log_struct(json_obj, "INFO")
+            print("upload log obj",json_obj)
         if int(chunkNumber) == int(totalChunks):
             return create_api_response('Success',data=result, message='Source Node Created Successfully')
         else:
@@ -930,7 +931,7 @@ async def retry_processing(
         # chunks = execute_graph_query(graph,QUERY_TO_GET_CHUNKS,params={"filename":file_name})
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'retry_processing', 'db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'file_name':file_name,'retry_condition':retry_condition,
+        json_obj = {'api_name':'retry_processing', 'db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'filename':file_name,'retry_condition':retry_condition,
                             'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         await asyncio.to_thread(set_status_retry, graph,file_name,retry_condition)
