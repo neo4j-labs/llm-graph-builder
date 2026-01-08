@@ -218,6 +218,7 @@ gcloud run deploy dev-backend \
 
 ## [ENV][env-sheet]
 
+## [ENV][env-sheet]
 | Env Variable Name       | Mandatory/Optional | Default Value | Description                                                                                      |
 |------------------------ |-------------------|---------------|--------------------------------------------------------------------------------------------------|
 |                        |                   |               |                                                                                                  |
@@ -263,13 +264,14 @@ gcloud run deploy dev-backend \
 | VITE_TOKENS_PER_CHUNK  | Optional           | 100           | Variable to configure tokens count per chunk. This gives flexibility for users who may require different chunk sizes for various tokenization tasks |
 | VITE_CHUNK_TO_COMBINE  | Optional           | 1             | Variable to configure number of chunks to combine for parallel processing                        |
 
-### Refer to this link for additional [Environment Variables][env-vars].
+### Refer to this link for additional  [Environment Variables][env-vars].
 
 ---
 
 ## Links
 
-[LLM Knowledge Graph Builder Application][app-link]  
+[LLM Knowledge Graph Builder Application][app-link]
+
 [Neo4j Workspace][neo4j-workspace]
 
 ## Reference

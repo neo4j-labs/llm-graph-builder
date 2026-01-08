@@ -8,7 +8,7 @@ from datetime import datetime as dt
 from dotenv import load_dotenv
 from src.entities.source_node import sourceNode
 from src.graphDB_dataAccess import graphDBdataAccess
-from src.shared.common_fn import get_value_from_env
+from src.shared.common_fn import Neo4jCredentials, get_value_from_env
 from src.main import create_graph_database_connection, extract_graph_from_file_local_file, populate_graph_schema_from_text,extract_graph_from_file_Wikipedia, extract_graph_from_file_gcs, extract_graph_from_file_s3, extract_graph_from_file_youtube, extract_graph_from_web_page, execute_graph_query, create_source_node_graph_url_wikipedia, create_source_node_graph_url_youtube, create_source_node_graph_web_url
 from src.QA_integration import QA_RAG
 from pathlib import Path
@@ -35,7 +35,8 @@ RESULTS_DIR = BASE_DIR / "test_results"
 RESULTS_DIR.mkdir(exist_ok=True)
 
 # Initialize Neo4j connection
-graph = create_graph_database_connection(URI, USERNAME, PASSWORD, DATABASE)
+credentials = Neo4jCredentials(uri=URI, userName=USERNAME, password=PASSWORD, database=DATABASE)
+graph = create_graph_database_connection(credentials)
 
 def create_source_node_local(graph, model, file_name):
    """Creates a source node for a local file."""
@@ -71,11 +72,23 @@ def test_graph_from_file_local(model_name):
        file_name = 'About Amazon.pdf'
        merged_file_path = MERGED_DIR / file_name
        shutil.copyfile('/workspaces/llm-graph-builder/backend/files/About Amazon.pdf', merged_file_path)
-       graph = create_graph_database_connection(URI, USERNAME, PASSWORD, DATABASE)
+       
+       graph = create_graph_database_connection(credentials)
        create_source_node_local(graph, model_name, file_name)
        result = asyncio.run(
            extract_graph_from_file_local_file(
-               URI, USERNAME, PASSWORD, DATABASE, model_name, str(merged_file_path), file_name, '', '',100,20,1, None,''
+               credentials, {
+                   "model": model_name,
+                   "source_url": "",
+                   "file_name": file_name,
+                   "allowedNodes": "",
+                   "allowedRelationship": "",
+                   "token_chunk_size": 100,
+                   "chunk_overlap": 20,
+                   "chunks_to_combine": 1,
+                   "retry_condition": None,
+                   "additional_instructions": "",
+               }, str(merged_file_path)
            )
        )
        logging.info(f"Local file test result: {result}")
@@ -89,11 +102,23 @@ def test_graph_from_wikipedia(model_name):
    try:
        wiki_query = 'https://en.wikipedia.org/wiki/Apollo_program'
        file_name = 'Apollo_program'
-       graph = create_graph_database_connection(URI, USERNAME, PASSWORD, DATABASE)
-       create_source_node_graph_url_wikipedia(graph, model_name, wiki_query, "Wikipedia")
+       graph = create_graph_database_connection(credentials)
+       create_source_node_graph_url_wikipedia(graph, {"model": model_name, "source_url": wiki_query, "source_type": "Wikipedia"})
        result = asyncio.run(
            extract_graph_from_file_Wikipedia(
-               URI, USERNAME, PASSWORD, DATABASE, model_name, file_name, 'en', file_name, '', '', 100,20,1,None,''
+               credentials,{
+                   "model": model_name,
+                   "source_url": "",
+                   "file_name": file_name,
+                   "allowedNodes": "",
+                   "allowedRelationship": "",
+                   "token_chunk_size": 100,
+                   "chunk_overlap": 20,
+                   "language": "en",
+                   "chunks_to_combine": 1,
+                   "retry_condition": None,
+                   "additional_instructions": "",
+               }
            )
        )
        logging.info(f"Wikipedia test result: {result}")
@@ -107,11 +132,23 @@ def test_graph_from_youtube_video(model_name):
    try:
        source_url = 'https://www.youtube.com/watch?v=T-qy-zPWgqA'
        file_name = 'NKc8Tr5_L3w'
-       graph = create_graph_database_connection(URI, USERNAME, PASSWORD, DATABASE)
-       create_source_node_graph_url_youtube(graph, model_name, source_url, "youtube")
+       graph = create_graph_database_connection(credentials)
+       create_source_node_graph_url_youtube(graph,{"model": model_name, "source_url": source_url, "source_type": "youtube"})
        result = asyncio.run(
            extract_graph_from_file_youtube(
-               URI, USERNAME, PASSWORD, DATABASE, model_name, source_url, file_name, '', '',100,20,1, None,''
+               credentials,{
+                   "model": model_name,
+                   "source_url": source_url,
+                   "file_name": file_name,
+                   "allowedNodes": "",
+                   "allowedRelationship": "",
+                   "token_chunk_size": 100,
+                   "chunk_overlap": 20,
+                   "language": "en",
+                   "chunks_to_combine": 1,
+                   "retry_condition": None,
+                   "additional_instructions": "",
+               }
            )
       )
        logging.info(f"YouTube video test result: {result}")
@@ -127,11 +164,23 @@ def test_graph_website(model_name):
    try:
        source_url = 'https://www.scrapethissite.com/pages/simple/'
        file_name = 'Countries of the World: A Simple Example | Scrape This Site | A public sandbox for learning web scraping-simple'
-       graph = create_graph_database_connection(URI, USERNAME, PASSWORD, DATABASE)
-       create_source_node_graph_web_url(graph, model_name, source_url, "web-url")
+       graph = create_graph_database_connection(credentials)
+       create_source_node_graph_web_url(graph,{"model": model_name, "source_url": source_url, "source_type": "web-url"})
        result = asyncio.run(
            extract_graph_from_web_page(
-               URI, USERNAME, PASSWORD, DATABASE, model_name, source_url, file_name, '', '', 100, 20, 1, None, ''
+               credentials,
+               {
+                   "model": model_name,
+                   "source_url": source_url,
+                   "file_name": file_name,
+                   "allowedNodes": "",
+                   "allowedRelationship": "",
+                   "token_chunk_size": 100,
+                   "chunk_overlap": 20,
+                   "chunks_to_combine": 1,
+                   "retry_condition": None,
+                   "additional_instructions": "",
+               },
            )
        )
        logging.info(f"Web URL test result: {result}")
@@ -145,7 +194,7 @@ def test_graph_website(model_name):
 def test_chatbot_qna(model_name, mode='vector'):
    """Tests chatbot QnA functionality."""
    try:
-       graph = create_graph_database_connection(URI, USERNAME, PASSWORD, DATABASE)
+       graph = create_graph_database_connection(credentials)
        result = QA_RAG(graph, model_name, 'Tell me about Amazon', '[]', 1, mode)
        logging.info(f"Chatbot QnA test passed for mode: {mode}")
        final_result = {'model_name':model_name,'mode':mode,'result':result}
@@ -157,7 +206,7 @@ def test_chatbot_qna(model_name, mode='vector'):
 def get_disconnected_nodes():
    """Fetches list of disconnected nodes."""
    try:
-       graph = create_graph_database_connection(URI, USERNAME, PASSWORD, DATABASE)
+       graph = create_graph_database_connection(credentials)
        graphDb_data_Access = graphDBdataAccess(graph)
        nodes_list, total_nodes = graphDb_data_Access.list_unconnected_nodes()
        if not nodes_list:
@@ -170,7 +219,7 @@ def get_disconnected_nodes():
 def delete_disconnected_nodes(lst_element_id):
    """Deletes disconnected nodes from the graph."""
    try:
-       graph = create_graph_database_connection(URI, USERNAME, PASSWORD, DATABASE)
+       graph = create_graph_database_connection(credentials)
        graphDb_data_Access = graphDBdataAccess(graph)
        result = graphDb_data_Access.delete_unconnected_nodes(json.dumps(lst_element_id))
        return "Successfully deleted disconnected nodes" if not result else "Failed to delete nodes"

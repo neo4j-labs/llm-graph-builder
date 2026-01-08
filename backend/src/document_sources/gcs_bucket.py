@@ -13,6 +13,35 @@ from .local_file import load_document_content
 
 logger = logging.getLogger(__name__)
 
+def get_nltk_download_dir():
+    """
+    Returns a directory for NLTK data that is writable by the current user.
+    Prefers /usr/local/nltk_data if writable, else falls back to ~/.nltk_data.
+    """
+    system_dir = "/usr/local/nltk_data"
+    user_dir = os.path.expanduser("~/.nltk_data")
+    if os.access(system_dir, os.W_OK):
+        return system_dir
+    return user_dir
+
+def ensure_nltk_resources():
+    """
+    Ensures required NLTK resources are available, downloading if necessary.
+    """
+    download_dir = get_nltk_download_dir()
+    if download_dir not in nltk.data.path:
+        nltk.data.path.append(download_dir)
+    resources = [
+        ("punkt", "tokenizers"),
+        ("averaged_perceptron_tagger", "taggers"),
+    ]
+    for res, res_type in resources:
+        try:
+            nltk.data.find(f"{res_type}/{res}")
+        except LookupError:
+            logger.info("NLTK resource '%s' not found; downloading to %s", res, download_dir)
+            nltk.download(res, download_dir=download_dir)
+
 def get_gcs_bucket_files_info(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, creds):
     """
     Retrieves metadata for files in a GCS bucket folder.
@@ -94,21 +123,7 @@ def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, g
     Raises:
         LLMGraphBuilderException: If file does not exist or loading fails.
     """
-    nltk_data_dirs = ["/usr/local/nltk_data", os.path.expanduser("~/.nltk_data")]
-    for d in nltk_data_dirs:
-        if d not in nltk.data.path:
-            nltk.data.path.append(d)
-
-    resources = [
-        ("punkt", "tokenizers"),
-        ("averaged_perceptron_tagger", "taggers"),
-    ]
-    for res, res_type in resources:
-        try:
-            nltk.data.find(f"{res_type}/{res}")
-        except LookupError:
-            logger.info("NLTK resource '%s' not found; downloading to /usr/local/nltk_data", res)
-            nltk.download(res, download_dir="/usr/local/nltk_data")
+    ensure_nltk_resources()
 
     if gcs_bucket_folder and gcs_bucket_folder.strip():
         blob_name = f"{gcs_bucket_folder.rstrip('/')}/{gcs_blob_filename}"
@@ -151,14 +166,14 @@ def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, g
     except Exception as exc:
         raise LLMGraphBuilderException(str(exc)) from exc
 
-def upload_file_to_gcs(file_chunk, chunk_number, original_file_name, bucket_name, folder_name_sha1_hashed):
+def upload_file_to_gcs(file_chunk, chunk_number, file_name, bucket_name, folder_name_sha1_hashed):
     """
     Uploads a file chunk to a GCS bucket.
 
     Args:
         file_chunk: File-like object containing the chunk.
         chunk_number (int): Chunk number.
-        original_file_name (str): Original file name.
+        file_name (str): Original file name.
         bucket_name (str): GCS bucket name.
         folder_name_sha1_hashed (str): Hashed folder name in GCS.
 
@@ -167,7 +182,7 @@ def upload_file_to_gcs(file_chunk, chunk_number, original_file_name, bucket_name
     """
     try:
         storage_client = storage.Client()
-        file_name = f'{original_file_name}_part_{chunk_number}'
+        file_name = f'{file_name}_part_{chunk_number}'
         bucket = storage_client.bucket(bucket_name)
         file_data = file_chunk.file.read()
         file_name_with_hashed_folder = f"{folder_name_sha1_hashed}/{file_name}"
@@ -180,13 +195,13 @@ def upload_file_to_gcs(file_chunk, chunk_number, original_file_name, bucket_name
     except Exception as exc:
         raise Exception('Error in while uploading the file chunks on GCS') from exc
 
-def merge_file_gcs(bucket_name, original_file_name: str, folder_name_sha1_hashed, total_chunks):
+def merge_file_gcs(bucket_name, file_name: str, folder_name_sha1_hashed, total_chunks):
     """
     Merges file chunks in a GCS bucket into a single file.
 
     Args:
         bucket_name (str): GCS bucket name.
-        original_file_name (str): Original file name.
+        file_name (str): Original file name.
         folder_name_sha1_hashed (str): Hashed folder name in GCS.
         total_chunks (int): Total number of chunks.
 
@@ -201,14 +216,14 @@ def merge_file_gcs(bucket_name, original_file_name: str, folder_name_sha1_hashed
         bucket = storage_client.bucket(bucket_name)
         chunks = []
         for i in range(1, total_chunks + 1):
-            blob_name = f"{folder_name_sha1_hashed}/{original_file_name}_part_{i}"
+            blob_name = f"{folder_name_sha1_hashed}/{file_name}_part_{i}"
             blob = bucket.blob(blob_name)
             if blob.exists():
                 logger.info('Blob Name: %s', blob.name)
                 chunks.append(blob.download_as_bytes())
                 blob.delete()
         merged_file = b"".join(chunks)
-        file_name_with_hashed_folder = f"{folder_name_sha1_hashed}/{original_file_name}"
+        file_name_with_hashed_folder = f"{folder_name_sha1_hashed}/{file_name}"
         logger.info('GCS folder path in merge: %s', file_name_with_hashed_folder)
         blob = storage_client.bucket(bucket_name).blob(file_name_with_hashed_folder)
         logger.info('save the merged file from chunks in gcs')
