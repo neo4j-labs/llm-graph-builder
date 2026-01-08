@@ -54,7 +54,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
         isCloseable={false}
         htmlAttributes={{ style: { height: 'initial' } }}
       >
-        {!isReadOnlyUser || !isAuthEnabled ? (
+        {!isReadOnlyUser || !isAuthEnabled || connectionStatus ? (
           <Drawer.Body className='overflow-hidden! w-[294px]!'>
             {alertState.showAlert && (
               <CustomAlert
