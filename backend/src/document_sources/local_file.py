@@ -52,7 +52,7 @@ def load_document_content(file_path):
         return loader, encoding_flag
     if file_extension == ".txt":
         encoding = detect_encoding(file_path)
-        logging.info("Detected encoding for %s: %s", file_path, encoding)
+        logging.info("Detected encoding for text file: %s", encoding)
         if encoding.lower() == "utf-8":
             loader = UnstructuredFileLoader(file_path, mode="elements", autodetect_encoding=True)
             return loader, encoding_flag
