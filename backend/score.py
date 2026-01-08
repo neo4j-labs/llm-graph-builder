@@ -139,8 +139,6 @@ async def create_source_knowledge_graph_url(
 ):
     """Create a source node in the knowledge graph from a given URL or bucket."""
     try:
-        if not credentials.uri or not credentials.userName or not credentials.password:
-            return create_api_response("Failed", message="Missing required credentials (uri, userName, password)", error="Invalid credentials", file_source=params.source_type)
         start = time.time()
         source = params.source_url if params.source_url is not None else params.wiki_query
         graph = create_graph_database_connection(credentials)
@@ -309,8 +307,6 @@ async def extract_knowledge_graph_from_file(
 async def get_source_list(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
     """Get the list of sources already present in the database."""
     try:
-        if not credentials.uri or not credentials.userName or not credentials.password:
-            return create_api_response("Failed", message="Missing required credentials (uri, userName, password)", error="Invalid credentials")
         start = time.time()
         result = await asyncio.to_thread(get_source_list_from_graph,credentials)
         end = time.time()
@@ -537,8 +533,6 @@ async def clear_chat_bot(
 async def connect(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
     """Connect to the Neo4j database and check vector dimensions."""
     try:
-        if not credentials.uri or not credentials.userName or not credentials.password:
-            return create_api_response("Failed", message="Missing required credentials (uri, userName, password)", error="Invalid credentials")
         start = time.time()
         graph = create_graph_database_connection(credentials)
         
