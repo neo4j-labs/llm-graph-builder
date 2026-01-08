@@ -37,7 +37,7 @@ python-dotenv==1.1.1
 python-magic==0.4.27
 PyPDF2==3.0.1
 PyMuPDF==1.26.4
-starlette==0.50.0
+starlette==0.47.3
 sse-starlette==3.0.2
 starlette-session==0.4.3
 tqdm==4.67.1
