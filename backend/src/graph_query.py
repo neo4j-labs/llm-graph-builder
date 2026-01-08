@@ -7,7 +7,7 @@ import json
 
 from src.shared.constants import GRAPH_CHUNK_LIMIT,GRAPH_QUERY,CHUNK_TEXT_QUERY,COUNT_CHUNKS_QUERY,SCHEMA_VISUALIZATION_QUERY
 
-def get_graphDB_driver(uri, username, password,database="neo4j"):
+def get_graphDB_driver(credentials):
     """
     Creates and returns a Neo4j database driver instance configured with the provided credentials.
 
@@ -16,21 +16,30 @@ def get_graphDB_driver(uri, username, password,database="neo4j"):
 
     """
     try:
-        logging.info(f"Attempting to connect to the Neo4j database at {uri}")
-        if all(v is None for v in [username, password]):
-            username= get_value_from_env('NEO4J_USERNAME')
-            database= get_value_from_env('NEO4J_DATABASE')
-            password= get_value_from_env('NEO4J_PASSWORD')
+        logging.info(f"Attempting to connect to the Neo4j database at {credentials.uri}")
+        # Prefer credentials values, fallback to env if missing
+        username = credentials.userName if credentials.userName is not None else get_value_from_env('NEO4J_USERNAME')
+        password = credentials.password if credentials.password is not None else get_value_from_env('NEO4J_PASSWORD')
+        database = credentials.database if hasattr(credentials, 'database') and credentials.database is not None else get_value_from_env('NEO4J_DATABASE')
 
         enable_user_agent = get_value_from_env("ENABLE_USER_AGENT", "False", "bool")
         if enable_user_agent:
-            driver = GraphDatabase.driver(uri, auth=(username, password),database=database, user_agent= get_value_from_env("USER_AGENT","LLM-Graph-Builder"))
+            driver = GraphDatabase.driver(
+                credentials.uri,
+                auth=(username, password),
+                database=database,
+                user_agent=get_value_from_env("USER_AGENT", "LLM-Graph-Builder")
+            )
         else:
-            driver = GraphDatabase.driver(uri, auth=(username, password),database=database)
+            driver = GraphDatabase.driver(
+                credentials.uri,
+                auth=(username, password),
+                database=database
+            )
         logging.info("Connection successful")
         return driver
     except Exception as e:
-        error_message = f"graph_query module: Failed to connect to the database at {uri}."
+        error_message = f"graph_query module: Failed to connect to the database at {credentials.uri}."
         logging.error(error_message, exc_info=True)
 
 
@@ -186,24 +195,20 @@ def get_completed_documents(driver):
     return documents
 
 
-def get_graph_results(uri, username, password,database,document_names):
+def get_graph_results(credentials, document_names):
     """
     Retrieves graph data by executing a specified Cypher query using credentials and parameters provided.
     Processes the results to extract nodes and relationships and packages them in a structured output.
 
     Args:
-    uri (str): The URI for the Neo4j database.
-    username (str): The username for authentication.
-    password (str): The password for authentication.
-    query_type (str): The type of query to be executed.
-    document_name (str, optional): The name of the document to specifically query for, if any. Default is None.
-
+    credentials (Neo4jCredentials): The credentials object containing URI, username, password, and database information.
+    document_names (str): A JSON string representing a list of document names to query for, if any.
     Returns:
     dict: Contains the session ID, user-defined messages with nodes and relationships, and the user module identifier.
     """
     try:
         logging.info(f"Starting graph query process")
-        driver = get_graphDB_driver(uri, username, password,database)  
+        driver = get_graphDB_driver(credentials)  
         document_names= list(map(str, json.loads(document_names)))
         query = GRAPH_QUERY.format(graph_chunk_limit=GRAPH_CHUNK_LIMIT)
         records, summary , keys = execute_query(driver, query.strip(), document_names)
@@ -227,7 +232,7 @@ def get_graph_results(uri, username, password,database,document_names):
         driver.close()
 
 
-def get_chunktext_results(uri, username, password, database, document_name, page_no):
+def get_chunktext_results(credentials, document_name, page_no):
    """Retrieves chunk text, position, and page number from graph data with pagination."""
    driver = None
    try:
@@ -235,8 +240,8 @@ def get_chunktext_results(uri, username, password, database, document_name, page
        offset = 10
        skip = (page_no - 1) * offset
        limit = offset
-       driver = get_graphDB_driver(uri, username, password,database)  
-       with driver.session(database=database) as session:
+       driver = get_graphDB_driver(credentials)  
+       with driver.session(database=credentials.database) as session:
            total_chunks_result = session.run(COUNT_CHUNKS_QUERY, file_name=document_name)
            total_chunks = total_chunks_result.single()["total_chunks"]
            total_pages = (total_chunks + offset - 1) // offset  # Calculate total pages
@@ -262,12 +267,12 @@ def get_chunktext_results(uri, username, password, database, document_name, page
            driver.close()
 
 
-def visualize_schema(uri, userName, password, database):
+def visualize_schema(credentials):
    """Retrieves graph schema"""
    driver = None
    try:
        logging.info("Starting visualizing graph schema")
-       driver = get_graphDB_driver(uri, userName, password,database)  
+       driver = get_graphDB_driver(credentials)  
        records, summary, keys = driver.execute_query(SCHEMA_VISUALIZATION_QUERY)
        nodes = records[0].get("nodes", [])
        relationships = records[0].get("relationships", [])

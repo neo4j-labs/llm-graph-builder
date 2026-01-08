@@ -129,7 +129,7 @@ def create_fulltext(driver,type):
         logging.info(f"Process completed in {time.time() - start_time:.2f} seconds.")
 
 
-def create_vector_fulltext_indexes(uri, username, password, database):
+def create_vector_fulltext_indexes(credentials):
     types = ["entities", "hybrid"]
     embedding_model = get_value_from_env("EMBEDDING_MODEL", "sentence_transformer")
     embeddings, dimension = load_embedding_model(embedding_model)
@@ -138,7 +138,7 @@ def create_vector_fulltext_indexes(uri, username, password, database):
     logging.info("Starting the process of creating full-text indexes.")
 
     try:
-        driver = get_graphDB_driver(uri, username, password,database)
+        driver = get_graphDB_driver(credentials)
         driver.verify_connectivity()
         logging.info("Database connectivity verified.")
     except Exception as e:

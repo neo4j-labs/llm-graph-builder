@@ -710,7 +710,11 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
     const fetchFiles = async () => {
       try {
         setIsLoading(true);
-        const res = await getSourceNodes();
+        if (!userCredentials) {
+          setIsLoading(false);
+          return;
+        }
+        const res = await getSourceNodes(userCredentials);
         if (!res.data) {
           throw new Error('Please check backend connection');
         }
@@ -835,8 +839,11 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
   }, [connectionStatus, filesData.length, isReadOnlyUser]);
 
   const refreshFileData = async () => {
+    if (!userCredentials) {
+      return;
+    }
     try {
-      const res = await getSourceNodes();
+      const res = await getSourceNodes(userCredentials);
       if (res.data && res.data.status !== 'Failed' && res.data.data.length) {
         const updatedFiles = res.data.data
           .map((item: SourceNode) => {

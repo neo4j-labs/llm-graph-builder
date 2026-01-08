@@ -1,8 +1,9 @@
-import api from '../API/Index';
+import api, { createCredentialsFormData } from '../API/Index';
+import { UserCredentials } from '../types';
 
-const connectAPI = async () => {
+const connectAPI = async (userCredentials: UserCredentials) => {
   try {
-    const formData = new FormData();
+    const formData = createCredentialsFormData(userCredentials);
     const response = await api.post(`/connect`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
