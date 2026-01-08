@@ -314,7 +314,6 @@ class UniversalTokenUsageHandler(BaseCallbackHandler):
                         self.total_completion_tokens += metadata.get("output_tokens", 0)
 
     def report(self):
-        print(f"Reporting tokens: prompt={self.total_prompt_tokens}, completion={self.total_completion_tokens}, total={self.total_prompt_tokens + self.total_completion_tokens}")
         return {
             "prompt_tokens": self.total_prompt_tokens,
             "completion_tokens": self.total_completion_tokens,
