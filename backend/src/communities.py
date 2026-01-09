@@ -5,8 +5,9 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
-from src.shared.common_fn import load_embedding_model
-
+from src.shared.common_fn import get_value_from_env
+from src.shared.common_fn import load_embedding_model,track_token_usage
+from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 
 COMMUNITY_PROJECTION_NAME = "communities"
 NODE_PROJECTION = "!Chunk&!Document&!__Community__"
@@ -14,7 +15,7 @@ NODE_PROJECTION_ENTITY = "__Entity__"
 MAX_WORKERS = 10
 MAX_COMMUNITY_LEVELS = 3 
 MIN_COMMUNITY_SIZE = 1 
-COMMUNITY_CREATION_DEFAULT_MODEL = "openai_gpt_4.1"
+COMMUNITY_CREATION_DEFAULT_MODEL = "openai_gpt_5_mini"
 
 
 CREATE_COMMUNITY_GRAPH_PROJECTION = """
@@ -194,9 +195,9 @@ COMMUNITY_INDEX_FULL_TEXT_QUERY = f"CREATE FULLTEXT INDEX {COMMUNITY_FULLTEXT_IN
 def get_gds_driver(uri, username, password, database):
     try:
         if all(v is None for v in [username, password]):
-            username= os.getenv('NEO4J_USERNAME')
-            database= os.getenv('NEO4J_DATABASE')
-            password= os.getenv('NEO4J_PASSWORD')
+            username= get_value_from_env('NEO4J_USERNAME')
+            database= get_value_from_env('NEO4J_DATABASE')
+            password= get_value_from_env('NEO4J_PASSWORD')
             
         gds = GraphDataScience(
             endpoint=uri,
@@ -247,12 +248,11 @@ def write_communities(gds, graph_project, project_name=COMMUNITY_PROJECTION_NAME
         return False
 
 
-def get_community_chain(model, is_parent=False,community_template=COMMUNITY_TEMPLATE,system_template=COMMUNITY_SYSTEM_TEMPLATE):
+def get_community_chain(llm, is_parent=False,community_template=COMMUNITY_TEMPLATE,system_template=COMMUNITY_SYSTEM_TEMPLATE):
     try:
         if is_parent:
             community_template=PARENT_COMMUNITY_TEMPLATE
             system_template= PARENT_COMMUNITY_SYSTEM_TEMPLATE
-        llm, model_name = get_llm(model)
         community_prompt = ChatPromptTemplate.from_messages(
             [
                 (
@@ -311,11 +311,21 @@ def process_community_info(community, chain, is_parent=False):
         logging.error(f"Failed to process community {community.get('communityId', 'unknown')}: {e}")
         return None
 
-def create_community_summaries(gds, model):
+def create_community_summaries(gds, model, email, uri):
+    callback_handler = None
+    token_usage = 0
     try:
+        #pre check if user allowed to create community summaries
+        if get_value_from_env("TRACK_TOKEN_USAGE", "false", "bool"):
+            try:
+                track_token_usage(email, uri, 0, model)
+            except LLMGraphBuilderException as e:
+                logging.error(str(e))
+                raise RuntimeError(str(e))
         community_info_list = gds.run_cypher(GET_COMMUNITY_INFO)
-        community_chain = get_community_chain(model)
-
+        llm, model_name,callback_handler = get_llm(model)
+        community_chain = get_community_chain(llm)
+        
         summaries = []
         with ThreadPoolExecutor() as executor:
             futures = [executor.submit(process_community_info, community, community_chain) for community in community_info_list.to_dict(orient="records")]
@@ -330,7 +340,7 @@ def create_community_summaries(gds, model):
         gds.run_cypher(STORE_COMMUNITY_SUMMARIES, params={"data": summaries})
 
         parent_community_info = gds.run_cypher(GET_PARENT_COMMUNITY_INFO)
-        parent_community_chain = get_community_chain(model, is_parent=True)
+        parent_community_chain = get_community_chain(llm, is_parent=True)
 
         parent_summaries = []
         with ThreadPoolExecutor() as executor:
@@ -349,9 +359,22 @@ def create_community_summaries(gds, model):
         logging.error(f"Failed to create community summaries: {e}")
         raise
 
+    finally:
+       try:
+           if get_value_from_env("TRACK_TOKEN_USAGE", "false", "bool"):
+               if callback_handler:
+                   usage = callback_handler.report()
+                   token_usage = usage.get("total_tokens", 0)
+                   if email and token_usage > 0:
+                       email = email.strip().replace('"', '')
+                       latest_token = track_token_usage(email, uri, token_usage, model)
+                       logging.info(f"In community : Total token usage {latest_token} for user {email} ")
+       except Exception as err:
+           logging.warning(f"Failed to track token usage: {err}")
+
 def create_community_embeddings(gds):
     try:
-        embedding_model = os.getenv('EMBEDDING_MODEL')
+        embedding_model = get_value_from_env("EMBEDDING_MODEL","sentence_transformer")
         embeddings, dimension = load_embedding_model(embedding_model)
         logging.info(f"Embedding model '{embedding_model}' loaded successfully.")
         
@@ -444,7 +467,7 @@ def create_fulltext_index(gds, index_type):
         logging.error("An error occurred while creating the full-text index.", exc_info=True)
         logging.error(f"Error details: {str(e)}")
 
-def create_community_properties(gds, model):
+def create_community_properties(gds, model, email, uri):
     commands = [
         (CREATE_COMMUNITY_CONSTRAINT, "created community constraint to the graph."),
         (CREATE_COMMUNITY_LEVELS, "Successfully created community levels."),
@@ -458,7 +481,7 @@ def create_community_properties(gds, model):
             gds.run_cypher(command)
             logging.info(message)
 
-        create_community_summaries(gds, model)
+        create_community_summaries(gds, model, email, uri)
         logging.info("Successfully created community summaries.")
 
         embedding_dimension = create_community_embeddings(gds)
@@ -495,16 +518,16 @@ def clear_communities(gds):
         raise
 
 
-def create_communities(uri, username, password, database,model=COMMUNITY_CREATION_DEFAULT_MODEL):
+def create_communities(uri, username, password, database,email=None,model=COMMUNITY_CREATION_DEFAULT_MODEL):
     try:
         gds = get_gds_driver(uri, username, password, database)
         clear_communities(gds)
 
         graph_project = create_community_graph_projection(gds)
-        write_communities_sucess = write_communities(gds, graph_project)
-        if write_communities_sucess:
+        write_communities_success = write_communities(gds, graph_project)
+        if write_communities_success:
             logging.info("Starting Community properties creation process.")
-            create_community_properties(gds,model)
+            create_community_properties(gds,model,email,uri)
             logging.info("Communities creation process completed successfully.")
         else:
             logging.warning("Failed to write communities. Constraint was not applied.")

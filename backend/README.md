@@ -72,10 +72,6 @@ Update the environment variable in `.env` file. Refer example.env in backend fol
 
 `NEO4J_PASSWORD` : Neo4j database user password
 
-`AWS_ACCESS_KEY_ID` : AWS Access key ID
-
-`AWS_SECRET_ACCESS_KEY` : AWS secret access key
-
 
 ## Contact
 For questions or support, feel free to contact us at christopher.crosbie@neo4j.com or michael.hunger@neo4j.com

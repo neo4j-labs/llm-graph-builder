@@ -9,6 +9,7 @@ import { useGoogleLogin } from '@react-oauth/google';
 import { useAlertContext } from '../../../context/Alert';
 import { buttonCaptions } from '../../../utils/Constants';
 import { showErrorToast, showNormalToast } from '../../../utils/Toasts';
+import { useCredentials } from '../../../context/UserCredentials';
 
 const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) => {
   const [bucketName, setBucketName] = useState<string>('');
@@ -19,6 +20,7 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
   const { showAlert } = useAlertContext();
 
   const { setFilesData, model, filesData } = useFileContext();
+  const { userCredentials } = useCredentials();
 
   const defaultValues: CustomFileBase = {
     processingTotalTime: 0,
@@ -48,19 +50,26 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
   const googleLogin = useGoogleLogin({
     onSuccess: async (codeResponse) => {
       try {
+        if (!userCredentials) {
+          showErrorToast('Please connect to database first');
+          return;
+        }
         setStatus('info');
         setStatusMessage('Loading...');
         openGCSModal();
-        const apiResponse = await urlScanAPI({
-          model,
-          accessKey: '',
-          secretKey: '',
-          gcs_bucket_name: bucketName,
-          gcs_bucket_folder: folderName,
-          source_type: 'gcs bucket',
-          gcs_project_id: projectId,
-          access_token: codeResponse.access_token,
-        });
+        const apiResponse = await urlScanAPI(
+          {
+            model,
+            accessKey: '',
+            secretKey: '',
+            gcs_bucket_name: bucketName,
+            gcs_bucket_folder: folderName,
+            source_type: 'gcs bucket',
+            gcs_project_id: projectId,
+            access_token: codeResponse.access_token,
+          },
+          userCredentials
+        );
         if (apiResponse.data.status == 'Failed' || !apiResponse.data) {
           showErrorToast(apiResponse?.data?.message);
           setTimeout(() => {

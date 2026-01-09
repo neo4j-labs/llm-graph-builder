@@ -6,9 +6,9 @@ from datasets import Dataset
 from dotenv import load_dotenv
 from ragas import evaluate
 from ragas.metrics import answer_relevancy, faithfulness,context_entity_recall
-from src.shared.common_fn import load_embedding_model 
+from src.shared.common_fn import get_value_from_env,load_embedding_model 
 from ragas.dataset_schema import SingleTurnSample
-from ragas.metrics import RougeScore, SemanticSimilarity, ContextEntityRecall
+from ragas.metrics import RougeScore, SemanticSimilarity
 from ragas.llms import LangchainLLMWrapper
 from ragas.embeddings import LangchainEmbeddingsWrapper
 import nltk
@@ -22,9 +22,9 @@ except LookupError:
     
 load_dotenv()
 
-EMBEDDING_MODEL = os.getenv("RAGAS_EMBEDDING_MODEL")
-logging.info(f"Loading embedding model '{EMBEDDING_MODEL}' for ragas evaluation")
-EMBEDDING_FUNCTION, _ = load_embedding_model(EMBEDDING_MODEL)
+ragas_embedding_model = get_value_from_env("RAGAS_EMBEDDING_MODEL","openai")
+logging.info("Loading embedding model for ragas evaluation")
+EMBEDDING_FUNCTION, _ = load_embedding_model(ragas_embedding_model)
 
 def get_ragas_metrics(question: str, context: list, answer: list, model: str):
     """Calculates RAGAS metrics."""
@@ -37,10 +37,10 @@ def get_ragas_metrics(question: str, context: list, answer: list, model: str):
         if ("diffbot" in model) or ("ollama" in model):
             raise ValueError(f"Unsupported model for evaluation: {model}")
         elif ("gemini" in model):
-            llm, model_name = get_llm(model=model)
+            llm, model_name, _ = get_llm(model=model)
             llm = LangchainLLMWrapper(llm,is_finished_parser=custom_is_finished_parser)
         else:
-            llm, model_name = get_llm(model=model)
+            llm, model_name, _ = get_llm(model=model)
             llm = LangchainLLMWrapper(llm)
     
         logging.info(f"Evaluating with model: {model_name}")
@@ -77,7 +77,7 @@ async def get_additional_metrics(question: str, contexts: list, answers: list, r
    try:
        if ("diffbot" in model_name) or ("ollama" in model_name):
            raise ValueError(f"Unsupported model for evaluation: {model_name}")
-       llm, model_name = get_llm(model=model_name)
+       llm, model_name, _ = get_llm(model=model_name)
        embeddings = EMBEDDING_FUNCTION
        embedding_model = LangchainEmbeddingsWrapper(embeddings=embeddings)
        rouge_scorer = RougeScore()

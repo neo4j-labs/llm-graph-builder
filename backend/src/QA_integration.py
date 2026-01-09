@@ -20,7 +20,7 @@ from langchain_text_splitters import TokenTextSplitter
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_community.chat_message_histories import ChatMessageHistory 
 from langchain_core.callbacks import StdOutCallbackHandler, BaseCallbackHandler
-
+from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 # LangChain chat models
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
 from langchain_google_vertexai import ChatVertexAI
@@ -32,11 +32,14 @@ from langchain_community.chat_models import ChatOllama
 
 # Local imports
 from src.llm import get_llm
-from src.shared.common_fn import load_embedding_model
-from src.shared.constants import *
+from src.shared.common_fn import load_embedding_model, track_token_usage,get_value_from_env
+from src.shared.constants import (
+    CHAT_SYSTEM_TEMPLATE, CHAT_TOKEN_CUT_OFF, CHAT_ENTITY_VECTOR_MODE,
+    CHAT_GLOBAL_VECTOR_FULLTEXT_MODE, CHAT_SEARCH_KWARG_SCORE_THRESHOLD,CHAT_MODE_CONFIG_MAP, CHAT_DEFAULT_MODE, CHAT_GRAPH_MODE,CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD, CHAT_DOC_SPLIT_SIZE, QUESTION_TRANSFORM_TEMPLATE
+)
 load_dotenv() 
 
-EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
+EMBEDDING_MODEL = get_value_from_env("EMBEDDING_MODEL", "sentence_transformer")
 
 class SessionChatHistory:
     history_dict = {}
@@ -400,7 +403,7 @@ def get_neo4j_retriever(graph, document_names,chat_mode_settings, score_threshol
         neo_db = initialize_neo4j_vector(graph, chat_mode_settings)
         # document_names= list(map(str.strip, json.loads(document_names)))
         search_k = chat_mode_settings["top_k"]
-        ef_ratio = int(os.getenv("EFFECTIVE_SEARCH_RATIO", "2")) if os.getenv("EFFECTIVE_SEARCH_RATIO", "2").isdigit() else 2
+        ef_ratio = get_value_from_env("EFFECTIVE_SEARCH_RATIO", 5, "int")
         retriever = create_retriever(neo_db, document_names,chat_mode_settings, search_k, score_threshold,ef_ratio)
         return retriever
     except Exception as e:
@@ -413,9 +416,9 @@ def setup_chat(model, graph, document_names, chat_mode_settings):
     start_time = time.time()
     try:
         if model == "diffbot":
-            model = os.getenv('DEFAULT_DIFFBOT_CHAT_MODEL')
+             model = get_value_from_env("DEFAULT_DIFFBOT_CHAT_MODEL","openai_gpt_5_mini")
         
-        llm, model_name = get_llm(model=model)
+        llm, model_name, _ = get_llm(model=model)
         logging.info(f"Model called in chat: {model} (version: {model_name})")
 
         retriever = get_neo4j_retriever(graph=graph, chat_mode_settings=chat_mode_settings, document_names=document_names)
@@ -430,14 +433,23 @@ def setup_chat(model, graph, document_names, chat_mode_settings):
     
     return llm, doc_retriever, model_name
 
-def process_chat_response(messages, history, question, model, graph, document_names, chat_mode_settings):
+def process_chat_response(messages, history, question, model, graph, document_names, chat_mode_settings, email=None, uri=None):
     try:
+        if get_value_from_env("TRACK_TOKEN_USAGE", "false", "bool"):
+            try:
+                track_token_usage(email, uri, 0, model)
+            except LLMGraphBuilderException as e:
+                logging.error(str(e))
+                raise RuntimeError(str(e))
         llm, doc_retriever, model_version = setup_chat(model, graph, document_names, chat_mode_settings)
         
         docs,transformed_question = retrieve_documents(doc_retriever, messages)  
 
         if docs:
             content, result, total_tokens,formatted_docs = process_documents(docs, question, messages, llm, model, chat_mode_settings)
+            if get_value_from_env("TRACK_TOKEN_USAGE", "false", "bool"):
+                latest_token = track_token_usage(email=email, uri=uri, usage=total_tokens, last_used_model=model)
+                logging.info(f"Total token usage {latest_token} for user {email} ")
         else:
             content = "I couldn't find any relevant documents to answer your question."
             result = {"sources": list(), "nodedetails": list(), "entities": list()}
@@ -529,8 +541,8 @@ def create_graph_chain(model, graph):
     try:
         logging.info(f"Graph QA Chain using LLM model: {model}")
 
-        cypher_llm,model_name = get_llm(model)
-        qa_llm,model_name = get_llm(model)
+        cypher_llm,model_name, _ = get_llm(model)
+        qa_llm,model_name, _ = get_llm(model)
         graph_chain = GraphCypherQAChain.from_llm(
             cypher_llm=cypher_llm,
             qa_llm=qa_llm,
@@ -652,7 +664,7 @@ def get_chat_mode_settings(mode,settings_map=CHAT_MODE_CONFIG_MAP):
 
     return chat_mode_settings
     
-def QA_RAG(graph,model, question, document_names, session_id, mode, write_access=True):
+def QA_RAG(graph, model, question, document_names, session_id, mode, write_access=True, email=None, uri=None):
     logging.info(f"Chat Mode: {mode}")
 
     history = create_neo4j_chat_message_history(graph, session_id, write_access)
@@ -683,7 +695,7 @@ def QA_RAG(graph,model, question, document_names, session_id, mode, write_access
                 "user": "chatbot"
             }
         else:
-            result = process_chat_response(messages,history, question, model, graph, document_names,chat_mode_settings)
+            result = process_chat_response(messages,history, question, model, graph, document_names,chat_mode_settings, email, uri)
 
     result["session_id"] = session_id
     

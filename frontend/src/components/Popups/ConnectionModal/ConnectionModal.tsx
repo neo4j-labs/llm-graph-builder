@@ -230,7 +230,7 @@ export default function ConnectionModal({
     createDefaultFormData(credential);
     setIsLoading(true);
     try {
-      const response = await connectAPI();
+      const response = await connectAPI(credential);
       setIsLoading(false);
       if (response?.data?.status !== 'Success') {
         throw new Error(response.data.error);

@@ -1,10 +1,15 @@
 import hashlib
 import os
+import json
+import logging
+from typing import Any
+from src.entities.user_credential import Neo4jCredentials
 from transformers import AutoTokenizer, AutoModel
 from langchain_huggingface import HuggingFaceEmbeddings
 from threading import Lock
 import logging
-from src.document_sources.youtube import create_youtube_url
+from urllib.parse import urlparse,parse_qs
+from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from langchain_google_vertexai import VertexAIEmbeddings
 from langchain_openai import OpenAIEmbeddings
 from langchain_neo4j import Neo4jGraph
@@ -18,6 +23,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 import boto3
 from langchain_community.embeddings import BedrockEmbeddings
+from langchain_core.callbacks import BaseCallbackHandler
 
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 MODEL_PATH = "./local_model"
@@ -26,15 +32,15 @@ _embedding_instance = None
 
 def ensure_sentence_transformer_model_downloaded():
    if os.path.isdir(MODEL_PATH):
-       print("Model already downloaded at:", MODEL_PATH)
+       logging.info(f"Model already downloaded at: {MODEL_PATH}")
        return
    else:
-       print("Downloading model to:", MODEL_PATH)
+       logging.info(f"Downloading model to: {MODEL_PATH}")
        tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
        model = AutoModel.from_pretrained(MODEL_NAME)
        tokenizer.save_pretrained(MODEL_PATH)
        model.save_pretrained(MODEL_PATH)
-   print("Model downloaded and saved.")
+   logging.info("Model downloaded and saved.")
 
 def get_local_sentence_transformer_embedding():
    """
@@ -50,8 +56,19 @@ def get_local_sentence_transformer_embedding():
        # Ensure model is present before instantiating
        ensure_sentence_transformer_model_downloaded()
        _embedding_instance = HuggingFaceEmbeddings(model_name=MODEL_PATH)
-       print("Embedding model initialized.")
+       logging.info("Embedding model initialized.")
        return _embedding_instance
+   
+def create_youtube_url(url):
+    you_tu_url = "https://www.youtube.com/watch?v="
+    u_pars = urlparse(url)
+    quer_v = parse_qs(u_pars.query).get('v')
+    if quer_v:
+      return  you_tu_url + quer_v[0].strip()
+
+    pth = u_pars.path.split('/')
+    if pth:
+      return you_tu_url + pth[-1].strip()
 
 def check_url_source(source_type, yt_url:str=None, wiki_query:str=None):
     language=''
@@ -67,17 +84,13 @@ def check_url_source(source_type, yt_url:str=None, wiki_query:str=None):
       
       elif  source_type == 'Wikipedia':
         wiki_query_id=''
-        #pattern = r"https?:\/\/([a-zA-Z0-9\.\,\_\-\/]+)\.wikipedia\.([a-zA-Z]{2,3})\/wiki\/([a-zA-Z0-9\.\,\_\-\/]+)"
+
         wikipedia_url_regex = r'https?:\/\/(www\.)?([a-zA-Z]{2,3})\.wikipedia\.org\/wiki\/(.*)'
-        wiki_id_pattern = r'^[a-zA-Z0-9 _\-\.\,\:\(\)\[\]\{\}\/]*$'
         
         match = re.search(wikipedia_url_regex, wiki_query.strip())
         if match:
                 language = match.group(2)
                 wiki_query_id = match.group(3)
-          # else : 
-          #       languages.append("en")
-          #       wiki_query_ids.append(wiki_url.strip())
         else:
             raise Exception(f'Not a valid wikipedia url: {wiki_query} ')
 
@@ -97,12 +110,12 @@ def get_chunk_and_graphDocument(graph_document_list, chunkId_chunkDoc_list):
                   
   return lst_chunk_chunkId_document  
                  
-def create_graph_database_connection(uri, userName, password, database):
-  enable_user_agent = os.environ.get("ENABLE_USER_AGENT", "False").lower() in ("true", "1", "yes")
+def create_graph_database_connection(credentials):
+  enable_user_agent = get_value_from_env("ENABLE_USER_AGENT", "False" ,"bool")
   if enable_user_agent:
-    graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, refresh_schema=False, sanitize=True,driver_config={'user_agent':os.environ.get('NEO4J_USER_AGENT')})  
+    graph = Neo4jGraph(url=credentials.uri, database=credentials.database, username=credentials.userName, password=credentials.password, refresh_schema=False, sanitize=True,driver_config={'user_agent':get_value_from_env("USER_AGENT","LLM-Graph-Builder")}) 
   else:
-    graph = Neo4jGraph(url=uri, database=database, username=userName, password=password, refresh_schema=False, sanitize=True)    
+    graph = Neo4jGraph(url=credentials.uri, database=credentials.database, username=credentials.userName, password=credentials.password, refresh_schema=False, sanitize=True)    
   return graph
 
 
@@ -215,7 +228,7 @@ def get_bedrock_embeddings():
        BedrockEmbeddings: An instance of the BedrockEmbeddings class.
    """
    try:
-       env_value = os.getenv("BEDROCK_EMBEDDING_MODEL")
+       env_value = get_value_from_env("BEDROCK_EMBEDDING_MODEL")
        if not env_value:
            raise ValueError("Environment variable 'BEDROCK_EMBEDDING_MODEL' is not set.")
        try:
@@ -237,5 +250,277 @@ def get_bedrock_embeddings():
        )
        return bedrock_embeddings
    except Exception as e:
-       print(f"An unexpected error occurred: {e}")
+       logging.error(f"An unexpected error occurred: {e}")
        raise
+   
+def get_value_from_env(key_name: str, default_value: Any = None, data_type: type = str):
+  
+  value = os.getenv(key_name, None)
+  if value is not None:
+    return convert_type(value, data_type)
+  elif default_value is not None:
+    return convert_type(default_value, data_type)
+  else:
+    error_msg = f"Environment variable '{key_name}' not found and no default value provided."
+    logging.error(error_msg)
+    return None
+
+
+def convert_type(value: str, data_type: type):
+    """Convert value to the specified data type."""
+    try:
+        if data_type in (int, "int"):
+            return int(value)
+        elif data_type in (float, "float"):
+            return float(value)
+        elif data_type in (bool, "bool"):
+            if isinstance(value, bool):
+                return value
+            if isinstance(value, (int, float)):
+                return bool(value)
+            if isinstance(value, str):
+                return value.strip().lower() in ["true", "1", "yes"]
+            raise ValueError(f"Cannot convert {value!r} to bool")
+        elif data_type in (list, dict, "list", "dict"):
+            return json.loads(value)
+        elif data_type in (str, "str"):
+            return str(value)
+        else:
+            raise TypeError(f"Unsupported data type for conversion: {data_type}")
+    except Exception as e:
+        logging.error(f"Type conversion error: {e}")
+        raise
+
+
+class UniversalTokenUsageHandler(BaseCallbackHandler):
+    def __init__(self):
+        self.total_prompt_tokens = 0
+        self.total_completion_tokens = 0
+
+    def on_llm_end(self, response, **kwargs):
+        usage = response.llm_output.get("token_usage") if response.llm_output else None
+       
+        if usage:
+            self.total_prompt_tokens += usage.get("prompt_tokens") or usage.get("input_tokens") or 0
+            self.total_completion_tokens += usage.get("completion_tokens") or usage.get("output_tokens") or 0
+            return
+
+        for generations in response.generations:
+            for generation in generations:
+                if hasattr(generation, 'message'):
+                    metadata = getattr(generation.message, 'usage_metadata', {})
+                    if metadata:
+                        self.total_prompt_tokens += metadata.get("input_tokens", 0)
+                        self.total_completion_tokens += metadata.get("output_tokens", 0)
+
+    def report(self):
+        return {
+            "prompt_tokens": self.total_prompt_tokens,
+            "completion_tokens": self.total_completion_tokens,
+            "total_tokens": self.total_prompt_tokens + self.total_completion_tokens,
+        }
+
+def track_token_usage(
+    email: str,
+    uri: str,
+    usage: int,
+    last_used_model: str | None = None,
+) -> int:
+    """
+    Track and persist token usage for a user.
+
+    - Assumes a `User` node already exists (created elsewhere).
+    - Matches by `email` or `db_url`.
+    - Increments daily, monthly and total usage.
+    - Stores previous total usage in `prevTokenUsage`.
+    """
+    try:
+        logging.info("inside new function of track_token_usage")
+        normalized_email = (email or "").strip().lower() or None
+        normalized_db_url = (uri or "").strip() or None
+
+        if not normalized_email and not normalized_db_url:
+            raise ValueError("Either email or db_url must be provided for token tracking.")
+
+        uri = get_value_from_env("TOKEN_TRACKER_DB_URI")
+        user = get_value_from_env("TOKEN_TRACKER_DB_USERNAME")
+        password = get_value_from_env("TOKEN_TRACKER_DB_PASSWORD")
+        database = get_value_from_env("TOKEN_TRACKER_DB_DATABASE", "neo4j")
+        credentials= Neo4jCredentials(uri=uri, userName=user, password=password, database=database)
+        if not all([uri, user, password]):
+            raise EnvironmentError("Neo4j credentials are not set properly.")
+
+        graph = create_graph_database_connection(credentials)
+        daily_tokens_limit = get_value_from_env("DAILY_TOKENS_LIMIT", "250000", "int")
+        monthly_tokens_limit = get_value_from_env("MONTHLY_TOKENS_LIMIT", "1000000", "int")
+        is_neo4j_user = bool(normalized_email and normalized_email.endswith("@neo4j.com"))
+
+        user_node = None
+        params = {
+            "email": normalized_email,
+            "db_url": normalized_db_url,
+            "usage": usage,
+            "lastUsedModel": last_used_model or "",
+            "is_neo4j_user": is_neo4j_user,
+            "daily_tokens_limit": daily_tokens_limit,
+            "monthly_tokens_limit": monthly_tokens_limit,
+        }
+
+        if normalized_email:
+            result = graph.query(
+                "MATCH (u:User {email: $email}) RETURN u", {"email": normalized_email}
+            )
+            if result and result[0].get("u"):
+                user_node = result[0]["u"]
+                graph.query(
+                    "MATCH (u:User {email: $email}) SET u.db_url = $db_url", {"email": normalized_email, "db_url": normalized_db_url}
+                )
+            else:
+                result = graph.query(
+                    "MATCH (u:User {db_url: $db_url}) RETURN u", {"db_url": normalized_db_url}
+                )
+                if result and result[0].get("u"):
+                    user_node = result[0]["u"]
+                    graph.query(
+                        "MATCH (u:User {db_url: $db_url}) SET u.email = $email", {"db_url": normalized_db_url, "email": normalized_email}
+                    )
+                else:
+                    graph.query(
+                        "CREATE (u:User {email: $email, db_url: $db_url, is_neo4j_user: $is_neo4j_user, daily_tokens_limit: $daily_tokens_limit, monthly_tokens_limit: $monthly_tokens_limit, daily_tokens_used: $usage, monthly_tokens_used: $usage, total_tokens_used: $usage, lastUsedModel: $lastUsedModel, lastOperationUsage: $usage, createdAt: datetime(), updatedAt: datetime()}) RETURN u",
+                        params
+                    )
+        else:
+            result = graph.query(
+                "MATCH (u:User {db_url: $db_url}) RETURN u", {"db_url": normalized_db_url}
+            )
+            if not (result and result[0].get("u")):
+                graph.query(
+                    "CREATE (u:User {db_url: $db_url, is_neo4j_user: $is_neo4j_user, daily_tokens_limit: $daily_tokens_limit, monthly_tokens_limit: $monthly_tokens_limit, daily_tokens_used: $usage, monthly_tokens_used: $usage, total_tokens_used: $usage, lastUsedModel: $lastUsedModel, lastOperationUsage: $usage, createdAt: datetime(), updatedAt: datetime()}) RETURN u",
+                    params
+                )
+        update_query = """
+        MATCH (u:User)
+        WHERE (u.email = $email AND $email IS NOT NULL) OR (u.db_url = $db_url AND $db_url IS NOT NULL)
+        SET u.lastOperationUsage   = $usage,
+            u.daily_tokens_used   = coalesce(u.daily_tokens_used, 0) + $usage,
+            u.monthly_tokens_used = coalesce(u.monthly_tokens_used, 0) + $usage,
+            u.total_tokens_used   = coalesce(u.total_tokens_used, 0) + $usage,
+            u.lastUsedModel       = $lastUsedModel,
+            u.is_neo4j_user       = $is_neo4j_user,
+            u.daily_tokens_limit  = $daily_tokens_limit,
+            u.monthly_tokens_limit= $monthly_tokens_limit,
+            u.updatedAt           = datetime()
+        RETURN
+            u.total_tokens_used    AS latestUsage,
+            u.lastOperationUsage   AS lastOperationUsage,
+            u.daily_tokens_used    AS daily_tokens_used,
+            u.monthly_tokens_used  AS monthly_tokens_used,
+            u.daily_tokens_limit   AS daily_tokens_limit,
+            u.monthly_tokens_limit AS monthly_tokens_limit
+        """
+        result = graph.query(update_query, params)
+        if result and "latestUsage" in result[0]:
+            daily_tokens_limit = result[0].get("daily_tokens_limit", 0)
+            monthly_tokens_limit = result[0].get("monthly_tokens_limit", 0)
+            daily_tokens_used = result[0].get("daily_tokens_used", 0)
+            monthly_tokens_used = result[0].get("monthly_tokens_used", 0)
+            if ((daily_tokens_used > daily_tokens_limit) or (monthly_tokens_used > monthly_tokens_limit)) and not is_neo4j_user:
+                raise LLMGraphBuilderException(
+                    "Token usage limit exceeded. Please contact the team to increase your limit."
+                )
+            logging.info(
+                "Updated token usage for user: "
+                "latest=%s last_op=%s daily_used=%s monthly_used=%s",
+                result[0]["latestUsage"],
+                result[0].get("lastOperationUsage", 0),
+                result[0].get("daily_tokens_used", 0),
+                result[0].get("monthly_tokens_used", 0),
+            )
+            return result[0]["latestUsage"]
+
+        logging.error("No matching User found or failed to fetch updated token usage. Result: %s", result)
+        raise RuntimeError("User not found or failed to fetch updated token usage.")
+
+    except Exception as e:
+        logging.error(
+            "Error in track_token_usage for identity %s: %s",
+            email or uri,
+            e,
+            exc_info=True,
+        )
+        raise
+
+
+def get_remaining_token_limits(email: str, uri: str) -> dict:
+    """
+    Returns the remaining daily and monthly token limits for a user, given email and/or uri.
+    Uses the same node lookup logic as track_token_usage.
+    """
+    try:
+        normalized_email = (email or "").strip().lower() or None
+        normalized_db_url = (uri or "").strip() or None
+        if not normalized_email and not normalized_db_url:
+            raise ValueError("Either email or db_url must be provided for token tracking.")
+
+        neo4j_uri = os.getenv("TOKEN_TRACKER_DB_URI")
+        user = os.getenv("TOKEN_TRACKER_DB_USERNAME")
+        password = os.getenv("TOKEN_TRACKER_DB_PASSWORD")
+        database = os.getenv("TOKEN_TRACKER_DB_DATABASE", "neo4j")
+        if not all([neo4j_uri, user, password]):
+            raise EnvironmentError("Neo4j credentials are not set properly.")
+
+        credentials= Neo4jCredentials(uri=neo4j_uri, userName=user, password=password, database=database)
+        graph = create_graph_database_connection(credentials)
+
+        params = {
+            "email": normalized_email,
+            "db_url": normalized_db_url,
+        }
+
+        user_node = None
+        if normalized_email:
+            result = graph.query(
+                "MATCH (u:User {email: $email}) RETURN u", {"email": normalized_email}
+            )
+            if result and result[0].get("u"):
+                user_node = result[0]["u"]
+            else:
+                result = graph.query(
+                    "MATCH (u:User {db_url: $db_url}) RETURN u", {"db_url": normalized_db_url}
+                )
+                if result and result[0].get("u"):
+                    user_node = result[0]["u"]
+        else:
+            result = graph.query(
+                "MATCH (u:User {db_url: $db_url}) RETURN u", {"db_url": normalized_db_url}
+            )
+            if result and result[0].get("u"):
+                user_node = result[0]["u"]
+
+        if not user_node:
+            daily_tokens_limit = int(os.getenv("DAILY_TOKENS_LIMIT", "250000"))
+            monthly_tokens_limit = int(os.getenv("MONTHLY_TOKENS_LIMIT", "1000000"))
+            daily_tokens_used = 0
+            monthly_tokens_used = 0
+        else:
+            daily_tokens_limit = user_node.get("daily_tokens_limit", int(os.getenv("DAILY_TOKENS_LIMIT", "250000")))
+            monthly_tokens_limit = user_node.get("monthly_tokens_limit", int(os.getenv("MONTHLY_TOKENS_LIMIT", "1000000")))
+            daily_tokens_used = user_node.get("daily_tokens_used", 0)
+            monthly_tokens_used = user_node.get("monthly_tokens_used", 0)
+
+        return {
+            "daily_remaining": max(daily_tokens_limit - daily_tokens_used, 0),
+            "monthly_remaining": max(monthly_tokens_limit - monthly_tokens_used, 0),
+            "daily_limit": daily_tokens_limit,
+            "monthly_limit": monthly_tokens_limit,
+            "daily_used": daily_tokens_used,
+            "monthly_used": monthly_tokens_used,
+        }
+    except Exception as e:
+        logging.error(
+            "Error in get_remaining_token_limits for identity %s: %s",
+            email or uri,
+            e,
+            exc_info=True,
+        )
+        raise

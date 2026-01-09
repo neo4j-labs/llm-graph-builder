@@ -12,9 +12,9 @@ export const llms =
   import.meta.env?.VITE_LLM_MODELS?.trim() != ''
     ? (import.meta.env.VITE_LLM_MODELS?.split(',') as string[])
     : [
+        'gemini_2.5_flash',
         'openai_gpt_5.2',
         'openai_gpt_5_mini',
-        'gemini_2.5_flash',
         'gemini_2.5_pro',
         'diffbot',
         'groq_llama3.1_8b',
@@ -29,44 +29,10 @@ export const llms =
         'fireworks_gpt_oss',
       ];
 
-export const supportedLLmsForRagas = [
-  'openai_gpt_5.2',
-  'openai_gpt_5_mini',
-  'gemini_2.5_flash',
-  'gemini_2.5_pro',
-  'diffbot',
-  'groq_llama3.1_8b',
-  'anthropic_claude_4.5_sonnet',
-  'anthropic_claude_4.5_haiku',
-  'llama4_maverick',
-  'bedrock_nova_micro_v1',
-  'bedrock_nova_lite_v1',
-  'bedrock_nova_pro_v1',
-  'fireworks_deepseek_v3',
-  'fireworks_qwen3_30b',
-  'fireworks_gpt_oss',
-];
-export const supportedLLmsForGroundTruthMetrics = [
-  'openai_gpt_5.2',
-  'openai_gpt_5_mini',
-  'gemini_2.5_flash',
-  'gemini_2.5_pro',
-  'diffbot',
-  'groq_llama3.1_8b',
-  'anthropic_claude_4.5_sonnet',
-  'anthropic_claude_4.5_haiku',
-  'llama4_maverick',
-  'bedrock_nova_micro_v1',
-  'bedrock_nova_lite_v1',
-  'bedrock_nova_pro_v1',
-  'fireworks_deepseek_v3',
-  'fireworks_qwen3_30b',
-  'fireworks_gpt_oss',
-];
 export const prodllms =
   import.meta.env.VITE_LLM_MODELS_PROD?.trim() != ''
     ? (import.meta.env.VITE_LLM_MODELS_PROD?.split(',') as string[])
-    : ['openai_gpt_5_mini', 'diffbot', 'gemini_2.5_flash', 'anthropic_claude_4.5_haiku'];
+    : ['gemini_2.5_flash', 'openai_gpt_5_mini', 'diffbot', 'anthropic_claude_4.5_haiku'];
 
 export const chatModeLables = {
   vector: 'vector',
@@ -175,7 +141,7 @@ export const tooltips = {
   predinedSchema: 'Predefined Schema',
   dataImporterJson: 'Data Importer JSON',
 };
-export const PRODMODELS = ['openai_gpt_5_mini', 'gemini_2.5_flash', 'diffbot', 'anthropic_claude_4.5_haiku'];
+export const PRODMODELS = ['gemini_2.5_flash', 'openai_gpt_5_mini', 'diffbot', 'anthropic_claude_4.5_haiku'];
 export const buttonCaptions = {
   exploreGraphWithBloom: 'Explore Graph',
   showPreviewGraph: 'Preview Graph',

@@ -47,7 +47,8 @@ import { useMessageContext } from '../context/UserMessages';
 import PostProcessingToast from './Popups/GraphEnhancementDialog/PostProcessingCheckList/PostProcessingToast';
 import { getChunkText } from '../services/getChunkText';
 import ChunkPopUp from './Popups/ChunkPopUp';
-import { isExpired, isFileReadyToProcess } from '../utils/Utils';
+import { isExpired, isFileReadyToProcess, shouldShowTokenTracking } from '../utils/Utils';
+import { checkTokenLimits } from '../utils/TokenWarning';
 import { useHasSelections } from '../hooks/useHasSelections';
 import { ChevronUpIconOutline, ChevronDownIconOutline } from '@neo4j-ndl/react/icons';
 import { ThemeWrapperContext } from '../context/ThemeWrapper';
@@ -170,6 +171,13 @@ const Content: React.FC<ContentProps> = ({
           />
         );
         try {
+          if (userCredentials && shouldShowTokenTracking(userCredentials.email)) {
+            const tokenCheck = await checkTokenLimits(userCredentials);
+            if (tokenCheck.shouldWarn) {
+              showNormalToast(tokenCheck.message);
+            }
+          }
+
           const payload = isGdsActive
             ? hasSelections
               ? postProcessingTasks.filter((task) => task !== 'graph_schema_consolidation')
@@ -279,6 +287,13 @@ const Content: React.FC<ContentProps> = ({
   const extractHandler = async (fileItem: CustomFile, uid: string) => {
     queue.remove((item) => item.name === fileItem.name);
     try {
+      if (userCredentials && shouldShowTokenTracking(userCredentials.email)) {
+        const tokenCheck = await checkTokenLimits(userCredentials);
+        if (tokenCheck.shouldWarn) {
+          showNormalToast(tokenCheck.message);
+        }
+      }
+
       setFilesData((prevfiles) =>
         prevfiles.map((curfile) => {
           if (curfile.id === uid) {
@@ -420,35 +435,42 @@ const Content: React.FC<ContentProps> = ({
         />
       );
       try {
-        const response = await postProcessing(postProcessingTasks);
-        if (response.data.status === 'Success') {
-          const communityfiles = response.data?.data;
-          if (Array.isArray(communityfiles) && communityfiles.length) {
-            communityfiles?.forEach((c: any) => {
-              setFilesData((prev) => {
-                return prev.map((f) => {
-                  if (f.name === c.filename) {
-                    return {
-                      ...f,
-                      chunkNodeCount: c.chunkNodeCount ?? 0,
-                      entityNodeCount: c.entityNodeCount ?? 0,
-                      communityNodeCount: c.communityNodeCount ?? 0,
-                      chunkRelCount: c.chunkRelCount ?? 0,
-                      entityEntityRelCount: c.entityEntityRelCount ?? 0,
-                      communityRelCount: c.communityRelCount ?? 0,
-                      nodesCount: c.nodeCount,
-                      relationshipsCount: c.relationshipCount,
-                    };
-                  }
-                  return f;
-                });
-              });
-            });
+        if (userCredentials && shouldShowTokenTracking(userCredentials.email)) {
+          const tokenCheck = await checkTokenLimits(userCredentials);
+          if (tokenCheck.shouldWarn) {
+            showNormalToast(tokenCheck.message);
           }
-          showSuccessToast('All Q&A functionality is available now.');
-        } else {
-          throw new Error(response.data.error);
         }
+
+        const response = await postProcessing(postProcessingTasks);
+        if (response.data.status !== 'Success') {
+          throw new Error('Post-processing failed');
+        }
+
+        const communityfiles = response.data?.data;
+        if (Array.isArray(communityfiles) && communityfiles.length) {
+          const updateFileData = (f: any, c: any) => {
+            if (f.name !== c.filename) {
+              return f;
+            }
+            return {
+              ...f,
+              chunkNodeCount: c.chunkNodeCount ?? 0,
+              entityNodeCount: c.entityNodeCount ?? 0,
+              communityNodeCount: c.communityNodeCount ?? 0,
+              chunkRelCount: c.chunkRelCount ?? 0,
+              entityEntityRelCount: c.entityEntityRelCount ?? 0,
+              communityRelCount: c.communityRelCount ?? 0,
+              nodesCount: c.nodeCount,
+              relationshipsCount: c.relationshipCount,
+            };
+          };
+
+          communityfiles?.forEach((c: any) => {
+            setFilesData((prev) => prev.map((f) => updateFileData(f, c)));
+          });
+        }
+        showSuccessToast('All Q&A functionality is available now.');
       } catch (error) {
         if (error instanceof Error) {
           showSuccessToast(error.message);
@@ -628,7 +650,7 @@ const Content: React.FC<ContentProps> = ({
       setRetryLoading(true);
       const response = await retry(filename, retryoption);
       setRetryLoading(false);
-      if (response.data.status === 'Failure') {
+      if (response.data.status === 'Failed') {
         throw new Error(response.data.error);
       } else if (
         response.data.status === 'Success' &&
@@ -638,16 +660,16 @@ const Content: React.FC<ContentProps> = ({
         showNormalToast(response.data.message as string);
         retryOnclose();
       } else {
-        const isStartFromBegining = retryoption === RETRY_OPIONS[0] || retryoption === RETRY_OPIONS[1];
+        const isStartFromBeginning = retryoption === RETRY_OPIONS[0] || retryoption === RETRY_OPIONS[1];
         setFilesData((prev) => {
           return prev.map((f) => {
             return f.name === filename
               ? {
                   ...f,
                   status: 'Ready to Reprocess',
-                  processingProgress: isStartFromBegining ? 0 : f.processingProgress,
-                  nodesCount: isStartFromBegining ? 0 : f.nodesCount,
-                  relationshipsCount: isStartFromBegining ? 0 : f.relationshipsCount,
+                  processingProgress: isStartFromBeginning ? 0 : f.processingProgress,
+                  nodesCount: isStartFromBeginning ? 0 : f.nodesCount,
+                  relationshipsCount: isStartFromBeginning ? 0 : f.relationshipsCount,
                 }
               : f;
           });
@@ -832,32 +854,6 @@ const Content: React.FC<ContentProps> = ({
             loading={extractLoading}
             selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
             isLargeDocumentAlert={true}
-          ></ConfirmationDialog>
-        </Suspense>
-      )}
-      {showExpirationModal && filesForProcessing.length && (
-        <Suspense fallback={<FallBackDialog />}>
-          <ConfirmationDialog
-            open={showExpirationModal}
-            largeFiles={filesForProcessing}
-            extractHandler={handleGenerateGraph}
-            onClose={() => setShowExpirationModal(false)}
-            loading={extractLoading}
-            selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
-            isLargeDocumentAlert={false}
-          ></ConfirmationDialog>
-        </Suspense>
-      )}
-      {showExpirationModal && filesForProcessing.length && (
-        <Suspense fallback={<FallBackDialog />}>
-          <ConfirmationDialog
-            open={showExpirationModal}
-            largeFiles={filesForProcessing}
-            extractHandler={handleGenerateGraph}
-            onClose={() => setShowExpirationModal(false)}
-            loading={extractLoading}
-            selectedRows={childRef.current?.getSelectedRows() as CustomFile[]}
-            isLargeDocumentAlert={false}
           ></ConfirmationDialog>
         </Suspense>
       )}
