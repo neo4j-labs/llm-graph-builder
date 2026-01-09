@@ -231,6 +231,7 @@ async def extract_knowledge_graph_from_file(
         else:
             return create_api_response('Failed', message='source_type is other than accepted source')
         extract_api_time = time.time() - start_time
+        json_obj = result.copy()
         if result is not None:
             logging.info("Going for counting nodes and relationships in extract")
             count_node_time = time.time()
@@ -248,24 +249,18 @@ async def extract_knowledge_graph_from_file(
                 result['nodeCount'] = count_response[params.file_name].get('nodeCount',"0")
                 result['relationshipCount']  = count_response[params.file_name].get('relationshipCount',"0")
                 logging.info(f"counting completed in {(time.time()-count_node_time):.2f}")
-            result['db_url'] = credentials.uri
-            result['api_name'] = 'extract'
-            result['source_url'] = params.source_url
-            result['wiki_query'] = params.wiki_query
-            result['source_type'] = params.source_type
-            result['logging_time'] = formatted_time(datetime.now(timezone.utc))
-            result['elapsed_api_time'] = f'{extract_api_time:.2f}'
-            result['userName'] = credentials.userName
-            result['database'] = credentials.database
-            result['aws_access_key_id'] = params.aws_access_key_id
-            result['gcs_bucket_name'] = params.gcs_bucket_name
-            result['gcs_bucket_folder'] = params.gcs_bucket_folder
-            result['gcs_blob_filename'] = params.gcs_blob_filename
-            result['gcs_project_id'] = params.gcs_project_id
-            result['language'] = params.language
-            result['retry_condition'] = params.retry_condition
-            result['email'] = credentials.email
-        logger.log_struct(result, "INFO")
+
+            json_obj['db_url'] = credentials.uri
+            json_obj['api_name'] = 'extract'
+            json_obj['source_url'] = params.source_url
+            json_obj['wiki_query'] = params.wiki_query
+            json_obj['source_type'] = params.source_type
+            json_obj['logging_time'] = formatted_time(datetime.now(timezone.utc))
+            json_obj['elapsed_api_time'] = f'{extract_api_time:.2f}'
+            json_obj['userName'] = credentials.userName
+            json_obj['database'] = credentials.database
+            json_obj['email'] = credentials.email
+        logger.log_struct(json_obj, "INFO")
         result.update(uri_latency)
         logging.info(f"extraction completed in {extract_api_time:.2f} seconds for file name {params.file_name}")
         return create_api_response('Success', data=result, file_source= params.source_type)
@@ -279,9 +274,8 @@ async def extract_knowledge_graph_from_file(
         node_detail = graphDb_data_Access.get_current_status_document_node(params.file_name)
         # Set the status "Completed" in logging becuase we are treating these error already handled by application as like custom errors.
         json_obj = {'api_name':'extract','message':error_message,'file_created_at':formatted_time(node_detail[0]['created_time']),'error_message':error_message, 'filename': params.file_name,'status':'Completed',
-                    'db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,'success_count':1, 'source_type': params.source_type, 'source_url':params.source_url, 'wiki_query':params.wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email,
-                    'allowedNodes': params.allowedNodes, 'allowedRelationship': params.allowedRelationship}
-        logger.log_struct(json_obj, "INFO")
+                    'db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,'failed_count':1, 'source_type': params.source_type, 'source_url':params.source_url, 'wiki_query':params.wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email}
+        logger.log_struct(json_obj, "ERROR")
         logging.exception(f'File Failed in extraction: {e}')
         return create_api_response("Failed", message = error_message, error=error_message, file_name=params.file_name)
     except Exception as e:
@@ -295,8 +289,7 @@ async def extract_knowledge_graph_from_file(
         node_detail = graphDb_data_Access.get_current_status_document_node(params.file_name)
         
         json_obj = {'api_name':'extract','message':message,'file_created_at':formatted_time(node_detail[0]['created_time']),'error_message':error_message, 'filename': params.file_name,'status':'Failed',
-                    'db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,'failed_count':1, 'source_type': params.source_type, 'source_url':params.source_url, 'wiki_query':params.wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email,
-                    'allowedNodes': params.allowedNodes, 'allowedRelationship': params.allowedRelationship}
+                    'db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,'failed_count':1, 'source_type': params.source_type, 'source_url':params.source_url, 'wiki_query':params.wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email}
         logger.log_struct(json_obj, "ERROR")
         logging.exception(f'File Failed in extraction: {e}')
         return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = params.file_name)
