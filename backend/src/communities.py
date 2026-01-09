@@ -372,9 +372,9 @@ def create_community_summaries(gds, model, email, uri):
        except Exception as err:
            logging.warning(f"Failed to track token usage: {err}")
 
-def create_community_embeddings(gds, embedding_model='local'):
+def create_community_embeddings(gds, embedding_provider, embedding_model):
     try:
-        embeddings, dimension = load_embedding_model(embedding_model)
+        embeddings, dimension = load_embedding_model(embedding_provider, embedding_model)
         logging.info(f"Embedding model '{embedding_model}' loaded successfully.")
         
         logging.info("Fetching community details.")
@@ -466,7 +466,7 @@ def create_fulltext_index(gds, index_type):
         logging.error("An error occurred while creating the full-text index.", exc_info=True)
         logging.error(f"Error details: {str(e)}")
 
-def create_community_properties(gds, model, email, uri, embedding_model='local'):
+def create_community_properties(gds, model, email, uri, embedding_provider, embedding_model):
     commands = [
         (CREATE_COMMUNITY_CONSTRAINT, "created community constraint to the graph."),
         (CREATE_COMMUNITY_LEVELS, "Successfully created community levels."),
@@ -483,7 +483,7 @@ def create_community_properties(gds, model, email, uri, embedding_model='local')
         create_community_summaries(gds, model, email, uri)
         logging.info("Successfully created community summaries.")
 
-        embedding_dimension = create_community_embeddings(gds, embedding_model)
+        embedding_dimension = create_community_embeddings(gds, embedding_provider, embedding_model)
         logging.info("Successfully created community embeddings.")
 
         create_vector_index(gds=gds,index_type=ENTITY_VECTOR_INDEX_NAME,embedding_dimension=embedding_dimension)
@@ -517,7 +517,7 @@ def clear_communities(gds):
         raise
 
 
-def create_communities(uri, username, password, database,email=None,model=COMMUNITY_CREATION_DEFAULT_MODEL, embedding_model='local'):
+def create_communities(uri, username, password, database,email=None,model=COMMUNITY_CREATION_DEFAULT_MODEL, embedding_provider=None, embedding_model=None):
     try:
         gds = get_gds_driver(uri, username, password, database)
         clear_communities(gds)
@@ -526,7 +526,7 @@ def create_communities(uri, username, password, database,email=None,model=COMMUN
         write_communities_success = write_communities(gds, graph_project)
         if write_communities_success:
             logging.info("Starting Community properties creation process.")
-            create_community_properties(gds,model,email,uri, embedding_model)
+            create_community_properties(gds,model,email,uri, embedding_provider, embedding_model)
             logging.info("Communities creation process completed successfully.")
         else:
             logging.warning("Failed to write communities. Constraint was not applied.")

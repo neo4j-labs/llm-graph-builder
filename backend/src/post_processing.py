@@ -129,9 +129,9 @@ def create_fulltext(driver,type):
         logging.info(f"Process completed in {time.time() - start_time:.2f} seconds.")
 
 
-def create_vector_fulltext_indexes(credentials):
+def create_vector_fulltext_indexes(credentials, embedding_provider, embedding_model):
     types = ["entities", "hybrid"]
-    embeddings, dimension = load_embedding_model(embedding_model)
+    embeddings, dimension = load_embedding_model(embedding_provider, embedding_model)
     if not dimension:
         dimension = CHUNK_VECTOR_EMBEDDING_DIMENSION
     logging.info("Starting the process of creating full-text indexes.")
@@ -168,10 +168,10 @@ def create_vector_fulltext_indexes(credentials):
     logging.info("Full-text and vector index creation process completed.")
 
 
-def create_entity_embedding(graph:Neo4jGraph, embedding_model='local'):
+def create_entity_embedding(graph:Neo4jGraph, embedding_provider, embedding_model):
     rows = fetch_entities_for_embedding(graph)
     for i in range(0, len(rows), 1000):
-        update_embeddings(rows[i:i+1000],graph, embedding_model)
+        update_embeddings(rows[i:i+1000],graph, embedding_provider, embedding_model)
             
 def fetch_entities_for_embedding(graph):
     query = """
@@ -182,8 +182,8 @@ def fetch_entities_for_embedding(graph):
     result = execute_graph_query(graph,query)        
     return [{"elementId": record["elementId"], "text": record["text"]} for record in result]
 
-def update_embeddings(rows, graph, embedding_model = 'local'):
-    embeddings, dimension = load_embedding_model(embedding_model)
+def update_embeddings(rows, graph, embedding_provider, embedding_model):
+    embeddings, dimension = load_embedding_model(embedding_provider, embedding_model)
     logging.info(f"update embedding for entities")
     for row in rows:
         row['embedding'] = embeddings.embed_query(row['text'])                        

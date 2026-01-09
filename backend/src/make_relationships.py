@@ -33,10 +33,10 @@ def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_docume
         execute_graph_query(graph,unwind_query, params={"batch_data": batch_data})
 
     
-def create_chunk_embeddings(graph, chunkId_chunkDoc_list, file_name, embedding_model):
+def create_chunk_embeddings(graph, chunkId_chunkDoc_list, file_name, embedding_provider, embedding_model):
     isEmbedding= get_value_from_env("IS_EMBEDDING", "True" ,"bool")
     
-    embeddings, dimension = load_embedding_model(embedding_model)
+    embeddings, dimension = load_embedding_model(embedding_provider, embedding_model)
     logging.info(f'embedding model:{embeddings} and dimesion:{dimension}')
     data_for_query = []
     logging.info(f"update embedding and vector index for chunks")
@@ -147,13 +147,13 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
     return lst_chunks_including_hash
 
 
-def create_chunk_vector_index(graph, embedding_model):
+def create_chunk_vector_index(graph, embedding_provider, embedding_model):
     start_time = time.time()
     try:
         vector_index_query = "SHOW INDEXES YIELD name, type, labelsOrTypes, properties WHERE name = 'vector' AND type = 'VECTOR' AND 'Chunk' IN labelsOrTypes AND 'embedding' IN properties RETURN name"
         vector_index = execute_graph_query(graph,vector_index_query)
         if not vector_index:
-            EMBEDDING_FUNCTION , EMBEDDING_DIMENSION = load_embedding_model(embedding_model)
+            EMBEDDING_FUNCTION , EMBEDDING_DIMENSION = load_embedding_model(embedding_provider,embedding_model)
             vector_store = Neo4jVector(embedding=EMBEDDING_FUNCTION,
                                     graph=graph,
                                     node_label="Chunk", 

@@ -25,39 +25,74 @@ import boto3
 from langchain_community.embeddings import BedrockEmbeddings
 from langchain_core.callbacks import BaseCallbackHandler
 
-MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
-MODEL_PATH = "./local_model"
-_lock = Lock()
-_embedding_instance = None
 
-def ensure_sentence_transformer_model_downloaded():
-   if os.path.isdir(MODEL_PATH):
-       logging.info(f"Model already downloaded at: {MODEL_PATH}")
-       return
-   else:
-       logging.info(f"Downloading model to: {MODEL_PATH}")
-       tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-       model = AutoModel.from_pretrained(MODEL_NAME)
-       tokenizer.save_pretrained(MODEL_PATH)
-       model.save_pretrained(MODEL_PATH)
-   logging.info("Model downloaded and saved.")
+# --- Embedding Model Helpers ---
+_embedding_instances = {}
+_embedding_locks = {}
 
-def get_local_sentence_transformer_embedding():
-   """
-   Lazy, threadsafe singleton. Caller does not need to worry about
-   import-time initialization or download race.
-   """
-   global _embedding_instance
-   if _embedding_instance is not None:
-       return _embedding_instance
-   with _lock:
-       if _embedding_instance is not None:
-           return _embedding_instance
-       # Ensure model is present before instantiating
-       ensure_sentence_transformer_model_downloaded()
-       _embedding_instance = HuggingFaceEmbeddings(model_name=MODEL_PATH)
-       logging.info("Embedding model initialized.")
-       return _embedding_instance
+def _ensure_sentence_transformer_model_downloaded(model_name: str, model_path: str):
+    """
+    Download and cache the sentence-transformer model if not already present.
+    """
+    if os.path.isdir(model_path):
+        logging.info(f"Model already downloaded at: {model_path}")
+        return
+    logging.info(f"Downloading model {model_name} to: {model_path}")
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModel.from_pretrained(model_name)
+    tokenizer.save_pretrained(model_path)
+    model.save_pretrained(model_path)
+    logging.info("Model downloaded and saved.")
+
+def _get_sentence_transformer_embedding(model_name: str, model_path: str = "./local_model"):
+    """
+    Threadsafe singleton for HuggingFaceEmbeddings for any sentence-transformer model.
+    """
+    if model_name not in _embedding_locks:
+        _embedding_locks[model_name] = Lock()
+    if model_name in _embedding_instances:
+        return _embedding_instances[model_name]
+    with _embedding_locks[model_name]:
+        if model_name in _embedding_instances:
+            return _embedding_instances[model_name]
+        _ensure_sentence_transformer_model_downloaded(model_name, model_path)
+        _embedding_instances[model_name] = HuggingFaceEmbeddings(model_name=model_path)
+        logging.info(f"Embedding model {model_name} initialized.")
+        return _embedding_instances[model_name]
+
+def _get_bedrock_embeddings(model_name: str):
+    """
+    Creates and returns a BedrockEmbeddings object using the specified model name.
+    Args:
+        model_name (str): The name of the model to use for embeddings.
+    Returns:
+        BedrockEmbeddings: An instance of the BedrockEmbeddings class.
+    """
+    try:
+        env_value = get_value_from_env("BEDROCK_EMBEDDING_MODEL")
+        if not env_value:
+            raise ValueError("Environment variable 'BEDROCK_EMBEDDING_MODEL' is not set.")
+        try:
+            _, aws_access_key, aws_secret_key, region_name = env_value.split(",")
+        except ValueError:
+            raise ValueError(
+                "Environment variable 'BEDROCK_EMBEDDING_MODEL' is improperly formatted. "
+                "Expected format: 'model_name,aws_access_key,aws_secret_key,region_name'."
+            )
+        bedrock_client = boto3.client(
+                service_name="bedrock-runtime",
+                region_name=region_name.strip(),
+                aws_access_key_id=aws_access_key.strip(),
+                aws_secret_access_key=aws_secret_key.strip(),
+            )
+        bedrock_embeddings = BedrockEmbeddings(
+            model_id=model_name.strip(),
+            client=bedrock_client
+        )
+        return bedrock_embeddings
+    except Exception as e:
+        logging.error(f"An unexpected error occurred: {e}")
+        raise
    
 def create_youtube_url(url):
     you_tu_url = "https://www.youtube.com/watch?v="
@@ -119,26 +154,62 @@ def create_graph_database_connection(credentials):
   return graph
 
 
-def load_embedding_model(embedding_model_name: str):
-    if embedding_model_name == "openai":
-        embeddings = OpenAIEmbeddings()
-        dimension = 1536
-        logging.info(f"Embedding: Using OpenAI Embeddings , Dimension:{dimension}")
-    elif embedding_model_name == "gemini":        
-        embeddings = VertexAIEmbeddings(
-            model="gemini-embedding-001"
-        )
-        dimension = 3072
-        logging.info(f"Embedding: Using Vertex AI Embeddings , Dimension:{dimension}")
-    elif embedding_model_name == "titan":
-        embeddings = get_bedrock_embeddings()
-        dimension = 1024
-        logging.info(f"Embedding: Using bedrock titan Embeddings , Dimension:{dimension}")
+
+def load_embedding_model(embedding_provider: str, embedding_model_name: str):
+    """
+    Load the appropriate embedding model and return its instance and dimension.
+
+    Args:
+        embedding_provider (str): The provider name (e.g., "openai", "gemini", "titan", "sentence-transformer").
+        embedding_model_name (str): The specific model name.
+
+    Returns:
+        tuple: (embedding_instance, dimension)
+
+    Raises:
+        ValueError: If provider or model is not supported.
+    """
+    # Mapping of model dimensions for each provider
+    model_dimensions = {
+        "openai": {
+            "text-embedding-3-large": 3072,
+            "text-embedding-3-small": 1536,
+            "text-embedding-ada-002": 1536,
+        },
+        "gemini": {
+            "gemini-embedding-001": 3072,
+            "text-embedding-005": 768,
+        },
+        "titan": {
+            "titan-embed-text-v2:0": 1536,
+            "titan-embed-text-v1": 1024,
+        },
+        "sentence-transformer": {
+            "all-MiniLM-L6-v2": 384,
+        },
+    }
+
+    provider = embedding_provider.lower()
+    model = embedding_model_name
+
+    if provider not in model_dimensions or model not in model_dimensions[provider]:
+        raise ValueError(f"Unsupported provider/model: {provider}/{model}")
+
+    dimension = model_dimensions[provider][model]
+
+    if provider == "openai":
+        embeddings = OpenAIEmbeddings(model=model)
+    elif provider == "gemini":
+        embeddings = VertexAIEmbeddings(model=model)
+    elif provider == "titan":
+        embeddings = _get_bedrock_embeddings(model)
+    elif provider == "sentence-transformer":
+        model_path = "./local_model" 
+        embeddings = _get_sentence_transformer_embedding(model, model_path)
     else:
-        # embeddings = HuggingFaceEmbeddings(model_name="./local_model")
-        embeddings = get_local_sentence_transformer_embedding()
-        dimension = 384
-        logging.info(f"Embedding: Using Langchain HuggingFaceEmbeddings , Dimension:{dimension}")
+        raise ValueError(f"Unknown embedding provider: {provider}")
+
+    logging.info(f"Embedding: Using {provider} - {model}, Dimension: {dimension}")
     return embeddings, dimension
 
 def save_graphDocuments_in_neo4j(graph: Neo4jGraph, graph_document_list: List[GraphDocument], max_retries=3, delay=1):
@@ -219,39 +290,7 @@ def last_url_segment(url):
   last_url_segment = path.split("/")[-1] if path else parsed_url.netloc.split(".")[0]
   return last_url_segment
 
-def get_bedrock_embeddings():
-   """
-   Creates and returns a BedrockEmbeddings object using the specified model name.
-   Args:
-       model (str): The name of the model to use for embeddings.
-   Returns:
-       BedrockEmbeddings: An instance of the BedrockEmbeddings class.
-   """
-   try:
-       env_value = get_value_from_env("BEDROCK_EMBEDDING_MODEL")
-       if not env_value:
-           raise ValueError("Environment variable 'BEDROCK_EMBEDDING_MODEL' is not set.")
-       try:
-           model_name, aws_access_key, aws_secret_key, region_name = env_value.split(",")
-       except ValueError:
-           raise ValueError(
-               "Environment variable 'BEDROCK_EMBEDDING_MODEL' is improperly formatted. "
-               "Expected format: 'model_name,aws_access_key,aws_secret_key,region_name'."
-           )
-       bedrock_client = boto3.client(
-               service_name="bedrock-runtime",
-               region_name=region_name.strip(),
-               aws_access_key_id=aws_access_key.strip(),
-               aws_secret_access_key=aws_secret_key.strip(),
-           )
-       bedrock_embeddings = BedrockEmbeddings(
-           model_id=model_name.strip(),
-           client=bedrock_client
-       )
-       return bedrock_embeddings
-   except Exception as e:
-       logging.error(f"An unexpected error occurred: {e}")
-       raise
+
    
 def get_value_from_env(key_name: str, default_value: Any = None, data_type: type = str):
   
