@@ -31,7 +31,7 @@ steps:
     - |
       ENV=$(cat /workspace/env)
       docker build \
-        -t ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend-${ENV}:$SHORT_SHA \
+        -t ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend-$${ENV}:$SHORT_SHA \
         ./backend
 
 - name: gcr.io/cloud-builders/docker
@@ -41,7 +41,7 @@ steps:
     - -c
     - |
       ENV=$(cat /workspace/env)
-      docker push ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend-${ENV}:$SHORT_SHA
+      docker push ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend-$${ENV}:$SHORT_SHA
 
 - name: gcr.io/google.com/cloudsdktool/cloud-sdk
   id: deploy-backend
@@ -50,13 +50,13 @@ steps:
     - -c
     - |
       ENV=$(cat /workspace/env)
-      gcloud run deploy backend-${ENV} \
-        --image ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend-${ENV}:$SHORT_SHA \
+      gcloud run deploy backend-$${ENV} \
+        --image ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend-$${ENV}:$SHORT_SHA \
         --region ${_REGION} \
         --platform managed \
         --allow-unauthenticated \
         --set-env-vars \
-          ENV=$ENV,\
+          ENV=$$ENV,\
           LOG_LEVEL=info
 
 - name: gcr.io/google.com/cloudsdktool/cloud-sdk
@@ -66,13 +66,13 @@ steps:
     - -c
     - |
       ENV=$(cat /workspace/env)
-      gcloud run deploy backend-${ENV}-extraction \
-        --image ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend-${ENV}:$SHORT_SHA \
+      gcloud run deploy backend-$${ENV}-extraction \
+        --image ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend-$${ENV}:$SHORT_SHA \
         --region ${_REGION} \
         --platform managed \
         --allow-unauthenticated \
         --set-env-vars \
-          ENV=$ENV,\
+          ENV=$$ENV,\
           LOG_LEVEL=info
 
 # - name: gcr.io/cloud-builders/docker
