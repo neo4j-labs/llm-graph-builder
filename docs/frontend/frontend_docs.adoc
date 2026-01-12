@@ -321,9 +321,9 @@ image::images/Schema.jpg[PredefinedSchema, 600]
 
 image::images/UserDefinedSchema.jpg[UserDefinedSchema, 600]
 
-* ***Additional Instructions:*** 
+* ***Processing Configuration:*** 
 
-image::images/AddtionalInstructions.jpg[AddtionalInstructions, 600]
+image::images/ProcessingConfiguration.jpg[ProcessingConfiguration, 600]
 
 * ***/delete_unconnected_nodes:***
   ** to remove the lonely entities.

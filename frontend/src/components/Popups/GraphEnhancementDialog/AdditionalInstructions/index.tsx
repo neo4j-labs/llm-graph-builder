@@ -1,4 +1,4 @@
-import { Flex, Select, TextArea, Typography, useMediaQuery } from '@neo4j-ndl/react';
+import { Flex, Select, TextArea, Typography, useMediaQuery, Tooltip } from '@neo4j-ndl/react';
 import {
   appLabels,
   buttonCaptions,
@@ -7,10 +7,11 @@ import {
   defaultChunksToCombineOptions,
   tooltips,
   embeddingModels,
+  EmbeddingModelOption,
 } from '../../../../utils/Constants';
 import { tokens } from '@neo4j-ndl/base';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useFileContext } from '../../../../context/UsersFiles';
 import { showNormalToast } from '../../../../utils/Toasts';
 import { OnChangeValue } from 'react-select';
@@ -34,12 +35,30 @@ export default function AdditionalInstructionsText({
     setSelectedChunks_to_combine,
   } = useFileContext();
 
-  const [selectedEmbeddingModel, setSelectedEmbeddingModel] = useState<OptionType>(() => {
+  const [selectedEmbeddingModel, setSelectedEmbeddingModel] = useState<EmbeddingModelOption>(() => {
+    const storedProvider = localStorage.getItem('embeddingProvider');
     const storedModel = localStorage.getItem('embeddingModel');
-    return storedModel
-      ? embeddingModels.find((opt) => opt.value === storedModel) || embeddingModels[0]
-      : embeddingModels[0];
+    if (storedProvider && storedModel) {
+      const found = embeddingModels.find((opt) => opt.provider === storedProvider && opt.model === storedModel);
+      return found || embeddingModels[0];
+    }
+    return embeddingModels[0];
   });
+
+  // Sync with localStorage whenever the component is visible
+  useEffect(() => {
+    const storedProvider = localStorage.getItem('embeddingProvider');
+    const storedModel = localStorage.getItem('embeddingModel');
+    if (storedProvider && storedModel) {
+      const found = embeddingModels.find((opt) => opt.provider === storedProvider && opt.model === storedModel);
+      if (
+        found &&
+        (found.provider !== selectedEmbeddingModel.provider || found.model !== selectedEmbeddingModel.model)
+      ) {
+        setSelectedEmbeddingModel(found);
+      }
+    }
+  }, []);
 
   const clickAnalyzeInstructHandler = useCallback(async () => {
     localStorage.setItem('instructions', additionalInstructions);
@@ -81,11 +100,12 @@ export default function AdditionalInstructionsText({
   };
 
   const onChangeEmbeddingModel = (newValue: unknown) => {
-    const value = newValue as OptionType | null;
+    const value = newValue as EmbeddingModelOption | null;
     if (value !== null) {
       setSelectedEmbeddingModel(value);
-      localStorage.setItem('embeddingModel', value.value);
-      showNormalToast(`Embedding model set to ${value.label}`);
+      localStorage.setItem('embeddingProvider', value.provider);
+      localStorage.setItem('embeddingModel', value.model);
+      showNormalToast(`Embedding model set to ${value.label} (dimension: ${value.dimension})`);
     }
   };
 
@@ -100,7 +120,7 @@ export default function AdditionalInstructionsText({
         <Flex justifyContent='space-between' flexDirection='column' gap='6'>
           <TextArea
             helpText={buttonCaptions.helpInstructions}
-            label='Additional Instructions'
+            label='Processing Configuration'
             style={{
               resize: 'vertical',
             }}
@@ -136,11 +156,55 @@ export default function AdditionalInstructionsText({
           type='creatable'
           selectProps={{
             isMulti: false,
-            options: embeddingModels,
+            options: embeddingModels.map((model) => ({
+              ...model,
+              label: (
+                <Tooltip type='simple' placement='right'>
+                  <Tooltip.Trigger>
+                    <span className='text-nowrap'>{model.label}</span>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>
+                    <div className='flex flex-col gap-1'>
+                      <div>
+                        <strong>Provider:</strong> {model.provider}
+                      </div>
+                      <div>
+                        <strong>Model:</strong> {model.model}
+                      </div>
+                      <div>
+                        <strong>Dimension:</strong> {model.dimension}
+                      </div>
+                    </div>
+                  </Tooltip.Content>
+                </Tooltip>
+              ),
+            })),
             onChange: onChangeEmbeddingModel,
-            value: selectedEmbeddingModel,
+            value: {
+              ...selectedEmbeddingModel,
+              label: (
+                <Tooltip type='simple' placement='right'>
+                  <Tooltip.Trigger>
+                    <span className='text-nowrap'>{selectedEmbeddingModel.label}</span>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>
+                    <div className='flex flex-col gap-1'>
+                      <div>
+                        <strong>Provider:</strong> {selectedEmbeddingModel.provider}
+                      </div>
+                      <div>
+                        <strong>Model:</strong> {selectedEmbeddingModel.model}
+                      </div>
+                      <div>
+                        <strong>Dimension:</strong> {selectedEmbeddingModel.dimension}
+                      </div>
+                    </div>
+                  </Tooltip.Content>
+                </Tooltip>
+              ),
+            },
           }}
-          helpText='Select the embedding model to use for vector indexing and similarity searches'
+          helpText={`Select the embedding model to use for vector indexing and similarity searches`}
         />
         <Select
           label='Token Count Per Chunk'

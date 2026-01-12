@@ -4,7 +4,9 @@ import { UserCredentials } from '../types';
 const connectAPI = async (userCredentials: UserCredentials) => {
   try {
     const formData = createCredentialsFormData(userCredentials);
-    const embeddingModel = localStorage.getItem('embeddingModel') || 'local';
+    const embeddingProvider = localStorage.getItem('embeddingProvider') || 'sentence-transformer';
+    const embeddingModel = localStorage.getItem('embeddingModel') || 'all-MiniLM-L6-v2';
+    formData.append('embedding_provider', embeddingProvider);
     formData.append('embedding_model', embeddingModel);
     const response = await api.post(`/connect`, formData, {
       headers: {
@@ -22,7 +24,9 @@ const envConnectionAPI = async () => {
   try {
     const conectionUrl = `/backend_connection_configuration`;
     const formData = new FormData();
-    const embeddingModel = localStorage.getItem('embeddingModel') || 'local';
+    const embeddingProvider = localStorage.getItem('embeddingProvider') || 'sentence-transformer';
+    const embeddingModel = localStorage.getItem('embeddingModel') || 'all-MiniLM-L6-v2';
+    formData.append('embedding_provider', embeddingProvider);
     formData.append('embedding_model', embeddingModel);
     const response = await api.post(conectionUrl, formData, {
       headers: {

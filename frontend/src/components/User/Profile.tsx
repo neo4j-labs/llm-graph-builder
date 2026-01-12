@@ -89,7 +89,6 @@ export default function Profile() {
       {
         title: 'Logout',
         onClick: () => {
-          localStorage.removeItem('embeddingModel');
           localStorage.removeItem('instructions');
           localStorage.removeItem('selectedChunk_size');
           localStorage.removeItem('selectedChunk_overlap');

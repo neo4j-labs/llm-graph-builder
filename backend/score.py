@@ -1,6 +1,5 @@
 from src.shared.common_fn import (
-    formatted_time, get_value_from_env, get_remaining_token_limits,
-    get_embedding_config_from_db, set_embedding_config_in_db, check_embedding_config_or_raise
+    formatted_time, get_value_from_env, get_remaining_token_limits
 )
 
 import asyncio
