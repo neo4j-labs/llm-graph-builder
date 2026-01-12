@@ -50,6 +50,10 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
   const googleLogin = useGoogleLogin({
     onSuccess: async (codeResponse) => {
       try {
+        if (!userCredentials) {
+          showErrorToast('Please connect to database first');
+          return;
+        }
         setStatus('info');
         setStatusMessage('Loading...');
         openGCSModal();
