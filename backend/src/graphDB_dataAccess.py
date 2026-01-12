@@ -165,36 +165,32 @@ class graphDBdataAccess:
             logging.info("Vector index does not exist, So KNN graph not update")
 
     def check_account_access(self, database):
+        """
+        Returns a value: bool
+        Checks write access for the current user on the given database.
+        Community edition: assumes write access is True (no fine-grained privilege control).
+        """
         try:
-            query_dbms_componenet = "call dbms.components() yield edition"
-            result_dbms_componenet = self.graph.query(query_dbms_componenet,session_params={"database":self.graph._database})
+            query_dbms_component = "call dbms.components() yield edition"
+            result_dbms_component = self.graph.query(query_dbms_component, session_params={"database": self.graph._database})
+            edition = result_dbms_component[0]["edition"] if result_dbms_component else "community"
 
-            if  result_dbms_componenet[0]["edition"] == "enterprise":
-                query = """
+            if edition == "enterprise":
+                write_query = """
                 SHOW USER PRIVILEGES 
-                YIELD * 
-                WHERE graph = $database AND action IN ['read'] 
-                RETURN COUNT(*) AS readAccessCount
+                YIELD action, graph
+                WHERE graph = $database AND action = 'write'
+                RETURN COUNT(*) AS writeAccessCount
                 """
-            
-                logging.info(f"Checking access for database: {database}")
-
-                result = self.graph.query(query, params={"database": database},session_params={"database":self.graph._database})
-                read_access_count = result[0]["readAccessCount"] if result else 0
-
-                logging.info(f"Read access count: {read_access_count}")
-
-                if read_access_count > 0:
-                    logging.info("The account has read access.")
-                    return False
-                else:
-                    logging.info("The account has write access.")
-                    return True
+                logging.info(f"Checking write access for database: {database}")
+                write_result = self.graph.query(write_query, params={"database": database}, session_params={"database": self.graph._database})
+                write_access = write_result[0]["writeAccessCount"] > 0 if write_result else False
+                logging.info(f"Write access: {write_access}")
+                return write_access
             else:
-                #Community version have no roles to execute admin command, so assuming write access as TRUE
-                logging.info("The account has write access.")
+                # Community edition: no fine-grained privilege control, assume write access is True
+                logging.info("Community edition: assuming write access is True.")
                 return True
-
         except Exception as e:
             logging.error(f"Error checking account access: {e}")
             return False
