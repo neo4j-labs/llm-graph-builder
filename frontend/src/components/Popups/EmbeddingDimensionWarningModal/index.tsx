@@ -1,5 +1,7 @@
 import { Button, Dialog, Typography, Banner } from '@neo4j-ndl/react';
-import { memo } from 'react';
+import { memo, useState } from 'react';
+import { createVectorIndex } from '../../../services/VectorIndexCreation';
+import { showErrorToast, showNormalToast } from '../../../utils/Toasts';
 
 interface EmbeddingDimensionWarningModalProps {
   open: boolean;
@@ -16,14 +18,33 @@ function EmbeddingDimensionWarningModal({
   dbDimension,
   selectedDimension,
 }: EmbeddingDimensionWarningModalProps) {
-  const handleProceed = () => {
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleProceed = async () => {
     console.log('User acknowledged dimension mismatch warning');
     console.log('Details:', {
       previousDimension: dbDimension,
       newDimension: selectedDimension,
       timestamp: new Date().toISOString(),
     });
-    onProceed();
+
+    setIsProcessing(true);
+    try {
+      const response = await createVectorIndex(true);
+      if (response.data.status === 'Success') {
+        showNormalToast('Vector index recreated successfully');
+        onProceed();
+      } else {
+        const errorMsg =
+          typeof response.data.message === 'string' ? response.data.message : 'Failed to recreate vector index';
+        showErrorToast(errorMsg);
+      }
+    } catch (error) {
+      console.error('Error recreating vector index:', error);
+      showErrorToast('Failed to recreate vector index. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -81,10 +102,10 @@ function EmbeddingDimensionWarningModal({
         </div>
       </Dialog.Content>
       <Dialog.Actions>
-        <Button onClick={onClose} size='medium' fill='outlined'>
+        <Button onClick={onClose} size='medium' fill='outlined' isDisabled={isProcessing}>
           Cancel
         </Button>
-        <Button onClick={handleProceed} size='medium'>
+        <Button onClick={handleProceed} size='medium' isLoading={isProcessing} isDisabled={isProcessing}>
           I Understand, Proceed
         </Button>
       </Dialog.Actions>
