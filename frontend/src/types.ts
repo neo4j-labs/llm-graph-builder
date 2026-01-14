@@ -402,7 +402,7 @@ interface orphanTotalNodes {
   total: number;
 }
 export interface commonserverresponse {
-  status: string;
+  status: 'Success' | 'Failed';
   error?: string;
   message?: string | orphanTotalNodes;
   file_name?: string;

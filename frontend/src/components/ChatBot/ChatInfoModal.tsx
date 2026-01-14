@@ -23,12 +23,7 @@ import ChunkInfo from './ChunkInfo';
 import EntitiesInfo from './EntitiesInfo';
 import SourcesInfo from './SourcesInfo';
 import CommunitiesInfo from './CommunitiesInfo';
-import {
-  chatModeLables,
-  chatModeReadableLables,
-  mergeNestedObjects,
-  supportedLLmsForRagas,
-} from '../../utils/Constants';
+import { chatModeLables, chatModeReadableLables, mergeNestedObjects, llms } from '../../utils/Constants';
 import { Relationship } from '@neo4j-nvl/base';
 import { getChatMetrics } from '../../services/GetRagasMetric';
 import MetricsTab from './MetricsTab';
@@ -379,16 +374,16 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
         <Tabs.TabPanel tabId={8} value={activeTab}>
           <Stack spacing={2}>
             <Stack spacing={2}>
-              {!supportedLLmsForRagas.includes(metricmodel) && (
+              {!llms.includes(metricmodel) && (
                 <Banner
                   type='warning'
                   title='LLM Model Not Supported ,Please Choose Different Model'
                   description={
                     <Typography variant='body-medium'>
                       Currently ragas evaluation works on{' '}
-                      {supportedLLmsForRagas.map((s, idx) => (
+                      {llms.map((s, idx) => (
                         <span className='font-bold' key={s}>
-                          {capitalizeWithUnderscore(s) + (idx != supportedLLmsForRagas.length - 1 ? ',' : '')}
+                          {capitalizeWithUnderscore(s) + (idx != llms.length - 1 ? ',' : '')}
                         </span>
                       ))}
                       .
@@ -452,7 +447,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
             {isSingleMode &&
               (isAdditionalMetricsWithSingleMode === false || isAdditionalMetricsWithSingleMode === null) && (
                 <Button
-                  isDisabled={metricsLoading || !supportedLLmsForRagas.includes(metricmodel)}
+                  isDisabled={metricsLoading || !llms.includes(metricmodel)}
                   className='w-max self-center mt-4'
                   onClick={loadMetrics}
                 >
@@ -461,7 +456,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               )}
             {isMultiModes && (isAdditionalMetricsEnabled === false || isAdditionalMetricsEnabled === null) && (
               <Button
-                isDisabled={metricsLoading || !supportedLLmsForRagas.includes(metricmodel)}
+                isDisabled={metricsLoading || !llms.includes(metricmodel)}
                 className='w-max self-center mt-4'
                 onClick={loadMetrics}
               >

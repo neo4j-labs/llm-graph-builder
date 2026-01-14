@@ -32,7 +32,6 @@ export default function AdditionalInstructionsText({
     selectedChunks_to_combine,
     setSelectedChunks_to_combine,
   } = useFileContext();
-
   const clickAnalyzeInstructHandler = useCallback(async () => {
     localStorage.setItem('instructions', additionalInstructions);
     closeEnhanceGraphSchemaDialog();

@@ -1,5 +1,5 @@
 import logging
-from src.graph_query import *
+from src.graph_query import get_graphDB_driver
 
 NEIGHBOURS_FROM_ELEMENT_ID_QUERY = """
 MATCH (n) 
@@ -37,12 +37,13 @@ RETURN
 """
 
 
-def get_neighbour_nodes(uri, username, password, database, element_id, query=NEIGHBOURS_FROM_ELEMENT_ID_QUERY):
+def get_neighbour_nodes(credentials, element_id, query=NEIGHBOURS_FROM_ELEMENT_ID_QUERY):
     driver = None
 
     try:
         logging.info(f"Querying neighbours for element_id: {element_id}")
-        driver = get_graphDB_driver(uri, username, password, database)
+        
+        driver = get_graphDB_driver(credentials)
         driver.verify_connectivity()
         logging.info("Database connectivity verified.")
 
