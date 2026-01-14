@@ -93,13 +93,13 @@ steps:
           LOG_LEVEL=info
 
 - name: gcr.io/google.com/cloudsdktool/cloud-sdk
-  id: deploy-backend-extraction
+  id: deploy-backend-processing
   entrypoint: bash
   args:
     - -c
     - |
       ENV=$(cat /workspace/env)
-      gcloud run deploy backend-$${ENV}-extraction \
+      gcloud run deploy backend-$${ENV}-processing \
         --image ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend-$${ENV}:$SHORT_SHA \
         --region ${_REGION} \
         --platform managed \
