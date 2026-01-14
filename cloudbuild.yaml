@@ -86,6 +86,15 @@ steps:
       LOG_LEVEL: "info"
       EOF
 
+- name: 'alpine'
+  id: debug-yaml
+  entrypoint: sh
+  args:
+    - -c
+    - |
+      apk add --no-cache yamllint
+      yamllint env-vars.yaml || exit 1
+
 - name: gcr.io/google.com/cloudsdktool/cloud-sdk
   id: deploy-backend
   entrypoint: bash
