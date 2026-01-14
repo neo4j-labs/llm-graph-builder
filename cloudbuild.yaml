@@ -1,0 +1,114 @@
+substitutions:
+  _REGION: us-central1
+  _REPO: cloud-run-repo
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+steps:
+
+# 1. Detect Environment by Branch
+- name: gcr.io/cloud-builders/gcloud
+  id: detect-env
+  entrypoint: bash
+  args:
+    - -c
+    - |
+      if [[ "$BRANCH_NAME" == "main" ]]; then
+        echo "prod" > /workspace/env
+      elif [[ "$BRANCH_NAME" == "staging" ]]; then
+        echo "staging" > /workspace/env
+      else
+        echo "dev" > /workspace/env
+      fi
+
+# 2. Backend – Python
+- name: gcr.io/cloud-builders/docker
+  id: build-backend
+  entrypoint: bash
+  args:
+    - -c
+    - |
+      ENV=$(cat /workspace/env)
+      docker build \
+        -t ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend-$${ENV}:$SHORT_SHA \
+        ./backend
+
+- name: gcr.io/cloud-builders/docker
+  id: push-backend
+  entrypoint: bash
+  args:
+    - -c
+    - |
+      ENV=$(cat /workspace/env)
+      docker push ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend-$${ENV}:$SHORT_SHA
+
+- name: gcr.io/google.com/cloudsdktool/cloud-sdk
+  id: deploy-backend
+  entrypoint: bash
+  args:
+    - -c
+    - |
+      ENV=$(cat /workspace/env)
+      gcloud run deploy backend-$${ENV} \
+        --image ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend-$${ENV}:$SHORT_SHA \
+        --region ${_REGION} \
+        --platform managed \
+        --allow-unauthenticated \
+        --set-env-vars \
+          ENV=$$ENV,\
+          LOG_LEVEL=info
+
+- name: gcr.io/google.com/cloudsdktool/cloud-sdk
+  id: deploy-backend-extraction
+  entrypoint: bash
+  args:
+    - -c
+    - |
+      ENV=$(cat /workspace/env)
+      gcloud run deploy backend-$${ENV}-extraction \
+        --image ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend-$${ENV}:$SHORT_SHA \
+        --region ${_REGION} \
+        --platform managed \
+        --allow-unauthenticated \
+        --set-env-vars \
+          ENV=$$ENV,\
+          LOG_LEVEL=info
+
+# - name: gcr.io/cloud-builders/docker
+#   id: build-frontend
+#   entrypoint: bash
+#   args:
+#     - -c
+#     - |
+#       ENV=$(cat /workspace/env)
+#       docker build \
+#         --build-arg NEXT_PUBLIC_ENV=$ENV \
+#         --build-arg NEXT_PUBLIC_API_URL=https://backend-$ENV-$PROJECT_ID.run.app \
+#         -t $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/frontend-$ENV:$SHORT_SHA \
+#         ./frontend
+
+# - name: gcr.io/cloud-builders/docker
+#   id: push-frontend
+#   entrypoint: bash
+#   args:
+#     - -c
+#     - |
+#       ENV=$(cat /workspace/env)
+#       docker push $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/frontend-$ENV:$SHORT_SHA
+
+# - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+#   id: deploy-frontend
+#   entrypoint: bash
+#   args:
+#     - -c
+#     - |
+#       ENV=$(cat /workspace/env)
+#       gcloud run deploy frontend-$ENV \
+#         --image $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/frontend-$ENV:$SHORT_SHA \
+#         --region $_REGION \
+#         --platform managed \
+#         --allow-unauthenticated \
+#         --set-env-vars \
+#           ENV=$ENV,\
+#           NEXT_PUBLIC_API_URL=https://backend-$ENV-$PROJECT_ID.run.app
