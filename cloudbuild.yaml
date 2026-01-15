@@ -88,6 +88,7 @@ steps:
         --platform managed \
         --allow-unauthenticated \
         --env-vars-file=/workspace/env_vars.json
+        --timeout=1200s
 
 - name: gcr.io/google.com/cloudsdktool/cloud-sdk
   id: deploy-backend-processing
@@ -121,14 +122,15 @@ steps:
       if not d.get("LOG_LEVEL"):
           d["LOG_LEVEL"] = "info"
       json.dump(d, open("/workspace/env_vars.json","w"), indent=2)
-
-      # Deploy using env file (preserves special characters)
+      PY
+      
       gcloud run deploy backend-$${ENV}-processing-new \
         --image ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend-$${ENV}:$SHORT_SHA \
         --region ${_REGION} \
         --platform managed \
         --allow-unauthenticated \
-        --env-vars-file=/workspace/env_vars.json
+        --env-vars-file=/workspace/env_vars.json \
+        --timeout=1200s
 
 # - name: gcr.io/cloud-builders/docker
 #   id: build-frontend
