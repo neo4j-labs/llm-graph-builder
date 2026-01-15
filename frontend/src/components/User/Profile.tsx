@@ -40,10 +40,10 @@ export default function Profile() {
   }, [userCredentials]);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && connectionStatus) {
       fetchTokenLimits();
     }
-  }, [isAuthenticated, fetchTokenLimits]);
+  }, [isAuthenticated, connectionStatus, fetchTokenLimits]);
 
   const settings = useMemo(() => {
     const isNeo4j = isNeo4jUser(user?.email);
