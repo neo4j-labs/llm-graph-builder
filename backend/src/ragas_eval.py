@@ -22,9 +22,10 @@ except LookupError:
     
 load_dotenv()
 
-ragas_embedding_model = get_value_from_env("RAGAS_EMBEDDING_MODEL","openai")
+embedding_env = get_value_from_env("RAGAS_EMBEDDING_MODEL", "openai,text-embedding-ada-002")
+embedding_provider, embedding_model = [x.strip() for x in embedding_env.split(",", 1)]
 logging.info("Loading embedding model for ragas evaluation")
-EMBEDDING_FUNCTION, _ = load_embedding_model(ragas_embedding_model)
+EMBEDDING_FUNCTION, _ = load_embedding_model(embedding_provider, embedding_model)
 
 def get_ragas_metrics(question: str, context: list, answer: list, model: str):
     """Calculates RAGAS metrics."""

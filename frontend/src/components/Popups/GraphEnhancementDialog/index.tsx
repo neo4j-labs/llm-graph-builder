@@ -149,10 +149,10 @@ export default function GraphEnhancementDialog({
                   <Tabs.Tab
                     tabId={1}
                     htmlAttributes={{
-                      'aria-label': 'Additional Instructions',
+                      'aria-label': 'Processing Configuration',
                     }}
                   >
-                    Additional Instructions
+                    Processing Configuration
                   </Tabs.Tab>
                   <Tabs.Tab
                     tabId={2}

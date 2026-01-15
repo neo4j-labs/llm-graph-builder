@@ -315,7 +315,7 @@ async def get_source_list(credentials: Neo4jCredentials = Depends(get_neo4j_cred
         return create_api_response(job_status, message=message, error=error_message)
 
 @app.post("/post_processing")
-async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), tasks=Form(None)):
+async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), tasks=Form(None), embedding_provider=Form(None), embedding_model=Form(None)):
     """Run post-processing tasks on the graph database."""
     try:
         graph = create_graph_database_connection(credentials)
@@ -329,12 +329,12 @@ async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_cred
             logging.info(f'Updated KNN Graph')
 
         if "enable_hybrid_search_and_fulltext_search_in_bloom" in tasks:
-            await asyncio.to_thread(create_vector_fulltext_indexes, credentials)
+            await asyncio.to_thread(create_vector_fulltext_indexes, credentials, embedding_provider, embedding_model)
             api_name = 'post_processing/enable_hybrid_search_and_fulltext_search_in_bloom'
             logging.info(f'Full Text index created')
 
         if get_value_from_env("ENTITY_EMBEDDING","False","bool") and "materialize_entity_similarities" in tasks:
-            await asyncio.to_thread(create_entity_embedding, graph)
+            await asyncio.to_thread(create_entity_embedding, graph, embedding_provider, embedding_model)
             api_name = 'post_processing/create_entity_embedding'
             logging.info(f'Entity Embeddings created')
 
@@ -345,7 +345,7 @@ async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_cred
             
         if "enable_communities" in tasks:
             api_name = 'create_communities'
-            await asyncio.to_thread(create_communities, credentials.uri, credentials.userName, credentials.password, credentials.database, credentials.email)
+            await asyncio.to_thread(create_communities, credentials.uri, credentials.userName, credentials.password, credentials.database, credentials.email, embedding_provider, embedding_model)
             logging.info(f'created communities') 
 
         graphDb_data_Access = graphDBdataAccess(graph)
@@ -388,7 +388,9 @@ async def chat_bot(
     question=Form(None),
     document_names=Form(None),
     session_id=Form(None),
-    mode=Form(None)
+    mode=Form(None),
+    embedding_provider=Form(None),
+    embedding_model=Form(None)
 ):
     """Run QA chat bot on the graph database."""
     logging.info(f"QA_RAG called at {datetime.now()}")
@@ -401,7 +403,7 @@ async def chat_bot(
         
         graphDb_data_Access = graphDBdataAccess(graph)
         write_access = graphDb_data_Access.check_account_access(database=credentials.database)
-        result = await asyncio.to_thread(QA_RAG, graph=graph, model=model, question=question, document_names=document_names, session_id=session_id, mode=mode, write_access=write_access, email=credentials.email, uri=credentials.uri)
+        result = await asyncio.to_thread(QA_RAG, graph=graph, model=model, question=question, document_names=document_names, session_id=session_id, mode=mode, write_access=write_access, email=credentials.email, uri=credentials.uri, embedding_provider=embedding_provider, embedding_model=embedding_model)
 
         total_call_time = time.time() - qa_rag_start_time
         logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
@@ -523,13 +525,14 @@ async def clear_chat_bot(
         gc.collect()
             
 @app.post("/connect")
-async def connect(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
+async def connect(credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
+                  embedding_provider=Form(None), embedding_model=Form(None)):
     """Connect to the Neo4j database and check vector dimensions."""
     try:
         start = time.time()
         graph = create_graph_database_connection(credentials)
         
-        result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, credentials.database)
+        result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, credentials.database, embedding_provider, embedding_model)
         gcs_cache = get_value_from_env("GCS_FILE_CACHE","False","bool")
         end = time.time()
         elapsed_time = end - start
@@ -888,14 +891,16 @@ async def merge_duplicate_nodes(
 @app.post("/drop_create_vector_index")
 async def drop_create_vector_index(
     credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
-    isVectorIndexExist=Form()
+    isVectorIndexExist=Form(None),
+    embedding_provider=Form(None),
+    embedding_model=Form(None)
 ):
     """Drop and re-create the vector index in the graph database."""
     try:
         start = time.time()
         graph = create_graph_database_connection(credentials)
         graphDb_data_Access = graphDBdataAccess(graph)
-        result = graphDb_data_Access.drop_create_vector_index(isVectorIndexExist)
+        result = graphDb_data_Access.drop_create_vector_index(isVectorIndexExist, embedding_provider, embedding_model)
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name':'drop_create_vector_index', 'db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,
@@ -1049,7 +1054,7 @@ async def fetch_chunktext(
 
 
 @app.post("/backend_connection_configuration")
-async def backend_connection_configuration():
+async def backend_connection_configuration(embedding_provider=Form(None), embedding_model=Form(None)):
     try:
         start = time.time()
         uri = get_value_from_env("NEO4J_URI")
@@ -1062,7 +1067,7 @@ async def backend_connection_configuration():
             logging.info(f'login connection status of object: {graph}')
             if graph is not None:
                 graph_connection = True        
-                result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, database)
+                result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, database, embedding_provider, embedding_model)
                 result['gcs_file_cache'] = gcs_cache
                 result['uri'] = uri
                 end = time.time()

@@ -271,9 +271,20 @@ export default function ConnectionModal({
             chunksTobeProcess,
             email: user?.email ?? '',
             connection: 'connectAPI',
+            db_vector_dimension: response.data.data.db_vector_dimension,
+            application_dimension: response.data.data.application_dimension,
           })
         );
         setUserDbVectorIndex(response.data.data.db_vector_dimension);
+        localStorage.setItem(
+          'embedding.dimensions',
+          JSON.stringify({
+            db_vector_dimension: response.data.data.db_vector_dimension,
+            application_dimension: response.data.data.application_dimension,
+            userDbVectorIndex: response.data.data.db_vector_dimension,
+          })
+        );
+
         if (
           (response.data.data.application_dimension === response.data.data.db_vector_dimension ||
             response.data.data.db_vector_dimension == 0) &&

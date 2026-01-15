@@ -1155,6 +1155,7 @@ The API is used to drop and create the vector index when vector index dimesion a
 * `database`= Neo4j database name,
 * `isVectorIndexExist`= True or False based on whether vector index exist in database,
 * `email`= Logged in User Email
+* `embedding_model`= Embedding model selected by user
 
 **Response :**
 [source,json,indent=0]

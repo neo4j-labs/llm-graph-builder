@@ -213,7 +213,7 @@ class graphDBdataAccess:
             logging.error(f"An error occurred while checking GDS version: {e}")
             return False
             
-    def connection_check_and_get_vector_dimensions(self,database):
+    def connection_check_and_get_vector_dimensions(self,database, embedding_provider, embedding_model):
         """
         Get the vector index dimension from database and application configuration and DB connection status
         
@@ -235,8 +235,7 @@ class graphDBdataAccess:
                                                     count(c.embedding) as hasEmbedding
                                 """,session_params={"database":self.graph._database})
         
-        embedding_model = get_value_from_env("EMBEDDING_MODEL", "sentence_transformer")
-        embeddings, application_dimension = load_embedding_model(embedding_model)
+        embeddings, application_dimension = load_embedding_model(embedding_provider, embedding_model)
 
         gds_status = self.check_gds_version()
         write_access = self.check_account_access(database=database)
@@ -247,9 +246,19 @@ class graphDBdataAccess:
             else:
                 if len(db_vector_dimension) == 0 and len(result_chunks) == 0:
                     logging.info("Chunks and vector index does not exists in database")
-                    return {'db_vector_dimension': 0, 'application_dimension':application_dimension, 'message':"Connection Successful","chunks_exists":False,"gds_status":gds_status,"write_access":write_access}
+                    self.drop_create_vector_index(
+                        isVectorIndexExist='false',
+                        embedding_provider=embedding_provider,
+                        embedding_model=embedding_model
+                    )
+                    return {'db_vector_dimension': application_dimension, 'application_dimension':application_dimension, 'message':"Connection Successful","chunks_exists":False,"gds_status":gds_status,"write_access":write_access}
                 elif len(db_vector_dimension) == 0 and result_chunks[0]['hasEmbedding']==0 and result_chunks[0]['chunks'] > 0:
-                    return {'db_vector_dimension': 0, 'application_dimension':application_dimension, 'message':"Connection Successful","chunks_exists":True,"gds_status":gds_status,"write_access":write_access}
+                    self.drop_create_vector_index(
+                        isVectorIndexExist='false',
+                        embedding_provider=embedding_provider,
+                        embedding_model=embedding_model
+                    )
+                    return {'db_vector_dimension': application_dimension, 'application_dimension':application_dimension, 'message':"Connection Successful","chunks_exists":True,"gds_status":gds_status,"write_access":write_access}
                 else:
                     return {'message':"Connection Successful","gds_status": gds_status,"write_access":write_access}
 
@@ -464,15 +473,14 @@ class graphDBdataAccess:
         param = {"rows":nodes_list}
         return self.execute_query(query,param)
     
-    def drop_create_vector_index(self, isVectorIndexExist):
+    def drop_create_vector_index(self, isVectorIndexExist, embedding_provider, embedding_model):
         """
         drop and create the vector index when vector index dimesion are different.
         """
-        embedding_model = get_value_from_env("EMBEDDING_MODEL", "sentence_transformer")
-        embeddings, dimension = load_embedding_model(embedding_model)
+        embeddings, dimension = load_embedding_model(embedding_provider, embedding_model)
         
         if isVectorIndexExist == 'true':
-            self.graph.query("""drop index vector""",session_params={"database":self.graph._database})
+            self.graph.query("""DROP INDEX vector IF EXISTS""",session_params={"database":self.graph._database})
         
         self.graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
                             OPTIONS {indexConfig: {

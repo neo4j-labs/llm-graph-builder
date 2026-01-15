@@ -171,6 +171,7 @@ export default function DropZoneForSmallLayouts() {
         communityNodeCount: 0,
         communityRelCount: 0,
         createdAt: new Date(),
+        token_usage: 0,
       };
 
       const copiedFilesData: CustomFile[] = [...filesData];
