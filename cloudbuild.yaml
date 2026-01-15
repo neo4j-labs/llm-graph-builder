@@ -77,10 +77,11 @@ steps:
       if not d.get("LOG_LEVEL"):
           d["LOG_LEVEL"] = "info"
       json.dump(d, open("/workspace/env_vars.json","w"), indent=2)
-
+      PY
+      
       echo "Deploying to Cloud Run service: backend-$${ENV}-new"
       cat /workspace/env_vars.json
-      
+
       gcloud run deploy backend-$${ENV}-new \
         --image ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend-$${ENV}:$SHORT_SHA \
         --region ${_REGION} \
