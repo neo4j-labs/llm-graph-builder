@@ -18,8 +18,8 @@ steps:
         echo "prod" > /workspace/env
       elif [[ "$BRANCH_NAME" == "staging" ]]; then
         echo "staging" > /workspace/env
-      elif [[ "$BRANCH_NAME" == "dev" ]]; then
-        echo "dev" > /workspace/env
+      elif [[ "$BRANCH_NAME" == "dev-ci-cd" ]]; then
+        echo "dev_ci_cd" > /workspace/env
       else
         echo "Branch $BRANCH_NAME does not correspond to a deployment environment."
         exit 1
@@ -53,7 +53,7 @@ steps:
     - -c
     - |
       ENV=$(cat /workspace/env)
-      gcloud run deploy backend-$${ENV} \
+      gcloud run deploy backend-$${ENV}-new \
         --image ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend-$${ENV}:$SHORT_SHA \
         --region ${_REGION} \
         --platform managed \
@@ -67,7 +67,7 @@ steps:
     - -c
     - |
       ENV=$(cat /workspace/env)
-      gcloud run deploy backend-$${ENV}-processing \
+      gcloud run deploy backend-$${ENV}-processing-new \
         --image ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend-$${ENV}:$SHORT_SHA \
         --region ${_REGION} \
         --platform managed \
