@@ -22,7 +22,7 @@ steps:
         echo "dev" > /workspace/env
       else
         echo "Branch $BRANCH_NAME does not correspond to a deployment environment."
-        exit 0
+        exit 1
       fi
 
 # 2. Backend – Python
