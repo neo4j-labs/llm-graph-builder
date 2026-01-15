@@ -19,7 +19,7 @@ steps:
       elif [[ "$BRANCH_NAME" == "staging" ]]; then
         echo "staging" > /workspace/env
       elif [[ "$BRANCH_NAME" == "dev-ci-cd" ]]; then
-        echo "dev_ci_cd" > /workspace/env
+        echo "dev-ci-cd" > /workspace/env
       else
         echo "Branch $BRANCH_NAME does not correspond to a deployment environment."
         exit 1
@@ -78,7 +78,7 @@ steps:
           d["LOG_LEVEL"] = "info"
       json.dump(d, open("/workspace/env_vars.json","w"), indent=2)
       PY
-      
+
       echo "Deploying to Cloud Run service: backend-$${ENV}-new"
       cat /workspace/env_vars.json
 
