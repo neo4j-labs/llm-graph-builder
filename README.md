@@ -268,6 +268,54 @@ gcloud run deploy dev-backend \
 
 ---
 
+## Cloud Build Deployment
+
+You can deploy the backend and the frontend to Google Cloud Run using Cloud Build, either manually or via automated triggers.
+
+### **Automated Deployment (Recommended)**
+1. **Connect your repository to Google Cloud Build:**
+   - In the Google Cloud Console, go to Cloud Build > Triggers.
+   - Create a new trigger and select your repository.
+   - Set the trigger to run on push to your desired branch (`main`, `staging`, or `dev`).
+   - Cloud Build will automatically use the `cloudbuild.yaml` file in the root of your repository.
+
+2. **Configure Substitutions and Secrets:**
+   - In the trigger settings, add required substitutions (e.g., `_OPENAI_API_KEY`, `_DIFFBOT_API_KEY`, etc.) as environment variables or use Secret Manager for sensitive data.
+
+3. **Push your code:**
+   - When you push to the configured branch, Cloud Build will build and deploy your backend (and optionally frontend) to Cloud Run using the steps defined in `cloudbuild.yaml`.
+
+### **Manual Deployment**
+1. **Set up Google Cloud SDK and authenticate:**
+   ```bash
+   gcloud auth login
+   gcloud config set project <YOUR_PROJECT_ID>
+   ```
+
+2. **Run Cloud Build manually:**
+   ```bash
+   gcloud builds submit --config cloudbuild.yaml \
+     --substitutions=_REGION=us-central1,_REPO=cloud-run-repo,_OPENAI_API_KEY=<your-openai-key>,_DIFFBOT_API_KEY=<your-diffbot-key>,_BUCKET_UPLOAD_FILE=<your-bucket>,_BUCKET_FAILED_FILE=<your-bucket>,_PROJECT_ID=<your-project-id>,_GCS_FILE_CACHE=False,_TRACK_TOKEN_USAGE=True,_TOKEN_TRACKER_DB_URI=...,_TOKEN_TRACKER_DB_USERNAME=...,_TOKEN_TRACKER_DB_PASSWORD=...,_TOKEN_TRACKER_DB_DATABASE=...,_DEFAULT_DIFFBOT_CHAT_MODEL=...,_RAGAS_EMBEDDING_MODEL=...,_YOUTUBE_TRANSCRIPT_PROXY=...,_BEDROCK_EMBEDDING_MODEL=...,_LLM_MODEL_CONFIG_OPENAI_GPT_5_1=...,_LLM_MODEL_CONFIG_OPENAI_GPT_5_MINI=...,_LLM_MODEL_CONFIG_GEMINI_2_5_FLASH=...,_LLM_MODEL_CONFIG_GEMINI_2_5_PRO=...,_LLM_MODEL_CONFIG_DIFFBOT=...,_LLM_MODEL_CONFIG_GROQ_LLAMA3_1_8B=...,_LLM_MODEL_CONFIG_ANTHROPIC_CLAUDE_4_5_SONNET=...,_LLM_MODEL_CONFIG_ANTHROPIC_CLAUDE_4_5_HAIKU=...,_LLM_MODEL_CONFIG_LLAMA4_MAVERICK=...,_LLM_MODEL_CONFIG_FIREWORKS_QWEN3_30B=...,_LLM_MODEL_CONFIG_FIREWORKS_GPT_OSS=...,_LLM_MODEL_CONFIG_FIREWORKS_DEEPSEEK_V3=...,_LLM_MODEL_CONFIG_BEDROCK_NOVA_MICRO_V1=...,_LLM_MODEL_CONFIG_BEDROCK_NOVA_LITE_V1=...,_LLM_MODEL_CONFIG_BEDROCK_NOVA_PRO_V1=...,_LLM_MODEL_CONFIG_OLLAMA_LLAMA3=...
+   ```
+   - Replace the values in angle brackets with your actual configuration and secrets.
+   - You can omit or add substitutions as needed for your deployment.
+
+3. **Monitor the build:**
+   - The build and deployment process will be visible in the Cloud Build console.
+
+4. **Access your deployed service:**
+   - After deployment, your backend will be available at the Cloud Run service URL shown in the Cloud Console.
+
+---
+
+**Note:**  
+- The `cloudbuild.yaml` file supports multiple environments (`main`, `staging`, `dev`) based on the branch name.
+- The frontend build and deployment steps are commented out by default. Uncomment them in `cloudbuild.yaml` if you wish to deploy the frontend as well.
+
+For more details, see the comments in [`cloudbuild.yaml`](cloudbuild.yaml).
+
+---
+
 ## Links
 
 [LLM Knowledge Graph Builder Application][app-link]

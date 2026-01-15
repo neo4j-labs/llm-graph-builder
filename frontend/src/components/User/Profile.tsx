@@ -4,7 +4,7 @@ import { ChevronDownIconOutline } from '@neo4j-ndl/react/icons';
 import { useAuth0 } from '@auth0/auth0-react';
 import { getTokenLimits, TokenLimitsResponse } from '../../services/TokenLimits';
 import { useCredentials } from '../../context/UserCredentials';
-import { shouldShowTokenTracking } from '../../utils/Utils';
+import { isNeo4jUser } from '../../utils/Utils';
 
 export default function Profile() {
   const [showMenu, setShowOpen] = useState<boolean>(false);
@@ -18,9 +18,6 @@ export default function Profile() {
   const fetchTokenLimits = useCallback(async () => {
     if (!userCredentials?.uri && !userCredentials?.email) {
       setTokenError('User credentials not available');
-      return;
-    }
-    if (!shouldShowTokenTracking(user?.email)) {
       return;
     }
     setIsLoadingTokens(true);
@@ -40,49 +37,72 @@ export default function Profile() {
     } finally {
       setIsLoadingTokens(false);
     }
-  }, [userCredentials, user?.email]);
+  }, [userCredentials]);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && connectionStatus) {
       fetchTokenLimits();
     }
-  }, [isAuthenticated, fetchTokenLimits]);
+  }, [isAuthenticated, connectionStatus, fetchTokenLimits]);
 
   const settings = useMemo(() => {
-    const showTokens = shouldShowTokenTracking(user?.email);
-    const tokenItems = showTokens
-      ? [
-          {
-            title: isLoadingTokens
-              ? 'Daily Tokens: Loading...'
-              : !connectionStatus
-                ? 'Daily Tokens: No DB connection'
-                : tokenError
-                  ? 'Daily Tokens: N/A'
-                  : `Daily Tokens: ${tokenLimits?.daily_used.toLocaleString() ?? 'N/A'} / ${tokenLimits?.daily_limit.toLocaleString() ?? 'N/A'}`,
-            onClick: () => {},
-            disabled: true,
-          },
-          {
-            title: isLoadingTokens
-              ? 'Monthly Tokens: Loading...'
-              : !connectionStatus
-                ? 'Monthly Tokens: No DB connection'
-                : tokenError
-                  ? 'Monthly Tokens: N/A'
-                  : `Monthly Tokens: ${tokenLimits?.monthly_used.toLocaleString() ?? 'N/A'} / ${tokenLimits?.monthly_limit.toLocaleString() ?? 'N/A'}`,
-            onClick: () => {},
-            disabled: true,
-          },
-          {
-            title: 'Get Latest Usage',
-            onClick: () => {
-              fetchTokenLimits();
-            },
-            disabled: isLoadingTokens,
-          },
-        ]
-      : [];
+    const isNeo4j = isNeo4jUser(user?.email);
+
+    const getDailyTokensTitle = () => {
+      if (isLoadingTokens) {
+        return 'Daily Tokens Used: Loading...';
+      }
+      if (!connectionStatus) {
+        return 'Daily Tokens Used: No DB connection';
+      }
+      if (tokenError) {
+        return 'Daily Tokens Used: N/A';
+      }
+      const used = tokenLimits?.daily_used.toLocaleString() ?? 'N/A';
+      if (isNeo4j) {
+        return `Daily Tokens Used: ${used}`;
+      }
+      const limit = tokenLimits?.daily_limit.toLocaleString() ?? 'N/A';
+      return `Daily Tokens Used: ${used} / ${limit}`;
+    };
+
+    const getMonthlyTokensTitle = () => {
+      if (isLoadingTokens) {
+        return 'Monthly Tokens: Loading...';
+      }
+      if (!connectionStatus) {
+        return 'Monthly Tokens Used: No DB connection';
+      }
+      if (tokenError) {
+        return 'Monthly Tokens Used: N/A';
+      }
+      const used = tokenLimits?.monthly_used.toLocaleString() ?? 'N/A';
+      if (isNeo4j) {
+        return `Monthly Tokens Used: ${used}`;
+      }
+      const limit = tokenLimits?.monthly_limit.toLocaleString() ?? 'N/A';
+      return `Monthly Tokens Used: ${used} / ${limit}`;
+    };
+
+    const tokenItems = [
+      {
+        title: getDailyTokensTitle(),
+        onClick: () => {},
+        disabled: true,
+      },
+      {
+        title: getMonthlyTokensTitle(),
+        onClick: () => {},
+        disabled: true,
+      },
+      {
+        title: 'Get Latest Usage',
+        onClick: () => {
+          fetchTokenLimits();
+        },
+        disabled: isLoadingTokens,
+      },
+    ];
 
     return [
       ...tokenItems,

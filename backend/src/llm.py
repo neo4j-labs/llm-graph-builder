@@ -22,7 +22,7 @@ from src.shared.common_fn import UniversalTokenUsageHandler,get_value_from_env
 
 def get_llm(model: str):
     """Retrieve the specified language model based on the model name."""
-    model = model.lower().strip()
+    model = model.upper().replace('.', '_').strip()
     env_key = f"LLM_MODEL_CONFIG_{model}"
     env_value = get_value_from_env(env_key)
 
@@ -35,7 +35,7 @@ def get_llm(model: str):
     callback_handler = UniversalTokenUsageHandler()
     callback_manager = CallbackManager([callback_handler])
     try:
-        if "gemini" in model:
+        if "GEMINI" in model:
             model_name = env_value
             credentials, project_id = google.auth.default()
             llm = ChatVertexAI(
@@ -53,9 +53,9 @@ def get_llm(model: str):
                 },
             
             )
-        elif "openai" in model:
+        elif "OPENAI" in model:
             model_name, api_key = env_value.split(",")
-            if "mini" in model:
+            if "MINI" in model:
                 llm= ChatOpenAI(
                 api_key=api_key,
                 model=model_name,
@@ -69,7 +69,7 @@ def get_llm(model: str):
                 callbacks=callback_manager,
                 )
 
-        elif "azure" in model:
+        elif "AZURE" in model:
             model_name, api_endpoint, api_key, api_version = env_value.split(",")
             llm = AzureChatOpenAI(
                 api_key=api_key,
@@ -82,21 +82,21 @@ def get_llm(model: str):
                 callbacks=callback_manager,
             )
 
-        elif "anthropic" in model:
+        elif "ANTHROPIC" in model:
             model_name, api_key = env_value.split(",")
             llm = ChatAnthropic(
                 api_key=api_key, model=model_name, temperature=0, timeout=None,callbacks=callback_manager, 
             )
 
-        elif "fireworks" in model:
+        elif "FIREWORKS" in model:
             model_name, api_key = env_value.split(",")
             llm = ChatFireworks(api_key=api_key, model=model_name,callbacks=callback_manager)
 
-        elif "groq" in model:
+        elif "GROQ" in model:
             model_name, base_url, api_key = env_value.split(",")
             llm = ChatGroq(api_key=api_key, model_name=model_name, temperature=0,callbacks=callback_manager)
 
-        elif "bedrock" in model:
+        elif "BEDROCK" in model:
             model_name, aws_access_key, aws_secret_key, region_name = env_value.split(",")
             bedrock_client = boto3.client(
                 service_name="bedrock-runtime",
@@ -109,11 +109,11 @@ def get_llm(model: str):
                 client=bedrock_client,region_name=region_name, model_id=model_name, model_kwargs=dict(temperature=0),callbacks=callback_manager, 
             )
 
-        elif "ollama" in model:
+        elif "OLLAMA" in model:
             model_name, base_url = env_value.split(",")
             llm = ChatOllama(base_url=base_url, model=model_name,callbacks=callback_manager)
 
-        elif "diffbot" in model:
+        elif "DIFFBOT" in model:
             #model_name = "diffbot"
             model_name, api_key = env_value.split(",")
             llm = DiffbotGraphTransformer(
@@ -196,7 +196,7 @@ async def get_graph_document_list(
         if "diffbot_api_key" in dir(llm):
             llm_transformer = llm
         else:
-            supported_models = ["ChatOpenAI", "ChatVertexAI", "AzureChatOpenAI"]
+            supported_models = ["ChatOpenAI", "ChatVertexAI", "AzureChatOpenAI","ChatAnthropic"]
             if hasattr(llm, "get_name") and llm.get_name() in supported_models:
                 node_properties = False
                 relationship_properties = False
