@@ -53,7 +53,7 @@ steps:
     - -c
     - |
       ENV=$(cat /workspace/env)
-      # Build JSON env file that preserves commas/quotes/newlines.
+      
       python3 - <<'PY' > /workspace/env_vars.json
       import os, json
       keys = [
@@ -78,7 +78,9 @@ steps:
           d["LOG_LEVEL"] = "info"
       json.dump(d, open("/workspace/env_vars.json","w"), indent=2)
 
-      # Deploy using env file (preserves special characters)
+      echo "Deploying to Cloud Run service: backend-$${ENV}-new"
+      cat /workspace/env_vars.json
+      
       gcloud run deploy backend-$${ENV}-new \
         --image ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend-$${ENV}:$SHORT_SHA \
         --region ${_REGION} \
