@@ -54,7 +54,7 @@ def get_llm(model: str):
             
             )
         elif "OPENAI" in model:
-            model_name, api_key = env_value.split(",")
+            model_name, api_key = env_value.split("{")
             if "MINI" in model:
                 llm= ChatOpenAI(
                 api_key=api_key,
@@ -83,7 +83,7 @@ def get_llm(model: str):
             )
 
         elif "ANTHROPIC" in model:
-            model_name, api_key = env_value.split(",")
+            model_name, api_key = env_value.split("{")
             llm = ChatAnthropic(
                 api_key=api_key, model=model_name, temperature=0, timeout=None,callbacks=callback_manager, 
             )
