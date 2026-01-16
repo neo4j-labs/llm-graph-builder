@@ -47,6 +47,29 @@ steps:
       docker push ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend-$${ENV}:$SHORT_SHA
 
 - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+  entrypoint: bash
+
+  # 🔴 THIS IS THE IMPORTANT PART
+  env:
+    - OPENAI_API_KEY=${_OPENAI_API_KEY}
+    - DB_URL=${_DB_URL}
+
+  args:
+    - -c
+    - |
+      echo "From bash:"
+      echo "$OPENAI_API_KEY"
+      echo "$DB_URL"
+
+      python3 << 'PY'
+import os
+print("From python:")
+print(os.environ["OPENAI_API_KEY"])
+print(os.environ["DB_URL"])
+PY
+
+
+- name: gcr.io/google.com/cloudsdktool/cloud-sdk
   id: deploy-backend
   entrypoint: bash
   args:
