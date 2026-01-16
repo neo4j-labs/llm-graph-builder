@@ -53,7 +53,7 @@ steps:
   args:
     - run
     - deploy
-    - backend-${ENV}-new
+    - backend-$${ENV}-new
     - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend-$${ENV}:$SHORT_SHA
     - --region=${_REGION}
     - --platform=managed
@@ -98,7 +98,7 @@ steps:
   args:
     - run
     - deploy
-    - backend-${ENV}-processing-new
+    - backend-$${ENV}-processing-new
     - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend-$${ENV}:$SHORT_SHA
     - --region=${_REGION}
     - --platform=managed
