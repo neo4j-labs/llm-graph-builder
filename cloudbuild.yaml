@@ -53,8 +53,8 @@ steps:
   args:
     - run
     - deploy
-    - backend-${_ENV}-new
-    - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend-$${_ENV}:$SHORT_SHA
+    - backend-${ENV}-new
+    - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend-$${ENV}:$SHORT_SHA
     - --region=${_REGION}
     - --platform=managed
     - --allow-unauthenticated
@@ -98,8 +98,8 @@ steps:
   args:
     - run
     - deploy
-    - backend-${_ENV}-processing-new
-    - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend-$${_ENV}:$SHORT_SHA
+    - backend-${ENV}-processing-new
+    - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend-$${ENV}:$SHORT_SHA
     - --region=${_REGION}
     - --platform=managed
     - --allow-unauthenticated
