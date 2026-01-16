@@ -62,11 +62,11 @@ steps:
       echo "$DB_URL"
 
       python3 << 'PY'
-import os
-print("From python:")
-print(os.environ["OPENAI_API_KEY"])
-print(os.environ["DB_URL"])
-PY
+      import os
+      print("From python:")
+      print(os.environ["OPENAI_API_KEY"])
+      print(os.environ["DB_URL"])
+      PY
 
 
 - name: gcr.io/google.com/cloudsdktool/cloud-sdk
