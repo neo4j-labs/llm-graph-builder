@@ -49,6 +49,7 @@ steps:
 
 - name: gcr.io/google.com/cloudsdktool/cloud-sdk
   id: deploy-backend
+  entrypoint: gcloud
   args:
     - run
     - deploy
@@ -93,6 +94,7 @@ steps:
 
 - name: gcr.io/google.com/cloudsdktool/cloud-sdk
   id: deploy-backend-processing
+  entrypoint: gcloud
   args:
     - run
     - deploy
