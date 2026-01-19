@@ -70,7 +70,7 @@ def get_llm(model: str):
                 )
 
         elif "AZURE" in model:
-            model_name, api_endpoint, api_key, api_version = env_value.split(",")
+            model_name, api_endpoint, api_key, api_version = env_value.split("{")
             llm = AzureChatOpenAI(
                 api_key=api_key,
                 azure_endpoint=api_endpoint,
@@ -89,15 +89,15 @@ def get_llm(model: str):
             )
 
         elif "FIREWORKS" in model:
-            model_name, api_key = env_value.split(",")
+            model_name, api_key = env_value.split("{")
             llm = ChatFireworks(api_key=api_key, model=model_name,callbacks=callback_manager)
 
         elif "GROQ" in model:
-            model_name, base_url, api_key = env_value.split(",")
+            model_name, base_url, api_key = env_value.split("{")
             llm = ChatGroq(api_key=api_key, model_name=model_name, temperature=0,callbacks=callback_manager)
 
         elif "BEDROCK" in model:
-            model_name, aws_access_key, aws_secret_key, region_name = env_value.split(",")
+            model_name, aws_access_key, aws_secret_key, region_name = env_value.split("{")
             bedrock_client = boto3.client(
                 service_name="bedrock-runtime",
                 region_name=region_name,
@@ -110,12 +110,12 @@ def get_llm(model: str):
             )
 
         elif "OLLAMA" in model:
-            model_name, base_url = env_value.split(",")
+            model_name, base_url = env_value.split("{")
             llm = ChatOllama(base_url=base_url, model=model_name,callbacks=callback_manager)
 
         elif "DIFFBOT" in model:
             #model_name = "diffbot"
-            model_name, api_key = env_value.split(",")
+            model_name, api_key = env_value.split("{")
             llm = DiffbotGraphTransformer(
                 diffbot_api_key=api_key,
                 extract_types=["entities", "facts"],
@@ -123,7 +123,7 @@ def get_llm(model: str):
             callback_handler = None
         
         else: 
-            model_name, api_endpoint, api_key = env_value.split(",")
+            model_name, api_endpoint, api_key = env_value.split("{")
             llm = ChatOpenAI(
                 api_key=api_key,
                 base_url=api_endpoint,
