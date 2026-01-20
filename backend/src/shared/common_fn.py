@@ -353,6 +353,8 @@ def track_token_usage(
         monthly_tokens_limit = get_value_from_env("MONTHLY_TOKENS_LIMIT", "1000000", "int")
         is_neo4j_user = bool(normalized_email and normalized_email.endswith("@neo4j.com"))
 
+        auth_required = get_value_from_env("AUTHENTICATION_REQUIRED", False, bool)
+
         params = {
             "email": normalized_email,
             "db_url": normalized_db_url,
@@ -364,7 +366,9 @@ def track_token_usage(
             "operation_type": operation_type,
         }
 
-        if normalized_email:
+        if auth_required:
+            if not normalized_email:
+                raise ValueError("Email is required for token tracking when authentication is required.")
             merge_query = """
             MERGE (u:User {email: $email})
             ON CREATE SET
@@ -386,9 +390,13 @@ def track_token_usage(
             """
             result = graph.query(merge_query, params)
         else:
+            if not normalized_db_url:
+                raise ValueError("db_url is required for token tracking when authentication is not required.")
+            params["email"] = "local_user"
             merge_query = """
             MERGE (u:User {db_url: $db_url})
             ON CREATE SET
+                u.email = $email,
                 u.is_neo4j_user = $is_neo4j_user,
                 u.daily_tokens_limit = $daily_tokens_limit,
                 u.monthly_tokens_limit = $monthly_tokens_limit,
@@ -404,16 +412,6 @@ def track_token_usage(
             RETURN u
             """
             result = graph.query(merge_query, params)
-
-        if normalized_email and normalized_db_url:
-            update_email_query = """
-            MATCH (u:User {db_url: $db_url})
-            WHERE u.email IS NULL
-            SET u.email = $email
-            RETURN u
-            """
-            graph.query(update_email_query, params)
-
 
         update_query = """
         MATCH (u:User)
@@ -492,20 +490,19 @@ def get_remaining_token_limits(email: str, uri: str) -> dict:
         credentials = Neo4jCredentials(uri=token_uri, userName=token_user, password=token_password, database=token_database)
         graph = create_graph_database_connection(credentials)
 
+        auth_required = get_value_from_env("AUTHENTICATION_REQUIRED", False, bool)
         user_node = None
-        if normalized_email:
+        if auth_required:
+            if not normalized_email:
+                raise ValueError("Email is required for token lookup when authentication is required.")
             result = graph.query(
                 "MATCH (u:User {email: $email}) RETURN u", {"email": normalized_email}
             )
             if result and result[0].get("u"):
                 user_node = result[0]["u"]
-            elif normalized_db_url:
-                result = graph.query(
-                    "MATCH (u:User {db_url: $db_url}) RETURN u", {"db_url": normalized_db_url}
-                )
-                if result and result[0].get("u"):
-                    user_node = result[0]["u"]
-        elif normalized_db_url:
+        else:
+            if not normalized_db_url:
+                raise ValueError("db_url is required for token lookup when authentication is not required.")
             result = graph.query(
                 "MATCH (u:User {db_url: $db_url}) RETURN u", {"db_url": normalized_db_url}
             )
