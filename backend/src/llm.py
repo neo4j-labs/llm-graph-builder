@@ -238,7 +238,10 @@ async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowed
        combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list, chunks_to_combine)
        logging.info(f"Combined {len(combined_chunk_document_list)} chunks")
     
-       allowed_nodes = [node.strip() for node in allowedNodes.split(',') if node.strip()]
+       if allowedNodes:
+           allowed_nodes = [node.strip() for node in allowedNodes.split(',') if node.strip()]
+       else:
+           allowed_nodes = []
        logging.info(f"Allowed nodes: {allowed_nodes}")
     
        allowed_relationships = []
