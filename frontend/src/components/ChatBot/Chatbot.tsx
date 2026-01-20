@@ -195,7 +195,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     if (!inputMessage.trim()) {
       return;
     }
-    if (userCredentials && shouldShowTokenTracking(userCredentials.email)) {
+    if (userCredentials && connectionStatus && shouldShowTokenTracking(userCredentials.email)) {
       const tokenCheck = await checkTokenLimits(userCredentials);
       if (tokenCheck.shouldWarn) {
         showNormalToast(tokenCheck.message);
