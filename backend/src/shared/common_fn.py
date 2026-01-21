@@ -271,7 +271,7 @@ def get_bedrock_embeddings():
 def get_value_from_env(key_name: str, default_value: Any = None, data_type: type = str):
   
   value = os.getenv(key_name, None)
-  if value is not None:
+  if value is not None and value != '':
     return convert_type(value, data_type)
   elif default_value is not None:
     return convert_type(default_value, data_type)
