@@ -422,8 +422,6 @@ def track_token_usage(
             u.total_tokens_used   = coalesce(u.total_tokens_used, 0) + $usage,
             u.lastUsedModel       = $lastUsedModel,
             u.is_neo4j_user       = $is_neo4j_user,
-            u.daily_tokens_limit  = $daily_tokens_limit,
-            u.monthly_tokens_limit= $monthly_tokens_limit,
             u.updatedAt           = datetime(),
             u.files_processed     = CASE 
                 WHEN coalesce(u.files_processed, NULL) IS NULL AND $usage > 0 THEN 1
@@ -443,6 +441,9 @@ def track_token_usage(
             monthly_tokens_limit = result[0].get("monthly_tokens_limit", 0)
             daily_tokens_used = result[0].get("daily_tokens_used", 0)
             monthly_tokens_used = result[0].get("monthly_tokens_used", 0)
+            logging.info("Token usage for user before limit check: daily_used=%s monthly_used=%s", daily_tokens_used, monthly_tokens_used)
+            logging.info("Token limits for user: daily_limit=%s monthly_limit=%s", daily_tokens_limit, monthly_tokens_limit)
+            logging.info("Is Neo4j user: %s", is_neo4j_user)
             if ((daily_tokens_used > daily_tokens_limit) or (monthly_tokens_used > monthly_tokens_limit)) and not is_neo4j_user:
                 raise LLMGraphBuilderException(
                     "Token usage limit exceeded. Please contact the team to increase your limit."
