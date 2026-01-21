@@ -26,7 +26,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
 }) => {
   const { closeAlert, alertState } = useAlertContext();
   const { isReadOnlyUser, isBackendConnected, connectionStatus } = useCredentials();
-  const { loginWithRedirect } = useAuth0();
+  const { loginWithRedirect, isAuthenticated } = useAuth0();
   const isLargeDesktop = useMediaQuery('(min-width:1440px)');
   const { filesData } = useFileContext();
   const isAuthEnabled = import.meta.env.VITE_SKIP_AUTH !== 'true';
@@ -54,7 +54,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
         isCloseable={false}
         htmlAttributes={{ style: { height: 'initial' } }}
       >
-        {!isReadOnlyUser || !isAuthEnabled || connectionStatus ? (
+        {(!isReadOnlyUser || !isAuthEnabled || connectionStatus) && (isAuthenticated || !isAuthEnabled) ? (
           <Drawer.Body className='overflow-hidden! w-[294px]!'>
             {alertState.showAlert && (
               <CustomAlert

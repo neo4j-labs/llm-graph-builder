@@ -171,7 +171,7 @@ const Content: React.FC<ContentProps> = ({
           />
         );
         try {
-          if (userCredentials && shouldShowTokenTracking(userCredentials.email)) {
+          if (userCredentials && connectionStatus && shouldShowTokenTracking(userCredentials.email)) {
             const tokenCheck = await checkTokenLimits(userCredentials);
             if (tokenCheck.shouldWarn) {
               showNormalToast(tokenCheck.message);
@@ -287,7 +287,7 @@ const Content: React.FC<ContentProps> = ({
   const extractHandler = async (fileItem: CustomFile, uid: string) => {
     queue.remove((item) => item.name === fileItem.name);
     try {
-      if (userCredentials && shouldShowTokenTracking(userCredentials.email)) {
+      if (userCredentials && connectionStatus && shouldShowTokenTracking(userCredentials.email)) {
         const tokenCheck = await checkTokenLimits(userCredentials);
         if (tokenCheck.shouldWarn) {
           showNormalToast(tokenCheck.message);
@@ -435,7 +435,7 @@ const Content: React.FC<ContentProps> = ({
         />
       );
       try {
-        if (userCredentials && shouldShowTokenTracking(userCredentials.email)) {
+        if (userCredentials && connectionStatus && shouldShowTokenTracking(userCredentials.email)) {
           const tokenCheck = await checkTokenLimits(userCredentials);
           if (tokenCheck.shouldWarn) {
             showNormalToast(tokenCheck.message);
