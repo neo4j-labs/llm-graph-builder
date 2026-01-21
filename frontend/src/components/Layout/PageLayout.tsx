@@ -270,13 +270,17 @@ const PageLayout: React.FC = () => {
           const storedCredentials = localStorage.getItem('neo4j.connection');
           if (storedCredentials) {
             const credentials = JSON.parse(storedCredentials);
-            setUserCredentials({ ...credentials, password: atob(credentials.password) });
+            const authedEmail = user?.email ?? '';
+            credentials.email = authedEmail || credentials.email || '';
+
+            credentials.password = atob(credentials.password);
+            setUserCredentials(credentials);
             createDefaultFormData({
               uri: credentials.uri,
               database: credentials.database,
               userName: credentials.userName,
-              password: atob(credentials?.password),
-              email: credentials.email ?? '',
+              password: credentials.password,
+              email: credentials.email,
             });
             setIsGCSActive(credentials.isGCSActive);
             setGdsActive(credentials.isgdsActive);
