@@ -413,29 +413,52 @@ def track_token_usage(
             """
             result = graph.query(merge_query, params)
 
-        update_query = """
-        MATCH (u:User)
-        WHERE (u.email = $email AND $email IS NOT NULL) OR (u.db_url = $db_url AND $db_url IS NOT NULL)
-        SET u.lastOperationUsage   = $usage,
-            u.daily_tokens_used   = coalesce(u.daily_tokens_used, 0) + $usage,
-            u.monthly_tokens_used = coalesce(u.monthly_tokens_used, 0) + $usage,
-            u.total_tokens_used   = coalesce(u.total_tokens_used, 0) + $usage,
-            u.lastUsedModel       = $lastUsedModel,
-            u.is_neo4j_user       = $is_neo4j_user,
-            u.updatedAt           = datetime(),
-            u.files_processed     = CASE 
-                WHEN coalesce(u.files_processed, NULL) IS NULL AND $usage > 0 THEN 1
-                WHEN $operation_type = 'extraction' AND $usage > 0 THEN coalesce(u.files_processed, 0) + 1
-                ELSE u.files_processed END
-        RETURN
-            u.total_tokens_used    AS latestUsage,
-            u.lastOperationUsage   AS lastOperationUsage,
-            u.daily_tokens_used    AS daily_tokens_used,
-            u.monthly_tokens_used  AS monthly_tokens_used,
-            u.daily_tokens_limit   AS daily_tokens_limit,
-            u.monthly_tokens_limit AS monthly_tokens_limit
-        """
-        result = graph.query(update_query, params)
+        if auth_required:
+            update_query = """
+            MATCH (u:User {email: $email})
+            SET u.lastOperationUsage   = $usage,
+                u.daily_tokens_used   = coalesce(u.daily_tokens_used, 0) + $usage,
+                u.monthly_tokens_used = coalesce(u.monthly_tokens_used, 0) + $usage,
+                u.total_tokens_used   = coalesce(u.total_tokens_used, 0) + $usage,
+                u.lastUsedModel       = $lastUsedModel,
+                u.is_neo4j_user       = $is_neo4j_user,
+                u.updatedAt           = datetime(),
+                u.files_processed     = CASE 
+                    WHEN coalesce(u.files_processed, NULL) IS NULL AND $usage > 0 THEN 1
+                    WHEN $operation_type = 'extraction' AND $usage > 0 THEN coalesce(u.files_processed, 0) + 1
+                    ELSE u.files_processed END
+            RETURN
+                u.total_tokens_used    AS latestUsage,
+                u.lastOperationUsage   AS lastOperationUsage,
+                u.daily_tokens_used    AS daily_tokens_used,
+                u.monthly_tokens_used  AS monthly_tokens_used,
+                u.daily_tokens_limit   AS daily_tokens_limit,
+                u.monthly_tokens_limit AS monthly_tokens_limit
+            """
+            result = graph.query(update_query, params)
+        else:
+            update_query = """
+            MATCH (u:User {db_url: $db_url})
+            SET u.lastOperationUsage   = $usage,
+                u.daily_tokens_used   = coalesce(u.daily_tokens_used, 0) + $usage,
+                u.monthly_tokens_used = coalesce(u.monthly_tokens_used, 0) + $usage,
+                u.total_tokens_used   = coalesce(u.total_tokens_used, 0) + $usage,
+                u.lastUsedModel       = $lastUsedModel,
+                u.is_neo4j_user       = $is_neo4j_user,
+                u.updatedAt           = datetime(),
+                u.files_processed     = CASE 
+                    WHEN coalesce(u.files_processed, NULL) IS NULL AND $usage > 0 THEN 1
+                    WHEN $operation_type = 'extraction' AND $usage > 0 THEN coalesce(u.files_processed, 0) + 1
+                    ELSE u.files_processed END
+            RETURN
+                u.total_tokens_used    AS latestUsage,
+                u.lastOperationUsage   AS lastOperationUsage,
+                u.daily_tokens_used    AS daily_tokens_used,
+                u.monthly_tokens_used  AS monthly_tokens_used,
+                u.daily_tokens_limit   AS daily_tokens_limit,
+                u.monthly_tokens_limit AS monthly_tokens_limit
+            """
+            result = graph.query(update_query, params)
         if result and "latestUsage" in result[0]:
             daily_tokens_limit = result[0].get("daily_tokens_limit", 0)
             monthly_tokens_limit = result[0].get("monthly_tokens_limit", 0)
