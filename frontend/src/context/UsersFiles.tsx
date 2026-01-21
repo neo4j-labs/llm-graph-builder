@@ -138,7 +138,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     }
     if (selectedChunks_to_combineStr != null) {
       const parsedSelectedChunks_to_combine = JSON.parse(selectedChunks_to_combineStr);
-      setSelectedChunk_overlap(parsedSelectedChunks_to_combine.selectedOption);
+      setSelectedChunks_to_combine(parsedSelectedChunks_to_combine.selectedOption);
     }
     if (selectedInstructstr != null) {
       const selectedInstructions = selectedInstructstr;
