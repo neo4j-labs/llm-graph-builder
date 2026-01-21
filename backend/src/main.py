@@ -573,7 +573,7 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
       
       start_save_token = time.time()
       if get_value_from_env("TRACK_TOKEN_USAGE", "false", "bool"):
-        track_token_usage(credentials.email,credentials.uri,tokens_per_file, params.model)
+        track_token_usage(credentials.email,credentials.uri,tokens_per_file, params.model, operation_type="extraction")
         logging.info("Token usage for extraction: %s for user: %s", tokens_per_file, credentials.email)
       end_save_token = time.time()
       elapsed_save_token = end_save_token - start_save_token
@@ -621,6 +621,7 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
       response["status"] = job_status
       response["model"] = params.model
       response["success_count"] = 1
+      response['token_usage'] = tokens_per_file
       
       return uri_latency, response
     else:      
@@ -643,7 +644,7 @@ async def processing_chunks(chunkId_chunkDoc_list,graph,credentials,file_name,mo
   #pre checking if user is allowed to process the file
   if get_value_from_env("TRACK_TOKEN_USAGE", "false", "bool"):
     try:
-      track_token_usage(credentials.email, credentials.uri, 0, model)
+      track_token_usage(credentials.email, credentials.uri, 0, model, operation_type="extraction")
     except LLMGraphBuilderException as e:
       logging.error(str(e))
       raise RuntimeError(str(e))
@@ -663,13 +664,6 @@ async def processing_chunks(chunkId_chunkDoc_list,graph,credentials,file_name,mo
   logging.info(f'Time taken to extract enitities from LLM Graph Builder: {elapsed_entity_extraction:.2f} seconds')
   latency_processing_chunk["entity_extraction"] = f'{elapsed_entity_extraction:.2f}'
   
-  start_save_token = time.time()
-  if get_value_from_env("TRACK_TOKEN_USAGE", "false", "bool"):
-    track_token_usage(credentials.email, credentials.uri, token_usage, model)
-    logging.info("Token usage for extraction: %s for user: %s", token_usage, credentials.email)
-  end_save_token = time.time()
-  elapsed_save_token = end_save_token - start_save_token
-  logging.info(f'Time taken to save token count: {elapsed_save_token:.2f} seconds')
   cleaned_graph_documents = handle_backticks_nodes_relationship_id_type(graph_documents)
   
   start_save_graphDocuments = time.time()

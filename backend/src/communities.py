@@ -318,7 +318,7 @@ def create_community_summaries(gds, model, email, uri):
         #pre check if user allowed to create community summaries
         if get_value_from_env("TRACK_TOKEN_USAGE", "false", "bool"):
             try:
-                track_token_usage(email, uri, 0, model)
+                track_token_usage(email, uri, 0, model,operation_type="community_summary")
             except LLMGraphBuilderException as e:
                 logging.error(str(e))
                 raise RuntimeError(str(e))
@@ -367,7 +367,7 @@ def create_community_summaries(gds, model, email, uri):
                    token_usage = usage.get("total_tokens", 0)
                    if email and token_usage > 0:
                        email = email.strip().replace('"', '')
-                       latest_token = track_token_usage(email, uri, token_usage, model)
+                       latest_token = track_token_usage(email, uri, token_usage, model,operation_type="community_summary")
                        logging.info(f"In community : Total token usage {latest_token} for user {email} ")
        except Exception as err:
            logging.warning(f"Failed to track token usage: {err}")

@@ -217,6 +217,14 @@ async def extract_knowledge_graph_from_file(
             file_name = sanitize_filename(params.file_name)
             params.file_name = file_name
             merged_file_path = validate_file_path(MERGED_DIR, file_name)
+        
+        auth_required = get_value_from_env("AUTHENTICATION_REQUIRED", False, bool)
+        if auth_required:
+            if not getattr(credentials, "email", None) or not getattr(credentials, "uri", None):
+                error_message = "Authentication required: Your session is missing required credentials. Please log in again to continue."
+                raise LLMGraphBuilderException(error_message)
+            
+        if params.source_type == 'local file':
             uri_latency, result = await extract_graph_from_file_local_file(credentials, params, merged_file_path)
         elif params.source_type == 's3 bucket' and params.source_url:
             uri_latency, result = await extract_graph_from_file_s3(credentials, params)
@@ -275,7 +283,10 @@ async def extract_knowledge_graph_from_file(
         # Set the status "Completed" in logging becuase we are treating these error already handled by application as like custom errors.
         json_obj = {'api_name':'extract','message':error_message,'file_created_at':formatted_time(node_detail[0]['created_time']),'error_message':error_message, 'filename': params.file_name,'status':'Completed',
                     'db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,'failed_count':1, 'source_type': params.source_type, 'source_url':params.source_url, 'wiki_query':params.wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email}
-        logger.log_struct(json_obj, "ERROR")
+        if "Token usage limit exceeded" in error_message:
+            logger.log_struct(json_obj, "WARNING")
+        else:
+            logger.log_struct(json_obj, "ERROR")
         logging.exception(f'File Failed in extraction: {e}')
         return create_api_response("Failed", message = error_message, error=error_message, file_name=params.file_name)
     except Exception as e:
@@ -319,6 +330,11 @@ async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_cred
     """Run post-processing tasks on the graph database."""
     try:
         graph = create_graph_database_connection(credentials)
+        auth_required = get_value_from_env("AUTHENTICATION_REQUIRED", False, bool)
+        if auth_required:
+            if not getattr(credentials, "email", None) or not getattr(credentials, "uri", None):
+                error_message = "Authentication required: Your session is missing required credentials. Please log in again to continue."
+                raise Exception(error_message)
         tasks = set(map(str.strip, json.loads(tasks)))
         api_name = 'post_processing'
         count_response = []
@@ -528,7 +544,11 @@ async def connect(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)
     try:
         start = time.time()
         graph = create_graph_database_connection(credentials)
-        
+        auth_required = get_value_from_env("AUTHENTICATION_REQUIRED", False, bool)
+        if auth_required:
+            if not getattr(credentials, "email", None) or not getattr(credentials, "uri", None):
+                error_message = "Authentication required: Your session is missing required credentials. Please log in again to continue."
+                raise Exception(error_message)
         result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, credentials.database)
         gcs_cache = get_value_from_env("GCS_FILE_CACHE","False","bool")
         end = time.time()
