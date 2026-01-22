@@ -16,14 +16,20 @@ export default function Profile() {
   const { userCredentials, connectionStatus } = useCredentials();
 
   const fetchTokenLimits = useCallback(async () => {
-    if (!userCredentials?.uri && !userCredentials?.email) {
+    const effectiveEmail = user?.email ?? userCredentials?.email ?? '';
+    const effectiveCreds = {
+      ...userCredentials,
+      email: effectiveEmail,
+    };
+
+    if (!effectiveCreds?.uri && !effectiveCreds?.email) {
       setTokenError('User credentials not available');
       return;
     }
     setIsLoadingTokens(true);
     setTokenError(null);
     try {
-      const limits = await getTokenLimits(userCredentials);
+      const limits = await getTokenLimits(effectiveCreds);
       if (limits) {
         setTokenLimits(limits);
         setTokenError(null);
@@ -37,13 +43,13 @@ export default function Profile() {
     } finally {
       setIsLoadingTokens(false);
     }
-  }, [userCredentials]);
+  }, [userCredentials, user?.email]);
 
   useEffect(() => {
     if (isAuthenticated && connectionStatus) {
       fetchTokenLimits();
     }
-  }, [isAuthenticated, connectionStatus, fetchTokenLimits]);
+  }, [isAuthenticated, connectionStatus, user?.email, userCredentials?.email, fetchTokenLimits]);
 
   const settings = useMemo(() => {
     const isNeo4j = isNeo4jUser(user?.email);
@@ -109,6 +115,17 @@ export default function Profile() {
       {
         title: 'Logout',
         onClick: () => {
+          try {
+            localStorage.removeItem('currentUserEmail');
+            const existing = localStorage.getItem('neo4j.connection');
+            if (existing) {
+              const parsed = JSON.parse(existing);
+              parsed.email = '';
+              localStorage.setItem('neo4j.connection', JSON.stringify(parsed));
+            }
+          } catch (e) {
+            console.warn('Failed to clear email on logout', e);
+          }
           logout({ logoutParams: { returnTo: `${window.location.origin}/readonly` } });
         },
       },

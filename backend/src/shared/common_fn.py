@@ -162,16 +162,31 @@ def handle_backticks_nodes_relationship_id_type(graph_document_list:List[GraphDo
     # Clean node id and types
     cleaned_nodes = []
     for node in graph_document.nodes:
-      if node.type.strip() and node.id.strip():
-        node.type = node.type.replace('`', '')
+      node_type = str(node.type).strip() if node.type is not None else ""
+      node_id = str(node.id).strip() if node.id is not None else ""
+      if node_type and node_id:
+        node.type = node_type.replace('`', '')
+        node.id = node_id
         cleaned_nodes.append(node)
     # Clean relationship id types and source/target node id and types
     cleaned_relationships = []
     for rel in graph_document.relationships:
-      if rel.type.strip() and rel.source.id.strip() and rel.source.type.strip() and rel.target.id.strip() and rel.target.type.strip():
-        rel.type = rel.type.replace('`', '')
-        rel.source.type = rel.source.type.replace('`', '')
-        rel.target.type = rel.target.type.replace('`', '')
+      # Defensive checks for source/target presence
+      src = getattr(rel, "source", None)
+      tgt = getattr(rel, "target", None)
+      rel_type = str(rel.type).strip() if rel.type is not None else ""
+      src_type = str(getattr(src, "type", "")).strip() if src is not None else ""
+      src_id = str(getattr(src, "id", "")).strip() if src is not None else ""
+      tgt_type = str(getattr(tgt, "type", "")).strip() if tgt is not None else ""
+      tgt_id = str(getattr(tgt, "id", "")).strip() if tgt is not None else ""
+      if rel_type and src_id and src_type and tgt_id and tgt_type:
+        rel.type = rel_type.replace('`', '')
+        if src is not None:
+          src.type = src_type.replace('`', '')
+          src.id = src_id.replace('`', '')
+        if tgt is not None:
+          tgt.type = tgt_type.replace('`', '')
+          tgt.id = tgt_id
         cleaned_relationships.append(rel)
     graph_document.relationships = cleaned_relationships
     graph_document.nodes = cleaned_nodes
@@ -256,7 +271,7 @@ def get_bedrock_embeddings():
 def get_value_from_env(key_name: str, default_value: Any = None, data_type: type = str):
   
   value = os.getenv(key_name, None)
-  if value is not None:
+  if value is not None and value != '':
     return convert_type(value, data_type)
   elif default_value is not None:
     return convert_type(default_value, data_type)
