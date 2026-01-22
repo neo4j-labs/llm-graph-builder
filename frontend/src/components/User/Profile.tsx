@@ -43,7 +43,7 @@ export default function Profile() {
     } finally {
       setIsLoadingTokens(false);
     }
-  }, [userCredentials]);
+  }, [userCredentials, user?.email]);
 
   useEffect(() => {
     if (isAuthenticated && connectionStatus) {
@@ -115,6 +115,17 @@ export default function Profile() {
       {
         title: 'Logout',
         onClick: () => {
+          try {
+            localStorage.removeItem('currentUserEmail');
+            const existing = localStorage.getItem('neo4j.connection');
+            if (existing) {
+              const parsed = JSON.parse(existing);
+              parsed.email = '';
+              localStorage.setItem('neo4j.connection', JSON.stringify(parsed));
+            }
+          } catch (e) {
+            console.warn('Failed to clear email on logout', e);
+          }
           logout({ logoutParams: { returnTo: `${window.location.origin}/readonly` } });
         },
       },

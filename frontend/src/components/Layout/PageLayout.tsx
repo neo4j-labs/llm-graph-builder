@@ -233,6 +233,18 @@ const PageLayout: React.FC = () => {
   }, [allPatterns, selectedNodes, selectedRels]);
 
   useEffect(() => {
+    try {
+      if (isAuthenticated && user?.email) {
+        localStorage.setItem('currentUserEmail', user.email);
+      } else if (!isAuthenticated) {
+        localStorage.removeItem('currentUserEmail');
+      }
+    } catch (e) {
+      console.warn('Failed to write email to localStorage', e);
+    }
+  }, [isAuthenticated, user?.email]);
+
+  useEffect(() => {
     async function initializeConnection() {
       // Fetch backend health status
       try {
