@@ -93,6 +93,7 @@ export default function ConnectionModal({
               content: 'Successfully created the vector index',
             });
             setConnectionStatus(true);
+            const existing = JSON.parse(localStorage.getItem('neo4j.connection') ?? '{}');
             localStorage.setItem(
               'neo4j.connection',
               JSON.stringify({
@@ -101,6 +102,7 @@ export default function ConnectionModal({
                 password: btoa(usercredential.password ?? ''),
                 database: usercredential?.database,
                 userDbVectorIndex: 384,
+                email: usercredential?.email ?? existing.email ?? '',
               })
             );
           }
