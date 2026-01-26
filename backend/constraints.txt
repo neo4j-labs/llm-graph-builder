@@ -1,4 +1,6 @@
--f https://download.pytorch.org/whl/torch_stable.html 
-torch==2.3.1+cpu
-torchvision==0.18.1+cpu
-torchaudio==2.3.1+cpu
+# Universal constraints - works on both x86_64 and ARM64 (Apple Silicon)
+# The +cpu suffix is only available for x86_64, so we use version ranges instead
+# For ARM Macs, regular torch packages are CPU-only by default (no CUDA on ARM)
+torch>=2.3.0,<3.0.0
+torchvision>=0.18.0,<1.0.0
+torchaudio>=2.3.0,<3.0.0

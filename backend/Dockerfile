@@ -18,11 +18,22 @@ RUN apt-get update && \
    apt-get clean && \
    rm -rf /var/lib/apt/lists/*
 
-# Set LD_LIBRARY_PATH
-ENV LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
+# Set LD_LIBRARY_PATH dynamically based on architecture
+# x86_64 uses /usr/lib/x86_64-linux-gnu, ARM64 uses /usr/lib/aarch64-linux-gnu
+RUN ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then \
+        LIB_PATH="/usr/lib/x86_64-linux-gnu"; \
+    elif [ "$ARCH" = "aarch64" ]; then \
+        LIB_PATH="/usr/lib/aarch64-linux-gnu"; \
+    else \
+        LIB_PATH="/usr/lib"; \
+    fi && \
+    echo "LD_LIBRARY_PATH=$LIB_PATH:\$LD_LIBRARY_PATH" >> /etc/environment
+ENV LD_LIBRARY_PATH="/usr/lib"
+
 # Copy requirements file and install Python dependencies
 COPY requirements.txt constraints.txt /code/
-# --no-cache-dir --upgrade 
+# --no-cache-dir --upgrade
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt -c constraints.txt
 
