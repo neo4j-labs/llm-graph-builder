@@ -203,6 +203,32 @@ const PageLayout: React.FC = () => {
   } = useFileContext();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth0();
+
+  useEffect(() => {
+    try {
+      const email = user?.email?.trim();
+      if (isAuthenticated && email) {
+        localStorage.setItem('currentUserEmail', email);
+        const existing = localStorage.getItem('neo4j.connection');
+        if (existing) {
+          const parsed = JSON.parse(existing);
+          parsed.email = email;
+          localStorage.setItem('neo4j.connection', JSON.stringify(parsed));
+        }
+      } else if (!isAuthenticated) {
+        localStorage.removeItem('currentUserEmail');
+        const existing = localStorage.getItem('neo4j.connection');
+        if (existing) {
+          const parsed = JSON.parse(existing);
+          parsed.email = '';
+          localStorage.setItem('neo4j.connection', JSON.stringify(parsed));
+        }
+      }
+    } catch (e) {
+      console.warn('localStorage email sync failed', e);
+    }
+  }, [isAuthenticated, user?.email]);
+
   const { cancel } = useSpeechSynthesis();
   const { setActiveSpotlight } = useSpotlightContext();
   const isYoutubeOnly = useMemo(
