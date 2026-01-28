@@ -68,7 +68,7 @@ This application allows you to upload files from various sources (local machine,
 
 ### **Token Usage Tracking**
 - Easily monitor and track your LLM token usage for each user and database connection.
-- Enable this feature by setting the `TRACK_TOKEN_USAGE` environment variable to `true` in your backend configuration.
+- Enable this feature by setting the `TRACK_USER_USAGE` environment variable to `true` in your backend configuration.
 - View your daily and monthly token consumption and limits, helping you manage usage and avoid overages.
 - You can check your remaining token limits at any time using the provided API endpoint.
 
@@ -295,7 +295,7 @@ You can deploy the backend and the frontend to Google Cloud Run using Cloud Buil
 2. **Run Cloud Build manually:**
    ```bash
    gcloud builds submit --config cloudbuild.yaml \
-     --substitutions=_REGION=us-central1,_REPO=cloud-run-repo,_OPENAI_API_KEY=<your-openai-key>,_DIFFBOT_API_KEY=<your-diffbot-key>,_BUCKET_UPLOAD_FILE=<your-bucket>,_BUCKET_FAILED_FILE=<your-bucket>,_PROJECT_ID=<your-project-id>,_GCS_FILE_CACHE=False,_TRACK_TOKEN_USAGE=True,_TOKEN_TRACKER_DB_URI=...,_TOKEN_TRACKER_DB_USERNAME=...,_TOKEN_TRACKER_DB_PASSWORD=...,_TOKEN_TRACKER_DB_DATABASE=...,_DEFAULT_DIFFBOT_CHAT_MODEL=...,_RAGAS_EMBEDDING_MODEL=...,_YOUTUBE_TRANSCRIPT_PROXY=...,_BEDROCK_EMBEDDING_MODEL=...,_LLM_MODEL_CONFIG_OPENAI_GPT_5_1=...,_LLM_MODEL_CONFIG_OPENAI_GPT_5_MINI=...,_LLM_MODEL_CONFIG_GEMINI_2_5_FLASH=...,_LLM_MODEL_CONFIG_GEMINI_2_5_PRO=...,_LLM_MODEL_CONFIG_DIFFBOT=...,_LLM_MODEL_CONFIG_GROQ_LLAMA3_1_8B=...,_LLM_MODEL_CONFIG_ANTHROPIC_CLAUDE_4_5_SONNET=...,_LLM_MODEL_CONFIG_ANTHROPIC_CLAUDE_4_5_HAIKU=...,_LLM_MODEL_CONFIG_LLAMA4_MAVERICK=...,_LLM_MODEL_CONFIG_FIREWORKS_QWEN3_30B=...,_LLM_MODEL_CONFIG_FIREWORKS_GPT_OSS=...,_LLM_MODEL_CONFIG_FIREWORKS_DEEPSEEK_V3=...,_LLM_MODEL_CONFIG_BEDROCK_NOVA_MICRO_V1=...,_LLM_MODEL_CONFIG_BEDROCK_NOVA_LITE_V1=...,_LLM_MODEL_CONFIG_BEDROCK_NOVA_PRO_V1=...,_LLM_MODEL_CONFIG_OLLAMA_LLAMA3=...
+     --substitutions=_REGION=us-central1,_REPO=cloud-run-repo,_OPENAI_API_KEY=<your-openai-key>,_DIFFBOT_API_KEY=<your-diffbot-key>,_BUCKET_UPLOAD_FILE=<your-bucket>,_BUCKET_FAILED_FILE=<your-bucket>,_PROJECT_ID=<your-project-id>,_GCS_FILE_CACHE=False,_TRACK_USER_USAGE=True,_TOKEN_TRACKER_DB_URI=...,_TOKEN_TRACKER_DB_USERNAME=...,_TOKEN_TRACKER_DB_PASSWORD=...,_TOKEN_TRACKER_DB_DATABASE=...,_DEFAULT_DIFFBOT_CHAT_MODEL=...,_RAGAS_EMBEDDING_MODEL=...,_YOUTUBE_TRANSCRIPT_PROXY=...,_BEDROCK_EMBEDDING_MODEL=...,_LLM_MODEL_CONFIG_OPENAI_GPT_5_1=...,_LLM_MODEL_CONFIG_OPENAI_GPT_5_MINI=...,_LLM_MODEL_CONFIG_GEMINI_2_5_FLASH=...,_LLM_MODEL_CONFIG_GEMINI_2_5_PRO=...,_LLM_MODEL_CONFIG_DIFFBOT=...,_LLM_MODEL_CONFIG_GROQ_LLAMA3_1_8B=...,_LLM_MODEL_CONFIG_ANTHROPIC_CLAUDE_4_5_SONNET=...,_LLM_MODEL_CONFIG_ANTHROPIC_CLAUDE_4_5_HAIKU=...,_LLM_MODEL_CONFIG_LLAMA4_MAVERICK=...,_LLM_MODEL_CONFIG_FIREWORKS_QWEN3_30B=...,_LLM_MODEL_CONFIG_FIREWORKS_GPT_OSS=...,_LLM_MODEL_CONFIG_FIREWORKS_DEEPSEEK_V3=...,_LLM_MODEL_CONFIG_BEDROCK_NOVA_MICRO_V1=...,_LLM_MODEL_CONFIG_BEDROCK_NOVA_LITE_V1=...,_LLM_MODEL_CONFIG_BEDROCK_NOVA_PRO_V1=...,_LLM_MODEL_CONFIG_OLLAMA_LLAMA3=...
    ```
    - Replace the values in angle brackets with your actual configuration and secrets.
    - You can omit or add substitutions as needed for your deployment.

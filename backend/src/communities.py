@@ -316,7 +316,7 @@ def create_community_summaries(gds, model, email, uri):
     token_usage = 0
     try:
         #pre check if user allowed to create community summaries
-        if get_value_from_env("TRACK_TOKEN_USAGE", "false", "bool"):
+        if get_value_from_env("TRACK_USER_USAGE", "false", "bool"):
             try:
                 track_token_usage(email, uri, 0, model,operation_type="community_summary")
             except LLMGraphBuilderException as e:
@@ -361,7 +361,7 @@ def create_community_summaries(gds, model, email, uri):
 
     finally:
        try:
-           if get_value_from_env("TRACK_TOKEN_USAGE", "false", "bool"):
+           if get_value_from_env("TRACK_USER_USAGE", "false", "bool"):
                if callback_handler:
                    usage = callback_handler.report()
                    token_usage = usage.get("total_tokens", 0)

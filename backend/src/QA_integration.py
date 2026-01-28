@@ -433,7 +433,7 @@ def setup_chat(model, graph, document_names, chat_mode_settings, embedding_provi
 
 def process_chat_response(messages, history, question, model, graph, document_names, chat_mode_settings, email=None, uri=None, embedding_provider=None, embedding_model=None):
     try:
-        # if get_value_from_env("TRACK_TOKEN_USAGE", "false", "bool"):
+        # if get_value_from_env("TRACK_USER_USAGE", "false", "bool"):
         #     try:
         #         track_token_usage(email, uri, 0, model, operation_type="chat")
         #     except LLMGraphBuilderException as e:
@@ -445,7 +445,7 @@ def process_chat_response(messages, history, question, model, graph, document_na
 
         if docs:
             content, result, total_tokens,formatted_docs = process_documents(docs, question, messages, llm, model, chat_mode_settings)
-            # if get_value_from_env("TRACK_TOKEN_USAGE", "false", "bool"):
+            # if get_value_from_env("TRACK_USER_USAGE", "false", "bool"):
             #     latest_token = track_token_usage(email=email, uri=uri, usage=total_tokens, last_used_model=model, operation_type="chat")
             #     logging.info(f"Total token usage {latest_token} for user {email} ")
         else:

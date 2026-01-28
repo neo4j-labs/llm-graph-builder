@@ -41,7 +41,7 @@ from src.main import (
 from src.neighbours import get_neighbour_nodes
 from src.post_processing import create_entity_embedding, create_vector_fulltext_indexes, graph_schema_consolidation
 from src.ragas_eval import get_additional_metrics, get_ragas_metrics
-from src.shared.common_fn import formatted_time, get_value_from_env, get_remaining_token_limits
+from src.shared.common_fn import formatted_time, get_value_from_env, get_remaining_token_limits, get_user_embedding_model, change_user_embedding_model
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from Secweb.XContentTypeOptions import XContentTypeOptions
 from Secweb.XFrameOptions import XFrame
@@ -553,7 +553,7 @@ async def connect(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)
             if not getattr(credentials, "email", None) or not getattr(credentials, "uri", None):
                 error_message = "Authentication required: Your session is missing required credentials. Please log in again to continue."
                 raise Exception(error_message)
-        result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, credentials.database)
+        result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, credentials.database, credentials.email, credentials.uri)
         gcs_cache = get_value_from_env("GCS_FILE_CACHE","False","bool")
         end = time.time()
         elapsed_time = end - start
@@ -1075,7 +1075,7 @@ async def fetch_chunktext(
 
 
 @app.post("/backend_connection_configuration")
-async def backend_connection_configuration(embedding_provider=Form(None), embedding_model=Form(None)):
+async def backend_connection_configuration():
     try:
         start = time.time()
         uri = get_value_from_env("NEO4J_URI")
@@ -1088,7 +1088,7 @@ async def backend_connection_configuration(embedding_provider=Form(None), embedd
             logging.info(f'login connection status of object: {graph}')
             if graph is not None:
                 graph_connection = True        
-                result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, database, embedding_provider, embedding_model)
+                result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, database, None, uri)
                 result['gcs_file_cache'] = gcs_cache
                 result['uri'] = uri
                 end = time.time()
@@ -1140,12 +1140,12 @@ async def get_schema_visualization(credentials: Neo4jCredentials = Depends(get_n
 async def get_token_limits(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
     """
     Returns the remaining daily and monthly token limits for a user, given email and/or uri.
-    Only enabled if TRACK_TOKEN_USAGE env variable is set to 'true'.
+    Only enabled if TRACK_USER_USAGE env variable is set to 'true'.
     """
     job_status = "Success"
     message = "Token limits fetched successfully"
     try:
-        if os.environ.get("TRACK_TOKEN_USAGE", "false").strip().lower() != "true":
+        if os.environ.get("TRACK_USER_USAGE", "false").strip().lower() != "true":
             message = "Token tracking is not enabled."
             return create_api_response(job_status, data=None, message=message)
         start = time.time()
@@ -1168,7 +1168,71 @@ async def get_token_limits(credentials: Neo4jCredentials = Depends(get_neo4j_cre
         logger.log_struct({'api_name': 'get_token_limits', 'db_url': credentials.uri, 'email': credentials.email, 'error_message': error_message, 'logging_time': formatted_time(datetime.now(timezone.utc))}, "ERROR")
         logging.exception(f'Exception in get_token_limits: {error_message}')
         return create_api_response(job_status, message=message, error=error_message)
-        
+
+@app.post("/fetch_embedding_model")
+async def fetch_embedding_model(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
+    """Fetch available embedding models for a given provider."""
+    try:
+        start = time.time()
+        result = await asyncio.to_thread(get_user_embedding_model, credentials.email)
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {
+            'api_name':'fetch_embedding_model',
+            'db_url': credentials.uri,
+            'email': credentials.email,
+            'logging_time': formatted_time(datetime.now(timezone.utc)),
+            'elapsed_api_time':f'{elapsed_time:.2f}'
+            }
+        logger.log_struct(json_obj, "INFO")
+        return create_api_response('Success',data=result)
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to fetch embedding models"
+        error_message = str(e)
+        logging.exception(f'Exception in fetch_embedding_model:{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        gc.collect() 
+
+@app.post("/change_embedding_model")
+async def change_embedding_model(
+    credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
+    embedding_provider=Form(None),
+    embedding_model=Form(None)
+):
+    """Change the embedding model for a user."""
+    try:
+        start = time.time()
+        change_index = await asyncio.to_thread(change_user_embedding_model, credentials.email, credentials.uri, embedding_provider, embedding_model)
+        if change_index:
+            graph = create_graph_database_connection(credentials)
+            graphDb_data_Access = graphDBdataAccess(graph)
+            result = graphDb_data_Access.drop_create_vector_index("True", embedding_provider, embedding_model)
+        else:
+            result = "No changes made to embedding model."
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {
+            'api_name':'change_embedding_model',
+            'db_url': credentials.uri,
+            'email': credentials.email,
+            'embedding_provider': embedding_provider,
+            'embedding_model': embedding_model,
+            'logging_time': formatted_time(datetime.now(timezone.utc)),
+            'elapsed_api_time':f'{elapsed_time:.2f}'
+            }
+        logger.log_struct(json_obj, "INFO")
+        return create_api_response('Success',message=result)
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to change embedding model"
+        error_message = str(e)
+        logging.exception(f'Exception in change_embedding_model:{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        gc.collect()
+
 if __name__ == "__main__":
     uvicorn.run(app)
 

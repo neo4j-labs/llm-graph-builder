@@ -572,7 +572,7 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
           graphDb_data_Access.update_node_relationship_count(params.file_name)
       
       start_save_token = time.time()
-      if get_value_from_env("TRACK_TOKEN_USAGE", "false", "bool"):
+      if get_value_from_env("TRACK_USER_USAGE", "false", "bool"):
         track_token_usage(credentials.email,credentials.uri,tokens_per_file, params.model, operation_type="extraction")
         logging.info("Token usage for extraction: %s for user: %s", tokens_per_file, credentials.email)
       end_save_token = time.time()
@@ -642,7 +642,7 @@ async def processing_chunks(chunkId_chunkDoc_list,graph,credentials,file_name,mo
     graph = create_graph_database_connection(credentials)
   
   #pre checking if user is allowed to process the file
-  if get_value_from_env("TRACK_TOKEN_USAGE", "false", "bool"):
+  if get_value_from_env("TRACK_USER_USAGE", "false", "bool"):
     try:
       track_token_usage(credentials.email, credentials.uri, 0, model, operation_type="extraction")
     except LLMGraphBuilderException as e:
@@ -767,7 +767,7 @@ def update_graph(graph):
   graph_DB_dataAccess = graphDBdataAccess(graph)
   graph_DB_dataAccess.update_KNN_graph()
 
-def connection_check_and_get_vector_dimensions(graph,database, embedding_provider, embedding_model):
+def connection_check_and_get_vector_dimensions(graph, database, email, uri):
   """
   Args:
     uri: URI of the graph to extract
@@ -778,7 +778,7 @@ def connection_check_and_get_vector_dimensions(graph,database, embedding_provide
    Returns a status of connection from NEO4j is success or failure
  """
   graph_DB_dataAccess = graphDBdataAccess(graph)
-  return graph_DB_dataAccess.connection_check_and_get_vector_dimensions(database, embedding_provider, embedding_model)
+  return graph_DB_dataAccess.connection_check_and_get_vector_dimensions(database, email, uri)
 
 
 def merge_chunks_local(file_name, total_chunks, chunk_dir, merged_dir):

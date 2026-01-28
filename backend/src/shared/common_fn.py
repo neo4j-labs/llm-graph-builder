@@ -613,3 +613,134 @@ def get_remaining_token_limits(email: str, uri: str) -> dict:
             exc_info=True,
         )
         raise
+
+def get_user_embedding_model(email: str, uri: str) -> dict:
+    """
+    Retrieve the embedding provider and model for a user from the User node.
+    If not found, return default sentence-transformer values.
+    """
+    try:
+        allow_embedding_change = False
+        track_user_usage = get_value_from_env("TRACK_USER_USAGE", "false", bool)
+        if not track_user_usage:
+            embedding_provider = get_value_from_env("EMBEDDING_PROVIDER","sentence-transformer")
+            embedding_model = get_value_from_env("EMBEDDING_MODEL","all-MiniLM-L6-v2")
+            if not embedding_provider or not embedding_model:
+                raise EnvironmentError("EMBEDDING_PROVIDER and EMBEDDING_MODEL environment variables must be set")
+            _, embedding_dimension = load_embedding_model(embedding_provider, embedding_model)
+            return embedding_provider, embedding_model, embedding_dimension, allow_embedding_change
+
+        allow_embedding_change = True
+        normalized_email = (email or "").strip().lower() or None
+        normalized_db_url = (uri or "").strip() or None
+        if not normalized_email and not normalized_db_url:
+            raise ValueError("Either email or db_url must be provided for fetching embedding model.")
+
+        token_uri = get_value_from_env("TOKEN_TRACKER_DB_URI")
+        token_user = get_value_from_env("TOKEN_TRACKER_DB_USERNAME")
+        token_password = get_value_from_env("TOKEN_TRACKER_DB_PASSWORD")
+        token_database = get_value_from_env("TOKEN_TRACKER_DB_DATABASE", "neo4j")
+        if not all([token_uri, token_user, token_password]):
+            raise EnvironmentError("Neo4j credentials are not set properly.")
+
+        credentials = Neo4jCredentials(uri=token_uri, userName=token_user, password=token_password, database=token_database)
+        graph = create_graph_database_connection(credentials)
+
+        auth_required = get_value_from_env("AUTHENTICATION_REQUIRED", False, bool)
+        user_node = None
+        if auth_required:
+            result = graph.query(
+                "MATCH (u:User {email: $email}) RETURN u", {"email": normalized_email}
+            )
+            if result and result[0].get("u"):
+                user_node = result[0]["u"]
+        else:
+            result = graph.query(
+                "MATCH (u:User {db_url: $db_url}) RETURN u", {"db_url": normalized_db_url}
+            )
+            if result and result[0].get("u"):
+                user_node = result[0]["u"]
+
+        if user_node:
+            embedding_provider = user_node.get("embedding_provider")
+            embedding_model = user_node.get("embedding_model")
+            embedding_dimension = user_node.get("embedding_dimension")
+            if embedding_provider and embedding_model and embedding_dimension is not None:
+                return embedding_provider, embedding_model, embedding_dimension, allow_embedding_change
+
+        return "sentence-transformer", "all-MiniLM-L6-v2", 384, allow_embedding_change
+    except Exception as e:
+        logging.error(f"Error in get_user_embedding_model for email {email}: {e}")
+        return "sentence-transformer", "all-MiniLM-L6-v2", 384, allow_embedding_change
+
+def change_user_embedding_model(email:str, uri:str, new_embedding_provider: str, new_embedding_model: str):
+    """
+    Update the User node's embedding_provider and embedding_model properties.
+    If the embedding dimension changes, drop the vector index in the connected DB.
+    Args:
+        email (str): User's email
+        uri (str): URI of the connected DB (not the token tracker DB)
+        new_embedding_provider (str): New embedding provider
+        new_embedding_model (str): New embedding model
+    Returns:
+        dict: {"status": "Success"/"Failed", "message": str}
+    """
+    try:
+        normalized_email = (email or "").strip().lower() or None
+        normalized_db_url = (uri or "").strip() or None
+        if not normalized_email and not normalized_db_url:
+            raise ValueError("Either email or db_url must be provided for changing embedding model.")
+
+        token_uri = get_value_from_env("TOKEN_TRACKER_DB_URI")
+        token_user = get_value_from_env("TOKEN_TRACKER_DB_USERNAME")
+        token_password = get_value_from_env("TOKEN_TRACKER_DB_PASSWORD")
+        token_database = get_value_from_env("TOKEN_TRACKER_DB_DATABASE", "neo4j")
+        if not all([token_uri, token_user, token_password]):
+            return {"status": "Failed", "message": "Token tracker DB credentials are not set properly."}
+
+        tracker_credentials = Neo4jCredentials(uri=token_uri, userName=token_user, password=token_password, database=token_database)
+        tracker_graph = create_graph_database_connection(tracker_credentials)
+
+        auth_required = get_value_from_env("AUTHENTICATION_REQUIRED", False, bool)
+        user_node = None
+        result = None
+        if auth_required:
+            if not normalized_email:
+                return {"status": "Failed", "message": "Email is required to update embedding model when authentication is required."}
+            result = tracker_graph.query(
+                "MATCH (u:User {email: $email}) RETURN u", {"email": normalized_email}
+            )
+        else:
+            if not normalized_db_url:
+                return {"status": "Failed", "message": "db_url is required to update embedding model when authentication is not required."}
+            result = tracker_graph.query(
+                "MATCH (u:User {db_url: $db_url}) RETURN u", {"db_url": normalized_db_url}
+            )
+        if result and result[0].get("u"):
+            user_node = result[0]["u"]
+            
+        old_dimension = user_node.get("embedding_dimension") if user_node else 384
+        _, new_dimension = load_embedding_model(new_embedding_provider, new_embedding_model)
+        if auth_required:
+            update_query = """
+            MATCH (u:User {email: $email})
+            SET u.embedding_provider = $embedding_provider, u.embedding_model = $embedding_model, u.embedding_dimension = $embedding_dimension, u.updatedAt = datetime()
+            RETURN u
+            """
+            tracker_graph.query(update_query, {"email": normalized_email, "embedding_provider": new_embedding_provider, "embedding_model": new_embedding_model, "embedding_dimension": new_dimension})
+        else:
+            update_query = """
+            MATCH (u:User {db_url: $db_url})
+            SET u.embedding_provider = $embedding_provider, u.embedding_model = $embedding_model, u.embedding_dimension = $embedding_dimension, u.updatedAt = datetime()
+            RETURN u
+            """
+            tracker_graph.query(update_query, {"db_url": normalized_db_url, "embedding_provider": new_embedding_provider, "embedding_model": new_embedding_model, "embedding_dimension": new_dimension})
+        
+        if old_dimension == new_dimension:
+            return False
+        else:
+            return True
+    except Exception as e:
+        logging.error(f"Error in change_user_embedding_model for email {email}: {e}")
+        return False
+    
