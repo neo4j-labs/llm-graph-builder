@@ -20,14 +20,8 @@ try:
 except LookupError:
     nltk.download("punkt", download_dir=os.path.expanduser("~/.nltk_data"))
     
-load_dotenv()
 
-embedding_env = get_value_from_env("RAGAS_EMBEDDING_MODEL", "openai,text-embedding-ada-002")
-embedding_provider, embedding_model = [x.strip() for x in embedding_env.split(",", 1)]
-logging.info("Loading embedding model for ragas evaluation")
-EMBEDDING_FUNCTION, _ = load_embedding_model(embedding_provider, embedding_model)
-
-def get_ragas_metrics(question: str, context: list, answer: list, model: str):
+def get_ragas_metrics(question: str, context: list, answer: list, model: str, embedding_provider: str, embedding_model: str):
     """Calculates RAGAS metrics."""
     try:
         start_time = time.time()
@@ -45,7 +39,7 @@ def get_ragas_metrics(question: str, context: list, answer: list, model: str):
             llm = LangchainLLMWrapper(llm)
     
         logging.info(f"Evaluating with model: {model_name}")
-
+        EMBEDDING_FUNCTION, _ = load_embedding_model(embedding_provider, embedding_model)
         score = evaluate(
             dataset=dataset,
             metrics=[faithfulness, answer_relevancy,context_entity_recall],
@@ -73,13 +67,13 @@ def get_ragas_metrics(question: str, context: list, answer: list, model: str):
        return {"error": str(e)}
 
 
-async def get_additional_metrics(question: str, contexts: list, answers: list, reference: str, model_name: str):
+async def get_additional_metrics(question: str, contexts: list, answers: list, reference: str, model_name: str, embedding_provider: str, embedding_model: str):
    """Calculates multiple metrics for given question, answers, contexts, and reference."""
    try:
        if ("diffbot" in model_name) or ("ollama" in model_name):
            raise ValueError(f"Unsupported model for evaluation: {model_name}")
        llm, model_name, _ = get_llm(model=model_name)
-       embeddings = EMBEDDING_FUNCTION
+       embeddings, _ = load_embedding_model(embedding_provider, embedding_model)
        embedding_model = LangchainEmbeddingsWrapper(embeddings=embeddings)
        rouge_scorer = RougeScore()
        semantic_scorer = SemanticSimilarity()

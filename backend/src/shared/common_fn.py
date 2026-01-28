@@ -69,15 +69,15 @@ def _get_bedrock_embeddings(model_name: str):
         BedrockEmbeddings: An instance of the BedrockEmbeddings class.
     """
     try:
-        env_value = get_value_from_env("BEDROCK_EMBEDDING_MODEL")
+        env_value = get_value_from_env("BEDROCK_EMBEDDING_MODEL_KEY")
         if not env_value:
             raise ValueError("Environment variable 'BEDROCK_EMBEDDING_MODEL' is not set.")
         try:
-            _, aws_access_key, aws_secret_key, region_name = env_value.split(",")
+            aws_access_key, aws_secret_key, region_name = env_value.split(",")
         except ValueError:
             raise ValueError(
-                "Environment variable 'BEDROCK_EMBEDDING_MODEL' is improperly formatted. "
-                "Expected format: 'model_name,aws_access_key,aws_secret_key,region_name'."
+                "Environment variable 'BEDROCK_EMBEDDING_MODEL_KEY' is improperly formatted. "
+                "Expected format: 'aws_access_key,aws_secret_key,region_name'."
             )
         bedrock_client = boto3.client(
                 service_name="bedrock-runtime",
@@ -181,8 +181,8 @@ def load_embedding_model(embedding_provider: str, embedding_model_name: str):
             "text-embedding-005": 768,
         },
         "titan": {
-            "titan-embed-text-v2:0": 1536,
-            "titan-embed-text-v1": 1024,
+            "amazon.titan-embed-text-v2:0": 1024,
+            "amazon.titan-embed-text-v1": 1536,
         },
         "sentence-transformer": {
             "all-MiniLM-L6-v2": 384,

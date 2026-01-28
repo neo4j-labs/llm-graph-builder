@@ -970,7 +970,9 @@ async def calculate_metric(
     context: str = Form(),
     answer: str = Form(),
     model: str = Form(),
-    mode: str = Form()
+    mode: str = Form(),
+    embedding_provider: str = Form(None),
+    embedding_model: str = Form(None)
 ):
     """Calculate RAGAS metrics for a given question, context, and answer."""
     try:
@@ -980,7 +982,7 @@ async def calculate_metric(
         mode_list = [str(item).strip() for item in json.loads(mode)] if mode else []
 
         result = await asyncio.to_thread(
-            get_ragas_metrics, question, context_list, answer_list, model
+            get_ragas_metrics, question, context_list, answer_list, model, embedding_provider, embedding_model
         )
         if result is None or "error" in result:
             return create_api_response(
