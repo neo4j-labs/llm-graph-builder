@@ -27,6 +27,7 @@ export const llms =
         'fireworks_deepseek_v3',
         'fireworks_qwen3_30b',
         'fireworks_gpt_oss',
+        'fireworks_kimi_k2p5',
       ];
 
 export const prodllms =
