@@ -1,7 +1,8 @@
-import { Button, Dialog, Typography, Banner } from '@neo4j-ndl/react';
+import { Dialog, Typography, Banner } from '@neo4j-ndl/react';
 import { memo, useState } from 'react';
 import { EmbeddingModelOption } from '../../../utils/Constants';
 import { showErrorToast } from '../../../utils/Toasts';
+import ButtonWithToolTip from '../../UI/ButtonWithToolTip';
 
 interface EmbeddingDimensionWarningModalProps {
   open: boolean;
@@ -113,15 +114,36 @@ function EmbeddingDimensionWarningModal({
         </div>
       </Dialog.Content>
       <Dialog.Actions>
-        <Button onClick={handleContactTeam} size='medium' fill='outlined' isDisabled={isProcessing}>
+        <ButtonWithToolTip
+          text='Open GitHub to create a new issue for support'
+          label='Contact Team'
+          onClick={handleContactTeam}
+          size='medium'
+          fill='outlined'
+          disabled={isProcessing}
+        >
           Contact Team
-        </Button>
-        <Button onClick={onClose} size='medium' fill='outlined' isDisabled={isProcessing}>
+        </ButtonWithToolTip>
+        <ButtonWithToolTip
+          text='Cancel the embedding model change'
+          label='Cancel'
+          onClick={onClose}
+          size='medium'
+          fill='outlined'
+          disabled={isProcessing}
+        >
           Cancel
-        </Button>
-        <Button onClick={handleProceed} size='medium' isLoading={isProcessing} isDisabled={isProcessing}>
+        </ButtonWithToolTip>
+        <ButtonWithToolTip
+          text='Update the vector index to match the new embedding dimension'
+          label='Update Index'
+          onClick={handleProceed}
+          size='medium'
+          loading={isProcessing}
+          disabled={isProcessing}
+        >
           <strong>Update Index</strong>
-        </Button>
+        </ButtonWithToolTip>
       </Dialog.Actions>
     </Dialog>
   );
