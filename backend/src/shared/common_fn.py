@@ -521,10 +521,11 @@ def track_token_usage(
             logging.info("Token usage for user before limit check: daily_used=%s monthly_used=%s", daily_tokens_used, monthly_tokens_used)
             logging.info("Token limits for user: daily_limit=%s monthly_limit=%s", daily_tokens_limit, monthly_tokens_limit)
             logging.info("Is Neo4j user: %s", is_neo4j_user)
-            if ((daily_tokens_used > daily_tokens_limit) or (monthly_tokens_used > monthly_tokens_limit)) and not is_neo4j_user:
-                raise LLMGraphBuilderException(
-                    "Token usage limit exceeded. Please contact the team to increase your limit."
-                )
+            if get_value_from_env("LIMIT_TOKEN_USAGE_PER_USER", "False", "bool"): 
+                if ((daily_tokens_used > daily_tokens_limit) or (monthly_tokens_used > monthly_tokens_limit)) and not is_neo4j_user:
+                    raise LLMGraphBuilderException(
+                        "Token usage limit exceeded. Please contact the team to increase your limit."
+                    )
             logging.info(
                 "Updated token usage for user: "
                 "latest=%s last_op=%s daily_used=%s monthly_used=%s",
