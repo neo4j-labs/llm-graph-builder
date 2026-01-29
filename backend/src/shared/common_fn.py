@@ -629,19 +629,20 @@ def get_user_embedding_model(email: str, uri: str) -> dict:
                 raise EnvironmentError("EMBEDDING_PROVIDER and EMBEDDING_MODEL environment variables must be set")
             _, embedding_dimension = load_embedding_model(embedding_provider, embedding_model)
             return embedding_provider, embedding_model, embedding_dimension, allow_embedding_change
-
+        else:
+            token_uri = get_value_from_env("TOKEN_TRACKER_DB_URI")
+            token_user = get_value_from_env("TOKEN_TRACKER_DB_USERNAME")
+            token_password = get_value_from_env("TOKEN_TRACKER_DB_PASSWORD")
+            token_database = get_value_from_env("TOKEN_TRACKER_DB_DATABASE", "neo4j")
+            if not all([token_uri, token_user, token_password]):
+                allow_embedding_change = False        
+                raise EnvironmentError("Neo4j credentials are not set properly.")
+            
         allow_embedding_change = True
         normalized_email = (email or "").strip().lower() or None
         normalized_db_url = (uri or "").strip() or None
         if not normalized_email and not normalized_db_url:
             raise ValueError("Either email or db_url must be provided for fetching embedding model.")
-
-        token_uri = get_value_from_env("TOKEN_TRACKER_DB_URI")
-        token_user = get_value_from_env("TOKEN_TRACKER_DB_USERNAME")
-        token_password = get_value_from_env("TOKEN_TRACKER_DB_PASSWORD")
-        token_database = get_value_from_env("TOKEN_TRACKER_DB_DATABASE", "neo4j")
-        if not all([token_uri, token_user, token_password]):
-            raise EnvironmentError("Neo4j credentials are not set properly.")
 
         credentials = Neo4jCredentials(uri=token_uri, userName=token_user, password=token_password, database=token_database)
         graph = create_graph_database_connection(credentials)

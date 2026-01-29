@@ -439,7 +439,7 @@ def process_chat_response(messages, history, question, model, graph, document_na
         #     except LLMGraphBuilderException as e:
         #         logging.error(str(e))
         #         raise RuntimeError(str(e))
-        llm, doc_retriever, model_version = setup_chat(model, graph, document_names, chat_mode_settings)
+        llm, doc_retriever, model_version = setup_chat(model, graph, document_names, chat_mode_settings,embedding_provider, embedding_model)
         
         docs,transformed_question = retrieve_documents(doc_retriever, messages)  
 
