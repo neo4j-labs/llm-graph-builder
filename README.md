@@ -72,6 +72,25 @@ This application allows you to upload files from various sources (local machine,
 - View your daily and monthly token consumption and limits, helping you manage usage and avoid overages.
 - You can check your remaining token limits at any time using the provided API endpoint.
 
+### **Embedding Model Selection**
+- Choose from a variety of embedding models to generate vector embeddings for your data. This can be configured from the frontend in **Graph Settings > Processing Configuration > Select Embedding Model**.
+- Supported model providers include OpenAI, Gemini, Amazon Titan, and Sentence Transformers.
+- Your selected embedding model is saved to your user profile when `TRACK_USER_USAGE` is enabled.
+
+#### **Local Configuration**
+You have two ways to configure the embedding model locally:
+
+1.  **With User Tracking (`TRACK_USER_USAGE=true`):**
+    - Set `TRACK_USER_USAGE` to `true` in your backend `.env` file.
+    - Provide your token tracking database credentials (`TOKEN_TRACKER_DB_URI`, `TOKEN_TRACKER_DB_USERNAME`, etc.).
+    - Select your desired embedding model from the frontend. Your selection will be saved and automatically used in subsequent sessions.
+
+2.  **Without User Tracking (`TRACK_USER_USAGE=false`):**
+    - Set `TRACK_USER_USAGE` to `false`.
+    - Specify the embedding model and provider directly in your backend `.env` file using `EMBEDDING_MODEL` and `EMBEDDING_PROVIDER`.
+    - If these variables are not set, the application defaults to a Sentence Transformer model.
+    - In this mode, the embedding model cannot be changed from the frontend.
+
 
 ---
 
