@@ -55,6 +55,10 @@ function EmbeddingDimensionWarningModal({
     onClose();
   };
 
+  const handleContactTeam = () => {
+    window.open('https://github.com/neo4j-labs/llm-graph-builder/issues/new', '_blank');
+  };
+
   return (
     <Dialog
       size='medium'
@@ -65,56 +69,58 @@ function EmbeddingDimensionWarningModal({
       }}
     >
       <Dialog.Header htmlAttributes={{ id: 'embedding-dimension-warning-dialog' }}>
-        {isSuccess ? 'Embedding Model Changed Successfully' : 'Embedding Dimension Mismatch Warning'}
+        {isSuccess ? 'Embedding Model Changed Successfully' : 'Important: Update Your Embedding Model'}
       </Dialog.Header>
       <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
-        <Banner
-          type='warning'
-          name='Warning Banner'
-          description='Mixing embeddings with different dimensions may cause errors'
-          usage='inline'
-        />
         <div className='n-flex n-flex-col n-gap-token-3'>
           <Typography variant='body-medium'>
-            <strong>You previously used an embedding model with a dimension of {dbDimension}</strong> to create and
-            store document embeddings in the database.
+            You're switching to a new embedding model, which uses a different method to understand your documents.
           </Typography>
+          <div className='n-flex n-flex-col n-gap-token-2'>
+            <Typography variant='body-medium'>
+              Previous Model Dimension: <strong>{dbDimension}</strong>
+            </Typography>
+            <Typography variant='body-medium'>
+              New Model Dimension: <strong>{selectedDimension}</strong>
+            </Typography>
+          </div>
           <Typography variant='body-medium'>
-            You are now selecting a different model with a dimension of <strong>{selectedDimension}</strong>.
-          </Typography>
-          <Typography variant='body-medium' className='n-text-palette-danger-text'>
-            <strong>Warning:</strong> Mixing embeddings of different dimensions in the same database is not supported
-            and may cause errors or incorrect results.
+            To make sure everything works correctly with the new model, two steps are needed:
           </Typography>
           <div className='n-bg-palette-neutral-bg-weak n-p-token-4 n-rounded'>
-            <Typography variant='subheading-medium' className='n-mb-token-3'>
-              To proceed safely, you must:
-            </Typography>
-            <ol className='n-list-decimal n-ml-token-6 n-flex n-flex-col n-gap-token-2'>
+            <ol className='n-list-decimal n-ml-token-6 n-flex n-flex-col n-gap-token-3'>
               <li>
-                <Typography variant='body-medium'>Drop the existing vector index from the database</Typography>
+                <Typography variant='body-medium'>
+                  <strong>Database Index Update:</strong> Clicking <strong>"Update Index"</strong> will automatically
+                  update your database's vector index for the new model.
+                </Typography>
               </li>
               <li>
                 <Typography variant='body-medium'>
-                  Reprocess all previously uploaded files using the new embedding model
+                  <strong>Reprocess Your Files:</strong> After the index is updated, you must <strong>manually</strong>{' '}
+                  re-process all your previously processed files again. This step ensures your documents are compatible
+                  with the new model.
                 </Typography>
               </li>
             </ol>
           </div>
-          <Typography variant='body-medium'>
-            This ensures all embeddings are consistent and compatible with the selected model.
-          </Typography>
-          <Typography variant='body-small' className='n-text-palette-neutral-text-weak'>
-            If you need help, please contact the support team.
-          </Typography>
+          <Banner
+            type='danger'
+            name='Warning Banner'
+            description='Skipping the file reprocessing step will lead to errors and incorrect results.'
+            usage='inline'
+          />
         </div>
       </Dialog.Content>
       <Dialog.Actions>
+        <Button onClick={handleContactTeam} size='medium' fill='outlined' isDisabled={isProcessing}>
+          Contact Team
+        </Button>
         <Button onClick={onClose} size='medium' fill='outlined' isDisabled={isProcessing}>
           Cancel
         </Button>
         <Button onClick={handleProceed} size='medium' isLoading={isProcessing} isDisabled={isProcessing}>
-          I Understand, Proceed
+          <strong>Update Index</strong>
         </Button>
       </Dialog.Actions>
     </Dialog>
