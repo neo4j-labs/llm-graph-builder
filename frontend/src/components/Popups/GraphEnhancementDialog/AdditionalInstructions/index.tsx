@@ -13,10 +13,12 @@ import { tokens } from '@neo4j-ndl/base';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
 import { useCallback, useState, useEffect } from 'react';
 import { useFileContext } from '../../../../context/UsersFiles';
-import { showNormalToast } from '../../../../utils/Toasts';
+import { showNormalToast, showErrorToast } from '../../../../utils/Toasts';
 import { OnChangeValue } from 'react-select';
 import { OptionType } from '../../../../types';
 import EmbeddingDimensionWarningModal from '../../EmbeddingDimensionWarningModal';
+import { changeEmbeddingModelAPI } from '../../../../services/ChangeEmbeddingModel';
+import { useCredentials } from '../../../../context/UserCredentials';
 
 export default function AdditionalInstructionsText({
   closeEnhanceGraphSchemaDialog,
@@ -25,6 +27,7 @@ export default function AdditionalInstructionsText({
 }) {
   const { breakpoints } = tokens;
   const tablet = useMediaQuery(`(min-width:${breakpoints.xs}) and (max-width: ${breakpoints.lg})`);
+  const { userCredentials } = useCredentials();
   const {
     additionalInstructions,
     setAdditionalInstructions,
@@ -48,11 +51,14 @@ export default function AdditionalInstructionsText({
 
   const [showDimensionWarning, setShowDimensionWarning] = useState(false);
   const [pendingEmbeddingModel, setPendingEmbeddingModel] = useState<EmbeddingModelOption | null>(null);
+  const [isEmbeddingReadonly, setIsEmbeddingReadonly] = useState(false);
 
-  // Sync with localStorage whenever the component is visible
   useEffect(() => {
     const storedProvider = localStorage.getItem('embeddingProvider');
     const storedModel = localStorage.getItem('embeddingModel');
+    const allowEmbeddingChange = localStorage.getItem('allowEmbeddingChange');
+    setIsEmbeddingReadonly(allowEmbeddingChange === 'false');
+
     if (storedProvider && storedModel) {
       const found = embeddingModels.find((opt) => opt.provider === storedProvider && opt.model === storedModel);
       if (
@@ -106,6 +112,11 @@ export default function AdditionalInstructionsText({
   const onChangeEmbeddingModel = (newValue: unknown) => {
     const value = newValue as EmbeddingModelOption | null;
     if (value !== null) {
+      // Check if this is actually a change from the current model
+      if (value.provider === selectedEmbeddingModel.provider && value.model === selectedEmbeddingModel.model) {
+        return; // No change, do nothing
+      }
+
       const dimensionsStr = localStorage.getItem('embedding.dimensions');
       const connectionStr = localStorage.getItem('neo4j.connection');
 
@@ -132,24 +143,72 @@ export default function AdditionalInstructionsText({
         setShowDimensionWarning(true);
         return;
       }
+      // If dimensions match or no existing dimension, call API directly
       applyEmbeddingModelChange(value);
     }
   };
 
-  const applyEmbeddingModelChange = (value: EmbeddingModelOption) => {
-    setSelectedEmbeddingModel(value);
-    localStorage.setItem('embeddingProvider', value.provider);
-    localStorage.setItem('embeddingModel', value.model);
-    const displayLabel = `${value.provider.charAt(0).toUpperCase() + value.provider.slice(1)} ${value.model}`;
-    showNormalToast(`Embedding model set to ${displayLabel} (dimension: ${value.dimension})`);
+  const applyEmbeddingModelChange = async (value: EmbeddingModelOption) => {
+    if (!userCredentials) {
+      showErrorToast('User credentials not available');
+      return;
+    }
+
+    try {
+      const response = await changeEmbeddingModelAPI({
+        userCredentials,
+        embeddingProvider: value.provider,
+        embeddingModel: value.model,
+      });
+
+      if (response?.data?.status === 'Success') {
+        setSelectedEmbeddingModel(value);
+        localStorage.setItem('embeddingProvider', value.provider);
+        localStorage.setItem('embeddingModel', value.model);
+        localStorage.setItem('embeddingDimension', value.dimension.toString());
+        const displayLabel = `${value.provider.charAt(0).toUpperCase() + value.provider.slice(1)} ${value.model}`;
+        showNormalToast(
+          response.data.message || `Embedding model set to ${displayLabel} (dimension: ${value.dimension})`
+        );
+      } else {
+        const errorMsg = response?.data?.message || 'Failed to change embedding model';
+        showErrorToast(errorMsg);
+      }
+    } catch (error) {
+      console.error('Error changing embedding model:', error);
+      showErrorToast('Failed to change embedding model. Please try again.');
+    }
   };
 
-  const handleWarningProceed = () => {
-    if (pendingEmbeddingModel) {
-      applyEmbeddingModelChange(pendingEmbeddingModel);
-      setPendingEmbeddingModel(null);
+  const handleWarningProceed = async (provider: string, model: string) => {
+    if (!userCredentials) {
+      showErrorToast('User credentials not available');
+      return;
     }
-    setShowDimensionWarning(false);
+
+    try {
+      const response = await changeEmbeddingModelAPI({
+        userCredentials,
+        embeddingProvider: provider,
+        embeddingModel: model,
+      });
+
+      if (response?.data?.status === 'Success') {
+        showNormalToast(response.data.message || 'Embedding model changed successfully');
+        if (pendingEmbeddingModel) {
+          applyEmbeddingModelChange(pendingEmbeddingModel);
+          setPendingEmbeddingModel(null);
+        }
+        setShowDimensionWarning(false);
+      } else {
+        const errorMsg = response?.data?.message || 'Failed to change embedding model';
+        showErrorToast(errorMsg);
+        throw new Error(errorMsg);
+      }
+    } catch (error) {
+      console.error('Error in handleWarningProceed:', error);
+      throw error;
+    }
   };
 
   const handleWarningCancel = () => {
@@ -181,6 +240,7 @@ export default function AdditionalInstructionsText({
           }
         })()}
         selectedDimension={pendingEmbeddingModel?.dimension || 0}
+        pendingEmbeddingModel={pendingEmbeddingModel}
       />
       <div>
         <Flex flexDirection='column'>
@@ -226,31 +286,40 @@ export default function AdditionalInstructionsText({
             label='Embedding Model'
             size='medium'
             type='creatable'
+            isDisabled={isEmbeddingReadonly}
             selectProps={{
               isMulti: false,
-              options: embeddingModels.map((model) => ({
-                ...model,
-                label: (
-                  <Tooltip type='simple' placement='right'>
-                    <Tooltip.Trigger>
-                      <span className='text-nowrap'>{model.label}</span>
-                    </Tooltip.Trigger>
-                    <Tooltip.Content>
-                      <div className='flex flex-col gap-1'>
-                        <div>
-                          <strong>Provider:</strong> {model.provider}
+              isDisabled: isEmbeddingReadonly,
+              options: (() => {
+                const otherModels = embeddingModels.filter(
+                  (model) =>
+                    model.provider !== selectedEmbeddingModel.provider || model.model !== selectedEmbeddingModel.model
+                );
+                const reorderedModels = [selectedEmbeddingModel, ...otherModels];
+                return reorderedModels.map((model) => ({
+                  ...model,
+                  label: (
+                    <Tooltip type='simple' placement='right'>
+                      <Tooltip.Trigger>
+                        <span className='text-nowrap'>{model.label}</span>
+                      </Tooltip.Trigger>
+                      <Tooltip.Content>
+                        <div className='flex flex-col gap-1'>
+                          <div>
+                            <strong>Provider:</strong> {model.provider}
+                          </div>
+                          <div>
+                            <strong>Model:</strong> {model.model}
+                          </div>
+                          <div>
+                            <strong>Dimension:</strong> {model.dimension}
+                          </div>
                         </div>
-                        <div>
-                          <strong>Model:</strong> {model.model}
-                        </div>
-                        <div>
-                          <strong>Dimension:</strong> {model.dimension}
-                        </div>
-                      </div>
-                    </Tooltip.Content>
-                  </Tooltip>
-                ),
-              })),
+                      </Tooltip.Content>
+                    </Tooltip>
+                  ),
+                }));
+              })(),
               onChange: onChangeEmbeddingModel,
               value: {
                 ...selectedEmbeddingModel,
@@ -276,7 +345,11 @@ export default function AdditionalInstructionsText({
                 ),
               },
             }}
-            helpText={`Select the embedding model to use for vector indexing and similarity searches`}
+            helpText={
+              isEmbeddingReadonly
+                ? 'Embedding model is configured by your administrator and cannot be changed'
+                : 'Select the embedding model to use for vector indexing and similarity searches'
+            }
           />
           <Select
             label='Token Count Per Chunk'

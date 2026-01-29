@@ -14,6 +14,12 @@ export const getChatMetrics = async (
   formData.append('answer', JSON.stringify(answer));
   formData.append('model', model);
   formData.append('mode', JSON.stringify(mode));
+
+  const embeddingProvider = localStorage.getItem('embeddingProvider') || 'sentence-transformer';
+  const embeddingModel = localStorage.getItem('embeddingModel') || 'all-MiniLM-L6-v2';
+  formData.append('embedding_provider', embeddingProvider);
+  formData.append('embedding_model', embeddingModel);
+
   try {
     const response = await api.post<MetricsResponse>(`/metric`, formData);
     return response;

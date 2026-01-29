@@ -125,6 +125,7 @@ app.add_middleware(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -1176,7 +1177,7 @@ async def fetch_embedding_model(credentials: Neo4jCredentials = Depends(get_neo4
     """Fetch available embedding models for a given provider."""
     try:
         start = time.time()
-        result = await asyncio.to_thread(get_user_embedding_model, credentials.email)
+        result = await asyncio.to_thread(get_user_embedding_model, credentials.email, credentials.uri)
         end = time.time()
         elapsed_time = end - start
         json_obj = {

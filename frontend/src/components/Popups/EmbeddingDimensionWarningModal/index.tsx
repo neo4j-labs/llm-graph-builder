@@ -1,14 +1,15 @@
 import { Button, Dialog, Typography, Banner } from '@neo4j-ndl/react';
 import { memo, useState } from 'react';
-import { createVectorIndex } from '../../../services/VectorIndexCreation';
-import { showErrorToast, showNormalToast } from '../../../utils/Toasts';
+import { EmbeddingModelOption } from '../../../utils/Constants';
+import { showErrorToast } from '../../../utils/Toasts';
 
 interface EmbeddingDimensionWarningModalProps {
   open: boolean;
   onClose: () => void;
-  onProceed: () => void;
+  onProceed: (provider: string, model: string) => Promise<void>;
   dbDimension: number;
   selectedDimension: number;
+  pendingEmbeddingModel: EmbeddingModelOption | null;
 }
 
 function EmbeddingDimensionWarningModal({
@@ -17,31 +18,31 @@ function EmbeddingDimensionWarningModal({
   onProceed,
   dbDimension,
   selectedDimension,
+  pendingEmbeddingModel,
 }: EmbeddingDimensionWarningModalProps) {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleProceed = async () => {
+    if (!pendingEmbeddingModel) {
+      showErrorToast('No embedding model selected');
+      return;
+    }
+
     console.log('User acknowledged dimension mismatch warning');
     console.log('Details:', {
       previousDimension: dbDimension,
       newDimension: selectedDimension,
+      provider: pendingEmbeddingModel.provider,
+      model: pendingEmbeddingModel.model,
       timestamp: new Date().toISOString(),
     });
 
     setIsProcessing(true);
     try {
-      const response = await createVectorIndex(true);
-      if (response.data.status === 'Success') {
-        showNormalToast('Vector index recreated successfully');
-        onProceed();
-      } else {
-        const errorMsg =
-          typeof response.data.message === 'string' ? response.data.message : 'Failed to recreate vector index';
-        showErrorToast(errorMsg);
-      }
+      await onProceed(pendingEmbeddingModel.provider, pendingEmbeddingModel.model);
     } catch (error) {
-      console.error('Error recreating vector index:', error);
-      showErrorToast('Failed to recreate vector index. Please try again.');
+      console.error('Error changing embedding model:', error);
+      showErrorToast('Failed to change embedding model. Please try again.');
     } finally {
       setIsProcessing(false);
     }

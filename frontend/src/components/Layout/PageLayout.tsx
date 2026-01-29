@@ -22,7 +22,7 @@ import LoadDBSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtracti
 import PredefinedSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/PredefinedSchemaDialog';
 import { SKIP_AUTH } from '../../utils/Constants';
 import { useNavigate } from 'react-router';
-import { deduplicateByFullPattern, deduplicateNodeByValue } from '../../utils/Utils';
+import { deduplicateByFullPattern, deduplicateNodeByValue, fetchAndStoreEmbeddingSettings } from '../../utils/Utils';
 import DataImporterSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/DataImporter';
 const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
 const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
@@ -305,6 +305,7 @@ const PageLayout: React.FC = () => {
           setConnectionStatus(Boolean(connectionData.data.graph_connection));
           setIsReadOnlyUser(shouldBeReadonly);
           handleDisconnectButtonState(false);
+          await fetchAndStoreEmbeddingSettings(credentials.uri, credentials.email ?? '');
         } else if (!connectionData.data && connectionData.status === 'Success') {
           const storedCredentials = localStorage.getItem('neo4j.connection');
           if (storedCredentials) {
@@ -328,6 +329,7 @@ const PageLayout: React.FC = () => {
               setIsReadOnlyUser(credentials.isReadonlyUser);
             }
             handleDisconnectButtonState(true);
+            await fetchAndStoreEmbeddingSettings(credentials.uri, credentials.email ?? '');
           } else {
             handleDisconnectButtonState(true);
           }
