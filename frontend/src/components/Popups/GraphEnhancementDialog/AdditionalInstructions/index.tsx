@@ -196,7 +196,10 @@ export default function AdditionalInstructionsText({
       if (response?.data?.status === 'Success') {
         showNormalToast(response.data.message || 'Embedding model changed successfully');
         if (pendingEmbeddingModel) {
-          applyEmbeddingModelChange(pendingEmbeddingModel);
+          setSelectedEmbeddingModel(pendingEmbeddingModel);
+          localStorage.setItem('embeddingProvider', pendingEmbeddingModel.provider);
+          localStorage.setItem('embeddingModel', pendingEmbeddingModel.model);
+          localStorage.setItem('embeddingDimension', pendingEmbeddingModel.dimension.toString());
           setPendingEmbeddingModel(null);
         }
         setShowDimensionWarning(false);
