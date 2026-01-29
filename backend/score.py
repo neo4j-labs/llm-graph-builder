@@ -1206,16 +1206,21 @@ async def change_embedding_model(
 ):
     """Change the embedding model for a user."""
     try:
-        start = time.time()
-        change_index = await asyncio.to_thread(change_user_embedding_model, credentials.email, credentials.uri, embedding_provider, embedding_model)
+        start_time = time.time()
+        result = await asyncio.to_thread(change_user_embedding_model, credentials.email, credentials.uri, embedding_provider, embedding_model)
+        if result.get("status") == "Failed":
+            return create_api_response(
+                status="Failed",
+                message=result.get("message", "Failed to change embedding model."),
+                error=result.get("message", "Failed to change embedding model.")
+            )
+        message = "Embedding model changed successfully."
+        change_index = result.get("change_index")
         if change_index:
-            graph = create_graph_database_connection(credentials)
-            graphDb_data_Access = graphDBdataAccess(graph)
-            result = graphDb_data_Access.drop_create_vector_index("True", embedding_provider, embedding_model)
-        else:
-            result = "No changes made to embedding model."
-        end = time.time()
-        elapsed_time = end - start
+            create_vector_fulltext_indexes(credentials, embedding_provider, embedding_model)
+            message += " Vector index was dropped and recreated."
+            
+        elapsed_time = time.time() - start_time
         json_obj = {
             'api_name':'change_embedding_model',
             'db_url': credentials.uri,
@@ -1226,13 +1231,17 @@ async def change_embedding_model(
             'elapsed_api_time':f'{elapsed_time:.2f}'
             }
         logger.log_struct(json_obj, "INFO")
-        return create_api_response('Success',message=result)
+        return create_api_response(
+            status="Success",
+            message=message,
+            data={"embedding_provider": result.get("new_embedding_provider"),
+                  "embedding_model": result.get("new_embedding_model"),
+                  "embedding_dimension": result.get("new_dimension"),
+                  "change_index": change_index}
+        )
     except Exception as e:
-        job_status = "Failed"
-        message="Unable to change embedding model"
-        error_message = str(e)
-        logging.exception(f'Exception in change_embedding_model:{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
+        logging.exception(f'Exception in change_embedding_model:{e}')
+        return create_api_response("Failed", message=f"An unexpected error occurred: {str(e)}", error=str(e))
     finally:
         gc.collect()
 

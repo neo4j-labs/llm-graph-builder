@@ -673,7 +673,7 @@ def get_user_embedding_model(email: str, uri: str) -> dict:
         logging.error(f"Error in get_user_embedding_model for email {email}: {e}")
         return "sentence-transformer", "all-MiniLM-L6-v2", 384, allow_embedding_change
 
-def change_user_embedding_model(email:str, uri:str, new_embedding_provider: str, new_embedding_model: str):
+def change_user_embedding_model(email:str, uri:str, new_embedding_provider: str, new_embedding_model: str) -> dict:
     """
     Update the User node's embedding_provider and embedding_model properties.
     If the embedding dimension changes, drop the vector index in the connected DB.
@@ -683,7 +683,7 @@ def change_user_embedding_model(email:str, uri:str, new_embedding_provider: str,
         new_embedding_provider (str): New embedding provider
         new_embedding_model (str): New embedding model
     Returns:
-        dict: {"status": "Success"/"Failed", "message": str}
+        dict: with status, message and other details.
     """
     try:
         normalized_email = (email or "").strip().lower() or None
@@ -736,11 +736,17 @@ def change_user_embedding_model(email:str, uri:str, new_embedding_provider: str,
             """
             tracker_graph.query(update_query, {"db_url": normalized_db_url, "embedding_provider": new_embedding_provider, "embedding_model": new_embedding_model, "embedding_dimension": new_dimension})
         
-        if old_dimension == new_dimension:
-            return False
-        else:
-            return True
+        change_index = False
+        if old_dimension != new_dimension:
+            change_index = True
+        return {
+            "status": "Success",
+            "change_index": change_index, 
+            "new_embedding_provider": new_embedding_provider, 
+            "new_embedding_model": new_embedding_model, 
+            "new_dimension": new_dimension
+        }
     except Exception as e:
         logging.error(f"Error in change_user_embedding_model for email {email}: {e}")
-        return False
+        return {"status": "Failed", "message": str(e)}
     
