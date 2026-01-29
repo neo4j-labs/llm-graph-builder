@@ -196,7 +196,7 @@ async def get_graph_document_list(
         if "diffbot_api_key" in dir(llm):
             llm_transformer = llm
         else:
-            supported_models = ["ChatOpenAI", "ChatVertexAI", "AzureChatOpenAI","ChatAnthropic"]
+            supported_models = ["ChatOpenAI", "ChatVertexAI", "AzureChatOpenAI","ChatAnthropic","ChatFireworks","ChatGroq"]
             if hasattr(llm, "get_name") and llm.get_name() in supported_models:
                 node_properties = False
                 relationship_properties = False
