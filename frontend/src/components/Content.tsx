@@ -627,6 +627,10 @@ const Content: React.FC<ContentProps> = ({
     localStorage.removeItem('selectedNodeLabels');
     localStorage.removeItem('selectedRelationshipLabels');
     localStorage.removeItem('selectedPattern');
+    localStorage.removeItem('embeddingProvider');
+    localStorage.removeItem('embeddingModel');
+    localStorage.removeItem('embeddingDimension');
+    localStorage.removeItem('allowEmbeddingChange');
     setAdditionalInstructions('');
     setMessages([
       {

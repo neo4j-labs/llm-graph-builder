@@ -11,6 +11,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { createDefaultFormData } from '../../../API/Index';
 import { getNodeLabelsAndRelTypesFromText } from '../../../services/SchemaFromTextAPI';
 import { useFileContext } from '../../../context/UsersFiles';
+import { fetchEmbeddingModelAPI } from '../../../services/FetchEmbeddingModel';
 
 export default function ConnectionModal({
   open,
@@ -54,7 +55,6 @@ export default function ConnectionModal({
     errorMessage,
     setIsGCSActive,
     setShowDisconnectButton,
-    // setChunksToBeProces,
   } = useCredentials();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -77,6 +77,33 @@ export default function ConnectionModal({
       setUserDbVectorIndex(undefined);
     };
   }, [open]);
+
+  const fetchAndStoreEmbeddingModel = async (credential: UserCredentials) => {
+    try {
+      const embeddingResponse = await fetchEmbeddingModelAPI(credential);
+      if (embeddingResponse?.data?.status === 'Success') {
+        const embeddingData = embeddingResponse.data.data;
+        if (Array.isArray(embeddingData)) {
+          const [provider, model, dimension, allowChange] = embeddingData;
+          if (provider) {
+            localStorage.setItem('embeddingProvider', provider);
+          }
+          if (model) {
+            localStorage.setItem('embeddingModel', model);
+          }
+          if (dimension != null) {
+            localStorage.setItem('embeddingDimension', dimension.toString());
+          }
+          if (allowChange != null) {
+            localStorage.setItem('allowEmbeddingChange', allowChange.toString());
+          }
+          console.log('Embedding model configuration fetched and stored:', { provider, model, dimension, allowChange });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch embedding model configuration:', error);
+    }
+  };
 
   const recreateVectorIndex = useCallback(
     async (isNewVectorIndex: boolean, usercredential: UserCredentials) => {
@@ -271,14 +298,26 @@ export default function ConnectionModal({
             chunksTobeProcess,
             email: user?.email ?? '',
             connection: 'connectAPI',
+            db_vector_dimension: response.data.data.db_vector_dimension,
+            application_dimension: response.data.data.application_dimension,
           })
         );
         setUserDbVectorIndex(response.data.data.db_vector_dimension);
+        localStorage.setItem(
+          'embedding.dimensions',
+          JSON.stringify({
+            db_vector_dimension: response.data.data.db_vector_dimension,
+            application_dimension: response.data.data.application_dimension,
+            userDbVectorIndex: response.data.data.db_vector_dimension,
+          })
+        );
+
         if (
           (response.data.data.application_dimension === response.data.data.db_vector_dimension ||
             response.data.data.db_vector_dimension == 0) &&
           !response.data.data.chunks_exists
         ) {
+          await fetchAndStoreEmbeddingModel(credential);
           setConnectionStatus(true);
           setShowDisconnectButton(true);
           setOpenConnection((prev) => ({ ...prev, openPopUp: false }));

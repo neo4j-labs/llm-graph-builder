@@ -98,6 +98,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               uploadProgress: 100,
               // total_pages: 'N/A',
               id: uuidv4(),
+              token_usage: 0,
               ...defaultValues,
             });
           } else {

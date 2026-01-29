@@ -105,6 +105,73 @@ export const chunksToCombine = import.meta.env.VITE_CHUNK_TO_COMBINE
 export const defaultTokenChunkSizeOptions = [50, 100, 200, 400, 1000];
 export const defaultChunkOverlapOptions = [10, 20, 30, 40, 50];
 export const defaultChunksToCombineOptions = [1, 2, 3, 4, 5, 6];
+
+export interface EmbeddingModelOption {
+  provider: string;
+  model: string;
+  dimension: number;
+  label: string;
+  value: string;
+}
+
+export const embeddingModels: EmbeddingModelOption[] = [
+  {
+    provider: 'openai',
+    model: 'text-embedding-3-large',
+    dimension: 3072,
+    label: 'OpenAI text-embedding-3-large',
+    value: 'openai-text-embedding-3-large',
+  },
+  {
+    provider: 'openai',
+    model: 'text-embedding-3-small',
+    dimension: 1536,
+    label: 'OpenAI text-embedding-3-small',
+    value: 'openai-text-embedding-3-small',
+  },
+  {
+    provider: 'openai',
+    model: 'text-embedding-ada-002',
+    dimension: 1536,
+    label: 'OpenAI text-embedding-ada-002',
+    value: 'openai-text-embedding-ada-002',
+  },
+  {
+    provider: 'gemini',
+    model: 'gemini-embedding-001',
+    dimension: 3072,
+    label: 'Gemini gemini-embedding-001',
+    value: 'gemini-gemini-embedding-001',
+  },
+  {
+    provider: 'gemini',
+    model: 'text-embedding-005',
+    dimension: 768,
+    label: 'Gemini text-embedding-005',
+    value: 'gemini-text-embedding-005',
+  },
+  {
+    provider: 'titan',
+    model: 'amazon.titan-embed-text-v2:0',
+    dimension: 1024,
+    label: 'Titan amazon.titan-embed-text-v2:0',
+    value: 'titan-amazon.titan-embed-text-v2:0',
+  },
+  {
+    provider: 'titan',
+    model: 'amazon.titan-embed-text-v1',
+    dimension: 1536,
+    label: 'Titan amazon.titan-embed-text-v1',
+    value: 'titan-amazon.titan-embed-text-v1',
+  },
+  {
+    provider: 'sentence-transformer',
+    model: 'all-MiniLM-L6-v2',
+    dimension: 384,
+    label: 'Sentence Transformer all-MiniLM-L6-v2',
+    value: 'sentence-transformer-all-MiniLM-L6-v2',
+  },
+];
 export const timeperpage = import.meta.env.VITE_TIME_PER_PAGE ? Number(import.meta.env.VITE_TIME_PER_PAGE) : 50;
 export const timePerByte = 0.2;
 export const largeFileSize = import.meta.env.VITE_LARGE_FILE_SIZE
@@ -165,7 +232,7 @@ export const buttonCaptions = {
   clearSettings: 'Clear Schema',
   ask: 'Ask',
   applyGraphSchema: 'Apply',
-  provideAdditionalInstructions: 'Provide Additional Instructions for Entity Extractions',
+  provideAdditionalInstructions: 'Provide Processing Configuration for Entity Extractions',
   analyzeInstructions: 'Analyze Instructions',
   helpInstructions: 'Provide specific instructions for entity extraction, such as focusing on the key topics.',
   importDropzoneSpan: 'JSON Documents',

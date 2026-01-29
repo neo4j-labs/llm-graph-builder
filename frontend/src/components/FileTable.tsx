@@ -572,6 +572,15 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
         header: () => <span>Relations</span>,
         footer: (info) => info.column.id,
       }),
+      columnHelper.accessor((row) => row.token_usage, {
+        id: 'tokenUsage',
+        cell: (info) => {
+          const tokenUsage = info.getValue();
+          return <i>{tokenUsage ?? 0}</i>;
+        },
+        header: () => <span>Token Usage</span>,
+        footer: (info) => info.column.id,
+      }),
       columnHelper.accessor((row) => row.status, {
         id: 'inspect',
         cell: (info) => (
@@ -781,6 +790,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                   communityNodeCount: item.communityNodeCount ?? 0,
                   communityRelCount: item.communityRelCount ?? 0,
                   createdAt: item.createdAt != undefined ? getParsedDate(item?.createdAt) : undefined,
+                  token_usage: item.token_usage ?? 0,
                 });
               }
             });
@@ -857,6 +867,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                 nodesCount: item?.nodeCount ?? existingFile.nodesCount,
                 relationshipsCount: item?.relationshipCount ?? existingFile.relationshipsCount,
                 processingTotalTime: item?.processingTime ?? existingFile.processingTotalTime,
+                token_usage: item.token_usage ?? existingFile.token_usage ?? 0,
               };
             }
             return existingFile;
@@ -990,6 +1001,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
       chunkRelCount,
       entityEntityRelCount,
       communityRelCount,
+      token_usage,
     } = file_name;
     if (fileName && total_chunks) {
       setFilesData((prevfiles) =>
@@ -1009,6 +1021,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
               chunkRelCount: chunkRelCount ?? 0,
               entityEntityRelCount: entityEntityRelCount ?? 0,
               communityRelCount: communityRelCount ?? 0,
+              token_usage: token_usage ?? curfile.token_usage ?? 0,
             };
           }
           return curfile;
@@ -1039,6 +1052,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
       chunkRelCount,
       entityEntityRelCount,
       communityRelCount,
+      token_usage,
     } = file_name;
     if (fileName && total_chunks) {
       setFilesData((prevfiles) =>
@@ -1056,6 +1070,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
               chunkRelCount: chunkRelCount ?? 0,
               entityEntityRelCount: entityEntityRelCount ?? 0,
               communityRelCount: communityRelCount ?? 0,
+              token_usage: token_usage ?? curfile.token_usage ?? 0,
             };
           }
           return curfile;
