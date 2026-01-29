@@ -143,7 +143,6 @@ export default function AdditionalInstructionsText({
         setShowDimensionWarning(true);
         return;
       }
-      // If dimensions match or no existing dimension, call API directly
       applyEmbeddingModelChange(value);
     }
   };
@@ -165,10 +164,20 @@ export default function AdditionalInstructionsText({
         setSelectedEmbeddingModel(value);
         localStorage.setItem('embeddingProvider', value.provider);
         localStorage.setItem('embeddingModel', value.model);
-        localStorage.setItem('embeddingDimension', value.dimension.toString());
+        const apiDimension = response?.data?.data?.embedding_dimension;
+        const dimensionToStore = apiDimension || value.dimension;
+        localStorage.setItem('embeddingDimension', dimensionToStore.toString());
+        const dimensionsData = {
+          db_vector_dimension: dimensionToStore,
+          provider: value.provider,
+          model: value.model,
+          updated_at: new Date().toISOString(),
+        };
+        localStorage.setItem('embedding.dimensions', JSON.stringify(dimensionsData));
+
         const displayLabel = `${value.provider.charAt(0).toUpperCase() + value.provider.slice(1)} ${value.model}`;
         showNormalToast(
-          response.data.message || `Embedding model set to ${displayLabel} (dimension: ${value.dimension})`
+          response.data.message || `Embedding model set to ${displayLabel} (dimension: ${dimensionToStore})`
         );
       } else {
         const errorMsg = response?.data?.message || 'Failed to change embedding model';
@@ -199,7 +208,17 @@ export default function AdditionalInstructionsText({
           setSelectedEmbeddingModel(pendingEmbeddingModel);
           localStorage.setItem('embeddingProvider', pendingEmbeddingModel.provider);
           localStorage.setItem('embeddingModel', pendingEmbeddingModel.model);
-          localStorage.setItem('embeddingDimension', pendingEmbeddingModel.dimension.toString());
+          const apiDimension = response?.data?.data?.embedding_dimension;
+          const dimensionToStore = apiDimension || pendingEmbeddingModel.dimension;
+          localStorage.setItem('embeddingDimension', dimensionToStore.toString());
+          const dimensionsData = {
+            db_vector_dimension: dimensionToStore,
+            provider: pendingEmbeddingModel.provider,
+            model: pendingEmbeddingModel.model,
+            updated_at: new Date().toISOString(),
+          };
+          localStorage.setItem('embedding.dimensions', JSON.stringify(dimensionsData));
+
           setPendingEmbeddingModel(null);
         }
         setShowDimensionWarning(false);

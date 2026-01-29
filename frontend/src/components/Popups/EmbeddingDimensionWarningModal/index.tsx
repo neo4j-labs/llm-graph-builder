@@ -21,6 +21,7 @@ function EmbeddingDimensionWarningModal({
   pendingEmbeddingModel,
 }: EmbeddingDimensionWarningModalProps) {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const handleProceed = async () => {
     if (!pendingEmbeddingModel) {
@@ -40,6 +41,7 @@ function EmbeddingDimensionWarningModal({
     setIsProcessing(true);
     try {
       await onProceed(pendingEmbeddingModel.provider, pendingEmbeddingModel.model);
+      setIsSuccess(true);
     } catch (error) {
       console.error('Error changing embedding model:', error);
       showErrorToast('Failed to change embedding model. Please try again.');
@@ -48,17 +50,22 @@ function EmbeddingDimensionWarningModal({
     }
   };
 
+  const handleClose = () => {
+    setIsSuccess(false);
+    onClose();
+  };
+
   return (
     <Dialog
       size='medium'
       isOpen={open}
-      onClose={onClose}
+      onClose={handleClose}
       htmlAttributes={{
         'aria-labelledby': 'embedding-dimension-warning-dialog',
       }}
     >
       <Dialog.Header htmlAttributes={{ id: 'embedding-dimension-warning-dialog' }}>
-        Embedding Dimension Mismatch Warning
+        {isSuccess ? 'Embedding Model Changed Successfully' : 'Embedding Dimension Mismatch Warning'}
       </Dialog.Header>
       <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
         <Banner
