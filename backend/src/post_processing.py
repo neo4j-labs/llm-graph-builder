@@ -12,23 +12,20 @@ from src.llm import get_llm
 from src.graphDB_dataAccess import graphDBdataAccess
 import time 
 
-DROP_INDEX_QUERY = "DROP INDEX entities IF EXISTS;"
+# Constants for Full-Text Indexes
 LABELS_QUERY = "CALL db.labels()"
-FULL_TEXT_QUERY = "CREATE FULLTEXT INDEX entities FOR (n{labels_str}) ON EACH [n.id, n.description];"
 FILTER_LABELS = ["Chunk","Document","__Community__"]
-
-HYBRID_SEARCH_INDEX_DROP_QUERY = "DROP INDEX keyword IF EXISTS;"
+FULL_TEXT_QUERY = "CREATE FULLTEXT INDEX entities FOR (n{labels_str}) ON EACH [n.id, n.description];"
 HYBRID_SEARCH_FULL_TEXT_QUERY = "CREATE FULLTEXT INDEX keyword FOR (n:Chunk) ON EACH [n.text]" 
-
-COMMUNITY_INDEX_DROP_QUERY = "DROP INDEX community_keyword IF EXISTS;"
 COMMUNITY_INDEX_FULL_TEXT_QUERY = "CREATE FULLTEXT INDEX community_keyword FOR (n:`__Community__`) ON EACH [n.summary]" 
 
+# Constants for Vector Indexes
 CHUNK_VECTOR_INDEX_NAME = "vector"
-CHUNK_VECTOR_EMBEDDING_DIMENSION = 384
+ENTITY_VECTOR_INDEX_NAME = "entity_vector"
+VECTOR_EMBEDDING_DEFAULT_DIMENSION = 384
 
-DROP_CHUNK_VECTOR_INDEX_QUERY = f"DROP INDEX {CHUNK_VECTOR_INDEX_NAME} IF EXISTS;"
-CREATE_CHUNK_VECTOR_INDEX_QUERY = """
-CREATE VECTOR INDEX {index_name} IF NOT EXISTS FOR (c:Chunk) ON c.embedding
+CREATE_VECTOR_INDEX_QUERY = """
+CREATE VECTOR INDEX {index_name} IF NOT EXISTS FOR (n:{node_label}) ON (n.{embedding_property})
 OPTIONS {{
   indexConfig: {{
     `vector.dimensions`: {embedding_dimension},
@@ -37,134 +34,91 @@ OPTIONS {{
 }}
 """
 
-def create_vector_index(driver, index_type, embedding_dimension=None):
-    drop_query = ""
-    query = ""
+# Index Configurations
+FULLTEXT_INDEXES = [
+    {"type": "entities", "query": FULL_TEXT_QUERY},
+    {"type": "hybrid", "query": HYBRID_SEARCH_FULL_TEXT_QUERY},
+    {"type": "community", "query": COMMUNITY_INDEX_FULL_TEXT_QUERY}
+]
+
+VECTOR_INDEXES = [
+    {"name": CHUNK_VECTOR_INDEX_NAME, "label": "Chunk", "property": "embedding"},
+    {"name": ENTITY_VECTOR_INDEX_NAME, "label": "__Entity__", "property": "embedding"}
+]
+
+def create_vector_index(session, index_name, node_label, embedding_property, embedding_dimension):
+    """Creates a vector index in the Neo4j database."""
+    drop_query = f"DROP INDEX {index_name} IF EXISTS;"
+    session.run(drop_query)
     
-    if index_type == CHUNK_VECTOR_INDEX_NAME:
-        drop_query = DROP_CHUNK_VECTOR_INDEX_QUERY
-        query = CREATE_CHUNK_VECTOR_INDEX_QUERY.format(
-            index_name=CHUNK_VECTOR_INDEX_NAME,
-            embedding_dimension=embedding_dimension if embedding_dimension else CHUNK_VECTOR_EMBEDDING_DIMENSION
-        )
-    else:
-        logging.error(f"Invalid index type provided: {index_type}")
-        return
+    query = CREATE_VECTOR_INDEX_QUERY.format(
+        index_name=index_name,
+        node_label=node_label,
+        embedding_property=embedding_property,
+        embedding_dimension=embedding_dimension
+    )
+    session.run(query)
+    logging.info(f"Vector index '{index_name}' created successfully.")
 
-    try:
-        logging.info("Starting the process to create vector index.")
-        with driver.session() as session:
-            try:
-                start_step = time.time()
-                session.run(drop_query)
-                logging.info(f"Dropped existing index (if any) in {time.time() - start_step:.2f} seconds.")
-            except Exception as e:
-                logging.error(f"Failed to drop index: {e}")
-                return
+def create_fulltext_index(session, index_type, query):
+    """Creates a full-text index in the Neo4j database."""
+    drop_query = f"DROP INDEX {index_type} IF EXISTS;"
+    if index_type == 'hybrid':
+        drop_query = "DROP INDEX keyword IF EXISTS;"
+    elif index_type == 'community':
+        drop_query = "DROP INDEX community_keyword IF EXISTS;"
+    
+    session.run(drop_query)
 
-            try:
-                start_step = time.time()
-                session.run(query)
-                logging.info(f"Created vector index in {time.time() - start_step:.2f} seconds.")
-            except Exception as e:
-                logging.error(f"Failed to create vector index: {e}")
-                return  
-    except Exception as e:
-        logging.error("An error occurred while creating the vector index.", exc_info=True)
-        logging.error(f"Error details: {str(e)}")
-
-def create_fulltext(driver,type):
-
-    start_time = time.time()
-    try:
-        with driver.session() as session:
-            try:
-                start_step = time.time()
-                if type == "entities":
-                    drop_query = DROP_INDEX_QUERY
-                elif type == "hybrid":
-                    drop_query = HYBRID_SEARCH_INDEX_DROP_QUERY
-                else:
-                    drop_query = COMMUNITY_INDEX_DROP_QUERY
-                session.run(drop_query)
-                logging.info(f"Dropped existing index (if any) in {time.time() - start_step:.2f} seconds.")
-            except Exception as e:
-                logging.error(f"Failed to drop index: {e}")
-                return
-            try:
-                if type == "entities":
-                    start_step = time.time()
-                    result = session.run(LABELS_QUERY)
-                    labels = [record["label"] for record in result]
-                    
-                    for label in FILTER_LABELS:
-                        if label in labels:
-                            labels.remove(label)
-                    if labels:
-                        labels_str = ":" + "|".join([f"`{label}`" for label in labels])
-                        logging.info(f"Fetched labels in {time.time() - start_step:.2f} seconds.")
-                    else:
-                        logging.info("Full text index is not created as labels are empty")
-                        return
-            except Exception as e:
-                logging.error(f"Failed to fetch labels: {e}")
-                return
-            try:
-                start_step = time.time()
-                if type == "entities":
-                    fulltext_query = FULL_TEXT_QUERY.format(labels_str=labels_str)
-                elif type == "hybrid":
-                    fulltext_query = HYBRID_SEARCH_FULL_TEXT_QUERY
-                else:
-                    fulltext_query = COMMUNITY_INDEX_FULL_TEXT_QUERY
-
-                session.run(fulltext_query)
-                logging.info(f"Created full-text index in {time.time() - start_step:.2f} seconds.")
-            except Exception as e:
-                logging.error(f"Failed to create full-text index: {e}")
-                return
-    except Exception as e:
-        logging.error(f"An error occurred during the session: {e}")
-    finally:
-        logging.info(f"Process completed in {time.time() - start_time:.2f} seconds.")
+    if index_type == "entities":
+        result = session.run(LABELS_QUERY)
+        labels = [record["label"] for record in result if record["label"] not in FILTER_LABELS]
+        if labels:
+            labels_str = ":" + "|".join([f"`{label}`" for label in labels])
+            query = query.format(labels_str=labels_str)
+        else:
+            logging.info("Full-text index for entities not created as no labels were found.")
+            return
+            
+    session.run(query)
+    logging.info(f"Full-text index for '{index_type}' created successfully.")
 
 
 def create_vector_fulltext_indexes(credentials, embedding_provider, embedding_model):
-    types = ["entities", "hybrid"]
-    embeddings, dimension = load_embedding_model(embedding_provider, embedding_model)
+    """Creates all configured full-text and vector indexes."""
+    logging.info("Starting the process of creating full-text and vector indexes.")
+    
+    _, dimension = load_embedding_model(embedding_provider, embedding_model)
     if not dimension:
-        dimension = CHUNK_VECTOR_EMBEDDING_DIMENSION
-    logging.info("Starting the process of creating full-text indexes.")
+        dimension = VECTOR_EMBEDDING_DEFAULT_DIMENSION
 
     try:
         driver = get_graphDB_driver(credentials)
         driver.verify_connectivity()
         logging.info("Database connectivity verified.")
+
+        with driver.session() as session:
+            # Create Full-Text Indexes
+            for index_config in FULLTEXT_INDEXES:
+                try:
+                    create_fulltext_index(session, index_config["type"], index_config["query"])
+                except Exception as e:
+                    logging.error(f"Failed to create full-text index for type '{index_config['type']}': {e}")
+
+            # Create Vector Indexes
+            for index_config in VECTOR_INDEXES:
+                try:
+                    create_vector_index(session, index_config["name"], index_config["label"], index_config["property"], dimension)
+                except Exception as e:
+                    logging.error(f"Failed to create vector index '{index_config['name']}': {e}")
+
     except Exception as e:
-        logging.error(f"Error connecting to the database: {e}")
-        return
-
-    for index_type in types:
-        try:
-            logging.info(f"Creating a full-text index for type '{index_type}'.")
-            create_fulltext(driver, index_type)
-            logging.info(f"Full-text index for type '{index_type}' created successfully.")
-        except Exception as e:
-            logging.error(f"Failed to create full-text index for type '{index_type}': {e}")
-
-    try:
-        logging.info(f"Creating a vector index for type '{CHUNK_VECTOR_INDEX_NAME}'.")
-        create_vector_index(driver, CHUNK_VECTOR_INDEX_NAME,dimension)
-        logging.info("Vector index for chunk created successfully.")
-    except Exception as e:
-        logging.error(f"Failed to create vector index for '{CHUNK_VECTOR_INDEX_NAME}': {e}")
-
-    try:
-        driver.close()
-        logging.info("Driver closed successfully.")
-    except Exception as e:
-        logging.error(f"Error closing the driver: {e}")
-
+        logging.error(f"An error occurred during the index creation process: {e}", exc_info=True)
+    finally:
+        if 'driver' in locals() and driver:
+            driver.close()
+            logging.info("Driver closed successfully.")
+    
     logging.info("Full-text and vector index creation process completed.")
 
 
