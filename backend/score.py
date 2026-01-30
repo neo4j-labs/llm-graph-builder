@@ -552,7 +552,7 @@ async def connect(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)
         auth_required = get_value_from_env("AUTHENTICATION_REQUIRED", False, bool)
         if auth_required:
             if not getattr(credentials, "email", None) or not getattr(credentials, "uri", None):
-                error_message = "Authentication required: Your session is missing required credentials. Please log in again to continue."
+                error_message = "Authentication required: Your session is missing required credentials. Please log in to the application."
                 raise Exception(error_message)
         result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, credentials.database, credentials.email, credentials.uri)
         gcs_cache = get_value_from_env("GCS_FILE_CACHE","False","bool")
