@@ -110,7 +110,7 @@ def check_url_source(source_type, yt_url:str=None, wiki_query:str=None):
     try:
       logging.info(f"incoming URL: {yt_url}")
       if source_type == 'youtube':
-        if re.match('(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/)([\w\-_]+)\&?',yt_url.strip()):
+        if re.match(r'(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/)([\w\-_]+)\&?',yt_url.strip()):
           youtube_url = create_youtube_url(yt_url.strip())
           logging.info(youtube_url)
           return youtube_url,language
