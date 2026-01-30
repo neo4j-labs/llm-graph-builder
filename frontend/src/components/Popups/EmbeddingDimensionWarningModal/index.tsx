@@ -106,7 +106,7 @@ function EmbeddingDimensionWarningModal({
             </ol>
           </div>
           <Banner
-            type='danger'
+            type='warning'
             name='Warning Banner'
             description='Skipping the file reprocessing step will lead to errors and incorrect results.'
             usage='inline'
