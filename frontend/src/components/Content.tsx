@@ -250,7 +250,7 @@ const Content: React.FC<ContentProps> = ({
         return {
           ...curfile,
           model:
-            curfile.status === 'New' || curfile.status === 'Ready to Reprocess'
+            curfile.status === 'New' || curfile.status === 'Ready to Reprocess' || curfile.status === 'Failed'
               ? (selectedOption?.value ?? '')
               : curfile.model,
         };
@@ -320,7 +320,7 @@ const Content: React.FC<ContentProps> = ({
       }
 
       const apiResponse = await extractAPI(
-        fileItem.model,
+        model,
         fileItem.fileSource,
         fileItem.retryOption ?? '',
         fileItem.sourceUrl,

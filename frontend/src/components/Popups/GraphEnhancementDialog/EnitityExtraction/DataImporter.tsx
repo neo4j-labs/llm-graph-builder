@@ -163,15 +163,13 @@ const DataImporterSchemaDialog = ({ open, onClose, onApply }: DataImporterDialog
           </Dialog.Actions>
         </Dialog.Content>
       </Dialog>
-      {openGraphView && (
-        <SchemaViz
-          open={openGraphView}
-          setGraphViewOpen={setOpenGraphView}
-          viewPoint={viewPoint}
-          nodeValues={importerNodes ?? []}
-          relationshipValues={importerRels ?? []}
-        />
-      )}
+      <SchemaViz
+        open={openGraphView}
+        setGraphViewOpen={setOpenGraphView}
+        viewPoint={viewPoint}
+        nodeValues={importerNodes ?? []}
+        relationshipValues={importerRels ?? []}
+      />
     </>
   );
 };
