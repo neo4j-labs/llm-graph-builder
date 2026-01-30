@@ -61,10 +61,6 @@ const SchemaViz: React.FunctionComponent<SchemaViewModalProps> = ({
         nvlRef.current?.destroy();
       }
       clearTimeout(timeoutId);
-      setNodes([]);
-      setRelationships([]);
-      setSearchQuery('');
-      setSelected(undefined);
     };
   }, []);
 
@@ -92,7 +88,7 @@ const SchemaViz: React.FunctionComponent<SchemaViewModalProps> = ({
         setNewScheme(scheme);
       }
     }
-  }, [open]);
+  }, [open, nodeValues, relationshipValues, view]);
 
   useEffect(() => {
     const query = debouncedQuery.toLowerCase();
@@ -119,8 +115,10 @@ const SchemaViz: React.FunctionComponent<SchemaViewModalProps> = ({
         selected: false,
       };
     });
-    setNodes(updatedNodes);
-    setRelationships(updatedRelationships);
+    if (nodes.length > 0 || relationships.length > 0) {
+      setNodes(updatedNodes);
+      setRelationships(updatedRelationships);
+    }
   }, [debouncedQuery]);
 
   const selectedItem = useMemo(() => {

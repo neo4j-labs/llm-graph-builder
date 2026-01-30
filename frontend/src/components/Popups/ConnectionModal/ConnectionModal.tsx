@@ -156,8 +156,13 @@ export default function ConnectionModal({
               recreateVectorIndex(chunksExistsWithDifferentEmbedding, userCredentials as UserCredentials)
             }
             isVectorIndexAlreadyExists={chunksExistsWithDifferentEmbedding || isVectorIndexMatch}
-            userVectorIndexDimension={JSON.parse(localStorage.getItem('neo4j.connection') ?? 'null').userDbVectorIndex}
+            userVectorIndexDimension={
+              JSON.parse(localStorage.getItem('embedding.dimensions') ?? 'null')?.db_vector_dimension
+            }
             chunksExists={chunksExistsWithoutEmbedding}
+            applicationDimension={
+              JSON.parse(localStorage.getItem('embedding.dimensions') ?? 'null')?.application_dimension
+            }
           />
         ),
       });
@@ -333,6 +338,8 @@ export default function ConnectionModal({
                 recreateVectorIndex={() => recreateVectorIndex(false, credential)}
                 isVectorIndexAlreadyExists={response.data.data.db_vector_dimension != 0}
                 chunksExists={true}
+                userVectorIndexDimension={response.data.data.db_vector_dimension}
+                applicationDimension={response.data.data.application_dimension}
               />
             ),
           });
@@ -349,6 +356,7 @@ export default function ConnectionModal({
                 }
                 chunksExists={true}
                 userVectorIndexDimension={response.data.data.db_vector_dimension}
+                applicationDimension={response.data.data.application_dimension}
               />
             ),
           });

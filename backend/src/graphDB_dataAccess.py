@@ -481,8 +481,20 @@ class graphDBdataAccess:
         
         if str(isVectorIndexExist or '').lower().strip() == 'true':
             self.graph.query("""DROP INDEX vector IF EXISTS""",session_params={"database":self.graph._database})
+            self.graph.query("""DROP INDEX entity_vector IF EXISTS""",session_params={"database":self.graph._database})
         
         self.graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
+                            OPTIONS {indexConfig: {
+                            `vector.dimensions`: $dimensions,
+                            `vector.similarity_function`: 'cosine'
+                            }}
+                        """,
+                        {
+                            "dimensions" : dimension
+                        },session_params={"database":self.graph._database}
+                        )
+        
+        self.graph.query("""CREATE VECTOR INDEX `entity_vector` if not exists for (n:__Entity__) on (n.embedding)
                             OPTIONS {indexConfig: {
                             `vector.dimensions`: $dimensions,
                             `vector.similarity_function`: 'cosine'
