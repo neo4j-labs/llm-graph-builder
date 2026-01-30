@@ -7,6 +7,7 @@ from langchain_groq import ChatGroq
 from langchain_google_vertexai import HarmBlockThreshold, HarmCategory
 from langchain_experimental.graph_transformers.diffbot import DiffbotGraphTransformer
 from langchain_experimental.graph_transformers import LLMGraphTransformer
+from langchain_experimental.graph_transformers.llm import _Graph
 from langchain_anthropic import ChatAnthropic
 from langchain_fireworks import ChatFireworks
 from langchain_aws import ChatBedrock
@@ -196,20 +197,27 @@ async def get_graph_document_list(
         if "diffbot_api_key" in dir(llm):
             llm_transformer = llm
         else:
-            supported_models = ["ChatOpenAI", "ChatVertexAI", "AzureChatOpenAI","ChatAnthropic","ChatFireworks","ChatGroq"]
-            if hasattr(llm, "get_name") and llm.get_name() in supported_models:
-                node_properties = False
-                relationship_properties = False
-            else:
+            try:
+                llm.with_structured_output(_Graph)
+                supports_structured_output = True
+            except Exception:
+                supports_structured_output = False
+            if supports_structured_output:
                 node_properties = ["description"]
                 relationship_properties = ["description"]
+                ignore_tool_usage = False
+            else:
+                node_properties = False
+                relationship_properties = False
+                ignore_tool_usage = True
+            
             llm_transformer = LLMGraphTransformer(
                 llm=llm,
                 node_properties=node_properties,
                 relationship_properties=relationship_properties,
                 allowed_nodes=allowedNodes,
                 allowed_relationships=allowedRelationship,
-                ignore_tool_usage=True,
+                ignore_tool_usage=ignore_tool_usage,
                 additional_instructions=ADDITIONAL_INSTRUCTIONS+ (additional_instructions if additional_instructions else "")
             )
         
