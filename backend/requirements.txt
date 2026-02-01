@@ -28,7 +28,7 @@ langchain-classic==1.0.0
 langdetect==1.0.9
 langsmith==0.4.55
 langserve==0.3.3
-neo4j-rust-ext==5.28.2.1
+neo4j-rust-ext==6.1.0.0
 nltk==3.9.1
 openai==2.9.0
 psutil==7.0.0
