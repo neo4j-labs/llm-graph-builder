@@ -6,7 +6,7 @@ certifi==2025.8.3
 fastapi==0.116.1
 fastapi-health==0.4.0
 fireworks-ai==0.15.12
-google-api-core==2.25.1
+google-api-core==2.29.0
 google-auth==2.40.3
 google_auth_oauthlib==1.2.2
 google-cloud-core==2.4.3
