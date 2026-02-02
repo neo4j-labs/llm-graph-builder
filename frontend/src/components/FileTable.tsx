@@ -527,6 +527,15 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
           },
         },
       }),
+      columnHelper.accessor((row) => row.embedding_model, {
+        id: 'embedding_model',
+        cell: (info) => {
+          const embedding_model = info.getValue();
+          return <i>{embedding_model ?? ''}</i>;
+        },
+        header: () => <span>Embedding Model</span>,
+        footer: (info) => info.column.id,
+      }),
       columnHelper.accessor((row) => row.nodesCount, {
         id: 'NodesCount',
         cell: (info) => {
@@ -791,6 +800,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                   communityRelCount: item.communityRelCount ?? 0,
                   createdAt: item.createdAt != undefined ? getParsedDate(item?.createdAt) : undefined,
                   token_usage: item.token_usage ?? 0,
+                  embedding_model: item.embedding_model ?? '',
                 });
               }
             });
@@ -1002,6 +1012,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
       entityEntityRelCount,
       communityRelCount,
       token_usage,
+      embedding_model,
     } = file_name;
     if (fileName && total_chunks) {
       setFilesData((prevfiles) =>
@@ -1022,6 +1033,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
               entityEntityRelCount: entityEntityRelCount ?? 0,
               communityRelCount: communityRelCount ?? 0,
               token_usage: token_usage ?? curfile.token_usage ?? 0,
+              embedding_model: embedding_model ?? curfile.embedding_model ?? '',
             };
           }
           return curfile;
@@ -1053,6 +1065,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
       entityEntityRelCount,
       communityRelCount,
       token_usage,
+      embedding_model,
     } = file_name;
     if (fileName && total_chunks) {
       setFilesData((prevfiles) =>
@@ -1071,6 +1084,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
               entityEntityRelCount: entityEntityRelCount ?? 0,
               communityRelCount: communityRelCount ?? 0,
               token_usage: token_usage ?? curfile.token_usage ?? 0,
+              embedding_model: embedding_model ?? curfile.embedding_model ?? '',
             };
           }
           return curfile;

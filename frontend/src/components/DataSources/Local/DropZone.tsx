@@ -41,6 +41,7 @@ const DropZone: FunctionComponent = () => {
         communityRelCount: 0,
         createdAt: new Date(),
         token_usage: 0,
+        embedding_model: localStorage.getItem('embeddingModel') || 'all-MiniLM-L6-v2',
       };
 
       const copiedFilesData: CustomFile[] = [...filesData];

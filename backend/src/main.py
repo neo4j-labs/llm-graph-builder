@@ -505,6 +505,7 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
       obj_source_node.status = status
       obj_source_node.total_chunks = total_chunks
       obj_source_node.model = params.model
+      obj_source_node.embedding_model = params.embedding_model
       if params.retry_condition == START_FROM_LAST_PROCESSED_POSITION:
           node_count = result[0]['nodeCount']
           rel_count = result[0]['relationshipCount']

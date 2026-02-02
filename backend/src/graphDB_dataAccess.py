@@ -115,6 +115,9 @@ class graphDBdataAccess:
 
             if obj_source_node.token_usage is not None :
                 params['token_usage'] = obj_source_node.token_usage
+
+            if obj_source_node.embedding_model is not None:
+                params['embedding_model'] = obj_source_node.embedding_model
             param= {"props":params}
             
             logging.info(f'Base Param value 1 : {param}')
