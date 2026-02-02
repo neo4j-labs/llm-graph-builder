@@ -1,11 +1,12 @@
 import { commonserverresponse } from '../types';
 import api from '../API/Index';
+import { getEmbeddingProvider, getEmbeddingModel } from '../utils/EmbeddingConfigUtils';
 
 export const createVectorIndex = async (isVectorIndexExists: boolean) => {
   const formData = new FormData();
   formData.append('isVectorIndexExist', JSON.stringify(isVectorIndexExists));
-  const embeddingProvider = localStorage.getItem('embeddingProvider') || 'sentence-transformer';
-  const embeddingModel = localStorage.getItem('embeddingModel') || 'all-MiniLM-L6-v2';
+  const embeddingProvider = getEmbeddingProvider();
+  const embeddingModel = getEmbeddingModel();
   formData.append('embedding_provider', embeddingProvider);
   formData.append('embedding_model', embeddingModel);
   try {
