@@ -31,3 +31,4 @@ class sourceNode:
     access_token:str=None
     retry_condition:str=None
     token_usage:int=None
+    embedding_model:str=None
