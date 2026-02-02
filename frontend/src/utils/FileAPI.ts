@@ -2,6 +2,7 @@ import { Method } from 'axios';
 import { url } from './Utils';
 import { ExtractParams, UploadParams } from '../types';
 import { apiCall } from '../services/CommonAPI';
+import { getEmbeddingProvider, getEmbeddingModel } from './EmbeddingConfigUtils';
 
 // Upload Call
 export const uploadAPI = async (
@@ -41,8 +42,8 @@ export const extractAPI = async (
 ): Promise<any> => {
   const urlExtract = `${url()}/extract`;
   const method: Method = 'post';
-  const embeddingProvider = localStorage.getItem('embeddingProvider') || 'sentence-transformer';
-  const embeddingModel = localStorage.getItem('embeddingModel') || 'all-MiniLM-L6-v2';
+  const embeddingProvider = getEmbeddingProvider();
+  const embeddingModel = getEmbeddingModel();
   let additionalParams: ExtractParams;
   if (source_type === 's3 bucket') {
     additionalParams = {

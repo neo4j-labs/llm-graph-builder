@@ -5,13 +5,12 @@ import {
   defaultChunkOverlapOptions,
   defaultTokenChunkSizeOptions,
   defaultChunksToCombineOptions,
-  tooltips,
   embeddingModels,
   EmbeddingModelOption,
 } from '../../../../utils/Constants';
 import { tokens } from '@neo4j-ndl/base';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
-import { useCallback, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useFileContext } from '../../../../context/UsersFiles';
 import { showNormalToast, showErrorToast } from '../../../../utils/Toasts';
 import { OnChangeValue } from 'react-select';
@@ -19,6 +18,7 @@ import { OptionType } from '../../../../types';
 import EmbeddingDimensionWarningModal from '../../EmbeddingDimensionWarningModal';
 import { changeEmbeddingModelAPI } from '../../../../services/ChangeEmbeddingModel';
 import { useCredentials } from '../../../../context/UserCredentials';
+import { getEmbeddingConfig, setEmbeddingConfig, setChunkConfig } from '../../../../utils/EmbeddingConfigUtils';
 
 export default function AdditionalInstructionsText({
   closeEnhanceGraphSchemaDialog,
@@ -40,10 +40,18 @@ export default function AdditionalInstructionsText({
   } = useFileContext();
 
   const [selectedEmbeddingModel, setSelectedEmbeddingModel] = useState<EmbeddingModelOption>(() => {
-    const storedProvider = localStorage.getItem('embeddingProvider');
-    const storedModel = localStorage.getItem('embeddingModel');
-    if (storedProvider && storedModel) {
-      const found = embeddingModels.find((opt) => opt.provider === storedProvider && opt.model === storedModel);
+    const config = getEmbeddingConfig();
+    if (config?.provider && config?.model) {
+      const found = embeddingModels.find((opt) => opt.provider === config.provider && opt.model === config.model);
+      return found || embeddingModels[0];
+    }
+    return embeddingModels[0];
+  });
+
+  const [displayEmbeddingModel, setDisplayEmbeddingModel] = useState<EmbeddingModelOption>(() => {
+    const config = getEmbeddingConfig();
+    if (config?.provider && config?.model) {
+      const found = embeddingModels.find((opt) => opt.provider === config.provider && opt.model === config.model);
       return found || embeddingModels[0];
     }
     return embeddingModels[0];
@@ -52,29 +60,39 @@ export default function AdditionalInstructionsText({
   const [showDimensionWarning, setShowDimensionWarning] = useState(false);
   const [pendingEmbeddingModel, setPendingEmbeddingModel] = useState<EmbeddingModelOption | null>(null);
   const [isEmbeddingReadonly, setIsEmbeddingReadonly] = useState(false);
+  const [dropdownKey, setDropdownKey] = useState(0);
+  const [originalValues, setOriginalValues] = useState({
+    instructions: additionalInstructions,
+    chunkSize: selectedTokenChunkSize,
+    chunkOverlap: selectedChunk_overlap,
+    chunksToCombine: selectedChunks_to_combine,
+    embeddingModel: selectedEmbeddingModel,
+  });
 
   useEffect(() => {
-    const storedProvider = localStorage.getItem('embeddingProvider');
-    const storedModel = localStorage.getItem('embeddingModel');
+    const config = getEmbeddingConfig();
     const allowEmbeddingChange = localStorage.getItem('allowEmbeddingChange');
     setIsEmbeddingReadonly(allowEmbeddingChange === 'false');
 
-    if (storedProvider && storedModel) {
-      const found = embeddingModels.find((opt) => opt.provider === storedProvider && opt.model === storedModel);
+    if (config?.provider && config?.model) {
+      const found = embeddingModels.find((opt) => opt.provider === config.provider && opt.model === config.model);
       if (
         found &&
         (found.provider !== selectedEmbeddingModel.provider || found.model !== selectedEmbeddingModel.model)
       ) {
         setSelectedEmbeddingModel(found);
+        setDisplayEmbeddingModel(found);
       }
     }
+    setOriginalValues({
+      instructions: additionalInstructions,
+      chunkSize: selectedTokenChunkSize,
+      chunkOverlap: selectedChunk_overlap,
+      chunksToCombine: selectedChunks_to_combine,
+      embeddingModel: selectedEmbeddingModel,
+    });
   }, []);
 
-  const clickAnalyzeInstructHandler = useCallback(async () => {
-    localStorage.setItem('instructions', additionalInstructions);
-    closeEnhanceGraphSchemaDialog();
-    showNormalToast(`Successfully Applied the Instructions`);
-  }, [additionalInstructions]);
   const onChangeChunk_size = (newValue: OnChangeValue<OptionType, false>) => {
     if (newValue !== null) {
       const parsedValue = Number(newValue.value);
@@ -83,7 +101,6 @@ export default function AdditionalInstructionsText({
         return;
       }
       setSelectedTokenChunkSize(parsedValue);
-      localStorage.setItem('selectedChunk_size', JSON.stringify({ selectedOption: parsedValue }));
     }
   };
   const onChangeChunk_overlap = (newValue: OnChangeValue<OptionType, false>) => {
@@ -94,7 +111,6 @@ export default function AdditionalInstructionsText({
         return;
       }
       setSelectedChunk_overlap(parsedValue);
-      localStorage.setItem('selectedChunk_overlap', JSON.stringify({ selectedOption: parsedValue }));
     }
   };
   const onChangeChunks_to_combine = (newValue: OnChangeValue<OptionType, false>) => {
@@ -105,40 +121,32 @@ export default function AdditionalInstructionsText({
         return;
       }
       setSelectedChunks_to_combine(parsedValue);
-      localStorage.setItem('selectedChunks_to_combine', JSON.stringify({ selectedOption: parsedValue }));
     }
   };
 
   const onChangeEmbeddingModel = (newValue: unknown) => {
     const value = newValue as EmbeddingModelOption | null;
     if (value !== null) {
-      // Check if this is actually a change from the current model
       if (value.provider === selectedEmbeddingModel.provider && value.model === selectedEmbeddingModel.model) {
-        return; // No change, do nothing
+        return;
       }
 
-      const dimensionsStr = localStorage.getItem('embedding.dimensions');
+      const config = getEmbeddingConfig();
       const connectionStr = localStorage.getItem('neo4j.connection');
 
-      let dbDimension = 0;
-      if (dimensionsStr) {
-        try {
-          const dimensions = JSON.parse(dimensionsStr);
-          dbDimension = dimensions.db_vector_dimension;
-          console.log('DB dimension from dedicated storage:', dbDimension);
-        } catch (e) {
-          console.error('Error parsing dimension data:', e);
-        }
-      }
+      let dbDimension = config?.db_vector_dimension || 0;
+      console.log('DB dimension from embedding config:', dbDimension);
+
       if (!dbDimension && connectionStr) {
         try {
           const connectionData = JSON.parse(connectionStr);
-          dbDimension = connectionData.db_vector_dimension || connectionData.userDbVectorIndex;
+          dbDimension = connectionData.db_vector_dimension || connectionData.userDbVectorIndex || 0;
         } catch (e) {
           console.error('Error parsing connection data:', e);
         }
       }
       if (dbDimension && dbDimension > 0 && dbDimension !== value.dimension) {
+        setDisplayEmbeddingModel(value);
         setPendingEmbeddingModel(value);
         setShowDimensionWarning(true);
         return;
@@ -162,18 +170,15 @@ export default function AdditionalInstructionsText({
 
       if (response?.data?.status === 'Success') {
         setSelectedEmbeddingModel(value);
-        localStorage.setItem('embeddingProvider', value.provider);
-        localStorage.setItem('embeddingModel', value.model);
+        setDisplayEmbeddingModel(value);
         const apiDimension = response?.data?.data?.embedding_dimension;
         const dimensionToStore = apiDimension || value.dimension;
-        localStorage.setItem('embeddingDimension', dimensionToStore.toString());
-        const dimensionsData = {
-          db_vector_dimension: dimensionToStore,
+        setEmbeddingConfig({
           provider: value.provider,
           model: value.model,
-          updated_at: new Date().toISOString(),
-        };
-        localStorage.setItem('embedding.dimensions', JSON.stringify(dimensionsData));
+          dimension: dimensionToStore,
+          db_vector_dimension: dimensionToStore,
+        });
 
         const displayLabel = `${value.provider.charAt(0).toUpperCase() + value.provider.slice(1)} ${value.model}`;
         showNormalToast(
@@ -206,18 +211,15 @@ export default function AdditionalInstructionsText({
         showNormalToast(response.data.message || 'Embedding model changed successfully');
         if (pendingEmbeddingModel) {
           setSelectedEmbeddingModel(pendingEmbeddingModel);
-          localStorage.setItem('embeddingProvider', pendingEmbeddingModel.provider);
-          localStorage.setItem('embeddingModel', pendingEmbeddingModel.model);
+          setDisplayEmbeddingModel(pendingEmbeddingModel);
           const apiDimension = response?.data?.data?.embedding_dimension;
           const dimensionToStore = apiDimension || pendingEmbeddingModel.dimension;
-          localStorage.setItem('embeddingDimension', dimensionToStore.toString());
-          const dimensionsData = {
-            db_vector_dimension: dimensionToStore,
+          setEmbeddingConfig({
             provider: pendingEmbeddingModel.provider,
             model: pendingEmbeddingModel.model,
-            updated_at: new Date().toISOString(),
-          };
-          localStorage.setItem('embedding.dimensions', JSON.stringify(dimensionsData));
+            dimension: dimensionToStore,
+            db_vector_dimension: dimensionToStore,
+          });
 
           setPendingEmbeddingModel(null);
         }
@@ -234,8 +236,61 @@ export default function AdditionalInstructionsText({
   };
 
   const handleWarningCancel = () => {
+    setDisplayEmbeddingModel(selectedEmbeddingModel);
     setPendingEmbeddingModel(null);
     setShowDimensionWarning(false);
+    setDropdownKey((prev) => prev + 1);
+  };
+
+  const handleApply = () => {
+    console.log('handleApply - About to save chunk config:', {
+      chunkSize: selectedTokenChunkSize,
+      chunkOverlap: selectedChunk_overlap,
+      chunksToCombine: selectedChunks_to_combine,
+      instructions: additionalInstructions,
+    });
+
+    setChunkConfig({
+      chunkSize: selectedTokenChunkSize,
+      chunkOverlap: selectedChunk_overlap,
+      chunksToCombine: selectedChunks_to_combine,
+      instructions: additionalInstructions,
+    });
+
+    console.log('handleApply - Chunk config saved to localStorage');
+
+    setOriginalValues({
+      instructions: additionalInstructions,
+      chunkSize: selectedTokenChunkSize,
+      chunkOverlap: selectedChunk_overlap,
+      chunksToCombine: selectedChunks_to_combine,
+      embeddingModel: selectedEmbeddingModel,
+    });
+
+    closeEnhanceGraphSchemaDialog();
+    showNormalToast('Successfully Applied All Settings');
+  };
+
+  const handleCancel = () => {
+    setAdditionalInstructions(originalValues.instructions);
+    setSelectedTokenChunkSize(originalValues.chunkSize);
+    setSelectedChunk_overlap(originalValues.chunkOverlap);
+    setSelectedChunks_to_combine(originalValues.chunksToCombine);
+    setSelectedEmbeddingModel(originalValues.embeddingModel);
+    setDisplayEmbeddingModel(originalValues.embeddingModel);
+    setChunkConfig({
+      chunkSize: originalValues.chunkSize,
+      chunkOverlap: originalValues.chunkOverlap,
+      chunksToCombine: originalValues.chunksToCombine,
+      instructions: originalValues.instructions,
+    });
+    setEmbeddingConfig({
+      provider: originalValues.embeddingModel.provider,
+      model: originalValues.embeddingModel.model,
+      dimension: originalValues.embeddingModel.dimension,
+    });
+    setDropdownKey((prev) => prev + 1);
+    showNormalToast('All changes have been reverted');
   };
 
   return (
@@ -246,10 +301,9 @@ export default function AdditionalInstructionsText({
         onProceed={handleWarningProceed}
         dbDimension={(() => {
           try {
-            const dimensionsStr = localStorage.getItem('embedding.dimensions');
-            if (dimensionsStr) {
-              const dimensions = JSON.parse(dimensionsStr);
-              return dimensions.db_vector_dimension || 0;
+            const config = getEmbeddingConfig();
+            if (config?.db_vector_dimension) {
+              return config.db_vector_dimension;
             }
             const connectionStr = localStorage.getItem('neo4j.connection');
             if (connectionStr) {
@@ -286,25 +340,13 @@ export default function AdditionalInstructionsText({
               size='small'
             />
           </Flex>
-          <Flex className='mt-4! mb-2 flex! items-center' flexDirection='row' justifyContent='flex-end'>
-            <Flex flexDirection='row' gap='4'>
-              <ButtonWithToolTip
-                placement='top'
-                label='Analyze button'
-                text={tooltips.additionalInstructions}
-                disabled={additionalInstructions.trim() === ''}
-                onClick={clickAnalyzeInstructHandler}
-              >
-                {buttonCaptions.analyzeInstructions}
-              </ButtonWithToolTip>
-            </Flex>
-          </Flex>
         </Flex>
         <div className='mt-4'>
           <div className='flex align-self-center justify-left'>
             <h5>{appLabels.chunkingConfiguration}</h5>
           </div>
           <Select
+            key={dropdownKey}
             label='Embedding Model'
             size='medium'
             type='creatable'
@@ -315,9 +357,9 @@ export default function AdditionalInstructionsText({
               options: (() => {
                 const otherModels = embeddingModels.filter(
                   (model) =>
-                    model.provider !== selectedEmbeddingModel.provider || model.model !== selectedEmbeddingModel.model
+                    model.provider !== displayEmbeddingModel.provider || model.model !== displayEmbeddingModel.model
                 );
-                const reorderedModels = [selectedEmbeddingModel, ...otherModels];
+                const reorderedModels = [displayEmbeddingModel, ...otherModels];
                 return reorderedModels.map((model) => ({
                   ...model,
                   label: (
@@ -344,22 +386,22 @@ export default function AdditionalInstructionsText({
               })(),
               onChange: onChangeEmbeddingModel,
               value: {
-                ...selectedEmbeddingModel,
+                ...displayEmbeddingModel,
                 label: (
                   <Tooltip type='simple' placement='right'>
                     <Tooltip.Trigger>
-                      <span className='text-nowrap'>{selectedEmbeddingModel.label}</span>
+                      <span className='text-nowrap'>{displayEmbeddingModel.label}</span>
                     </Tooltip.Trigger>
                     <Tooltip.Content>
                       <div className='flex flex-col gap-1'>
                         <div>
-                          <strong>Provider:</strong> {selectedEmbeddingModel.provider}
+                          <strong>Provider:</strong> {displayEmbeddingModel.provider}
                         </div>
                         <div>
-                          <strong>Model:</strong> {selectedEmbeddingModel.model}
+                          <strong>Model:</strong> {displayEmbeddingModel.model}
                         </div>
                         <div>
-                          <strong>Dimension:</strong> {selectedEmbeddingModel.dimension}
+                          <strong>Dimension:</strong> {displayEmbeddingModel.dimension}
                         </div>
                       </div>
                     </Tooltip.Content>
@@ -432,6 +474,25 @@ export default function AdditionalInstructionsText({
             type='creatable'
           />
         </div>
+        <Flex className='mt-6' flexDirection='row' justifyContent='flex-end' gap='4'>
+          <ButtonWithToolTip
+            placement='top'
+            label='Cancel button'
+            text='Discard all changes and close the dialog'
+            onClick={handleCancel}
+            fill='outlined'
+          >
+            Cancel
+          </ButtonWithToolTip>
+          <ButtonWithToolTip
+            placement='top'
+            label='Apply button'
+            text='Save all configuration changes'
+            onClick={handleApply}
+          >
+            Apply
+          </ButtonWithToolTip>
+        </Flex>
       </div>
     </>
   );

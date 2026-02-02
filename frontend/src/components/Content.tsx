@@ -54,6 +54,7 @@ import { ChevronUpIconOutline, ChevronDownIconOutline } from '@neo4j-ndl/react/i
 import { ThemeWrapperContext } from '../context/ThemeWrapper';
 import { useAuth0 } from '@auth0/auth0-react';
 import React from 'react';
+import { clearEmbeddingConfig, clearChunkConfig } from '../utils/EmbeddingConfigUtils';
 
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
 
@@ -619,17 +620,13 @@ const Content: React.FC<ContentProps> = ({
     setAllPatterns([]);
     localStorage.removeItem('selectedTokenChunkSize');
     setSelectedTokenChunkSize(tokenchunkSize);
-    localStorage.removeItem('selectedChunk_overlap');
+    clearChunkConfig();
     setSelectedChunk_overlap(chunkOverlap);
-    localStorage.removeItem('selectedChunks_to_combine');
     setSelectedChunks_to_combine(chunksToCombine);
-    localStorage.removeItem('instructions');
     localStorage.removeItem('selectedNodeLabels');
     localStorage.removeItem('selectedRelationshipLabels');
     localStorage.removeItem('selectedPattern');
-    localStorage.removeItem('embeddingProvider');
-    localStorage.removeItem('embeddingModel');
-    localStorage.removeItem('embeddingDimension');
+    clearEmbeddingConfig();
     localStorage.removeItem('allowEmbeddingChange');
     setAdditionalInstructions('');
     setMessages([

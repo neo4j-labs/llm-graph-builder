@@ -12,6 +12,7 @@ import { createDefaultFormData } from '../../../API/Index';
 import { getNodeLabelsAndRelTypesFromText } from '../../../services/SchemaFromTextAPI';
 import { useFileContext } from '../../../context/UsersFiles';
 import { fetchEmbeddingModelAPI } from '../../../services/FetchEmbeddingModel';
+import { getEmbeddingConfig } from '../../../utils/EmbeddingConfigUtils';
 
 export default function ConnectionModal({
   open,
@@ -156,13 +157,9 @@ export default function ConnectionModal({
               recreateVectorIndex(chunksExistsWithDifferentEmbedding, userCredentials as UserCredentials)
             }
             isVectorIndexAlreadyExists={chunksExistsWithDifferentEmbedding || isVectorIndexMatch}
-            userVectorIndexDimension={
-              JSON.parse(localStorage.getItem('embedding.dimensions') ?? 'null')?.db_vector_dimension
-            }
+            userVectorIndexDimension={getEmbeddingConfig()?.db_vector_dimension}
             chunksExists={chunksExistsWithoutEmbedding}
-            applicationDimension={
-              JSON.parse(localStorage.getItem('embedding.dimensions') ?? 'null')?.application_dimension
-            }
+            applicationDimension={getEmbeddingConfig()?.dimension}
           />
         ),
       });

@@ -1,5 +1,6 @@
 import { MetricsResponse } from '../types';
 import api from '../API/Index';
+import { getEmbeddingProvider, getEmbeddingModel } from '../utils/EmbeddingConfigUtils';
 
 export const getChatMetrics = async (
   question: string,
@@ -15,8 +16,8 @@ export const getChatMetrics = async (
   formData.append('model', model);
   formData.append('mode', JSON.stringify(mode));
 
-  const embeddingProvider = localStorage.getItem('embeddingProvider') || 'sentence-transformer';
-  const embeddingModel = localStorage.getItem('embeddingModel') || 'all-MiniLM-L6-v2';
+  const embeddingProvider = getEmbeddingProvider();
+  const embeddingModel = getEmbeddingModel();
   formData.append('embedding_provider', embeddingProvider);
   formData.append('embedding_model', embeddingModel);
 

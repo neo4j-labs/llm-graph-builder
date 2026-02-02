@@ -1,11 +1,12 @@
 import api from '../API/Index';
+import { getEmbeddingProvider, getEmbeddingModel } from '../utils/EmbeddingConfigUtils';
 
 const postProcessing = async (taskParam: string[]) => {
   try {
     const formData = new FormData();
     formData.append('tasks', JSON.stringify(taskParam));
-    const embeddingProvider = localStorage.getItem('embeddingProvider') || 'sentence-transformer';
-    const embeddingModel = localStorage.getItem('embeddingModel') || 'all-MiniLM-L6-v2';
+    const embeddingProvider = getEmbeddingProvider();
+    const embeddingModel = getEmbeddingModel();
     formData.append('embedding_provider', embeddingProvider);
     formData.append('embedding_model', embeddingModel);
     const response = await api.post(`/post_processing`, formData, {
