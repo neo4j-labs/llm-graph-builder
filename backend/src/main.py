@@ -768,18 +768,9 @@ def update_graph(graph):
   graph_DB_dataAccess = graphDBdataAccess(graph)
   graph_DB_dataAccess.update_KNN_graph()
 
-def connection_check_and_get_vector_dimensions(graph, database, email, uri):
-  """
-  Args:
-    uri: URI of the graph to extract
-    userName: Username to use for graph creation ( if None will use username from config file )
-    password: Password to use for graph creation ( if None will use password from config file )
-    db_name: db_name is database name to connect to graph db
-  Returns:
-   Returns a status of connection from NEO4j is success or failure
- """
+def connection_check_and_get_vector_dimensions(graph, credentials):
   graph_DB_dataAccess = graphDBdataAccess(graph)
-  return graph_DB_dataAccess.connection_check_and_get_vector_dimensions(database, email, uri)
+  return graph_DB_dataAccess.connection_check_and_get_vector_dimensions(credentials)
 
 
 def merge_chunks_local(file_name, total_chunks, chunk_dir, merged_dir):
