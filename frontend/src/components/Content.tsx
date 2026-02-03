@@ -29,6 +29,7 @@ import {
   tokenchunkSize,
   chunkOverlap,
   chunksToCombine,
+  SKIP_AUTH,
 } from '../utils/Constants';
 import ButtonWithToolTip from './UI/ButtonWithToolTip';
 import DropdownComponent from './Dropdown';
@@ -134,6 +135,7 @@ const Content: React.FC<ContentProps> = ({
   const [deleteLoading, setIsDeleteLoading] = useState<boolean>(false);
 
   const hasSelections = useHasSelections(selectedNodes, selectedRels);
+  const connectDisabled = !isAuthenticated && !SKIP_AUTH;
 
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
@@ -970,19 +972,18 @@ const Content: React.FC<ContentProps> = ({
               Graph Settings
             </ButtonWithToolTip>
             {!connectionStatus ? (
-              <SpotlightTarget
-                id='connectbutton'
-                hasPulse={true}
-                indicatorVariant='border'
-                className='n-bg-palette-primary-bg-strong hover:n-bg-palette-primary-hover-strong'
-              >
-                <Button
+              <SpotlightTarget id='connectbutton' hasPulse={!connectDisabled} indicatorVariant='border'>
+                <ButtonWithToolTip
+                  text={connectDisabled ? 'Please login first to connect' : buttonCaptions.connectToNeo4j}
+                  label={buttonCaptions.connectToNeo4j}
+                  disabled={connectDisabled}
                   size={isTablet ? 'small' : 'medium'}
                   className='mr-2!'
                   onClick={() => setOpenConnection((prev) => ({ ...prev, openPopUp: true }))}
+                  alwaysShowTooltip={true}
                 >
                   {buttonCaptions.connectToNeo4j}
-                </Button>
+                </ButtonWithToolTip>
               </SpotlightTarget>
             ) : (
               showDisconnectButton && (
