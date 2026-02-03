@@ -216,12 +216,22 @@ const Content: React.FC<ContentProps> = ({
               }
               showSuccessToast('All Q&A functionality is available now.');
             } else {
-              throw new Error(response.data.error);
+              throw new Error(JSON.stringify(response.data));
             }
           }
         } catch (error) {
           if (error instanceof Error) {
-            showSuccessToast(error.message);
+            try {
+              const errorData = JSON.parse(error.message);
+              if (errorData.error && errorData.message) {
+                console.error('Error:', errorData.error);
+                showErrorToast(errorData.message);
+              } else {
+                showErrorToast(error.message);
+              }
+            } catch {
+              showErrorToast(error.message);
+            }
           }
         }
       })();
