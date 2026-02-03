@@ -11,6 +11,8 @@ interface EmbeddingDimensionWarningModalProps {
   dbDimension: number;
   selectedDimension: number;
   pendingEmbeddingModel: EmbeddingModelOption | null;
+  lastEmbeddingModel: EmbeddingModelOption | null;
+  onCancel: (provider: string, model: string) => Promise<void>;
 }
 
 function EmbeddingDimensionWarningModal({
@@ -20,6 +22,8 @@ function EmbeddingDimensionWarningModal({
   dbDimension,
   selectedDimension,
   pendingEmbeddingModel,
+  lastEmbeddingModel,
+  onCancel,
 }: EmbeddingDimensionWarningModalProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -51,9 +55,21 @@ function EmbeddingDimensionWarningModal({
     }
   };
 
-  const handleClose = () => {
-    setIsSuccess(false);
-    onClose();
+  const handleClose = async () => {
+    if (!lastEmbeddingModel) {
+      setIsSuccess(false);
+      onClose();
+      return;
+    }
+
+    try {
+      await onCancel(lastEmbeddingModel.provider, lastEmbeddingModel.model);
+      setIsSuccess(false);
+      onClose();
+    } catch (error) {
+      console.error('Error reverting embedding model:', error);
+      showErrorToast('Failed to revert embedding model. Please try again.');
+    }
   };
 
   const handleContactTeam = () => {

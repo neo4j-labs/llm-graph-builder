@@ -61,6 +61,7 @@ export default function AdditionalInstructionsText({
   const [pendingEmbeddingModel, setPendingEmbeddingModel] = useState<EmbeddingModelOption | null>(null);
   const [isEmbeddingReadonly, setIsEmbeddingReadonly] = useState(false);
   const [dropdownKey, setDropdownKey] = useState(0);
+  const [isCancelling, setIsCancelling] = useState(false);
   const [originalValues, setOriginalValues] = useState({
     instructions: additionalInstructions,
     chunkSize: selectedTokenChunkSize,
@@ -235,11 +236,34 @@ export default function AdditionalInstructionsText({
     }
   };
 
-  const handleWarningCancel = () => {
-    setDisplayEmbeddingModel(selectedEmbeddingModel);
-    setPendingEmbeddingModel(null);
-    setShowDimensionWarning(false);
-    setDropdownKey((prev) => prev + 1);
+  const handleWarningCancel = async (provider: string, model: string) => {
+    if (!userCredentials) {
+      showErrorToast('User credentials not available');
+      return;
+    }
+
+    try {
+      const response = await changeEmbeddingModelAPI({
+        userCredentials,
+        embeddingProvider: provider,
+        embeddingModel: model,
+      });
+
+      if (response?.data?.status === 'Success') {
+        console.log('Embedding model reverted to:', provider, model);
+        setDisplayEmbeddingModel(selectedEmbeddingModel);
+        setPendingEmbeddingModel(null);
+        setShowDimensionWarning(false);
+        setDropdownKey((prev) => prev + 1);
+      } else {
+        const errorMsg = response?.data?.message || 'Failed to revert embedding model';
+        showErrorToast(errorMsg);
+        throw new Error(errorMsg);
+      }
+    } catch (error) {
+      console.error('Error in handleWarningCancel:', error);
+      throw error;
+    }
   };
 
   const handleApply = () => {
@@ -271,7 +295,40 @@ export default function AdditionalInstructionsText({
     showNormalToast('Successfully Applied All Settings');
   };
 
-  const handleCancel = () => {
+  const handleCancel = async () => {
+    const embeddingModelChanged =
+      selectedEmbeddingModel.provider !== originalValues.embeddingModel.provider ||
+      selectedEmbeddingModel.model !== originalValues.embeddingModel.model;
+
+    if (embeddingModelChanged && userCredentials) {
+      setIsCancelling(true);
+      try {
+        const response = await changeEmbeddingModelAPI({
+          userCredentials,
+          embeddingProvider: originalValues.embeddingModel.provider,
+          embeddingModel: originalValues.embeddingModel.model,
+        });
+
+        if (response?.data?.status === 'Success') {
+          console.log(
+            'Embedding model reverted to original:',
+            originalValues.embeddingModel.provider,
+            originalValues.embeddingModel.model
+          );
+        } else {
+          const errorMsg = response?.data?.message || 'Failed to revert embedding model';
+          showErrorToast(errorMsg);
+          setIsCancelling(false);
+          return;
+        }
+      } catch (error) {
+        console.error('Error reverting embedding model:', error);
+        showErrorToast('Failed to revert embedding model. Please try again.');
+        setIsCancelling(false);
+        return;
+      }
+    }
+
     setAdditionalInstructions(originalValues.instructions);
     setSelectedTokenChunkSize(originalValues.chunkSize);
     setSelectedChunk_overlap(originalValues.chunkOverlap);
@@ -290,6 +347,7 @@ export default function AdditionalInstructionsText({
       dimension: originalValues.embeddingModel.dimension,
     });
     setDropdownKey((prev) => prev + 1);
+    setIsCancelling(false);
     showNormalToast('All changes have been reverted');
   };
 
@@ -297,8 +355,15 @@ export default function AdditionalInstructionsText({
     <>
       <EmbeddingDimensionWarningModal
         open={showDimensionWarning}
-        onClose={handleWarningCancel}
+        onClose={() => {
+          setDisplayEmbeddingModel(selectedEmbeddingModel);
+          setPendingEmbeddingModel(null);
+          setShowDimensionWarning(false);
+          setDropdownKey((prev) => prev + 1);
+        }}
         onProceed={handleWarningProceed}
+        onCancel={handleWarningCancel}
+        lastEmbeddingModel={selectedEmbeddingModel}
         dbDimension={(() => {
           try {
             const config = getEmbeddingConfig();
@@ -481,6 +546,8 @@ export default function AdditionalInstructionsText({
             text='Discard all changes and close the dialog'
             onClick={handleCancel}
             fill='outlined'
+            loading={isCancelling}
+            disabled={isCancelling}
           >
             Cancel
           </ButtonWithToolTip>
