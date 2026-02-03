@@ -110,8 +110,34 @@ export default function Profile() {
       },
     ];
 
+    const exhausted =
+      !isNeo4j &&
+      !isLoadingTokens &&
+      !tokenError &&
+      Boolean(tokenLimits) &&
+      ((Number.isFinite(tokenLimits?.daily_limit) &&
+        Number.isFinite(tokenLimits?.daily_used) &&
+        (tokenLimits!.daily_limit as number) > 0 &&
+        (tokenLimits!.daily_used as number) >= (tokenLimits!.daily_limit as number)) ||
+        (Number.isFinite(tokenLimits?.monthly_limit) &&
+          Number.isFinite(tokenLimits?.monthly_used) &&
+          (tokenLimits!.monthly_limit as number) > 0 &&
+          (tokenLimits!.monthly_used as number) >= (tokenLimits!.monthly_limit as number)));
+
+    const items = [...tokenItems];
+
+    if (exhausted) {
+      items.push({
+        title: 'Request for token limit',
+        onClick: () => {
+          window.open('mailto:llm-graph-builder@neo4j.com', '_blank');
+        },
+        disabled: false,
+      });
+    }
+
     return [
-      ...tokenItems,
+      ...items,
       {
         title: 'Logout',
         onClick: () => {
@@ -128,9 +154,10 @@ export default function Profile() {
           }
           logout({ logoutParams: { returnTo: `${window.location.origin}/readonly` } });
         },
+        disabled: false,
       },
     ];
-  }, [tokenLimits, isLoadingTokens, tokenError, fetchTokenLimits, logout, user?.email]);
+  }, [tokenLimits, isLoadingTokens, tokenError, fetchTokenLimits, logout, user?.email, connectionStatus]);
 
   const handleClick = () => {
     setShowOpen(true);
