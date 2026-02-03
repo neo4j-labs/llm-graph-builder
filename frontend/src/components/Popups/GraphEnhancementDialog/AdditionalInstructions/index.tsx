@@ -62,6 +62,7 @@ export default function AdditionalInstructionsText({
   const [isEmbeddingReadonly, setIsEmbeddingReadonly] = useState(false);
   const [dropdownKey, setDropdownKey] = useState(0);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
   const [originalValues, setOriginalValues] = useState({
     instructions: additionalInstructions,
     chunkSize: selectedTokenChunkSize,
@@ -93,6 +94,27 @@ export default function AdditionalInstructionsText({
       embeddingModel: selectedEmbeddingModel,
     });
   }, []);
+
+  useEffect(() => {
+    const instructionsChanged = additionalInstructions !== originalValues.instructions;
+    const chunkSizeChanged = selectedTokenChunkSize !== originalValues.chunkSize;
+    const chunkOverlapChanged = selectedChunk_overlap !== originalValues.chunkOverlap;
+    const chunksToCombineChanged = selectedChunks_to_combine !== originalValues.chunksToCombine;
+    const embeddingModelChanged =
+      selectedEmbeddingModel.provider !== originalValues.embeddingModel.provider ||
+      selectedEmbeddingModel.model !== originalValues.embeddingModel.model;
+
+    setHasChanges(
+      instructionsChanged || chunkSizeChanged || chunkOverlapChanged || chunksToCombineChanged || embeddingModelChanged
+    );
+  }, [
+    additionalInstructions,
+    selectedTokenChunkSize,
+    selectedChunk_overlap,
+    selectedChunks_to_combine,
+    selectedEmbeddingModel,
+    originalValues,
+  ]);
 
   const onChangeChunk_size = (newValue: OnChangeValue<OptionType, false>) => {
     if (newValue !== null) {
@@ -547,7 +569,7 @@ export default function AdditionalInstructionsText({
             onClick={handleCancel}
             fill='outlined'
             loading={isCancelling}
-            disabled={isCancelling}
+            disabled={!hasChanges || isCancelling}
           >
             Cancel
           </ButtonWithToolTip>
@@ -556,6 +578,7 @@ export default function AdditionalInstructionsText({
             label='Apply button'
             text='Save all configuration changes'
             onClick={handleApply}
+            disabled={!hasChanges}
           >
             Apply
           </ButtonWithToolTip>
