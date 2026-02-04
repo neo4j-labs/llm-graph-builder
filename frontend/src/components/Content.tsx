@@ -962,12 +962,19 @@ const Content: React.FC<ContentProps> = ({
           <div className='enhancement-btn__wrapper'>
             <ButtonWithToolTip
               placement='top'
-              text='Enhance graph quality'
+              text={
+                !isAuthenticated
+                  ? 'Please log in first'
+                  : !connectionStatus
+                    ? 'Please connect to Neo4j'
+                    : 'Enhance graph quality'
+              }
               label='Graph Enhancement Settings'
               className='mr-2!'
               onClick={toggleEnhancementDialog}
               disabled={!connectionStatus || isReadOnlyUser}
               size={isTablet ? 'small' : 'medium'}
+              alwaysShowTooltip={true}
             >
               Graph Settings
             </ButtonWithToolTip>
@@ -1039,13 +1046,14 @@ const Content: React.FC<ContentProps> = ({
           <Flex flexDirection='row' gap='4' className='self-end mb-2.5' flexWrap='wrap'>
             <SpotlightTarget id='generategraphbtn'>
               <ButtonWithToolTip
-                text={tooltips.generateGraph}
+                text={!isAuthenticated ? 'Please log in first' : tooltips.generateGraph}
                 placement='top'
                 label='generate graph'
                 onClick={onClickHandler}
                 disabled={disableCheck || isReadOnlyUser}
                 className='mr-0.5'
                 size={isTablet ? 'small' : 'medium'}
+                alwaysShowTooltip={true}
               >
                 {buttonCaptions.generateGraph}{' '}
                 {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
@@ -1053,7 +1061,11 @@ const Content: React.FC<ContentProps> = ({
             </SpotlightTarget>
             <ButtonWithToolTip
               text={
-                !selectedfileslength ? tooltips.deleteFile : `${selectedfileslength} ${tooltips.deleteSelectedFiles}`
+                !isAuthenticated
+                  ? 'Please log in first'
+                  : !selectedfileslength
+                    ? 'Please select file to delete'
+                    : `${selectedfileslength} ${tooltips.deleteSelectedFiles}`
               }
               placement='top'
               onClick={() => setShowDeletePopUp(true)}
@@ -1061,6 +1073,7 @@ const Content: React.FC<ContentProps> = ({
               className='ml-0.5'
               label='Delete Files'
               size={isTablet ? 'small' : 'medium'}
+              alwaysShowTooltip={true}
             >
               {buttonCaptions.deleteFiles}
               {selectedfileslength != undefined && selectedfileslength > 0 && `(${selectedfileslength})`}
