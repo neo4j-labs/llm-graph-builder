@@ -184,6 +184,7 @@ export const tooltips = {
   showGraph: 'Preview generated graph.',
   bloomGraph: 'Visualize the graph in Bloom',
   deleteSelectedFiles: 'File/Files to be deleted',
+  previewGraphSelectedFiles: 'File/Files to Preview Graph',
   documentation: 'Documentation',
   github: 'GitHub Issues',
   theme: 'Light / Dark mode',
