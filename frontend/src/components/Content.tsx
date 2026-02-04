@@ -1080,9 +1080,18 @@ const Content: React.FC<ContentProps> = ({
             </ButtonWithToolTip>
             <SpotlightTarget id='visualizegraphbtn'>
               <Flex flexDirection='row' gap='0'>
-                <Button
+                <ButtonWithToolTip
+                  text={
+                    !selectedfileslength || selectedfileslength === 0
+                      ? 'Please select file to Preview Graph'
+                      : completedfileNo === 0
+                        ? 'Please select completed file(s) to Preview Graph'
+                        : `${selectedfileslength} selected, ${completedfileNo} file(s) ready to preview`
+                  }
+                  label='Preview Graph'
                   onClick={handleGraphView}
-                  isDisabled={showGraphCheck}
+                  alwaysShowTooltip={true}
+                  disabled={showGraphCheck}
                   className='px-0! flex! items-center justify-between gap-4 graphbtn'
                   size={isTablet ? 'small' : 'medium'}
                 >
@@ -1090,7 +1099,7 @@ const Content: React.FC<ContentProps> = ({
                     {buttonCaptions.showPreviewGraph}{' '}
                     {selectedfileslength && completedfileNo ? `(${completedfileNo})` : ''}
                   </span>
-                </Button>
+                </ButtonWithToolTip>
                 <div
                   className={`ndl-icon-btn ndl-clean dropdownbtn ${colorMode === 'dark' ? 'darktheme' : ''} ${
                     isTablet ? 'small' : 'medium'
