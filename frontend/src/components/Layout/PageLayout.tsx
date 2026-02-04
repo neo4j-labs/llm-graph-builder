@@ -22,7 +22,7 @@ import LoadDBSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtracti
 import PredefinedSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/PredefinedSchemaDialog';
 import { SKIP_AUTH } from '../../utils/Constants';
 import { useNavigate } from 'react-router';
-import { deduplicateByFullPattern, deduplicateNodeByValue } from '../../utils/Utils';
+import { deduplicateByFullPattern, deduplicateNodeByValue, fetchAndStoreEmbeddingSettings } from '../../utils/Utils';
 import DataImporterSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/DataImporter';
 const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
 const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
@@ -276,9 +276,22 @@ const PageLayout: React.FC = () => {
         const backendApiResponse = await envConnectionAPI();
         const connectionData = backendApiResponse.data;
         if (connectionData.data && connectionData.status === 'Success') {
+          localStorage.setItem(
+            'embedding.dimensions',
+            JSON.stringify({
+              db_vector_dimension: connectionData.data.db_vector_dimension,
+              application_dimension: connectionData.data.application_dimension,
+              userDbVectorIndex: connectionData.data.db_vector_dimension,
+            })
+          );
+
+          // Only set readonly mode if SKIP_AUTH is true AND we're in PROD environment
+          const isProdEnv = import.meta.env.VITE_ENV === 'PROD';
+          const shouldBeReadonly = isProdEnv && SKIP_AUTH ? !connectionData.data.write_access : false;
+
           const credentials = {
             uri: connectionData.data.uri,
-            isReadonlyUser: !connectionData.data.write_access,
+            isReadonlyUser: shouldBeReadonly,
             isgdsActive: connectionData.data.gds_status,
             isGCSActive: connectionData.data.gcs_file_cache === 'True',
             chunksTobeProcess: Number(connectionData.data.chunk_to_be_created),
@@ -290,8 +303,9 @@ const PageLayout: React.FC = () => {
           createDefaultFormData({ uri: credentials.uri, email: credentials.email ?? '' });
           setGdsActive(credentials.isgdsActive);
           setConnectionStatus(Boolean(connectionData.data.graph_connection));
-          setIsReadOnlyUser(connectionData.data.isReadonlyUser);
+          setIsReadOnlyUser(shouldBeReadonly);
           handleDisconnectButtonState(false);
+          await fetchAndStoreEmbeddingSettings(credentials.uri, credentials.email ?? '');
         } else if (!connectionData.data && connectionData.status === 'Success') {
           const storedCredentials = localStorage.getItem('neo4j.connection');
           if (storedCredentials) {
@@ -315,6 +329,7 @@ const PageLayout: React.FC = () => {
               setIsReadOnlyUser(credentials.isReadonlyUser);
             }
             handleDisconnectButtonState(true);
+            await fetchAndStoreEmbeddingSettings(credentials.uri, credentials.email ?? '');
           } else {
             handleDisconnectButtonState(true);
           }

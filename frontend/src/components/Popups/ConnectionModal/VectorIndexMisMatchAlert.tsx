@@ -9,11 +9,13 @@ export default function VectorIndexMisMatchAlert({
   isVectorIndexAlreadyExists,
   userVectorIndexDimension,
   chunksExists,
+  applicationDimension,
 }: {
   recreateVectorIndex: () => Promise<void>;
   isVectorIndexAlreadyExists: boolean;
   userVectorIndexDimension?: number;
   chunksExists: boolean;
+  applicationDimension?: number;
 }) {
   const { userCredentials } = useCredentials();
   const [vectorIndexLoading, setVectorIndexLoading] = useState<boolean>(false);
@@ -25,7 +27,7 @@ export default function VectorIndexMisMatchAlert({
           <Markdown>
             {isVectorIndexAlreadyExists
               ? `**Vector Index Incompatibility** 
-The existing Neo4j vector index dimension (${userVectorIndexDimension}) is incompatible with the supported dimension (384) for this application. 
+The existing Neo4j vector index dimension (${userVectorIndexDimension}) is incompatible with the supported dimension (${applicationDimension}) for this application. 
 To proceed, please choose one of the following options: 
 1.**Recreate Vector Index:** Click "Re-Create Vector Index" to generate a compatible vector index. 
 2.**Use a Different Instance:** Connect to a Neo4j instance with a compatible vector index configuration  `

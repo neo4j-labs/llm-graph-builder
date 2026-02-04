@@ -20,6 +20,7 @@ import {
 } from '../utils/Constants';
 import { useCredentials } from './UserCredentials';
 import Queue from '../utils/Queue';
+import { getChunkConfig } from '../utils/EmbeddingConfigUtils';
 
 const FileContext = createContext<FileContextType | undefined>(undefined);
 
@@ -27,12 +28,9 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const isProdEnv = import.meta.env.VITE_ENV === 'PROD';
   const selectedNodeLabelstr = localStorage.getItem('selectedNodeLabels');
   const selectedNodeRelsstr = localStorage.getItem('selectedRelationshipLabels');
-  const selectedTokenChunkSizeStr = localStorage.getItem('selectedTokenChunkSize');
-  const selectedChunk_overlapStr = localStorage.getItem('selectedChunk_overlap');
-  const selectedChunks_to_combineStr = localStorage.getItem('selectedChunks_to_combine');
+  const chunkConfig = getChunkConfig();
   const persistedQueue = localStorage.getItem('waitingQueue');
   const selectedModel = localStorage.getItem('selectedModel');
-  const selectedInstructstr = localStorage.getItem('instructions');
   const isProdDefaultModel = isProdEnv && selectedModel && PRODMODELS.includes(selectedModel);
   const { userCredentials } = useCredentials();
   const [files, setFiles] = useState<(File | null)[] | []>([]);
@@ -44,9 +42,13 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [graphType, setGraphType] = useState<string>('Knowledge Graph Entities');
   const [selectedNodes, setSelectedNodes] = useState<readonly OptionType[]>([]);
   const [selectedRels, setSelectedRels] = useState<readonly OptionType[]>([]);
-  const [selectedTokenChunkSize, setSelectedTokenChunkSize] = useState<number>(tokenchunkSize);
-  const [selectedChunk_overlap, setSelectedChunk_overlap] = useState<number>(chunkOverlap);
-  const [selectedChunks_to_combine, setSelectedChunks_to_combine] = useState<number>(chunksToCombine);
+  const [selectedTokenChunkSize, setSelectedTokenChunkSize] = useState<number>(
+    chunkConfig?.chunkSize || tokenchunkSize
+  );
+  const [selectedChunk_overlap, setSelectedChunk_overlap] = useState<number>(chunkConfig?.chunkOverlap || chunkOverlap);
+  const [selectedChunks_to_combine, setSelectedChunks_to_combine] = useState<number>(
+    chunkConfig?.chunksToCombine || chunksToCombine
+  );
   const [selectedSchemas, setSelectedSchemas] = useState<readonly OptionType[]>(getStoredSchema);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
@@ -79,7 +81,7 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   ]);
   const [processedCount, setProcessedCount] = useState<number>(0);
   const [postProcessingVal, setPostProcessingVal] = useState<boolean>(false);
-  const [additionalInstructions, setAdditionalInstructions] = useState<string>('');
+  const [additionalInstructions, setAdditionalInstructions] = useState<string>(chunkConfig?.instructions || '');
   const [schemaTextPattern, setSchemaTextPattern] = useState<string[]>([]);
   const [allPatterns, setAllPatterns] = useState<string[]>([]);
   const [userDefinedPattern, setUserDefinedPattern] = useState<string[]>([]);
@@ -127,22 +129,6 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
         });
         setAllPatterns(generatedPatterns);
       }
-    }
-    if (selectedTokenChunkSizeStr != null) {
-      const parsedSelectedChunk_size = JSON.parse(selectedTokenChunkSizeStr);
-      setSelectedTokenChunkSize(parsedSelectedChunk_size.selectedOption);
-    }
-    if (selectedChunk_overlapStr != null) {
-      const parsedSelectedChunk_overlap = JSON.parse(selectedChunk_overlapStr);
-      setSelectedChunk_overlap(parsedSelectedChunk_overlap.selectedOption);
-    }
-    if (selectedChunks_to_combineStr != null) {
-      const parsedSelectedChunks_to_combine = JSON.parse(selectedChunks_to_combineStr);
-      setSelectedChunks_to_combine(parsedSelectedChunks_to_combine.selectedOption);
-    }
-    if (selectedInstructstr != null) {
-      const selectedInstructions = selectedInstructstr;
-      setAdditionalInstructions(selectedInstructions);
     }
   }, [userCredentials]);
 

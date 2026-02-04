@@ -29,6 +29,7 @@ import {
   tokenchunkSize,
   chunkOverlap,
   chunksToCombine,
+  SKIP_AUTH,
 } from '../utils/Constants';
 import ButtonWithToolTip from './UI/ButtonWithToolTip';
 import DropdownComponent from './Dropdown';
@@ -54,6 +55,7 @@ import { ChevronUpIconOutline, ChevronDownIconOutline } from '@neo4j-ndl/react/i
 import { ThemeWrapperContext } from '../context/ThemeWrapper';
 import { useAuth0 } from '@auth0/auth0-react';
 import React from 'react';
+import { clearEmbeddingConfig, clearChunkConfig } from '../utils/EmbeddingConfigUtils';
 
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
 
@@ -133,6 +135,7 @@ const Content: React.FC<ContentProps> = ({
   const [deleteLoading, setIsDeleteLoading] = useState<boolean>(false);
 
   const hasSelections = useHasSelections(selectedNodes, selectedRels);
+  const connectDisabled = !isAuthenticated && !SKIP_AUTH;
 
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
@@ -215,12 +218,22 @@ const Content: React.FC<ContentProps> = ({
               }
               showSuccessToast('All Q&A functionality is available now.');
             } else {
-              throw new Error(response.data.error);
+              throw new Error(JSON.stringify(response.data));
             }
           }
         } catch (error) {
           if (error instanceof Error) {
-            showSuccessToast(error.message);
+            try {
+              const errorData = JSON.parse(error.message);
+              if (errorData.error && errorData.message) {
+                console.error('Error:', errorData.error);
+                showErrorToast(errorData.message);
+              } else {
+                showErrorToast(error.message);
+              }
+            } catch {
+              showErrorToast(error.message);
+            }
           }
         }
       })();
@@ -250,7 +263,7 @@ const Content: React.FC<ContentProps> = ({
         return {
           ...curfile,
           model:
-            curfile.status === 'New' || curfile.status === 'Ready to Reprocess'
+            curfile.status === 'New' || curfile.status === 'Ready to Reprocess' || curfile.status === 'Failed'
               ? (selectedOption?.value ?? '')
               : curfile.model,
         };
@@ -320,7 +333,7 @@ const Content: React.FC<ContentProps> = ({
       }
 
       const apiResponse = await extractAPI(
-        fileItem.model,
+        model,
         fileItem.fileSource,
         fileItem.retryOption ?? '',
         fileItem.sourceUrl,
@@ -619,14 +632,14 @@ const Content: React.FC<ContentProps> = ({
     setAllPatterns([]);
     localStorage.removeItem('selectedTokenChunkSize');
     setSelectedTokenChunkSize(tokenchunkSize);
-    localStorage.removeItem('selectedChunk_overlap');
+    clearChunkConfig();
     setSelectedChunk_overlap(chunkOverlap);
-    localStorage.removeItem('selectedChunks_to_combine');
     setSelectedChunks_to_combine(chunksToCombine);
-    localStorage.removeItem('instructions');
     localStorage.removeItem('selectedNodeLabels');
     localStorage.removeItem('selectedRelationshipLabels');
     localStorage.removeItem('selectedPattern');
+    clearEmbeddingConfig();
+    localStorage.removeItem('allowEmbeddingChange');
     setAdditionalInstructions('');
     setMessages([
       {
@@ -959,19 +972,18 @@ const Content: React.FC<ContentProps> = ({
               Graph Settings
             </ButtonWithToolTip>
             {!connectionStatus ? (
-              <SpotlightTarget
-                id='connectbutton'
-                hasPulse={true}
-                indicatorVariant='border'
-                className='n-bg-palette-primary-bg-strong hover:n-bg-palette-primary-hover-strong'
-              >
-                <Button
+              <SpotlightTarget id='connectbutton' hasPulse={!connectDisabled} indicatorVariant='border'>
+                <ButtonWithToolTip
+                  text={connectDisabled ? 'Please login first to connect' : buttonCaptions.connectToNeo4j}
+                  label={buttonCaptions.connectToNeo4j}
+                  disabled={connectDisabled}
                   size={isTablet ? 'small' : 'medium'}
                   className='mr-2!'
                   onClick={() => setOpenConnection((prev) => ({ ...prev, openPopUp: true }))}
+                  alwaysShowTooltip={true}
                 >
                   {buttonCaptions.connectToNeo4j}
-                </Button>
+                </ButtonWithToolTip>
               </SpotlightTarget>
             ) : (
               showDisconnectButton && (

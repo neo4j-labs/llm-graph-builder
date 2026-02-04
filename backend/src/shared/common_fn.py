@@ -25,39 +25,74 @@ import boto3
 from langchain_community.embeddings import BedrockEmbeddings
 from langchain_core.callbacks import BaseCallbackHandler
 
-MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
-MODEL_PATH = "./local_model"
-_lock = Lock()
-_embedding_instance = None
 
-def ensure_sentence_transformer_model_downloaded():
-   if os.path.isdir(MODEL_PATH):
-       logging.info(f"Model already downloaded at: {MODEL_PATH}")
-       return
-   else:
-       logging.info(f"Downloading model to: {MODEL_PATH}")
-       tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-       model = AutoModel.from_pretrained(MODEL_NAME)
-       tokenizer.save_pretrained(MODEL_PATH)
-       model.save_pretrained(MODEL_PATH)
-   logging.info("Model downloaded and saved.")
+# --- Embedding Model Helpers ---
+_embedding_instances = {}
+_embedding_locks = {}
 
-def get_local_sentence_transformer_embedding():
-   """
-   Lazy, threadsafe singleton. Caller does not need to worry about
-   import-time initialization or download race.
-   """
-   global _embedding_instance
-   if _embedding_instance is not None:
-       return _embedding_instance
-   with _lock:
-       if _embedding_instance is not None:
-           return _embedding_instance
-       # Ensure model is present before instantiating
-       ensure_sentence_transformer_model_downloaded()
-       _embedding_instance = HuggingFaceEmbeddings(model_name=MODEL_PATH)
-       logging.info("Embedding model initialized.")
-       return _embedding_instance
+def _ensure_sentence_transformer_model_downloaded(model_name: str, model_path: str):
+    """
+    Download and cache the sentence-transformer model if not already present.
+    """
+    if os.path.isdir(model_path):
+        logging.info(f"Model already downloaded at: {model_path}")
+        return
+    logging.info(f"Downloading model {model_name} to: {model_path}")
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModel.from_pretrained(model_name)
+    tokenizer.save_pretrained(model_path)
+    model.save_pretrained(model_path)
+    logging.info("Model downloaded and saved.")
+
+def _get_sentence_transformer_embedding(model_name: str, model_path: str = "./local_model"):
+    """
+    Threadsafe singleton for HuggingFaceEmbeddings for any sentence-transformer model.
+    """
+    if model_name not in _embedding_locks:
+        _embedding_locks[model_name] = Lock()
+    if model_name in _embedding_instances:
+        return _embedding_instances[model_name]
+    with _embedding_locks[model_name]:
+        if model_name in _embedding_instances:
+            return _embedding_instances[model_name]
+        _ensure_sentence_transformer_model_downloaded(model_name, model_path)
+        _embedding_instances[model_name] = HuggingFaceEmbeddings(model_name=model_path)
+        logging.info(f"Embedding model {model_name} initialized.")
+        return _embedding_instances[model_name]
+
+def _get_bedrock_embeddings(model_name: str):
+    """
+    Creates and returns a BedrockEmbeddings object using the specified model name.
+    Args:
+        model_name (str): The name of the model to use for embeddings.
+    Returns:
+        BedrockEmbeddings: An instance of the BedrockEmbeddings class.
+    """
+    try:
+        env_value = get_value_from_env("BEDROCK_EMBEDDING_MODEL_KEY")
+        if not env_value:
+            raise ValueError("Environment variable 'BEDROCK_EMBEDDING_MODEL' is not set.")
+        try:
+            aws_access_key, aws_secret_key, region_name = env_value.split(",")
+        except ValueError:
+            raise ValueError(
+                "Environment variable 'BEDROCK_EMBEDDING_MODEL_KEY' is improperly formatted. "
+                "Expected format: 'aws_access_key,aws_secret_key,region_name'."
+            )
+        bedrock_client = boto3.client(
+                service_name="bedrock-runtime",
+                region_name=region_name.strip(),
+                aws_access_key_id=aws_access_key.strip(),
+                aws_secret_access_key=aws_secret_key.strip(),
+            )
+        bedrock_embeddings = BedrockEmbeddings(
+            model_id=model_name.strip(),
+            client=bedrock_client
+        )
+        return bedrock_embeddings
+    except Exception as e:
+        logging.error(f"An unexpected error occurred: {e}")
+        raise
    
 def create_youtube_url(url):
     you_tu_url = "https://www.youtube.com/watch?v="
@@ -75,7 +110,7 @@ def check_url_source(source_type, yt_url:str=None, wiki_query:str=None):
     try:
       logging.info(f"incoming URL: {yt_url}")
       if source_type == 'youtube':
-        if re.match('(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/)([\w\-_]+)\&?',yt_url.strip()):
+        if re.match(r'(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/)([\w\-_]+)\&?',yt_url.strip()):
           youtube_url = create_youtube_url(yt_url.strip())
           logging.info(youtube_url)
           return youtube_url,language
@@ -119,26 +154,62 @@ def create_graph_database_connection(credentials):
   return graph
 
 
-def load_embedding_model(embedding_model_name: str):
-    if embedding_model_name == "openai":
-        embeddings = OpenAIEmbeddings()
-        dimension = 1536
-        logging.info(f"Embedding: Using OpenAI Embeddings , Dimension:{dimension}")
-    elif embedding_model_name == "vertexai":        
-        embeddings = VertexAIEmbeddings(
-            model="gemini-embedding-001"
-        )
-        dimension = 3072
-        logging.info(f"Embedding: Using Vertex AI Embeddings , Dimension:{dimension}")
-    elif embedding_model_name == "titan":
-        embeddings = get_bedrock_embeddings()
-        dimension = 1024
-        logging.info(f"Embedding: Using bedrock titan Embeddings , Dimension:{dimension}")
+
+def load_embedding_model(embedding_provider: str, embedding_model_name: str):
+    """
+    Load the appropriate embedding model and return its instance and dimension.
+
+    Args:
+        embedding_provider (str): The provider name (e.g., "openai", "gemini", "titan", "sentence-transformer").
+        embedding_model_name (str): The specific model name.
+
+    Returns:
+        tuple: (embedding_instance, dimension)
+
+    Raises:
+        ValueError: If provider or model is not supported.
+    """
+    # Mapping of model dimensions for each provider
+    model_dimensions = {
+        "openai": {
+            "text-embedding-3-large": 3072,
+            "text-embedding-3-small": 1536,
+            "text-embedding-ada-002": 1536,
+        },
+        "gemini": {
+            "gemini-embedding-001": 3072,
+            "text-embedding-005": 768,
+        },
+        "titan": {
+            "amazon.titan-embed-text-v2:0": 1024,
+            "amazon.titan-embed-text-v1": 1536,
+        },
+        "sentence-transformer": {
+            "all-MiniLM-L6-v2": 384,
+        },
+    }
+
+    provider = embedding_provider.lower()
+    model = embedding_model_name
+
+    if provider not in model_dimensions or model not in model_dimensions[provider]:
+        raise ValueError(f"Unsupported provider/model: {provider}/{model}")
+
+    dimension = model_dimensions[provider][model]
+
+    if provider == "openai":
+        embeddings = OpenAIEmbeddings(model=model)
+    elif provider == "gemini":
+        embeddings = VertexAIEmbeddings(model=model)
+    elif provider == "titan":
+        embeddings = _get_bedrock_embeddings(model)
+    elif provider == "sentence-transformer":
+        model_path = "./local_model" 
+        embeddings = _get_sentence_transformer_embedding(model, model_path)
     else:
-        # embeddings = HuggingFaceEmbeddings(model_name="./local_model")
-        embeddings = get_local_sentence_transformer_embedding()
-        dimension = 384
-        logging.info(f"Embedding: Using Langchain HuggingFaceEmbeddings , Dimension:{dimension}")
+        raise ValueError(f"Unknown embedding provider: {provider}")
+
+    logging.info(f"Embedding: Using {provider} - {model}, Dimension: {dimension}")
     return embeddings, dimension
 
 def save_graphDocuments_in_neo4j(graph: Neo4jGraph, graph_document_list: List[GraphDocument], max_retries=3, delay=1):
@@ -234,39 +305,7 @@ def last_url_segment(url):
   last_url_segment = path.split("/")[-1] if path else parsed_url.netloc.split(".")[0]
   return last_url_segment
 
-def get_bedrock_embeddings():
-   """
-   Creates and returns a BedrockEmbeddings object using the specified model name.
-   Args:
-       model (str): The name of the model to use for embeddings.
-   Returns:
-       BedrockEmbeddings: An instance of the BedrockEmbeddings class.
-   """
-   try:
-       env_value = get_value_from_env("BEDROCK_EMBEDDING_MODEL")
-       if not env_value:
-           raise ValueError("Environment variable 'BEDROCK_EMBEDDING_MODEL' is not set.")
-       try:
-           model_name, aws_access_key, aws_secret_key, region_name = env_value.split(",")
-       except ValueError:
-           raise ValueError(
-               "Environment variable 'BEDROCK_EMBEDDING_MODEL' is improperly formatted. "
-               "Expected format: 'model_name,aws_access_key,aws_secret_key,region_name'."
-           )
-       bedrock_client = boto3.client(
-               service_name="bedrock-runtime",
-               region_name=region_name.strip(),
-               aws_access_key_id=aws_access_key.strip(),
-               aws_secret_access_key=aws_secret_key.strip(),
-           )
-       bedrock_embeddings = BedrockEmbeddings(
-           model_id=model_name.strip(),
-           client=bedrock_client
-       )
-       return bedrock_embeddings
-   except Exception as e:
-       logging.error(f"An unexpected error occurred: {e}")
-       raise
+
    
 def get_value_from_env(key_name: str, default_value: Any = None, data_type: type = str):
   
@@ -482,10 +521,11 @@ def track_token_usage(
             logging.info("Token usage for user before limit check: daily_used=%s monthly_used=%s", daily_tokens_used, monthly_tokens_used)
             logging.info("Token limits for user: daily_limit=%s monthly_limit=%s", daily_tokens_limit, monthly_tokens_limit)
             logging.info("Is Neo4j user: %s", is_neo4j_user)
-            if ((daily_tokens_used > daily_tokens_limit) or (monthly_tokens_used > monthly_tokens_limit)) and not is_neo4j_user:
-                raise LLMGraphBuilderException(
-                    "Token usage limit exceeded. Please contact the team to increase your limit."
-                )
+            if get_value_from_env("LIMIT_TOKEN_USAGE_PER_USER", "False", "bool"): 
+                if ((daily_tokens_used > daily_tokens_limit) or (monthly_tokens_used > monthly_tokens_limit)) and not is_neo4j_user:
+                    raise LLMGraphBuilderException(
+                        "Token usage limit exceeded. Please contact the team to increase your limit."
+                    )
             logging.info(
                 "Updated token usage for user: "
                 "latest=%s last_op=%s daily_used=%s monthly_used=%s",
@@ -574,3 +614,141 @@ def get_remaining_token_limits(email: str, uri: str) -> dict:
             exc_info=True,
         )
         raise
+
+def get_user_embedding_model(email: str, uri: str) -> dict:
+    """
+    Retrieve the embedding provider and model for a user from the User node.
+    If not found, return default sentence-transformer values.
+    """
+    try:
+        allow_embedding_change = False
+        track_user_usage = get_value_from_env("TRACK_USER_USAGE", "false", bool)
+        if not track_user_usage:
+            embedding_provider = get_value_from_env("EMBEDDING_PROVIDER","sentence-transformer")
+            embedding_model = get_value_from_env("EMBEDDING_MODEL","all-MiniLM-L6-v2")
+            if not embedding_provider or not embedding_model:
+                raise EnvironmentError("EMBEDDING_PROVIDER and EMBEDDING_MODEL environment variables must be set")
+            _, embedding_dimension = load_embedding_model(embedding_provider, embedding_model)
+            return embedding_provider, embedding_model, embedding_dimension, allow_embedding_change
+        else:
+            token_uri = get_value_from_env("TOKEN_TRACKER_DB_URI")
+            token_user = get_value_from_env("TOKEN_TRACKER_DB_USERNAME")
+            token_password = get_value_from_env("TOKEN_TRACKER_DB_PASSWORD")
+            token_database = get_value_from_env("TOKEN_TRACKER_DB_DATABASE", "neo4j")
+            if not all([token_uri, token_user, token_password]):
+                allow_embedding_change = False        
+                raise EnvironmentError("Neo4j credentials are not set properly.")
+            
+        allow_embedding_change = True
+        normalized_email = (email or "").strip().lower() or None
+        normalized_db_url = (uri or "").strip() or None
+        if not normalized_email and not normalized_db_url:
+            raise ValueError("Either email or db_url must be provided for fetching embedding model.")
+
+        credentials = Neo4jCredentials(uri=token_uri, userName=token_user, password=token_password, database=token_database)
+        graph = create_graph_database_connection(credentials)
+
+        auth_required = get_value_from_env("AUTHENTICATION_REQUIRED", False, bool)
+        user_node = None
+        if auth_required:
+            result = graph.query(
+                "MATCH (u:User {email: $email}) RETURN u", {"email": normalized_email}
+            )
+            if result and result[0].get("u"):
+                user_node = result[0]["u"]
+        else:
+            result = graph.query(
+                "MATCH (u:User {db_url: $db_url}) RETURN u", {"db_url": normalized_db_url}
+            )
+            if result and result[0].get("u"):
+                user_node = result[0]["u"]
+
+        if user_node:
+            embedding_provider = user_node.get("embedding_provider")
+            embedding_model = user_node.get("embedding_model")
+            embedding_dimension = user_node.get("embedding_dimension")
+            if embedding_provider and embedding_model and embedding_dimension is not None:
+                return embedding_provider, embedding_model, embedding_dimension, allow_embedding_change
+
+        return "sentence-transformer", "all-MiniLM-L6-v2", 384, allow_embedding_change
+    except Exception as e:
+        logging.error(f"Error in get_user_embedding_model for email {email}: {e}")
+        return "sentence-transformer", "all-MiniLM-L6-v2", 384, allow_embedding_change
+
+def change_user_embedding_model(email:str, uri:str, new_embedding_provider: str, new_embedding_model: str) -> dict:
+    """
+    Update the User node's embedding_provider and embedding_model properties.
+    If the embedding dimension changes, drop the vector index in the connected DB.
+    Args:
+        email (str): User's email
+        uri (str): URI of the connected DB (not the token tracker DB)
+        new_embedding_provider (str): New embedding provider
+        new_embedding_model (str): New embedding model
+    Returns:
+        dict: with status, message and other details.
+    """
+    try:
+        normalized_email = (email or "").strip().lower() or None
+        normalized_db_url = (uri or "").strip() or None
+        if not normalized_email and not normalized_db_url:
+            raise ValueError("Either email or db_url must be provided for changing embedding model.")
+
+        token_uri = get_value_from_env("TOKEN_TRACKER_DB_URI")
+        token_user = get_value_from_env("TOKEN_TRACKER_DB_USERNAME")
+        token_password = get_value_from_env("TOKEN_TRACKER_DB_PASSWORD")
+        token_database = get_value_from_env("TOKEN_TRACKER_DB_DATABASE", "neo4j")
+        if not all([token_uri, token_user, token_password]):
+            return {"status": "Failed", "message": "Token tracker DB credentials are not set properly."}
+
+        tracker_credentials = Neo4jCredentials(uri=token_uri, userName=token_user, password=token_password, database=token_database)
+        tracker_graph = create_graph_database_connection(tracker_credentials)
+
+        auth_required = get_value_from_env("AUTHENTICATION_REQUIRED", False, bool)
+        user_node = None
+        result = None
+        if auth_required:
+            if not normalized_email:
+                return {"status": "Failed", "message": "Email is required to update embedding model when authentication is required."}
+            result = tracker_graph.query(
+                "MATCH (u:User {email: $email}) RETURN u", {"email": normalized_email}
+            )
+        else:
+            if not normalized_db_url:
+                return {"status": "Failed", "message": "db_url is required to update embedding model when authentication is not required."}
+            result = tracker_graph.query(
+                "MATCH (u:User {db_url: $db_url}) RETURN u", {"db_url": normalized_db_url}
+            )
+        if result and result[0].get("u"):
+            user_node = result[0]["u"]
+            
+        old_dimension = user_node.get("embedding_dimension") if user_node else 384
+        _, new_dimension = load_embedding_model(new_embedding_provider, new_embedding_model)
+        if auth_required:
+            update_query = """
+            MATCH (u:User {email: $email})
+            SET u.embedding_provider = $embedding_provider, u.embedding_model = $embedding_model, u.embedding_dimension = $embedding_dimension, u.updatedAt = datetime()
+            RETURN u
+            """
+            tracker_graph.query(update_query, {"email": normalized_email, "embedding_provider": new_embedding_provider, "embedding_model": new_embedding_model, "embedding_dimension": new_dimension})
+        else:
+            update_query = """
+            MATCH (u:User {db_url: $db_url})
+            SET u.embedding_provider = $embedding_provider, u.embedding_model = $embedding_model, u.embedding_dimension = $embedding_dimension, u.updatedAt = datetime()
+            RETURN u
+            """
+            tracker_graph.query(update_query, {"db_url": normalized_db_url, "embedding_provider": new_embedding_provider, "embedding_model": new_embedding_model, "embedding_dimension": new_dimension})
+        
+        change_index = False
+        if old_dimension != new_dimension:
+            change_index = True
+        return {
+            "status": "Success",
+            "change_index": change_index, 
+            "new_embedding_provider": new_embedding_provider, 
+            "new_embedding_model": new_embedding_model, 
+            "new_dimension": new_dimension
+        }
+    except Exception as e:
+        logging.error(f"Error in change_user_embedding_model for email {email}: {e}")
+        return {"status": "Failed", "message": str(e)}
+    

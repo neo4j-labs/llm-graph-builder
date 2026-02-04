@@ -1,4 +1,5 @@
 import api from '../API/Index';
+import { getEmbeddingProvider, getEmbeddingModel } from '../utils/EmbeddingConfigUtils';
 
 export const chatBotAPI = async (
   question: string,
@@ -14,6 +15,10 @@ export const chatBotAPI = async (
     formData.append('model', model);
     formData.append('mode', mode);
     formData.append('document_names', JSON.stringify(document_names));
+    const embeddingProvider = getEmbeddingProvider();
+    const embeddingModel = getEmbeddingModel();
+    formData.append('embedding_provider', embeddingProvider);
+    formData.append('embedding_model', embeddingModel);
     const startTime = Date.now();
     const response = await api.post(`/chat_bot`, formData, {
       headers: {

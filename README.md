@@ -68,9 +68,28 @@ This application allows you to upload files from various sources (local machine,
 
 ### **Token Usage Tracking**
 - Easily monitor and track your LLM token usage for each user and database connection.
-- Enable this feature by setting the `TRACK_TOKEN_USAGE` environment variable to `true` in your backend configuration.
+- Enable this feature by setting the `TRACK_USER_USAGE` environment variable to `true` in your backend configuration.
 - View your daily and monthly token consumption and limits, helping you manage usage and avoid overages.
 - You can check your remaining token limits at any time using the provided API endpoint.
+
+### **Embedding Model Selection**
+- Choose from a variety of embedding models to generate vector embeddings for your data. This can be configured from the frontend in **Graph Settings > Processing Configuration > Select Embedding Model**.
+- Supported model providers include OpenAI, Gemini, Amazon Titan, and Sentence Transformers.
+- Your selected embedding model is saved to your user profile when `TRACK_USER_USAGE` is enabled.
+
+#### **Local Configuration**
+You have two ways to configure the embedding model locally:
+
+1.  **With User Tracking (`TRACK_USER_USAGE=true`):**
+    - Set `TRACK_USER_USAGE` to `true` in your backend `.env` file.
+    - Provide your token tracking database credentials (`TOKEN_TRACKER_DB_URI`, `TOKEN_TRACKER_DB_USERNAME`, etc.).
+    - Select your desired embedding model from the frontend. Your selection will be saved and automatically used in subsequent sessions.
+
+2.  **Without User Tracking (`TRACK_USER_USAGE=false`):**
+    - Set `TRACK_USER_USAGE` to `false`.
+    - Specify the embedding model and provider directly in your backend `.env` file using `EMBEDDING_MODEL` and `EMBEDDING_PROVIDER`.
+    - If these variables are not set, the application defaults to a Sentence Transformer model.
+    - In this mode, the embedding model cannot be changed from the frontend.
 
 
 ---
@@ -220,57 +239,48 @@ gcloud run deploy dev-backend \
 
 ## [ENV][env-sheet]
 | Env Variable Name       | Mandatory/Optional | Default Value | Description                                                                                      |
-|-------------------------|--------------------|---------------|--------------------------------------------------------------------------------------------------|
-|                         |                    |               |                                                                                                  |
-| **BACKEND ENV**         |                    |               |                                                                                                  |
-| OPENAI_API_KEY          | Mandatory          |               | An OpenAI Key is required to use OpenAI LLM model to authenticate and track requests            |
-| DIFFBOT_API_KEY         | Mandatory          |               | API key is required to use Diffbot's NLP service to extract entities and relationships from unstructured data |
-| BUCKET                  | Mandatory          |               | Bucket name to store uploaded files on GCS                                                     |
-| NEO4J_USER_AGENT        | Optional           | llm-graph-builder | Name of the user agent to track Neo4j database activity                                       |
-| ENABLE_USER_AGENT       | Optional           | true           | Boolean value to enable/disable Neo4j user agent                                              |
-| DUPLICATE_TEXT_DISTANCE | Mandatory          | 5              | This value is used to find distance for all node pairs in the graph and is calculated based on node properties |
-| DUPLICATE_SCORE_VALUE   | Mandatory          | 0.97           | Node score value to match duplicate nodes                                                     |
-| EFFECTIVE_SEARCH_RATIO  | Mandatory          | 1              | Ratio used for effective search calculations                                                  |
-| GRAPH_CLEANUP_MODEL     | Optional           | openai_gpt_4o_mini | Model name to clean up graph in post processing                                             |
-| MAX_TOKEN_CHUNK_SIZE    | Optional           | 10000          | Maximum token size to process file content                                                   |
-| YOUTUBE_TRANSCRIPT_PROXY | Optional          |                | Proxy key to process YouTube videos for getting transcripts                                  |
-| EMBEDDING_MODEL         | Optional           |                | Model for generating text embeddings (default: all-MiniLM-L6-v2, openai, vertexai, titan)   |
-| IS_EMBEDDING            | Optional           | true           | Flag to enable text embedding                                                                |
-| KNN_MIN_SCORE           | Optional           | 0.94           | Minimum score for KNN algorithm                                                              |
-| GEMINI_ENABLED          | Optional           | False          | Flag to enable Gemini                                                                        |
-| GCP_LOG_METRICS_ENABLED | Optional           | False          | Flag to enable Google Cloud logs                                                             |
-| NUMBER_OF_CHUNKS_TO_COMBINE | Optional        | 5              | Number of chunks to combine when processing embeddings                                       |
-| UPDATE_GRAPH_CHUNKS_PROCESSED | Optional      | 20             | Number of chunks processed before updating progress                                         |
-| NEO4J_URI               | Optional           | neo4j://database:7687 | URI for Neo4j database                                                                 |
-| NEO4J_USERNAME          | Optional           | neo4j          | Username for Neo4j database                                                                 |
-| NEO4J_PASSWORD          | Optional           | password       | Password for Neo4j database                                                                 |
-| LANGCHAIN_API_KEY       | Optional           |                | API key for Langchain                                                                       |
-| LANGCHAIN_PROJECT       | Optional           |                | Project for Langchain                                                                       |
-| LANGCHAIN_TRACING_V2    | Optional           | true           | Flag to enable Langchain tracing                                                            |
-| GCS_FILE_CACHE          | Optional           | False          | If set to True, will save files to process into GCS. If False, will save files locally      |
-| LANGCHAIN_ENDPOINT      | Optional           | [Langchain Endpoint][langchain-endpoint] | Endpoint for Langchain API                                                  |
-| ENTITY_EMBEDDING        | Optional           | False          | If set to True, it will add embeddings for each entity in the database                     |
-| LLM_MODEL_CONFIG_ollama_<model_name> | Optional |              | Set ollama config as model_name,model_local_url for local deployments                    |
-| RAGAS_EMBEDDING_MODEL   | Optional           |                | Embedding model used by RAGAS evaluation framework                                         |
-|                         |                    |               |                                                                                                  |
-| **FRONTEND ENV**        |                    |               |                                                                                                  |
-| VITE_BLOOM_URL          | Mandatory          | [Bloom URL][bloom-url] | URL for Bloom visualization |
-| VITE_REACT_APP_SOURCES  | Mandatory          | local,youtube,wiki,s3 | List of input sources that will be available                                            |
-| VITE_CHAT_MODES         | Mandatory          | vector,graph+vector,graph,hybrid | Chat modes available for Q&A                                               |
-| VITE_ENV                | Mandatory          | DEV or PROD    | Environment variable for the app                                                           |
-| VITE_LLM_MODELS         | Optional          |openai_gpt_5_mini,gemini_2.5_flash,anthropic_claude_4.5_haiku
-| Supported models for the application |
-| VITE_BACKEND_API_URL    | Optional           | [localhost][backend-url] | URL for backend API                                                                    |
-| VITE_TIME_PER_PAGE      | Optional           | 50             | Time per page for processing                                                              |
-| VITE_CHUNK_SIZE         | Optional           | 5242880        | Size of each chunk of file for upload                                                      |
-| VITE_GOOGLE_CLIENT_ID   | Optional           |                | Client ID for Google authentication                                                       |
-| VITE_LLM_MODELS_PROD    | Optional           | openai_gpt_5_mini,gemini_2.5_flash,anthropic_claude_4.5_haiku | To distinguish models based on environment (PROD or DEV)                        |
-| VITE_AUTH0_CLIENT_ID    | Mandatory if you are enabling Authentication otherwise it is optional |  | Okta OAuth Client ID for authentication                                          |
-| VITE_AUTH0_DOMAIN       | Mandatory if you are enabling Authentication otherwise it is optional |  | Okta OAuth Client Domain                                                         |
-| VITE_SKIP_AUTH          | Optional           | true           | Flag to skip authentication                                                               |
-| VITE_CHUNK_OVERLAP      | Optional           | 20             | Variable to configure chunk overlap                                                       |
-| VITE_TOKENS_PER_CHUNK   | Optional           | 100            | Variable to configure tokens count per chunk. This gives flexibility for users who may require different chunk sizes for various tokenization tasks |
-| VITE_CHUNK_TO_COMBINE   | Optional           | 1              | Variable to configure number of chunks to combine for parallel processing                 |
+|------------------------ |-------------------|---------------|--------------------------------------------------------------------------------------------------|
+|                        |                   |               |                                                                                                  |
+| **BACKEND ENV**         |                   |               |                                                                                                  |
+| OPENAI_API_KEY          | Optional          |               | An OpenAI Key is required to use OpenAI LLM model to authenticate and track requests             |
+| DIFFBOT_API_KEY         | Mandatory         |               | API key is required to use Diffbot's NLP service to extract entities and relationships from unstructured data |
+| BUCKET_UPLOAD_FILE      | Optional          |               | Bucket name to store uploaded file on GCS                                                        |
+| BUCKET_FAILED_FILE      | Optional          |               | Bucket name to store failed file on GCS while extraction                                         |
+| NEO4J_USER_AGENT        | Optional          | llm-graph-builder | Name of the user agent to track Neo4j database activity                                      |
+| ENABLE_USER_AGENT       | Optional          | true          | Boolean value to enable/disable Neo4j user agent                                                 |
+| DUPLICATE_TEXT_DISTANCE | Optional          | 5             | This value is used to find distance for all node pairs in the graph and is calculated based on node properties |
+| DUPLICATE_SCORE_VALUE   | Optional          | 0.97          | Node score value to match duplicate nodes                                                        |
+| EFFECTIVE_SEARCH_RATIO  | Optional          | 1             | Ratio used for effective search calculations                                                     |
+| GRAPH_CLEANUP_MODEL     | Optional          | openai_gpt_4o_mini | Model name to clean up graph in post processing                                            |
+| MAX_TOKEN_CHUNK_SIZE    | Optional          | 10000         | Maximum token size to process file content                                                       |
+| YOUTUBE_TRANSCRIPT_PROXY| Mandatory         |               | Proxy key to process YouTube videos for getting transcripts                                      |
+| IS_EMBEDDING           | Optional           | true          | Flag to enable text embedding                                                                    |
+| KNN_MIN_SCORE          | Optional           | 0.8           | Minimum score for KNN algorithm                                                                  |
+| GCP_LOG_METRICS_ENABLED| Optional           | False         | Flag to enable Google Cloud logs                                                                 |
+| NEO4J_URI              | Optional           | neo4j://database:7687 | URI for Neo4j database                                                                  |
+| NEO4J_USERNAME         | Optional           | neo4j         | Username for Neo4j database                                                                      |
+| NEO4J_PASSWORD         | Optional           | password      | Password for Neo4j database                                                                      |                                               |
+| GCS_FILE_CACHE         | Optional           | False         | If set to True, will save files to process into GCS. If False, will save files locally           |                   |
+| ENTITY_EMBEDDING       | Optional           | False         | If set to True, it will add embeddings for each entity in the database                           |
+| LLM_MODEL_CONFIG_ollama_<model_name> | Optional |           | Set ollama config as model_name,model_local_url for local deployments                            |
+|                        |                   |               |                                                                                                  |
+| **FRONTEND ENV**        |                   |               |                                                                                                  |
+| VITE_BLOOM_URL         | Mandatory          | [Bloom URL][bloom-url] | URL for Bloom visualization                                |
+| VITE_REACT_APP_SOURCES | Mandatory          | local,youtube,wiki,s3 | List of input sources that will be available                                 |
+| VITE_CHAT_MODES        | Mandatory          | vector,graph+vector,graph,hybrid | Chat modes available for Q&A                                |
+| VITE_ENV               | Mandatory          | DEV or PROD   | Environment variable for the app                                                                 |
+| VITE_LLM_MODELS        | Optional           | openai_gpt_5_mini,gemini_2.5_flash,anthropic_claude_4.5_haiku | Supported models for the application |
+| VITE_BACKEND_API_URL   | Optional           | [localhost][backend-url] | URL for backend API                                        |
+| VITE_TIME_PER_PAGE     | Optional           | 50            | Time per page for processing                                                                     |
+| VITE_CHUNK_SIZE        | Optional           | 5242880       | Size of each chunk of file for upload                                                            |
+| VITE_GOOGLE_CLIENT_ID  | Optional           |               | Client ID for Google authentication                                                              |
+| VITE_LLM_MODELS_PROD   | Optional           | openai_gpt_5_mini,gemini_2.5_flash,anthropic_claude_4.5_haiku | To distinguish models based on environment (PROD or DEV) |
+| VITE_AUTH0_CLIENT_ID   | Mandatory if you are enabling Authentication otherwise it is optional |  | Okta OAuth Client ID for authentication |
+| VITE_AUTH0_DOMAIN      | Mandatory if you are enabling Authentication otherwise it is optional |  | Okta OAuth Client Domain                                  |
+| VITE_SKIP_AUTH         | Optional           | true          | Flag to skip authentication                                                                      |
+| VITE_CHUNK_OVERLAP     | Optional           | 20            | Variable to configure chunk overlap                                                              |
+| VITE_TOKENS_PER_CHUNK  | Optional           | 100           | Variable to configure tokens count per chunk. This gives flexibility for users who may require different chunk sizes for various tokenization tasks |
+| VITE_CHUNK_TO_COMBINE  | Optional           | 1             | Variable to configure number of chunks to combine for parallel processing                        |
 
 ### Refer to this link for additional  [Environment Variables][env-vars].
 
@@ -303,7 +313,8 @@ You can deploy the backend and the frontend to Google Cloud Run using Cloud Buil
 2. **Run Cloud Build manually:**
    ```bash
    gcloud builds submit --config cloudbuild.yaml \
-     --substitutions=_REGION=us-central1,_REPO=cloud-run-repo,_OPENAI_API_KEY=<your-openai-key>,_DIFFBOT_API_KEY=<your-diffbot-key>,_BUCKET_UPLOAD_FILE=<your-bucket>,_BUCKET_FAILED_FILE=<your-bucket>,_PROJECT_ID=<your-project-id>,_GCS_FILE_CACHE=False,_TRACK_TOKEN_USAGE=True,_TOKEN_TRACKER_DB_URI=...,_TOKEN_TRACKER_DB_USERNAME=...,_TOKEN_TRACKER_DB_PASSWORD=...,_TOKEN_TRACKER_DB_DATABASE=...,_DEFAULT_DIFFBOT_CHAT_MODEL=...,_RAGAS_EMBEDDING_MODEL=...,_YOUTUBE_TRANSCRIPT_PROXY=...,_BEDROCK_EMBEDDING_MODEL=...,_LLM_MODEL_CONFIG_OPENAI_GPT_5_1=...,_LLM_MODEL_CONFIG_OPENAI_GPT_5_MINI=...,_LLM_MODEL_CONFIG_GEMINI_2_5_FLASH=...,_LLM_MODEL_CONFIG_GEMINI_2_5_PRO=...,_LLM_MODEL_CONFIG_DIFFBOT=...,_LLM_MODEL_CONFIG_GROQ_LLAMA3_1_8B=...,_LLM_MODEL_CONFIG_ANTHROPIC_CLAUDE_4_5_SONNET=...,_LLM_MODEL_CONFIG_ANTHROPIC_CLAUDE_4_5_HAIKU=...,_LLM_MODEL_CONFIG_LLAMA4_MAVERICK=...,_LLM_MODEL_CONFIG_FIREWORKS_QWEN3_30B=...,_LLM_MODEL_CONFIG_FIREWORKS_GPT_OSS=...,_LLM_MODEL_CONFIG_FIREWORKS_DEEPSEEK_V3=...,_LLM_MODEL_CONFIG_BEDROCK_NOVA_MICRO_V1=...,_LLM_MODEL_CONFIG_BEDROCK_NOVA_LITE_V1=...,_LLM_MODEL_CONFIG_BEDROCK_NOVA_PRO_V1=...,_LLM_MODEL_CONFIG_OLLAMA_LLAMA3=...
+     --substitutions=_REGION=us-central1,_REPO=cloud-run-repo,_OPENAI_API_KEY=<your-openai-key>,_DIFFBOT_API_KEY=<your-diffbot-key>,_BUCKET_UPLOAD_FILE=<your-bucket>,_BUCKET_FAILED_FILE=<your-bucket>,_PROJECT_ID=<your-project-id>,_GCS_FILE_CACHE=False,_TRACK_USER_USAGE=False,_TOKEN_TRACKER_DB_URI=...,_TOKEN_TRACKER_DB_USERNAME=...,_TOKEN_TRACKER_DB_PASSWORD=...,_TOKEN_TRACKER_DB_DATABASE=...,_DEFAULT_DIFFBOT_CHAT_MODEL=...,_YOUTUBE_TRANSCRIPT_PROXY=...,_EMBEDDING_MODEL=...,
+     _EMBEDDING_PROVIDER=...,_BEDROCK_EMBEDDING_MODEL_KEY=...,_LLM_MODEL_CONFIG_OPENAI_GPT_5_2=...,_LLM_MODEL_CONFIG_OPENAI_GPT_5_MINI=...,_LLM_MODEL_CONFIG_GEMINI_2_5_FLASH=...,_LLM_MODEL_CONFIG_GEMINI_2_5_PRO=...,_LLM_MODEL_CONFIG_DIFFBOT=...,_LLM_MODEL_CONFIG_GROQ_LLAMA3_1_8B=...,_LLM_MODEL_CONFIG_ANTHROPIC_CLAUDE_4_5_SONNET=...,_LLM_MODEL_CONFIG_ANTHROPIC_CLAUDE_4_5_HAIKU=...,_LLM_MODEL_CONFIG_LLAMA4_MAVERICK=...,_LLM_MODEL_CONFIG_FIREWORKS_QWEN3_30B=...,_LLM_MODEL_CONFIG_FIREWORKS_GPT_OSS=...,_LLM_MODEL_CONFIG_FIREWORKS_DEEPSEEK_V3=...,_LLM_MODEL_CONFIG_BEDROCK_NOVA_MICRO_V1=...,_LLM_MODEL_CONFIG_BEDROCK_NOVA_LITE_V1=...,_LLM_MODEL_CONFIG_BEDROCK_NOVA_PRO_V1=...,_LLM_MODEL_CONFIG_OLLAMA_LLAMA3=...
    ```
    - Replace the values in angle brackets with your actual configuration and secrets.
    - You can omit or add substitutions as needed for your deployment.

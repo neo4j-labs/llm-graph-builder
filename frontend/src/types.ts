@@ -36,6 +36,8 @@ export interface CustomFileBase extends Partial<globalThis.File> {
   communityNodeCount: number;
   communityRelCount: number;
   createdAt?: Date;
+  token_usage?: number;
+  embedding_model?: string;
 }
 export interface CustomFile extends CustomFileBase {
   id: string;
@@ -339,6 +341,8 @@ export interface fileStatus {
   entityEntityRelCount: number;
   communityNodeCount: number;
   communityRelCount: number;
+  token_usage?: number;
+  embedding_model?: string;
 }
 export interface PollingAPI_Response extends Partial<AxiosResponse> {
   data: statusupdate;

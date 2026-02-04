@@ -39,8 +39,6 @@ from src.shared.constants import (
 )
 load_dotenv() 
 
-EMBEDDING_MODEL = get_value_from_env("EMBEDDING_MODEL", "sentence_transformer")
-
 class SessionChatHistory:
     history_dict = {}
 
@@ -291,7 +289,7 @@ def retrieve_documents(doc_retriever, messages):
     
     return docs,transformed_question
 
-def create_document_retriever_chain(llm, retriever):
+def create_document_retriever_chain(llm, retriever, embedding_provider, embedding_model):
     try:
         logging.info("Starting to create document retriever chain")
 
@@ -305,7 +303,7 @@ def create_document_retriever_chain(llm, retriever):
         output_parser = StrOutputParser()
 
         splitter = TokenTextSplitter(chunk_size=CHAT_DOC_SPLIT_SIZE, chunk_overlap=0)
-        EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL) 
+        EMBEDDING_FUNCTION , _ = load_embedding_model(embedding_provider, embedding_model) 
         embeddings_filter = EmbeddingsFilter(
             embeddings=EMBEDDING_FUNCTION,
             similarity_threshold=CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD
@@ -334,7 +332,7 @@ def create_document_retriever_chain(llm, retriever):
         logging.error(f"Error creating document retriever chain: {e}", exc_info=True)
         raise
 
-def initialize_neo4j_vector(graph, chat_mode_settings):
+def initialize_neo4j_vector(graph, chat_mode_settings, embedding_provider, embedding_model):
     try:
         retrieval_query = chat_mode_settings.get("retrieval_query")
         index_name = chat_mode_settings.get("index_name")
@@ -346,7 +344,7 @@ def initialize_neo4j_vector(graph, chat_mode_settings):
 
         if not retrieval_query or not index_name:
             raise ValueError("Required settings 'retrieval_query' or 'index_name' are missing.")
-        EMBEDDING_FUNCTION , _ = load_embedding_model(EMBEDDING_MODEL) 
+        EMBEDDING_FUNCTION , _ = load_embedding_model(embedding_provider, embedding_model) 
         if keyword_index:
             neo_db = Neo4jVector.from_existing_graph(
                 embedding=EMBEDDING_FUNCTION,
@@ -397,10 +395,10 @@ def create_retriever(neo_db, document_names, chat_mode_settings,search_k, score_
         logging.info(f"Successfully created retriever with search_k={search_k}, score_threshold={score_threshold}")
     return retriever
 
-def get_neo4j_retriever(graph, document_names,chat_mode_settings, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD):
+def get_neo4j_retriever(graph, document_names,chat_mode_settings, score_threshold=CHAT_SEARCH_KWARG_SCORE_THRESHOLD, embedding_provider=None, embedding_model=None):
     try:
 
-        neo_db = initialize_neo4j_vector(graph, chat_mode_settings)
+        neo_db = initialize_neo4j_vector(graph, chat_mode_settings, embedding_provider, embedding_model)
         # document_names= list(map(str.strip, json.loads(document_names)))
         search_k = chat_mode_settings["top_k"]
         ef_ratio = get_value_from_env("EFFECTIVE_SEARCH_RATIO", 5, "int")
@@ -412,7 +410,7 @@ def get_neo4j_retriever(graph, document_names,chat_mode_settings, score_threshol
         raise Exception(f"An error occurred while retrieving the Neo4jVector index or creating the retriever. Please drop and create a new vector index '{index_name}': {e}") from e 
 
 
-def setup_chat(model, graph, document_names, chat_mode_settings):
+def setup_chat(model, graph, document_names, chat_mode_settings, embedding_provider, embedding_model):
     start_time = time.time()
     try:
         if model == "diffbot":
@@ -421,8 +419,8 @@ def setup_chat(model, graph, document_names, chat_mode_settings):
         llm, model_name, _ = get_llm(model=model)
         logging.info(f"Model called in chat: {model} (version: {model_name})")
 
-        retriever = get_neo4j_retriever(graph=graph, chat_mode_settings=chat_mode_settings, document_names=document_names)
-        doc_retriever = create_document_retriever_chain(llm, retriever)
+        retriever = get_neo4j_retriever(graph=graph, chat_mode_settings=chat_mode_settings, document_names=document_names, embedding_provider=embedding_provider, embedding_model=embedding_model)
+        doc_retriever = create_document_retriever_chain(llm, retriever, embedding_provider, embedding_model)
         
         chat_setup_time = time.time() - start_time
         logging.info(f"Chat setup completed in {chat_setup_time:.2f} seconds")
@@ -433,21 +431,21 @@ def setup_chat(model, graph, document_names, chat_mode_settings):
     
     return llm, doc_retriever, model_name
 
-def process_chat_response(messages, history, question, model, graph, document_names, chat_mode_settings, email=None, uri=None):
+def process_chat_response(messages, history, question, model, graph, document_names, chat_mode_settings, email=None, uri=None, embedding_provider=None, embedding_model=None):
     try:
-        # if get_value_from_env("TRACK_TOKEN_USAGE", "false", "bool"):
+        # if get_value_from_env("TRACK_USER_USAGE", "false", "bool"):
         #     try:
         #         track_token_usage(email, uri, 0, model, operation_type="chat")
         #     except LLMGraphBuilderException as e:
         #         logging.error(str(e))
         #         raise RuntimeError(str(e))
-        llm, doc_retriever, model_version = setup_chat(model, graph, document_names, chat_mode_settings)
+        llm, doc_retriever, model_version = setup_chat(model, graph, document_names, chat_mode_settings,embedding_provider, embedding_model)
         
         docs,transformed_question = retrieve_documents(doc_retriever, messages)  
 
         if docs:
             content, result, total_tokens,formatted_docs = process_documents(docs, question, messages, llm, model, chat_mode_settings)
-            # if get_value_from_env("TRACK_TOKEN_USAGE", "false", "bool"):
+            # if get_value_from_env("TRACK_USER_USAGE", "false", "bool"):
             #     latest_token = track_token_usage(email=email, uri=uri, usage=total_tokens, last_used_model=model, operation_type="chat")
             #     logging.info(f"Total token usage {latest_token} for user {email} ")
         else:
@@ -664,7 +662,7 @@ def get_chat_mode_settings(mode,settings_map=CHAT_MODE_CONFIG_MAP):
 
     return chat_mode_settings
     
-def QA_RAG(graph, model, question, document_names, session_id, mode, write_access=True, email=None, uri=None):
+def QA_RAG(graph, model, question, document_names, session_id, mode, write_access=True, email=None, uri=None, embedding_provider=None, embedding_model=None):
     logging.info(f"Chat Mode: {mode}")
 
     history = create_neo4j_chat_message_history(graph, session_id, write_access)
@@ -695,7 +693,7 @@ def QA_RAG(graph, model, question, document_names, session_id, mode, write_acces
                 "user": "chatbot"
             }
         else:
-            result = process_chat_response(messages,history, question, model, graph, document_names,chat_mode_settings, email, uri)
+            result = process_chat_response(messages,history, question, model, graph, document_names,chat_mode_settings, email, uri, embedding_provider, embedding_model)
 
     result["session_id"] = session_id
     
