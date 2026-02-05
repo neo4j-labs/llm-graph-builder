@@ -63,6 +63,8 @@ export default function useSourceInput(
         entityEntityRelCount: 0,
         communityNodeCount: 0,
         communityRelCount: 0,
+        token_usage: 0,
+        embedding_model: localStorage.getItem('embeddingModel') || '',
       };
       if (url.trim() != '') {
         setIsValid(validator(url) && isFocused);
@@ -149,6 +151,8 @@ export default function useSourceInput(
                   fileSource: defaultValues.fileSource,
                   processingProgress: defaultValues.processingProgress,
                   uploadProgress: 100,
+                  token_usage: defaultValues.token_usage,
+                  embedding_model: defaultValues.embedding_model,
                 });
               }
             }

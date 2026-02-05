@@ -46,6 +46,8 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       entityEntityRelCount: 0,
       communityNodeCount: 0,
       communityRelCount: 0,
+      token_usage: 0,
+      embedding_model: localStorage.getItem('embeddingModel') || '',
     };
     if (url) {
       setValid(validation(bucketUrl) && isFocused);
@@ -96,9 +98,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               size: item.fileSize,
               sourceUrl: item.url,
               uploadProgress: 100,
-              // total_pages: 'N/A',
               id: uuidv4(),
-              token_usage: 0,
               ...defaultValues,
             });
           } else {
@@ -114,6 +114,8 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               fileSource: defaultValues.fileSource,
               processingProgress: defaultValues.processingProgress,
               uploadProgress: 100,
+              token_usage: defaultValues.token_usage,
+              embedding_model: defaultValues.embedding_model,
             });
           }
         });

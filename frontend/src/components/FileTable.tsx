@@ -1032,8 +1032,8 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
               chunkRelCount: chunkRelCount ?? 0,
               entityEntityRelCount: entityEntityRelCount ?? 0,
               communityRelCount: communityRelCount ?? 0,
-              token_usage: token_usage ?? curfile.token_usage ?? 0,
-              embedding_model: embedding_model ?? curfile.embedding_model ?? '',
+              token_usage: token_usage ?? 0,
+              embedding_model: embedding_model ?? '',
             };
           }
           return curfile;
@@ -1083,8 +1083,8 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
               chunkRelCount: chunkRelCount ?? 0,
               entityEntityRelCount: entityEntityRelCount ?? 0,
               communityRelCount: communityRelCount ?? 0,
-              token_usage: token_usage ?? curfile.token_usage ?? 0,
-              embedding_model: embedding_model ?? curfile.embedding_model ?? '',
+              token_usage: token_usage ?? 0,
+              embedding_model: embedding_model ?? '',
             };
           }
           return curfile;

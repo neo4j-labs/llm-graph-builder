@@ -41,7 +41,7 @@ const DropZone: FunctionComponent = () => {
         communityRelCount: 0,
         createdAt: new Date(),
         token_usage: 0,
-        embedding_model: localStorage.getItem('embeddingModel') || 'all-MiniLM-L6-v2',
+        embedding_model: localStorage.getItem('embeddingModel') || '',
       };
 
       const copiedFilesData: CustomFile[] = [...filesData];
@@ -70,6 +70,8 @@ const DropZone: FunctionComponent = () => {
             model: defaultValues.model,
             fileSource: defaultValues.fileSource,
             processingProgress: defaultValues.processingProgress,
+            token_usage: defaultValues.token_usage,
+            embedding_model: defaultValues.embedding_model,
           });
         }
       }
