@@ -172,6 +172,7 @@ export default function DropZoneForSmallLayouts() {
         communityRelCount: 0,
         createdAt: new Date(),
         token_usage: 0,
+        embedding_model: localStorage.getItem('embeddingModel') || '',
       };
 
       const copiedFilesData: CustomFile[] = [...filesData];
@@ -200,6 +201,8 @@ export default function DropZoneForSmallLayouts() {
             model: defaultValues.model,
             fileSource: defaultValues.fileSource,
             processingProgress: defaultValues.processingProgress,
+            token_usage: defaultValues.token_usage,
+            embedding_model: defaultValues.embedding_model,
           });
         }
       }

@@ -36,7 +36,7 @@ export interface CustomFileBase extends Partial<globalThis.File> {
   communityNodeCount: number;
   communityRelCount: number;
   createdAt?: Date;
-  token_usage?: number;
+  token_usage: number;
   embedding_model?: string;
 }
 export interface CustomFile extends CustomFileBase {
@@ -57,7 +57,7 @@ export type UserCredentials = {
   connection?: string;
 } & { [key: string]: any };
 
-export interface SourceNode extends Omit<CustomFileBase, 'relationshipsCount' | 'createdAt'> {
+export interface SourceNode extends Omit<CustomFileBase, 'relationshipsCount' | 'createdAt' | 'token_usage'> {
   fileName: string;
   fileSize: number;
   fileType: string;
@@ -72,6 +72,8 @@ export interface SourceNode extends Omit<CustomFileBase, 'relationshipsCount' | 
   total_chunks?: number;
   retry_condition?: string;
   createdAt: filedate;
+  token_usage?: number;
+  embedding_model?: string;
 }
 
 export type ExtractParams = Pick<CustomFile, 'wikiQuery' | 'model' | 'sourceUrl' | 'language' | 'accessToken'> & {

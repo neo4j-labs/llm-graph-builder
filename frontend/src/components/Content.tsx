@@ -209,6 +209,7 @@ const Content: React.FC<ContentProps> = ({
                           communityRelCount: c.communityRelCount ?? 0,
                           nodesCount: c.nodeCount,
                           relationshipsCount: c.relationshipCount,
+                          token_usage: c.token_usage ?? 0,
                         };
                       }
                       return f;
@@ -372,6 +373,7 @@ const Content: React.FC<ContentProps> = ({
                 nodesCount: apiRes?.nodeCount,
                 relationshipsCount: apiRes?.relationshipCount,
                 model: apiRes?.model,
+                token_usage: apiRes?.token_usage,
               };
             }
             return curfile;
@@ -476,6 +478,7 @@ const Content: React.FC<ContentProps> = ({
               communityRelCount: c.communityRelCount ?? 0,
               nodesCount: c.nodeCount,
               relationshipsCount: c.relationshipCount,
+              token_usage: c.token_usage ?? 0,
             };
           };
 
@@ -683,6 +686,7 @@ const Content: React.FC<ContentProps> = ({
                   processingProgress: isStartFromBeginning ? 0 : f.processingProgress,
                   nodesCount: isStartFromBeginning ? 0 : f.nodesCount,
                   relationshipsCount: isStartFromBeginning ? 0 : f.relationshipsCount,
+                  token_usage: isStartFromBeginning ? 0 : f.token_usage,
                 }
               : f;
           });

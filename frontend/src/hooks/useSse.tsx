@@ -26,6 +26,7 @@ export default function useServerSideEvent(
       chunkRelCount,
       entityEntityRelCount,
       communityRelCount,
+      token_usage,
     } = eventSourceRes;
     const alertShownStatus = JSON.parse(localStorage.getItem('alertShown') || 'null');
 
@@ -55,6 +56,7 @@ export default function useServerSideEvent(
                   model: model,
                   processingTotalTime: processingTime?.toFixed(2),
                   processingProgress: Math.floor((processed_chunk / total_chunks) * 100),
+                  token_usage: token_usage ?? 0,
                 };
               }
               return curfile;
@@ -79,6 +81,7 @@ export default function useServerSideEvent(
               chunkRelCount: chunkRelCount ?? 0,
               entityEntityRelCount: entityEntityRelCount ?? 0,
               communityRelCount: communityRelCount ?? 0,
+              token_usage: token_usage ?? 0,
             };
           }
           return curfile;

@@ -39,6 +39,8 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
     entityEntityRelCount: 0,
     communityNodeCount: 0,
     communityRelCount: 0,
+    token_usage: 0,
+    embedding_model: localStorage.getItem('embeddingModel') || '',
   };
 
   const reset = () => {
@@ -104,7 +106,6 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
                 gcsBucketFolder: item.gcsBucketFolder,
                 googleProjectId: item.gcsProjectId,
                 id: uuidv4(),
-                token_usage: 0,
                 accessToken: codeResponse.access_token,
                 ...defaultValues,
                 uploadProgress: 100,
@@ -123,6 +124,8 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
                 processingProgress: defaultValues.processingProgress,
                 accessToken: codeResponse.access_token,
                 uploadProgress: 100,
+                token_usage: defaultValues.token_usage,
+                embedding_model: defaultValues.embedding_model,
               });
             }
           }
