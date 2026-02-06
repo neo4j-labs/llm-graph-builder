@@ -4,6 +4,7 @@ import { useFileContext } from '../context/UsersFiles';
 import { urlScanAPI } from '../services/URLScan';
 import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../context/UserCredentials';
+import { getEmbeddingModel } from '../utils/EmbeddingConfigUtils';
 
 export default function useSourceInput(
   validator: (e: string) => boolean,
@@ -64,7 +65,7 @@ export default function useSourceInput(
         communityNodeCount: 0,
         communityRelCount: 0,
         token_usage: 0,
-        embedding_model: localStorage.getItem('embeddingModel') || '',
+        embedding_model: getEmbeddingModel(),
       };
       if (url.trim() != '') {
         setIsValid(validator(url) && isFocused);
