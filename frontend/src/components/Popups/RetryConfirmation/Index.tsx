@@ -26,7 +26,7 @@ function RetryConfirmationDialog({
   const { filesData, setFilesData } = useFileContext();
   const file = filesData.find((c) => c.id === fileId);
   const RetryOptionsForFile =
-    file?.status === 'Failed'
+    file?.status === 'Failed' || file?.status === 'Cancelled'
       ? RETRY_OPIONS
       : RETRY_OPIONS.filter(
           (option) => option !== 'start_from_beginning' && option !== 'start_from_last_processed_position'

@@ -527,15 +527,15 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
           },
         },
       }),
-      columnHelper.accessor((row) => row.embedding_model, {
-        id: 'embedding_model',
-        cell: (info) => {
-          const embedding_model = info.getValue();
-          return <i>{embedding_model ?? ''}</i>;
-        },
-        header: () => <span>Embedding Model</span>,
-        footer: (info) => info.column.id,
-      }),
+      // columnHelper.accessor((row) => row.embedding_model, {
+      //   id: 'embedding_model',
+      //   cell: (info) => {
+      //     const embedding_model = info.getValue();
+      //     return <i>{embedding_model ?? ''}</i>;
+      //   },
+      //   header: () => <span>Embedding Model</span>,
+      //   footer: (info) => info.column.id,
+      // }),
       columnHelper.accessor((row) => row.nodesCount, {
         id: 'NodesCount',
         cell: (info) => {
