@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../../../HOC/CustomModal';
 import { buttonCaptions } from '../../../utils/Constants';
 import { useCredentials } from '../../../context/UserCredentials';
+import { getEmbeddingModel } from '../../../utils/EmbeddingConfigUtils';
 
 const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [bucketUrl, setBucketUrl] = useState<string>('');
@@ -47,7 +48,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       communityNodeCount: 0,
       communityRelCount: 0,
       token_usage: 0,
-      embedding_model: localStorage.getItem('embeddingModel') || '',
+      embedding_model: getEmbeddingModel(),
     };
     if (url) {
       setValid(validation(bucketUrl) && isFocused);

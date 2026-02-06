@@ -172,6 +172,14 @@ export const embeddingModels: EmbeddingModelOption[] = [
     value: 'sentence-transformer-all-MiniLM-L6-v2',
   },
 ];
+export const DEFAULT_EMBEDDING_MODEL: EmbeddingModelOption = {
+  provider: 'sentence-transformer',
+  model: 'all-MiniLM-L6-v2',
+  dimension: 384,
+  label: 'Sentence Transformer all-MiniLM-L6-v2',
+  value: 'sentence-transformer-all-MiniLM-L6-v2',
+};
+
 export const timeperpage = import.meta.env.VITE_TIME_PER_PAGE ? Number(import.meta.env.VITE_TIME_PER_PAGE) : 50;
 export const timePerByte = 0.2;
 export const largeFileSize = import.meta.env.VITE_LARGE_FILE_SIZE

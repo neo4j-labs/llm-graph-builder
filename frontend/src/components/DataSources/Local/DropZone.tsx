@@ -10,6 +10,7 @@ import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
 import { IconButtonWithToolTip } from '../../UI/IconButtonToolTip';
 import { uploadAPI } from '../../../utils/FileAPI';
 import { showErrorToast, showSuccessToast } from '../../../utils/Toasts';
+import { getEmbeddingModel } from '../../../utils/EmbeddingConfigUtils';
 
 const DropZone: FunctionComponent = () => {
   const { filesData, setFilesData, model } = useFileContext();
@@ -41,7 +42,7 @@ const DropZone: FunctionComponent = () => {
         communityRelCount: 0,
         createdAt: new Date(),
         token_usage: 0,
-        embedding_model: localStorage.getItem('embeddingModel') || '',
+        embedding_model: getEmbeddingModel(),
       };
 
       const copiedFilesData: CustomFile[] = [...filesData];

@@ -12,7 +12,7 @@ import { createDefaultFormData } from '../../../API/Index';
 import { getNodeLabelsAndRelTypesFromText } from '../../../services/SchemaFromTextAPI';
 import { useFileContext } from '../../../context/UsersFiles';
 import { fetchEmbeddingModelAPI } from '../../../services/FetchEmbeddingModel';
-import { getEmbeddingConfig } from '../../../utils/EmbeddingConfigUtils';
+import { getEmbeddingConfig, setEmbeddingConfig } from '../../../utils/EmbeddingConfigUtils';
 
 export default function ConnectionModal({
   open,
@@ -86,19 +86,22 @@ export default function ConnectionModal({
         const embeddingData = embeddingResponse.data.data;
         if (Array.isArray(embeddingData)) {
           const [provider, model, dimension, allowChange] = embeddingData;
-          if (provider) {
-            localStorage.setItem('embeddingProvider', provider);
-          }
-          if (model) {
-            localStorage.setItem('embeddingModel', model);
-          }
-          if (dimension != null) {
-            localStorage.setItem('embeddingDimension', dimension.toString());
+          if (provider && model && dimension != null) {
+            setEmbeddingConfig({
+              provider,
+              model,
+              dimension,
+            });
+            console.log('Embedding model configuration fetched and stored:', {
+              provider,
+              model,
+              dimension,
+              allowChange,
+            });
           }
           if (allowChange != null) {
             localStorage.setItem('allowEmbeddingChange', allowChange.toString());
           }
-          console.log('Embedding model configuration fetched and stored:', { provider, model, dimension, allowChange });
         }
       }
     } catch (error) {
@@ -157,9 +160,9 @@ export default function ConnectionModal({
               recreateVectorIndex(chunksExistsWithDifferentEmbedding, userCredentials as UserCredentials)
             }
             isVectorIndexAlreadyExists={chunksExistsWithDifferentEmbedding || isVectorIndexMatch}
-            userVectorIndexDimension={getEmbeddingConfig()?.db_vector_dimension}
+            userVectorIndexDimension={getEmbeddingConfig().db_vector_dimension}
             chunksExists={chunksExistsWithoutEmbedding}
-            applicationDimension={getEmbeddingConfig()?.dimension}
+            applicationDimension={getEmbeddingConfig().dimension}
           />
         ),
       });

@@ -10,6 +10,7 @@ import { useAlertContext } from '../../../context/Alert';
 import { buttonCaptions } from '../../../utils/Constants';
 import { showErrorToast, showNormalToast } from '../../../utils/Toasts';
 import { useCredentials } from '../../../context/UserCredentials';
+import { getEmbeddingModel } from '../../../utils/EmbeddingConfigUtils';
 
 const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) => {
   const [bucketName, setBucketName] = useState<string>('');
@@ -40,7 +41,7 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
     communityNodeCount: 0,
     communityRelCount: 0,
     token_usage: 0,
-    embedding_model: localStorage.getItem('embeddingModel') || '',
+    embedding_model: getEmbeddingModel(),
   };
 
   const reset = () => {
