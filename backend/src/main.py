@@ -976,8 +976,9 @@ def set_status_retry(graph, file_name, retry_condition):
         obj_source_node.communityRelCount=0
         obj_source_node.entityEntityRelCount=0
         obj_source_node.entityNodeCount=0
-        obj_source_node.processingTime=0
+        obj_source_node.processing_time=0
         obj_source_node.total_chunks=0
+        obj_source_node.token_usage=0
     if retry_condition == DELETE_ENTITIES_AND_START_FROM_BEGINNING:
         execute_graph_query(graph,QUERY_TO_DELETE_EXISTING_ENTITIES, params={"filename":file_name})
         

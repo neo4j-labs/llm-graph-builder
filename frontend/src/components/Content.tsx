@@ -55,7 +55,7 @@ import { ChevronUpIconOutline, ChevronDownIconOutline } from '@neo4j-ndl/react/i
 import { ThemeWrapperContext } from '../context/ThemeWrapper';
 import { useAuth0 } from '@auth0/auth0-react';
 import React from 'react';
-import { clearEmbeddingConfig, clearChunkConfig } from '../utils/EmbeddingConfigUtils';
+import { clearEmbeddingConfig, clearChunkConfig, getEmbeddingModel } from '../utils/EmbeddingConfigUtils';
 
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
 
@@ -687,6 +687,7 @@ const Content: React.FC<ContentProps> = ({
                   nodesCount: isStartFromBeginning ? 0 : f.nodesCount,
                   relationshipsCount: isStartFromBeginning ? 0 : f.relationshipsCount,
                   token_usage: isStartFromBeginning ? 0 : f.token_usage,
+                  embedding_model: getEmbeddingModel(),
                 }
               : f;
           });

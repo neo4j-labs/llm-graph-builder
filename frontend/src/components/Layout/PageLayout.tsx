@@ -275,6 +275,7 @@ const PageLayout: React.FC = () => {
       try {
         const backendApiResponse = await envConnectionAPI();
         const connectionData = backendApiResponse.data;
+        console.log('Connection Data:', connectionData.data);
         if (connectionData.data && connectionData.status === 'Success') {
           localStorage.setItem(
             'embedding.dimensions',
@@ -285,13 +286,10 @@ const PageLayout: React.FC = () => {
             })
           );
 
-          // Only set readonly mode if SKIP_AUTH is true AND we're in PROD environment
-          const isProdEnv = import.meta.env.VITE_ENV === 'PROD';
-          const shouldBeReadonly = isProdEnv && SKIP_AUTH ? !connectionData.data.write_access : false;
-
+          console.log('readOnly', connectionData.data.write_access);
           const credentials = {
             uri: connectionData.data.uri,
-            isReadonlyUser: shouldBeReadonly,
+            isReadonlyUser: !connectionData.data.write_access,
             isgdsActive: connectionData.data.gds_status,
             isGCSActive: connectionData.data.gcs_file_cache === 'True',
             chunksTobeProcess: Number(connectionData.data.chunk_to_be_created),
@@ -303,7 +301,7 @@ const PageLayout: React.FC = () => {
           createDefaultFormData({ uri: credentials.uri, email: credentials.email ?? '' });
           setGdsActive(credentials.isgdsActive);
           setConnectionStatus(Boolean(connectionData.data.graph_connection));
-          setIsReadOnlyUser(shouldBeReadonly);
+          setIsReadOnlyUser(!connectionData.data.write_access);
           handleDisconnectButtonState(false);
           await fetchAndStoreEmbeddingSettings(credentials.uri, credentials.email ?? '');
         } else if (!connectionData.data && connectionData.status === 'Success') {

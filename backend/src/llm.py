@@ -202,11 +202,13 @@ async def get_graph_document_list(
                 supports_structured_output = True
             except Exception:
                 supports_structured_output = False
-            if supports_structured_output:
+            if supports_structured_output and not isinstance(llm, ChatGroq):
+                logging.info("LLM supports structured output; including descriptions in graph")
                 node_properties = ["description"]
                 relationship_properties = ["description"]
                 ignore_tool_usage = False
             else:
+                logging.info("LLM does not support structured output; excluding descriptions in graph") 
                 node_properties = False
                 relationship_properties = False
                 ignore_tool_usage = True
