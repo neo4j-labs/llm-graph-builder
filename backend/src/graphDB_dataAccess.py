@@ -293,7 +293,8 @@ class graphDBdataAccess:
                 d.communityNodeCount AS communityNodeCount,
                 d.communityRelCount AS communityRelCount,
                 d.createdAt AS created_time,
-                coalesce(d.token_usage, 0) AS token_usage
+                coalesce(d.token_usage, 0) AS token_usage,
+                coalesce(d.embedding_model, "") AS embedding_model
                 """
         param = {"file_name" : file_name}
         return self.execute_query(query, param)
