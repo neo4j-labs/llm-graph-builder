@@ -679,25 +679,30 @@ class graphDBdataAccess:
 
             graph = None
             if token_uri and token_user and token_password:
-                credentials= Neo4jCredentials(uri=token_uri, userName=token_user, password=token_password, database=token_database)
-                graph = create_graph_database_connection(credentials)
+                graph_credentials = Neo4jCredentials(
+                    uri=token_uri,
+                    userName=token_user,
+                    password=token_password,
+                    database=token_database,
+                )
+                graph = create_graph_database_connection(graph_credentials)
             else:
-                credentials= Neo4jCredentials(uri=credentials.uri, userName=credentials.userName, password=credentials.password, database=credentials.database)
-                graph = create_graph_database_connection(credentials)
+                graph_credentials = Neo4jCredentials(
+                    uri=credentials.uri,
+                    userName=credentials.userName,
+                    password=credentials.password,
+                    database=credentials.database,
+                )
+                graph = create_graph_database_connection(graph_credentials)
 
             # Prepare MERGE params; we store db info on User node keyed by email
             params = {
                 "email": credentials.email,
-                "db_url": credentials.db_url or "",
+                "db_url": credentials.uri or "",
                 "username": credentials.userName or "",
                 "password": encrypted_password or "",
                 "database": credentials.database or "neo4j",
             }
-
-            print("Plain Password:", credentials.password)
-            print("Encrypted Password:", encrypted_password)
-            d_password = decrypt_text_aes_gcm(encrypted_password, passphrase)  # Test decryption to ensure integrity
-            print("Decrypted Password:", d_password)
 
             # Use MERGE to either create or update user info
             query = """
