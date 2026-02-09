@@ -5,7 +5,7 @@ import time
 from src.entities.user_credential import Neo4jCredentials
 from neo4j.exceptions import TransientError
 from langchain_neo4j import Neo4jGraph
-from src.shared.common_fn import create_gcs_bucket_folder_name_hashed, create_graph_database_connection, delete_uploaded_local_file, load_embedding_model, get_value_from_env, get_user_embedding_model
+from src.shared.common_fn import close_db_connection, create_gcs_bucket_folder_name_hashed, create_graph_database_connection, delete_uploaded_local_file, load_embedding_model, get_value_from_env, get_user_embedding_model
 from src.document_sources.gcs_bucket import delete_file_from_gcs
 from src.shared.constants import NODEREL_COUNT_QUERY_WITH_COMMUNITY, NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY
 from src.entities.source_node import sourceNode
@@ -722,12 +722,11 @@ class graphDBdataAccess:
             RETURN u
             """
 
-            result = graph.query(query, params, session_params={"database": self.graph._database})
+            result = graph.query(query, params, session_params={"database": graph._database})
 
             return {"status": "Success", "email": credentials.email, "result_count": len(result) if result else 0}
         except Exception as e:
             logging.error("Exception in save_user_information: %s", e, exc_info=True)
             return {"status": "Failed", "message": str(e)}
         finally:
-            if graph:
-                graph.close()
+            close_db_connection(graph, 'save_user_information')

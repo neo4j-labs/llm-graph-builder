@@ -1086,12 +1086,18 @@ async def backend_connection_configuration():
         database= get_value_from_env("NEO4J_DATABASE")
         password= get_value_from_env("NEO4J_PASSWORD")
         gcs_cache = get_value_from_env("GCS_FILE_CACHE","False","bool")
+        graph_credentials = Neo4jCredentials(
+                    uri=uri,
+                    userName=username,
+                    password=password,
+                    database=database,
+                )
         if all([uri, username, database, password]):
             graph = Neo4jGraph()
             logging.info(f'login connection status of object: {graph}')
             if graph is not None:
                 graph_connection = True        
-                result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, database, None, uri)
+                result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, graph_credentials)
                 result['gcs_file_cache'] = gcs_cache
                 result['uri'] = uri
                 end = time.time()
