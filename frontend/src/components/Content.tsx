@@ -55,7 +55,7 @@ import { ChevronUpIconOutline, ChevronDownIconOutline } from '@neo4j-ndl/react/i
 import { ThemeWrapperContext } from '../context/ThemeWrapper';
 import { useAuth0 } from '@auth0/auth0-react';
 import React from 'react';
-import { clearEmbeddingConfig, clearChunkConfig } from '../utils/EmbeddingConfigUtils';
+import { clearEmbeddingConfig, clearChunkConfig, getEmbeddingModel } from '../utils/EmbeddingConfigUtils';
 
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
 
@@ -209,6 +209,7 @@ const Content: React.FC<ContentProps> = ({
                           communityRelCount: c.communityRelCount ?? 0,
                           nodesCount: c.nodeCount,
                           relationshipsCount: c.relationshipCount,
+                          token_usage: c.token_usage ?? 0,
                         };
                       }
                       return f;
@@ -372,6 +373,7 @@ const Content: React.FC<ContentProps> = ({
                 nodesCount: apiRes?.nodeCount,
                 relationshipsCount: apiRes?.relationshipCount,
                 model: apiRes?.model,
+                token_usage: apiRes?.token_usage,
               };
             }
             return curfile;
@@ -476,6 +478,7 @@ const Content: React.FC<ContentProps> = ({
               communityRelCount: c.communityRelCount ?? 0,
               nodesCount: c.nodeCount,
               relationshipsCount: c.relationshipCount,
+              token_usage: c.token_usage ?? 0,
             };
           };
 
@@ -683,6 +686,8 @@ const Content: React.FC<ContentProps> = ({
                   processingProgress: isStartFromBeginning ? 0 : f.processingProgress,
                   nodesCount: isStartFromBeginning ? 0 : f.nodesCount,
                   relationshipsCount: isStartFromBeginning ? 0 : f.relationshipsCount,
+                  token_usage: isStartFromBeginning ? 0 : f.token_usage,
+                  embedding_model: getEmbeddingModel(),
                 }
               : f;
           });
@@ -962,12 +967,19 @@ const Content: React.FC<ContentProps> = ({
           <div className='enhancement-btn__wrapper'>
             <ButtonWithToolTip
               placement='top'
-              text='Enhance graph quality'
+              text={
+                !isAuthenticated
+                  ? 'Please log in first'
+                  : !connectionStatus
+                    ? 'Please connect to Neo4j'
+                    : 'Enhance graph quality'
+              }
               label='Graph Enhancement Settings'
               className='mr-2!'
               onClick={toggleEnhancementDialog}
               disabled={!connectionStatus || isReadOnlyUser}
               size={isTablet ? 'small' : 'medium'}
+              alwaysShowTooltip={true}
             >
               Graph Settings
             </ButtonWithToolTip>
@@ -1039,13 +1051,14 @@ const Content: React.FC<ContentProps> = ({
           <Flex flexDirection='row' gap='4' className='self-end mb-2.5' flexWrap='wrap'>
             <SpotlightTarget id='generategraphbtn'>
               <ButtonWithToolTip
-                text={tooltips.generateGraph}
+                text={!isAuthenticated ? 'Please log in first' : tooltips.generateGraph}
                 placement='top'
                 label='generate graph'
                 onClick={onClickHandler}
                 disabled={disableCheck || isReadOnlyUser}
                 className='mr-0.5'
                 size={isTablet ? 'small' : 'medium'}
+                alwaysShowTooltip={true}
               >
                 {buttonCaptions.generateGraph}{' '}
                 {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
@@ -1053,7 +1066,11 @@ const Content: React.FC<ContentProps> = ({
             </SpotlightTarget>
             <ButtonWithToolTip
               text={
-                !selectedfileslength ? tooltips.deleteFile : `${selectedfileslength} ${tooltips.deleteSelectedFiles}`
+                !isAuthenticated
+                  ? 'Please log in first'
+                  : !selectedfileslength
+                    ? 'Please select file to delete'
+                    : `${selectedfileslength} ${tooltips.deleteSelectedFiles}`
               }
               placement='top'
               onClick={() => setShowDeletePopUp(true)}
@@ -1061,15 +1078,25 @@ const Content: React.FC<ContentProps> = ({
               className='ml-0.5'
               label='Delete Files'
               size={isTablet ? 'small' : 'medium'}
+              alwaysShowTooltip={true}
             >
               {buttonCaptions.deleteFiles}
               {selectedfileslength != undefined && selectedfileslength > 0 && `(${selectedfileslength})`}
             </ButtonWithToolTip>
             <SpotlightTarget id='visualizegraphbtn'>
               <Flex flexDirection='row' gap='0'>
-                <Button
+                <ButtonWithToolTip
+                  text={
+                    !selectedfileslength || selectedfileslength === 0
+                      ? 'Please select file to Preview Graph'
+                      : completedfileNo === 0
+                        ? 'Please select completed file(s) to Preview Graph'
+                        : `${selectedfileslength} selected, ${completedfileNo} file(s) ready to preview`
+                  }
+                  label='Preview Graph'
                   onClick={handleGraphView}
-                  isDisabled={showGraphCheck}
+                  alwaysShowTooltip={true}
+                  disabled={showGraphCheck}
                   className='px-0! flex! items-center justify-between gap-4 graphbtn'
                   size={isTablet ? 'small' : 'medium'}
                 >
@@ -1077,7 +1104,7 @@ const Content: React.FC<ContentProps> = ({
                     {buttonCaptions.showPreviewGraph}{' '}
                     {selectedfileslength && completedfileNo ? `(${completedfileNo})` : ''}
                   </span>
-                </Button>
+                </ButtonWithToolTip>
                 <div
                   className={`ndl-icon-btn ndl-clean dropdownbtn ${colorMode === 'dark' ? 'darktheme' : ''} ${
                     isTablet ? 'small' : 'medium'

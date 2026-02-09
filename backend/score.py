@@ -752,7 +752,9 @@ async def get_document_status(file_name, url, userName, password, database):
                 'entityNodeCount' : result[0]['entityNodeCount'],
                 'entityEntityRelCount' : result[0]['entityEntityRelCount'],
                 'communityNodeCount' : result[0]['communityNodeCount'],
-                'communityRelCount' : result[0]['communityRelCount']
+                'communityRelCount' : result[0]['communityRelCount'],
+                'token_usage' : result[0]['token_usage'],
+                'embedding_model' : result[0]['embedding_model']
                 }
         else:
             status = {'fileName':file_name, 'status':'Failed'}

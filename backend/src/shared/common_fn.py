@@ -555,7 +555,9 @@ def get_remaining_token_limits(email: str, uri: str) -> dict:
     """
     try:
         normalized_email = (email or "").strip().lower() or None
+
         normalized_db_url = (uri or "").strip() or None
+        logging.info(f"Fetching remaining token limits for email: {normalized_email}, uri: {normalized_db_url}")
         if not normalized_email and not normalized_db_url:
             raise ValueError("Either email or db_url must be provided for token tracking.")
 
@@ -571,20 +573,25 @@ def get_remaining_token_limits(email: str, uri: str) -> dict:
 
         auth_required = get_value_from_env("AUTHENTICATION_REQUIRED", False, bool)
         user_node = None
+        logging.info(f"Authentication required: {auth_required}")
         if auth_required:
+            logging.info("Looking up user by email for token limits")
             if not normalized_email:
                 raise ValueError("Email is required for token lookup when authentication is required.")
             result = graph.query(
                 "MATCH (u:User {email: $email}) RETURN u", {"email": normalized_email}
             )
+            logging.info(f"Query result for user lookup: {result}")
             if result and result[0].get("u"):
                 user_node = result[0]["u"]
         else:
+            logging.info("Looking up user by db_url for token limits")
             if not normalized_db_url:
                 raise ValueError("db_url is required for token lookup when authentication is not required.")
             result = graph.query(
                 "MATCH (u:User {db_url: $db_url}) RETURN u", {"db_url": normalized_db_url}
             )
+            logging.info(f"Query result for user lookup: {result}")
             if result and result[0].get("u"):
                 user_node = result[0]["u"]
 
@@ -597,6 +604,7 @@ def get_remaining_token_limits(email: str, uri: str) -> dict:
             monthly_tokens_limit = user_node.get("monthly_tokens_limit", monthly_tokens_limit)
             daily_tokens_used = user_node.get("daily_tokens_used", 0)
             monthly_tokens_used = user_node.get("monthly_tokens_used", 0)
+
 
         return {
             "daily_remaining": max(daily_tokens_limit - daily_tokens_used, 0),

@@ -9,6 +9,7 @@ import { uploadAPI } from '../../../utils/FileAPI';
 import { v4 as uuidv4 } from 'uuid';
 import { LoadingSpinner } from '@neo4j-ndl/react';
 import { showErrorToast, showSuccessToast } from '../../../utils/Toasts';
+import { getEmbeddingModel } from '../../../utils/EmbeddingConfigUtils';
 
 export default function DropZoneForSmallLayouts() {
   const { filesData, setFilesData, model } = useFileContext();
@@ -172,6 +173,7 @@ export default function DropZoneForSmallLayouts() {
         communityRelCount: 0,
         createdAt: new Date(),
         token_usage: 0,
+        embedding_model: getEmbeddingModel(),
       };
 
       const copiedFilesData: CustomFile[] = [...filesData];
@@ -200,6 +202,8 @@ export default function DropZoneForSmallLayouts() {
             model: defaultValues.model,
             fileSource: defaultValues.fileSource,
             processingProgress: defaultValues.processingProgress,
+            token_usage: defaultValues.token_usage,
+            embedding_model: defaultValues.embedding_model,
           });
         }
       }

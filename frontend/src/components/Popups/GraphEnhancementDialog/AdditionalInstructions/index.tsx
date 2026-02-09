@@ -7,6 +7,7 @@ import {
   defaultChunksToCombineOptions,
   embeddingModels,
   EmbeddingModelOption,
+  DEFAULT_EMBEDDING_MODEL,
 } from '../../../../utils/Constants';
 import { tokens } from '@neo4j-ndl/base';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
@@ -41,20 +42,14 @@ export default function AdditionalInstructionsText({
 
   const [selectedEmbeddingModel, setSelectedEmbeddingModel] = useState<EmbeddingModelOption>(() => {
     const config = getEmbeddingConfig();
-    if (config?.provider && config?.model) {
-      const found = embeddingModels.find((opt) => opt.provider === config.provider && opt.model === config.model);
-      return found || embeddingModels[0];
-    }
-    return embeddingModels[0];
+    const found = embeddingModels.find((opt) => opt.provider === config.provider && opt.model === config.model);
+    return found || DEFAULT_EMBEDDING_MODEL;
   });
 
   const [displayEmbeddingModel, setDisplayEmbeddingModel] = useState<EmbeddingModelOption>(() => {
     const config = getEmbeddingConfig();
-    if (config?.provider && config?.model) {
-      const found = embeddingModels.find((opt) => opt.provider === config.provider && opt.model === config.model);
-      return found || embeddingModels[0];
-    }
-    return embeddingModels[0];
+    const found = embeddingModels.find((opt) => opt.provider === config.provider && opt.model === config.model);
+    return found || DEFAULT_EMBEDDING_MODEL;
   });
 
   const [showDimensionWarning, setShowDimensionWarning] = useState(false);
@@ -76,15 +71,10 @@ export default function AdditionalInstructionsText({
     const allowEmbeddingChange = localStorage.getItem('allowEmbeddingChange');
     setIsEmbeddingReadonly(allowEmbeddingChange === 'false');
 
-    if (config?.provider && config?.model) {
-      const found = embeddingModels.find((opt) => opt.provider === config.provider && opt.model === config.model);
-      if (
-        found &&
-        (found.provider !== selectedEmbeddingModel.provider || found.model !== selectedEmbeddingModel.model)
-      ) {
-        setSelectedEmbeddingModel(found);
-        setDisplayEmbeddingModel(found);
-      }
+    const found = embeddingModels.find((opt) => opt.provider === config.provider && opt.model === config.model);
+    if (found && (found.provider !== selectedEmbeddingModel.provider || found.model !== selectedEmbeddingModel.model)) {
+      setSelectedEmbeddingModel(found);
+      setDisplayEmbeddingModel(found);
     }
     setOriginalValues({
       instructions: additionalInstructions,
@@ -389,7 +379,7 @@ export default function AdditionalInstructionsText({
         dbDimension={(() => {
           try {
             const config = getEmbeddingConfig();
-            if (config?.db_vector_dimension) {
+            if (config.db_vector_dimension) {
               return config.db_vector_dimension;
             }
             const connectionStr = localStorage.getItem('neo4j.connection');
