@@ -100,6 +100,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               sourceUrl: item.url,
               uploadProgress: 100,
               id: uuidv4(),
+              token_usage: 0,
               ...defaultValues,
             });
           } else {

@@ -285,11 +285,10 @@ const PageLayout: React.FC = () => {
               userDbVectorIndex: connectionData.data.db_vector_dimension,
             })
           );
-
-          console.log('readOnly', connectionData.data.write_access);
+          
           const credentials = {
             uri: connectionData.data.uri,
-            isReadonlyUser: !connectionData.data.write_access,
+            isReadonlyUser: shouldBeReadonly,
             isgdsActive: connectionData.data.gds_status,
             isGCSActive: connectionData.data.gcs_file_cache === 'True',
             chunksTobeProcess: Number(connectionData.data.chunk_to_be_created),
