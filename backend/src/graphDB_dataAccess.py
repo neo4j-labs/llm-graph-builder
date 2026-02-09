@@ -728,3 +728,6 @@ class graphDBdataAccess:
         except Exception as e:
             logging.error("Exception in save_user_information: %s", e, exc_info=True)
             return {"status": "Failed", "message": str(e)}
+        finally:
+            if graph:
+                graph.close()
