@@ -2,7 +2,6 @@ import base64
 import logging
 import os
 import time
-from typing import Optional
 from src.entities.user_credential import Neo4jCredentials
 from neo4j.exceptions import TransientError
 from langchain_neo4j import Neo4jGraph
