@@ -275,6 +275,7 @@ const PageLayout: React.FC = () => {
       try {
         const backendApiResponse = await envConnectionAPI();
         const connectionData = backendApiResponse.data;
+        console.log('Connection Data:', connectionData.data);
         if (connectionData.data && connectionData.status === 'Success') {
           localStorage.setItem(
             'embedding.dimensions',
