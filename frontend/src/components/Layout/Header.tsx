@@ -33,7 +33,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
     window.open(url, '_blank');
   }, []);
   const downloadLinkRef = useRef<HTMLAnchorElement>(null);
-  const { loginWithRedirect } = useAuth0();
+  const { loginWithRedirect, isAuthenticated } = useAuth0();
   const firstTourTarget = useRef<HTMLDivElement>(null);
   const { connectionStatus } = useCredentials();
   const chatAnchor = useRef<HTMLDivElement>(null);
@@ -152,6 +152,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                   </IconButtonWithToolTip>
                   {!SKIP_AUTH && <Profile />}
                   {pathname === '/readonly' &&
+                    !isAuthenticated &&
                     (!connectionStatus ? (
                       <SpotlightTarget id='loginbutton' hasPulse={true} indicatorVariant='border' ref={firstTourTarget}>
                         <Button type='button' fill='outlined' onClick={() => loginWithRedirect()}>
