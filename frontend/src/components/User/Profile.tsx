@@ -16,14 +16,20 @@ export default function Profile() {
   const { userCredentials, connectionStatus } = useCredentials();
 
   const fetchTokenLimits = useCallback(async () => {
-    if (!userCredentials?.uri && !userCredentials?.email) {
+    const effectiveEmail = user?.email ?? userCredentials?.email ?? '';
+    const effectiveCreds = {
+      ...userCredentials,
+      email: effectiveEmail,
+    };
+
+    if (!effectiveCreds?.uri && !effectiveCreds?.email) {
       setTokenError('User credentials not available');
       return;
     }
     setIsLoadingTokens(true);
     setTokenError(null);
     try {
-      const limits = await getTokenLimits(userCredentials);
+      const limits = await getTokenLimits(effectiveCreds);
       if (limits) {
         setTokenLimits(limits);
         setTokenError(null);
@@ -37,13 +43,13 @@ export default function Profile() {
     } finally {
       setIsLoadingTokens(false);
     }
-  }, [userCredentials]);
+  }, [userCredentials, user?.email]);
 
   useEffect(() => {
     if (isAuthenticated && connectionStatus) {
       fetchTokenLimits();
     }
-  }, [isAuthenticated, connectionStatus, fetchTokenLimits]);
+  }, [isAuthenticated, connectionStatus, user?.email, userCredentials?.email, fetchTokenLimits]);
 
   const settings = useMemo(() => {
     const isNeo4j = isNeo4jUser(user?.email);
@@ -104,16 +110,54 @@ export default function Profile() {
       },
     ];
 
+    const exhausted =
+      !isNeo4j &&
+      !isLoadingTokens &&
+      !tokenError &&
+      Boolean(tokenLimits) &&
+      ((Number.isFinite(tokenLimits?.daily_limit) &&
+        Number.isFinite(tokenLimits?.daily_used) &&
+        (tokenLimits!.daily_limit as number) > 0 &&
+        (tokenLimits!.daily_used as number) >= (tokenLimits!.daily_limit as number)) ||
+        (Number.isFinite(tokenLimits?.monthly_limit) &&
+          Number.isFinite(tokenLimits?.monthly_used) &&
+          (tokenLimits!.monthly_limit as number) > 0 &&
+          (tokenLimits!.monthly_used as number) >= (tokenLimits!.monthly_limit as number)));
+
+    const items = [...tokenItems];
+
+    if (exhausted) {
+      items.push({
+        title: 'Request for token limit',
+        onClick: () => {
+          window.open('mailto:llm-graph-builder@neo4j.com', '_blank');
+        },
+        disabled: false,
+      });
+    }
+
     return [
-      ...tokenItems,
+      ...items,
       {
         title: 'Logout',
         onClick: () => {
+          try {
+            localStorage.removeItem('currentUserEmail');
+            const existing = localStorage.getItem('neo4j.connection');
+            if (existing) {
+              const parsed = JSON.parse(existing);
+              parsed.email = '';
+              localStorage.setItem('neo4j.connection', JSON.stringify(parsed));
+            }
+          } catch (e) {
+            console.warn('Failed to clear email on logout', e);
+          }
           logout({ logoutParams: { returnTo: `${window.location.origin}/readonly` } });
         },
+        disabled: false,
       },
     ];
-  }, [tokenLimits, isLoadingTokens, tokenError, fetchTokenLimits, logout, user?.email]);
+  }, [tokenLimits, isLoadingTokens, tokenError, fetchTokenLimits, logout, user?.email, connectionStatus]);
 
   const handleClick = () => {
     setShowOpen(true);

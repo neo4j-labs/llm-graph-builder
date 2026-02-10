@@ -1,5 +1,6 @@
 import { MetricsResponse } from '../types';
 import api from '../API/Index';
+import { getEmbeddingProvider, getEmbeddingModel } from '../utils/EmbeddingConfigUtils';
 
 export const getChatMetrics = async (
   question: string,
@@ -14,6 +15,12 @@ export const getChatMetrics = async (
   formData.append('answer', JSON.stringify(answer));
   formData.append('model', model);
   formData.append('mode', JSON.stringify(mode));
+
+  const embeddingProvider = getEmbeddingProvider();
+  const embeddingModel = getEmbeddingModel();
+  formData.append('embedding_provider', embeddingProvider);
+  formData.append('embedding_model', embeddingModel);
+
   try {
     const response = await api.post<MetricsResponse>(`/metric`, formData);
     return response;

@@ -918,3 +918,30 @@ export const isNeo4jUser = (email?: string): boolean => {
 export const shouldShowTokenTracking = (email?: string): boolean => {
   return !isNeo4jUser(email);
 };
+
+export const fetchAndStoreEmbeddingSettings = async (uri: string, email: string) => {
+  try {
+    const { fetchEmbeddingModelAPI } = await import('../services/FetchEmbeddingModel');
+    const { setEmbeddingConfig } = await import('./EmbeddingConfigUtils');
+    const embeddingResponse = await fetchEmbeddingModelAPI({ uri, email });
+    if (embeddingResponse?.data?.status === 'Success') {
+      const embeddingData = embeddingResponse.data.data;
+      if (Array.isArray(embeddingData)) {
+        const [provider, model, dimension, allowChange] = embeddingData;
+        if (provider && model && dimension != null) {
+          setEmbeddingConfig({
+            provider,
+            model,
+            dimension,
+          });
+        }
+        if (allowChange != null) {
+          localStorage.setItem('allowEmbeddingChange', allowChange.toString());
+        }
+      }
+    }
+  } catch (embeddingError) {
+    // Embedding settings are optional, but log error for debugging
+    console.error('Failed to fetch embedding model settings:', embeddingError);
+  }
+};

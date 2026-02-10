@@ -22,7 +22,7 @@ import LoadDBSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtracti
 import PredefinedSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/PredefinedSchemaDialog';
 import { SKIP_AUTH } from '../../utils/Constants';
 import { useNavigate } from 'react-router';
-import { deduplicateByFullPattern, deduplicateNodeByValue } from '../../utils/Utils';
+import { deduplicateByFullPattern, deduplicateNodeByValue, fetchAndStoreEmbeddingSettings } from '../../utils/Utils';
 import DataImporterSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/DataImporter';
 const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
 const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
@@ -203,6 +203,32 @@ const PageLayout: React.FC = () => {
   } = useFileContext();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth0();
+
+  useEffect(() => {
+    try {
+      const email = user?.email?.trim();
+      if (isAuthenticated && email) {
+        localStorage.setItem('currentUserEmail', email);
+        const existing = localStorage.getItem('neo4j.connection');
+        if (existing) {
+          const parsed = JSON.parse(existing);
+          parsed.email = email;
+          localStorage.setItem('neo4j.connection', JSON.stringify(parsed));
+        }
+      } else if (!isAuthenticated) {
+        localStorage.removeItem('currentUserEmail');
+        const existing = localStorage.getItem('neo4j.connection');
+        if (existing) {
+          const parsed = JSON.parse(existing);
+          parsed.email = '';
+          localStorage.setItem('neo4j.connection', JSON.stringify(parsed));
+        }
+      }
+    } catch (e) {
+      console.warn('localStorage email sync failed', e);
+    }
+  }, [isAuthenticated, user?.email]);
+
   const { cancel } = useSpeechSynthesis();
   const { setActiveSpotlight } = useSpotlightContext();
   const isYoutubeOnly = useMemo(
@@ -249,7 +275,17 @@ const PageLayout: React.FC = () => {
       try {
         const backendApiResponse = await envConnectionAPI();
         const connectionData = backendApiResponse.data;
+        console.log('Connection Data:', connectionData.data);
         if (connectionData.data && connectionData.status === 'Success') {
+          localStorage.setItem(
+            'embedding.dimensions',
+            JSON.stringify({
+              db_vector_dimension: connectionData.data.db_vector_dimension,
+              application_dimension: connectionData.data.application_dimension,
+              userDbVectorIndex: connectionData.data.db_vector_dimension,
+            })
+          );
+
           const credentials = {
             uri: connectionData.data.uri,
             isReadonlyUser: !connectionData.data.write_access,
@@ -264,19 +300,24 @@ const PageLayout: React.FC = () => {
           createDefaultFormData({ uri: credentials.uri, email: credentials.email ?? '' });
           setGdsActive(credentials.isgdsActive);
           setConnectionStatus(Boolean(connectionData.data.graph_connection));
-          setIsReadOnlyUser(connectionData.data.isReadonlyUser);
+          setIsReadOnlyUser(!connectionData.data.write_access);
           handleDisconnectButtonState(false);
+          await fetchAndStoreEmbeddingSettings(credentials.uri, credentials.email ?? '');
         } else if (!connectionData.data && connectionData.status === 'Success') {
           const storedCredentials = localStorage.getItem('neo4j.connection');
           if (storedCredentials) {
             const credentials = JSON.parse(storedCredentials);
-            setUserCredentials({ ...credentials, password: atob(credentials.password) });
+            const authedEmail = user?.email ?? '';
+            credentials.email = authedEmail || credentials.email || '';
+
+            credentials.password = atob(credentials.password);
+            setUserCredentials(credentials);
             createDefaultFormData({
               uri: credentials.uri,
               database: credentials.database,
               userName: credentials.userName,
-              password: atob(credentials?.password),
-              email: credentials.email ?? '',
+              password: credentials.password,
+              email: credentials.email,
             });
             setIsGCSActive(credentials.isGCSActive);
             setGdsActive(credentials.isgdsActive);
@@ -285,6 +326,7 @@ const PageLayout: React.FC = () => {
               setIsReadOnlyUser(credentials.isReadonlyUser);
             }
             handleDisconnectButtonState(true);
+            await fetchAndStoreEmbeddingSettings(credentials.uri, credentials.email ?? '');
           } else {
             handleDisconnectButtonState(true);
           }

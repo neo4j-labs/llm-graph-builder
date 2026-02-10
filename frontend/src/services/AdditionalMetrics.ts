@@ -1,4 +1,5 @@
 import api from '../API/Index';
+import { getEmbeddingProvider, getEmbeddingModel } from '../utils/EmbeddingConfigUtils';
 
 const getAdditionalMetrics = async (
   question: string,
@@ -16,6 +17,11 @@ const getAdditionalMetrics = async (
     formData.append('reference', reference ?? '');
     formData.append('model', model ?? '');
     formData.append('mode', JSON.stringify(mode) ?? '');
+
+    const embeddingProvider = getEmbeddingProvider();
+    const embeddingModel = getEmbeddingModel();
+    formData.append('embedding_provider', embeddingProvider);
+    formData.append('embedding_model', embeddingModel);
 
     const response = await api.post(`/additional_metrics`, formData, {
       headers: {

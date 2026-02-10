@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import CustomModal from '../../../HOC/CustomModal';
 import { buttonCaptions } from '../../../utils/Constants';
 import { useCredentials } from '../../../context/UserCredentials';
+import { getEmbeddingModel } from '../../../utils/EmbeddingConfigUtils';
 
 const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
   const [bucketUrl, setBucketUrl] = useState<string>('');
@@ -46,6 +47,8 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
       entityEntityRelCount: 0,
       communityNodeCount: 0,
       communityRelCount: 0,
+      token_usage: 0,
+      embedding_model: getEmbeddingModel(),
     };
     if (url) {
       setValid(validation(bucketUrl) && isFocused);
@@ -96,7 +99,6 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               size: item.fileSize,
               sourceUrl: item.url,
               uploadProgress: 100,
-              // total_pages: 'N/A',
               id: uuidv4(),
               ...defaultValues,
             });
@@ -113,6 +115,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               fileSource: defaultValues.fileSource,
               processingProgress: defaultValues.processingProgress,
               uploadProgress: 100,
+              embedding_model: defaultValues.embedding_model,
             });
           }
         });

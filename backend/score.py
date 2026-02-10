@@ -41,7 +41,7 @@ from src.main import (
 from src.neighbours import get_neighbour_nodes
 from src.post_processing import create_entity_embedding, create_vector_fulltext_indexes, graph_schema_consolidation
 from src.ragas_eval import get_additional_metrics, get_ragas_metrics
-from src.shared.common_fn import formatted_time, get_value_from_env, get_remaining_token_limits
+from src.shared.common_fn import formatted_time, get_value_from_env, get_remaining_token_limits, get_user_embedding_model, change_user_embedding_model
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from Secweb.XContentTypeOptions import XContentTypeOptions
 from Secweb.XFrameOptions import XFrame
@@ -125,6 +125,7 @@ app.add_middleware(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -217,6 +218,14 @@ async def extract_knowledge_graph_from_file(
             file_name = sanitize_filename(params.file_name)
             params.file_name = file_name
             merged_file_path = validate_file_path(MERGED_DIR, file_name)
+        
+        auth_required = get_value_from_env("AUTHENTICATION_REQUIRED", False, bool)
+        if auth_required:
+            if not getattr(credentials, "email", None) or not getattr(credentials, "uri", None):
+                error_message = "Authentication required: Your session is missing required credentials. Please log in again to continue."
+                raise LLMGraphBuilderException(error_message)
+            
+        if params.source_type == 'local file':
             uri_latency, result = await extract_graph_from_file_local_file(credentials, params, merged_file_path)
         elif params.source_type == 's3 bucket' and params.source_url:
             uri_latency, result = await extract_graph_from_file_s3(credentials, params)
@@ -260,6 +269,7 @@ async def extract_knowledge_graph_from_file(
             json_obj['userName'] = credentials.userName
             json_obj['database'] = credentials.database
             json_obj['email'] = credentials.email
+            json_obj['model'] = params.model
         logger.log_struct(json_obj, "INFO")
         result.update(uri_latency)
         logging.info(f"extraction completed in {extract_api_time:.2f} seconds for file name {params.file_name}")
@@ -274,8 +284,11 @@ async def extract_knowledge_graph_from_file(
         node_detail = graphDb_data_Access.get_current_status_document_node(params.file_name)
         # Set the status "Completed" in logging becuase we are treating these error already handled by application as like custom errors.
         json_obj = {'api_name':'extract','message':error_message,'file_created_at':formatted_time(node_detail[0]['created_time']),'error_message':error_message, 'filename': params.file_name,'status':'Completed',
-                    'db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,'failed_count':1, 'source_type': params.source_type, 'source_url':params.source_url, 'wiki_query':params.wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email}
-        logger.log_struct(json_obj, "ERROR")
+                    'db_url':credentials.uri,'model': params.model, 'userName':credentials.userName, 'database':credentials.database,'failed_count':1, 'source_type': params.source_type, 'source_url':params.source_url, 'wiki_query':params.wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email}
+        if "Token usage limit exceeded" in error_message:
+            logger.log_struct(json_obj, "WARNING")
+        else:
+            logger.log_struct(json_obj, "ERROR")
         logging.exception(f'File Failed in extraction: {e}')
         return create_api_response("Failed", message = error_message, error=error_message, file_name=params.file_name)
     except Exception as e:
@@ -289,7 +302,7 @@ async def extract_knowledge_graph_from_file(
         node_detail = graphDb_data_Access.get_current_status_document_node(params.file_name)
         
         json_obj = {'api_name':'extract','message':message,'file_created_at':formatted_time(node_detail[0]['created_time']),'error_message':error_message, 'filename': params.file_name,'status':'Failed',
-                    'db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,'failed_count':1, 'source_type': params.source_type, 'source_url':params.source_url, 'wiki_query':params.wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email}
+                    'db_url':credentials.uri,'model': params.model, 'userName':credentials.userName, 'database':credentials.database,'failed_count':1, 'source_type': params.source_type, 'source_url':params.source_url, 'wiki_query':params.wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email}
         logger.log_struct(json_obj, "ERROR")
         logging.exception(f'File Failed in extraction: {e}')
         return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = params.file_name)
@@ -315,10 +328,15 @@ async def get_source_list(credentials: Neo4jCredentials = Depends(get_neo4j_cred
         return create_api_response(job_status, message=message, error=error_message)
 
 @app.post("/post_processing")
-async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), tasks=Form(None)):
+async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), tasks=Form(None), embedding_provider=Form(None), embedding_model=Form(None)):
     """Run post-processing tasks on the graph database."""
     try:
         graph = create_graph_database_connection(credentials)
+        auth_required = get_value_from_env("AUTHENTICATION_REQUIRED", False, bool)
+        if auth_required:
+            if not getattr(credentials, "email", None) or not getattr(credentials, "uri", None):
+                error_message = "Authentication required: Your session is missing required credentials. Please log in again to continue."
+                raise Exception(error_message)
         tasks = set(map(str.strip, json.loads(tasks)))
         api_name = 'post_processing'
         count_response = []
@@ -329,12 +347,12 @@ async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_cred
             logging.info(f'Updated KNN Graph')
 
         if "enable_hybrid_search_and_fulltext_search_in_bloom" in tasks:
-            await asyncio.to_thread(create_vector_fulltext_indexes, credentials)
+            await asyncio.to_thread(create_vector_fulltext_indexes, credentials, embedding_provider, embedding_model)
             api_name = 'post_processing/enable_hybrid_search_and_fulltext_search_in_bloom'
             logging.info(f'Full Text index created')
 
         if get_value_from_env("ENTITY_EMBEDDING","False","bool") and "materialize_entity_similarities" in tasks:
-            await asyncio.to_thread(create_entity_embedding, graph)
+            await asyncio.to_thread(create_entity_embedding, graph, embedding_provider, embedding_model)
             api_name = 'post_processing/create_entity_embedding'
             logging.info(f'Entity Embeddings created')
 
@@ -345,7 +363,7 @@ async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_cred
             
         if "enable_communities" in tasks:
             api_name = 'create_communities'
-            await asyncio.to_thread(create_communities, credentials.uri, credentials.userName, credentials.password, credentials.database, credentials.email)
+            await asyncio.to_thread(create_communities, credentials.uri, credentials.userName, credentials.password, credentials.database, credentials.email, embedding_provider, embedding_model)
             logging.info(f'created communities') 
 
         graphDb_data_Access = graphDBdataAccess(graph)
@@ -388,7 +406,9 @@ async def chat_bot(
     question=Form(None),
     document_names=Form(None),
     session_id=Form(None),
-    mode=Form(None)
+    mode=Form(None),
+    embedding_provider=Form(None),
+    embedding_model=Form(None)
 ):
     """Run QA chat bot on the graph database."""
     logging.info(f"QA_RAG called at {datetime.now()}")
@@ -401,7 +421,7 @@ async def chat_bot(
         
         graphDb_data_Access = graphDBdataAccess(graph)
         write_access = graphDb_data_Access.check_account_access(database=credentials.database)
-        result = await asyncio.to_thread(QA_RAG, graph=graph, model=model, question=question, document_names=document_names, session_id=session_id, mode=mode, write_access=write_access, email=credentials.email, uri=credentials.uri)
+        result = await asyncio.to_thread(QA_RAG, graph=graph, model=model, question=question, document_names=document_names, session_id=session_id, mode=mode, write_access=write_access, email=credentials.email, uri=credentials.uri, embedding_provider=embedding_provider, embedding_model=embedding_model)
 
         total_call_time = time.time() - qa_rag_start_time
         logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
@@ -523,13 +543,18 @@ async def clear_chat_bot(
         gc.collect()
             
 @app.post("/connect")
-async def connect(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
+async def connect(credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
+                  embedding_provider=Form(None), embedding_model=Form(None)):
     """Connect to the Neo4j database and check vector dimensions."""
     try:
         start = time.time()
         graph = create_graph_database_connection(credentials)
-        
-        result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, credentials.database)
+        auth_required = get_value_from_env("AUTHENTICATION_REQUIRED", False, bool)
+        if auth_required:
+            if not getattr(credentials, "email", None) or not getattr(credentials, "uri", None):
+                error_message = "Authentication required: Your session is missing required credentials. Please log in to the application."
+                raise Exception(error_message)
+        result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, credentials.database, credentials.email, credentials.uri)
         gcs_cache = get_value_from_env("GCS_FILE_CACHE","False","bool")
         end = time.time()
         elapsed_time = end - start
@@ -659,7 +684,8 @@ async def update_extract_status(
                         'entityEntityRelCount' : result[0]['entityEntityRelCount'],
                         'communityNodeCount' : result[0]['communityNodeCount'],
                         'communityRelCount' : result[0]['communityRelCount'],
-                        'token_usage' : result[0]['token_usage']
+                        'token_usage' : result[0]['token_usage'],
+                        'embedding_model' : result[0]['embedding_model']
                         })
                     yield status
             except asyncio.CancelledError:
@@ -726,7 +752,9 @@ async def get_document_status(file_name, url, userName, password, database):
                 'entityNodeCount' : result[0]['entityNodeCount'],
                 'entityEntityRelCount' : result[0]['entityEntityRelCount'],
                 'communityNodeCount' : result[0]['communityNodeCount'],
-                'communityRelCount' : result[0]['communityRelCount']
+                'communityRelCount' : result[0]['communityRelCount'],
+                'token_usage' : result[0]['token_usage'],
+                'embedding_model' : result[0]['embedding_model']
                 }
         else:
             status = {'fileName':file_name, 'status':'Failed'}
@@ -888,14 +916,16 @@ async def merge_duplicate_nodes(
 @app.post("/drop_create_vector_index")
 async def drop_create_vector_index(
     credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
-    isVectorIndexExist=Form()
+    isVectorIndexExist=Form(None),
+    embedding_provider=Form(None),
+    embedding_model=Form(None)
 ):
     """Drop and re-create the vector index in the graph database."""
     try:
         start = time.time()
         graph = create_graph_database_connection(credentials)
         graphDb_data_Access = graphDBdataAccess(graph)
-        result = graphDb_data_Access.drop_create_vector_index(isVectorIndexExist)
+        result = graphDb_data_Access.drop_create_vector_index(isVectorIndexExist, embedding_provider, embedding_model)
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name':'drop_create_vector_index', 'db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,
@@ -944,7 +974,9 @@ async def calculate_metric(
     context: str = Form(),
     answer: str = Form(),
     model: str = Form(),
-    mode: str = Form()
+    mode: str = Form(),
+    embedding_provider: str = Form(None),
+    embedding_model: str = Form(None)
 ):
     """Calculate RAGAS metrics for a given question, context, and answer."""
     try:
@@ -954,7 +986,7 @@ async def calculate_metric(
         mode_list = [str(item).strip() for item in json.loads(mode)] if mode else []
 
         result = await asyncio.to_thread(
-            get_ragas_metrics, question, context_list, answer_list, model
+            get_ragas_metrics, question, context_list, answer_list, model, embedding_provider, embedding_model
         )
         if result is None or "error" in result:
             return create_api_response(
@@ -1062,7 +1094,7 @@ async def backend_connection_configuration():
             logging.info(f'login connection status of object: {graph}')
             if graph is not None:
                 graph_connection = True        
-                result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, database)
+                result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, database, None, uri)
                 result['gcs_file_cache'] = gcs_cache
                 result['uri'] = uri
                 end = time.time()
@@ -1114,12 +1146,12 @@ async def get_schema_visualization(credentials: Neo4jCredentials = Depends(get_n
 async def get_token_limits(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
     """
     Returns the remaining daily and monthly token limits for a user, given email and/or uri.
-    Only enabled if TRACK_TOKEN_USAGE env variable is set to 'true'.
+    Only enabled if TRACK_USER_USAGE env variable is set to 'true'.
     """
     job_status = "Success"
     message = "Token limits fetched successfully"
     try:
-        if os.environ.get("TRACK_TOKEN_USAGE", "false").strip().lower() != "true":
+        if os.environ.get("TRACK_USER_USAGE", "false").strip().lower() != "true":
             message = "Token tracking is not enabled."
             return create_api_response(job_status, data=None, message=message)
         start = time.time()
@@ -1142,7 +1174,80 @@ async def get_token_limits(credentials: Neo4jCredentials = Depends(get_neo4j_cre
         logger.log_struct({'api_name': 'get_token_limits', 'db_url': credentials.uri, 'email': credentials.email, 'error_message': error_message, 'logging_time': formatted_time(datetime.now(timezone.utc))}, "ERROR")
         logging.exception(f'Exception in get_token_limits: {error_message}')
         return create_api_response(job_status, message=message, error=error_message)
-        
+
+@app.post("/fetch_embedding_model")
+async def fetch_embedding_model(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
+    """Fetch available embedding models for a given provider."""
+    try:
+        start = time.time()
+        result = await asyncio.to_thread(get_user_embedding_model, credentials.email, credentials.uri)
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {
+            'api_name':'fetch_embedding_model',
+            'db_url': credentials.uri,
+            'email': credentials.email,
+            'logging_time': formatted_time(datetime.now(timezone.utc)),
+            'elapsed_api_time':f'{elapsed_time:.2f}'
+            }
+        logger.log_struct(json_obj, "INFO")
+        return create_api_response('Success',data=result)
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to fetch embedding models"
+        error_message = str(e)
+        logging.exception(f'Exception in fetch_embedding_model:{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        gc.collect() 
+
+@app.post("/change_embedding_model")
+async def change_embedding_model(
+    credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
+    embedding_provider=Form(None),
+    embedding_model=Form(None)
+):
+    """Change the embedding model for a user."""
+    try:
+        start_time = time.time()
+        result = await asyncio.to_thread(change_user_embedding_model, credentials.email, credentials.uri, embedding_provider, embedding_model)
+        if result.get("status") == "Failed":
+            return create_api_response(
+                status="Failed",
+                message=result.get("message", "Failed to change embedding model."),
+                error=result.get("message", "Failed to change embedding model.")
+            )
+        message = "Embedding model changed successfully."
+        change_index = result.get("change_index")
+        if change_index:
+            create_vector_fulltext_indexes(credentials, embedding_provider, embedding_model)
+            message += " Vector index was dropped and recreated."
+            
+        elapsed_time = time.time() - start_time
+        json_obj = {
+            'api_name':'change_embedding_model',
+            'db_url': credentials.uri,
+            'email': credentials.email,
+            'embedding_provider': embedding_provider,
+            'embedding_model': embedding_model,
+            'logging_time': formatted_time(datetime.now(timezone.utc)),
+            'elapsed_api_time':f'{elapsed_time:.2f}'
+            }
+        logger.log_struct(json_obj, "INFO")
+        return create_api_response(
+            status="Success",
+            message=message,
+            data={"embedding_provider": result.get("new_embedding_provider"),
+                  "embedding_model": result.get("new_embedding_model"),
+                  "embedding_dimension": result.get("new_dimension"),
+                  "change_index": change_index}
+        )
+    except Exception as e:
+        logging.exception(f'Exception in change_embedding_model:{e}')
+        return create_api_response("Failed", message=f"An unexpected error occurred: {str(e)}", error=str(e))
+    finally:
+        gc.collect()
+
 if __name__ == "__main__":
     uvicorn.run(app)
 

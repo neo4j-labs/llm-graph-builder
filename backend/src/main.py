@@ -477,7 +477,7 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
   logging.info(f'Time taken database connection: {elapsed_create_connection:.2f} seconds')
   uri_latency["create_connection"] = f'{elapsed_create_connection:.2f}'
   graphDb_data_Access = graphDBdataAccess(graph)
-  create_chunk_vector_index(graph)
+  create_chunk_vector_index(graph, params.embedding_provider,params.embedding_model)
   start_get_chunkId_chunkDoc_list = time.time()
   total_chunks, chunkId_chunkDoc_list = get_chunkId_chunkDoc_list(graph, params.file_name, pages, params.token_chunk_size, params.chunk_overlap, params.retry_condition, credentials.email)
   end_get_chunkId_chunkDoc_list = time.time()
@@ -505,6 +505,7 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
       obj_source_node.status = status
       obj_source_node.total_chunks = total_chunks
       obj_source_node.model = params.model
+      obj_source_node.embedding_model = params.embedding_model
       if params.retry_condition == START_FROM_LAST_PROCESSED_POSITION:
           node_count = result[0]['nodeCount']
           rel_count = result[0]['relationshipCount']
@@ -512,7 +513,13 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
       obj_source_node.processed_chunk = 0+select_chunks_with_retry
       logging.info(params.file_name)
       logging.info(obj_source_node)
-      
+      #pre checking if user is allowed to process the file
+      if get_value_from_env("TRACK_USER_USAGE", "false", "bool"):
+        try:
+          track_token_usage(credentials.email, credentials.uri, 0, params.model, operation_type="precheck")
+        except LLMGraphBuilderException as e:
+          logging.error(str(e))
+          raise RuntimeError(str(e))
       start_update_source_node = time.time()
       graphDb_data_Access.update_source_node(obj_source_node)
       graphDb_data_Access.update_node_relationship_count(params.file_name)
@@ -543,10 +550,30 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
           break
         else:
           processing_chunks_start_time = time.time()
-          node_count,rel_count,latency_processed_chunk,token_usage = await processing_chunks(selected_chunks,graph,credentials,params.file_name,params.model,params.allowedNodes,params.allowedRelationship,params.chunks_to_combine,node_count, rel_count, params.additional_instructions)
+          node_count,rel_count,latency_processed_chunk,token_usage = await processing_chunks(selected_chunks,graph,credentials,params.file_name,params.model,params.allowedNodes,params.allowedRelationship,params.chunks_to_combine,node_count, rel_count, params.additional_instructions, params.embedding_provider, params.embedding_model)
           logging.info("Token used in processing chunks: %s", token_usage)
           tokens_per_file += token_usage
           logging.info("Total token used per file: %s", tokens_per_file)
+          start_save_token = time.time()
+          try:
+            if get_value_from_env("TRACK_USER_USAGE", "false", "bool"):
+                    track_token_usage(credentials.email,credentials.uri,token_usage, params.model, operation_type="extraction")
+                    logging.info("Token usage for extraction: %s for user: %s", token_usage, credentials.email)
+          except LLMGraphBuilderException as e:
+            logging.info(f"Error while tracking token usage: {e}")
+            obj_source_node = sourceNode()
+            obj_source_node.file_name = params.file_name
+            obj_source_node.updated_at = datetime.now()
+            obj_source_node.processing_time = datetime.now() - start_time
+            obj_source_node.processed_chunk = select_chunks_upto + select_chunks_with_retry
+            obj_source_node.token_usage = tokens_per_file
+            graphDb_data_Access.update_source_node(obj_source_node)
+            graphDb_data_Access.update_node_relationship_count(params.file_name)
+            raise e
+          end_save_token = time.time()
+          elapsed_save_token = end_save_token - start_save_token
+          logging.info(f'Time taken to save token count: {elapsed_save_token:.2f} seconds')
+
           processing_chunks_end_time = time.time()
           processing_chunks_elapsed_end_time = processing_chunks_end_time - processing_chunks_start_time
           logging.info(f"Time taken {update_graph_chunk_processed} chunks processed upto {select_chunks_upto} completed in {processing_chunks_elapsed_end_time:.2f} seconds for file name {params.file_name}")
@@ -570,14 +597,6 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
             obj_source_node.relationship_count = rel_count
           graphDb_data_Access.update_source_node(obj_source_node)
           graphDb_data_Access.update_node_relationship_count(params.file_name)
-      
-      start_save_token = time.time()
-      if get_value_from_env("TRACK_TOKEN_USAGE", "false", "bool"):
-        track_token_usage(credentials.email,credentials.uri,tokens_per_file, params.model)
-        logging.info("Token usage for extraction: %s for user: %s", tokens_per_file, credentials.email)
-      end_save_token = time.time()
-      elapsed_save_token = end_save_token - start_save_token
-      logging.info(f'Time taken to save token count: {elapsed_save_token:.2f} seconds')
       result = graphDb_data_Access.get_current_status_document_node(params.file_name)
       is_cancelled_status = result[0]['is_cancelled']
       if bool(is_cancelled_status) == True:
@@ -621,6 +640,7 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
       response["status"] = job_status
       response["model"] = params.model
       response["success_count"] = 1
+      response['token_usage'] = tokens_per_file
       
       return uri_latency, response
     else:      
@@ -631,7 +651,7 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
     logging.error(error_message)
     raise LLMGraphBuilderException(error_message)
 
-async def processing_chunks(chunkId_chunkDoc_list,graph,credentials,file_name,model,allowedNodes,allowedRelationship, chunks_to_combine, node_count, rel_count, additional_instructions):
+async def processing_chunks(chunkId_chunkDoc_list,graph,credentials,file_name,model,allowedNodes,allowedRelationship, chunks_to_combine, node_count, rel_count, additional_instructions, embedding_provider, embedding_model):
   #create vector index and update chunk node with embedding
   latency_processing_chunk = {}
   if graph is not None:
@@ -639,17 +659,9 @@ async def processing_chunks(chunkId_chunkDoc_list,graph,credentials,file_name,mo
       graph = create_graph_database_connection(credentials)
   else:
     graph = create_graph_database_connection(credentials)
-  
-  #pre checking if user is allowed to process the file
-  if get_value_from_env("TRACK_TOKEN_USAGE", "false", "bool"):
-    try:
-      track_token_usage(credentials.email, credentials.uri, 0, model)
-    except LLMGraphBuilderException as e:
-      logging.error(str(e))
-      raise RuntimeError(str(e))
     
   start_update_embedding = time.time()
-  create_chunk_embeddings( graph, chunkId_chunkDoc_list, file_name)
+  create_chunk_embeddings( graph, chunkId_chunkDoc_list, file_name, embedding_provider, embedding_model)
   end_update_embedding = time.time()
   elapsed_update_embedding = end_update_embedding - start_update_embedding
   logging.info(f'Time taken to update embedding in chunk node: {elapsed_update_embedding:.2f} seconds')
@@ -663,13 +675,6 @@ async def processing_chunks(chunkId_chunkDoc_list,graph,credentials,file_name,mo
   logging.info(f'Time taken to extract enitities from LLM Graph Builder: {elapsed_entity_extraction:.2f} seconds')
   latency_processing_chunk["entity_extraction"] = f'{elapsed_entity_extraction:.2f}'
   
-  start_save_token = time.time()
-  if get_value_from_env("TRACK_TOKEN_USAGE", "false", "bool"):
-    track_token_usage(credentials.email, credentials.uri, token_usage, model)
-    logging.info("Token usage for extraction: %s for user: %s", token_usage, credentials.email)
-  end_save_token = time.time()
-  elapsed_save_token = end_save_token - start_save_token
-  logging.info(f'Time taken to save token count: {elapsed_save_token:.2f} seconds')
   cleaned_graph_documents = handle_backticks_nodes_relationship_id_type(graph_documents)
   
   start_save_graphDocuments = time.time()
@@ -760,10 +765,11 @@ def get_source_list_from_graph(credentials):
   logging.info("Get existing files list from graph")
   graph = Neo4jGraph(url=credentials.uri, database=credentials.database, username=credentials.userName, password=credentials.password)
   graph_DB_dataAccess = graphDBdataAccess(graph)
+  result = graph_DB_dataAccess.get_source_list()
   if not graph._driver._closed:
       logging.info(f"closing connection for sources_list api")
       graph._driver.close()
-  return graph_DB_dataAccess.get_source_list()
+  return result
 
 def update_graph(graph):
   """
@@ -772,8 +778,7 @@ def update_graph(graph):
   graph_DB_dataAccess = graphDBdataAccess(graph)
   graph_DB_dataAccess.update_KNN_graph()
 
-  
-def connection_check_and_get_vector_dimensions(graph,database):
+def connection_check_and_get_vector_dimensions(graph, database, email, uri):
   """
   Args:
     uri: URI of the graph to extract
@@ -784,7 +789,7 @@ def connection_check_and_get_vector_dimensions(graph,database):
    Returns a status of connection from NEO4j is success or failure
  """
   graph_DB_dataAccess = graphDBdataAccess(graph)
-  return graph_DB_dataAccess.connection_check_and_get_vector_dimensions(database)
+  return graph_DB_dataAccess.connection_check_and_get_vector_dimensions(database, email, uri)
 
 
 def merge_chunks_local(file_name, total_chunks, chunk_dir, merged_dir):
@@ -981,8 +986,9 @@ def set_status_retry(graph, file_name, retry_condition):
         obj_source_node.communityRelCount=0
         obj_source_node.entityEntityRelCount=0
         obj_source_node.entityNodeCount=0
-        obj_source_node.processingTime=0
+        obj_source_node.processing_time=0
         obj_source_node.total_chunks=0
+        obj_source_node.token_usage=0
     if retry_condition == DELETE_ENTITIES_AND_START_FROM_BEGINNING:
         execute_graph_query(graph,QUERY_TO_DELETE_EXISTING_ENTITIES, params={"filename":file_name})
         

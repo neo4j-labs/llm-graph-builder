@@ -316,9 +316,9 @@ def create_community_summaries(gds, model, email, uri):
     token_usage = 0
     try:
         #pre check if user allowed to create community summaries
-        if get_value_from_env("TRACK_TOKEN_USAGE", "false", "bool"):
+        if get_value_from_env("TRACK_USER_USAGE", "false", "bool"):
             try:
-                track_token_usage(email, uri, 0, model)
+                track_token_usage(email, uri, 0, model,operation_type="precheck")
             except LLMGraphBuilderException as e:
                 logging.error(str(e))
                 raise RuntimeError(str(e))
@@ -361,21 +361,20 @@ def create_community_summaries(gds, model, email, uri):
 
     finally:
        try:
-           if get_value_from_env("TRACK_TOKEN_USAGE", "false", "bool"):
+           if get_value_from_env("TRACK_USER_USAGE", "false", "bool"):
                if callback_handler:
                    usage = callback_handler.report()
                    token_usage = usage.get("total_tokens", 0)
                    if email and token_usage > 0:
                        email = email.strip().replace('"', '')
-                       latest_token = track_token_usage(email, uri, token_usage, model)
+                       latest_token = track_token_usage(email, uri, token_usage, model,operation_type="community_summary")
                        logging.info(f"In community : Total token usage {latest_token} for user {email} ")
        except Exception as err:
            logging.warning(f"Failed to track token usage: {err}")
 
-def create_community_embeddings(gds):
+def create_community_embeddings(gds, embedding_provider, embedding_model):
     try:
-        embedding_model = get_value_from_env("EMBEDDING_MODEL","sentence_transformer")
-        embeddings, dimension = load_embedding_model(embedding_model)
+        embeddings, dimension = load_embedding_model(embedding_provider, embedding_model)
         logging.info(f"Embedding model '{embedding_model}' loaded successfully.")
         
         logging.info("Fetching community details.")
@@ -467,7 +466,7 @@ def create_fulltext_index(gds, index_type):
         logging.error("An error occurred while creating the full-text index.", exc_info=True)
         logging.error(f"Error details: {str(e)}")
 
-def create_community_properties(gds, model, email, uri):
+def create_community_properties(gds, model, email, uri, embedding_provider, embedding_model):
     commands = [
         (CREATE_COMMUNITY_CONSTRAINT, "created community constraint to the graph."),
         (CREATE_COMMUNITY_LEVELS, "Successfully created community levels."),
@@ -484,7 +483,7 @@ def create_community_properties(gds, model, email, uri):
         create_community_summaries(gds, model, email, uri)
         logging.info("Successfully created community summaries.")
 
-        embedding_dimension = create_community_embeddings(gds)
+        embedding_dimension = create_community_embeddings(gds, embedding_provider, embedding_model)
         logging.info("Successfully created community embeddings.")
 
         create_vector_index(gds=gds,index_type=ENTITY_VECTOR_INDEX_NAME,embedding_dimension=embedding_dimension)
@@ -518,7 +517,7 @@ def clear_communities(gds):
         raise
 
 
-def create_communities(uri, username, password, database,email=None,model=COMMUNITY_CREATION_DEFAULT_MODEL):
+def create_communities(uri, username, password, database,email=None,model=COMMUNITY_CREATION_DEFAULT_MODEL, embedding_provider=None, embedding_model=None):
     try:
         gds = get_gds_driver(uri, username, password, database)
         clear_communities(gds)
@@ -527,7 +526,7 @@ def create_communities(uri, username, password, database,email=None,model=COMMUN
         write_communities_success = write_communities(gds, graph_project)
         if write_communities_success:
             logging.info("Starting Community properties creation process.")
-            create_community_properties(gds,model,email,uri)
+            create_community_properties(gds,model,email,uri, embedding_provider, embedding_model)
             logging.info("Communities creation process completed successfully.")
         else:
             logging.warning("Failed to write communities. Constraint was not applied.")

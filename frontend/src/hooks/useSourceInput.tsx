@@ -4,6 +4,7 @@ import { useFileContext } from '../context/UsersFiles';
 import { urlScanAPI } from '../services/URLScan';
 import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../context/UserCredentials';
+import { getEmbeddingModel } from '../utils/EmbeddingConfigUtils';
 
 export default function useSourceInput(
   validator: (e: string) => boolean,
@@ -63,6 +64,8 @@ export default function useSourceInput(
         entityEntityRelCount: 0,
         communityNodeCount: 0,
         communityRelCount: 0,
+        token_usage: 0,
+        embedding_model: getEmbeddingModel(),
       };
       if (url.trim() != '') {
         setIsValid(validator(url) && isFocused);
@@ -149,6 +152,8 @@ export default function useSourceInput(
                   fileSource: defaultValues.fileSource,
                   processingProgress: defaultValues.processingProgress,
                   uploadProgress: 100,
+                  token_usage: defaultValues.token_usage,
+                  embedding_model: defaultValues.embedding_model,
                 });
               }
             }

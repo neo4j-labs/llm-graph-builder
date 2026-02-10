@@ -321,9 +321,9 @@ image::images/Schema.jpg[PredefinedSchema, 600]
 
 image::images/UserDefinedSchema.jpg[UserDefinedSchema, 600]
 
-* ***Additional Instructions:*** 
+* ***Processing Configuration:*** 
 
-image::images/AddtionalInstructions.jpg[AddtionalInstructions, 600]
+image::images/ProcessingConfiguration.jpg[ProcessingConfiguration, 600]
 
 * ***/delete_unconnected_nodes:***
   ** to remove the lonely entities.
@@ -843,6 +843,8 @@ The API is used to drop and create the vector index when vector index dimesion a
 * `password`= Neo4j db password, 
 * `database`= Neo4j database name,
 * `isVectorIndexExist`= True or False based on whether vector index exist in database,
+* `embedding_provider`= Embedding provider selected by user
+* `embedding_model`= Embedding model selected by user
 
 === 23) Reprocessing of sources
 ----

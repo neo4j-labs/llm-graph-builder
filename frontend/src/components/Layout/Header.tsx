@@ -11,7 +11,7 @@ import {
   ArrowDownTrayIconOutline,
 } from '@neo4j-ndl/react/icons';
 import { Button, SpotlightTarget, TextLink, Typography, useSpotlightContext } from '@neo4j-ndl/react';
-import { memo, useCallback, useContext, useEffect, useRef, useState, useMemo } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState, useMemo } from 'react';
 import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
 import { buttonCaptions, SKIP_AUTH, tooltips } from '../../utils/Constants';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
@@ -282,4 +282,4 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
     </>
   );
 };
-export default memo(Header);
+export default Header;

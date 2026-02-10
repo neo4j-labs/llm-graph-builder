@@ -29,6 +29,7 @@ import {
   tokenchunkSize,
   chunkOverlap,
   chunksToCombine,
+  SKIP_AUTH,
 } from '../utils/Constants';
 import ButtonWithToolTip from './UI/ButtonWithToolTip';
 import DropdownComponent from './Dropdown';
@@ -54,6 +55,7 @@ import { ChevronUpIconOutline, ChevronDownIconOutline } from '@neo4j-ndl/react/i
 import { ThemeWrapperContext } from '../context/ThemeWrapper';
 import { useAuth0 } from '@auth0/auth0-react';
 import React from 'react';
+import { clearEmbeddingConfig, clearChunkConfig, getEmbeddingModel } from '../utils/EmbeddingConfigUtils';
 
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
 
@@ -133,6 +135,7 @@ const Content: React.FC<ContentProps> = ({
   const [deleteLoading, setIsDeleteLoading] = useState<boolean>(false);
 
   const hasSelections = useHasSelections(selectedNodes, selectedRels);
+  const connectDisabled = !isAuthenticated && !SKIP_AUTH;
 
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
@@ -171,7 +174,7 @@ const Content: React.FC<ContentProps> = ({
           />
         );
         try {
-          if (userCredentials && shouldShowTokenTracking(userCredentials.email)) {
+          if (userCredentials && connectionStatus && shouldShowTokenTracking(userCredentials.email)) {
             const tokenCheck = await checkTokenLimits(userCredentials);
             if (tokenCheck.shouldWarn) {
               showNormalToast(tokenCheck.message);
@@ -206,6 +209,7 @@ const Content: React.FC<ContentProps> = ({
                           communityRelCount: c.communityRelCount ?? 0,
                           nodesCount: c.nodeCount,
                           relationshipsCount: c.relationshipCount,
+                          token_usage: c.token_usage ?? 0,
                         };
                       }
                       return f;
@@ -215,12 +219,22 @@ const Content: React.FC<ContentProps> = ({
               }
               showSuccessToast('All Q&A functionality is available now.');
             } else {
-              throw new Error(response.data.error);
+              throw new Error(JSON.stringify(response.data));
             }
           }
         } catch (error) {
           if (error instanceof Error) {
-            showSuccessToast(error.message);
+            try {
+              const errorData = JSON.parse(error.message);
+              if (errorData.error && errorData.message) {
+                console.error('Error:', errorData.error);
+                showErrorToast(errorData.message);
+              } else {
+                showErrorToast(error.message);
+              }
+            } catch {
+              showErrorToast(error.message);
+            }
           }
         }
       })();
@@ -250,7 +264,7 @@ const Content: React.FC<ContentProps> = ({
         return {
           ...curfile,
           model:
-            curfile.status === 'New' || curfile.status === 'Ready to Reprocess'
+            curfile.status === 'New' || curfile.status === 'Ready to Reprocess' || curfile.status === 'Failed'
               ? (selectedOption?.value ?? '')
               : curfile.model,
         };
@@ -287,7 +301,7 @@ const Content: React.FC<ContentProps> = ({
   const extractHandler = async (fileItem: CustomFile, uid: string) => {
     queue.remove((item) => item.name === fileItem.name);
     try {
-      if (userCredentials && shouldShowTokenTracking(userCredentials.email)) {
+      if (userCredentials && connectionStatus && shouldShowTokenTracking(userCredentials.email)) {
         const tokenCheck = await checkTokenLimits(userCredentials);
         if (tokenCheck.shouldWarn) {
           showNormalToast(tokenCheck.message);
@@ -320,7 +334,7 @@ const Content: React.FC<ContentProps> = ({
       }
 
       const apiResponse = await extractAPI(
-        fileItem.model,
+        model,
         fileItem.fileSource,
         fileItem.retryOption ?? '',
         fileItem.sourceUrl,
@@ -359,6 +373,7 @@ const Content: React.FC<ContentProps> = ({
                 nodesCount: apiRes?.nodeCount,
                 relationshipsCount: apiRes?.relationshipCount,
                 model: apiRes?.model,
+                token_usage: apiRes?.token_usage,
               };
             }
             return curfile;
@@ -435,7 +450,7 @@ const Content: React.FC<ContentProps> = ({
         />
       );
       try {
-        if (userCredentials && shouldShowTokenTracking(userCredentials.email)) {
+        if (userCredentials && connectionStatus && shouldShowTokenTracking(userCredentials.email)) {
           const tokenCheck = await checkTokenLimits(userCredentials);
           if (tokenCheck.shouldWarn) {
             showNormalToast(tokenCheck.message);
@@ -463,6 +478,7 @@ const Content: React.FC<ContentProps> = ({
               communityRelCount: c.communityRelCount ?? 0,
               nodesCount: c.nodeCount,
               relationshipsCount: c.relationshipCount,
+              token_usage: c.token_usage ?? 0,
             };
           };
 
@@ -619,14 +635,14 @@ const Content: React.FC<ContentProps> = ({
     setAllPatterns([]);
     localStorage.removeItem('selectedTokenChunkSize');
     setSelectedTokenChunkSize(tokenchunkSize);
-    localStorage.removeItem('selectedChunk_overlap');
+    clearChunkConfig();
     setSelectedChunk_overlap(chunkOverlap);
-    localStorage.removeItem('selectedChunks_to_combine');
     setSelectedChunks_to_combine(chunksToCombine);
-    localStorage.removeItem('instructions');
     localStorage.removeItem('selectedNodeLabels');
     localStorage.removeItem('selectedRelationshipLabels');
     localStorage.removeItem('selectedPattern');
+    clearEmbeddingConfig();
+    localStorage.removeItem('allowEmbeddingChange');
     setAdditionalInstructions('');
     setMessages([
       {
@@ -670,6 +686,8 @@ const Content: React.FC<ContentProps> = ({
                   processingProgress: isStartFromBeginning ? 0 : f.processingProgress,
                   nodesCount: isStartFromBeginning ? 0 : f.nodesCount,
                   relationshipsCount: isStartFromBeginning ? 0 : f.relationshipsCount,
+                  token_usage: isStartFromBeginning ? 0 : f.token_usage,
+                  embedding_model: getEmbeddingModel(),
                 }
               : f;
           });
@@ -949,29 +967,35 @@ const Content: React.FC<ContentProps> = ({
           <div className='enhancement-btn__wrapper'>
             <ButtonWithToolTip
               placement='top'
-              text='Enhance graph quality'
+              text={
+                !isAuthenticated
+                  ? 'Please log in first'
+                  : !connectionStatus
+                    ? 'Please connect to Neo4j'
+                    : 'Enhance graph quality'
+              }
               label='Graph Enhancement Settings'
               className='mr-2!'
               onClick={toggleEnhancementDialog}
               disabled={!connectionStatus || isReadOnlyUser}
               size={isTablet ? 'small' : 'medium'}
+              alwaysShowTooltip={true}
             >
               Graph Settings
             </ButtonWithToolTip>
             {!connectionStatus ? (
-              <SpotlightTarget
-                id='connectbutton'
-                hasPulse={true}
-                indicatorVariant='border'
-                className='n-bg-palette-primary-bg-strong hover:n-bg-palette-primary-hover-strong'
-              >
-                <Button
+              <SpotlightTarget id='connectbutton' hasPulse={!connectDisabled} indicatorVariant='border'>
+                <ButtonWithToolTip
+                  text={connectDisabled ? 'Please login first to connect' : buttonCaptions.connectToNeo4j}
+                  label={buttonCaptions.connectToNeo4j}
+                  disabled={connectDisabled}
                   size={isTablet ? 'small' : 'medium'}
                   className='mr-2!'
                   onClick={() => setOpenConnection((prev) => ({ ...prev, openPopUp: true }))}
+                  alwaysShowTooltip={true}
                 >
                   {buttonCaptions.connectToNeo4j}
-                </Button>
+                </ButtonWithToolTip>
               </SpotlightTarget>
             ) : (
               showDisconnectButton && (
@@ -1027,13 +1051,14 @@ const Content: React.FC<ContentProps> = ({
           <Flex flexDirection='row' gap='4' className='self-end mb-2.5' flexWrap='wrap'>
             <SpotlightTarget id='generategraphbtn'>
               <ButtonWithToolTip
-                text={tooltips.generateGraph}
+                text={!isAuthenticated ? 'Please log in first' : tooltips.generateGraph}
                 placement='top'
                 label='generate graph'
                 onClick={onClickHandler}
                 disabled={disableCheck || isReadOnlyUser}
                 className='mr-0.5'
                 size={isTablet ? 'small' : 'medium'}
+                alwaysShowTooltip={true}
               >
                 {buttonCaptions.generateGraph}{' '}
                 {selectedfileslength && !disableCheck && newFilecheck ? `(${newFilecheck})` : ''}
@@ -1041,7 +1066,11 @@ const Content: React.FC<ContentProps> = ({
             </SpotlightTarget>
             <ButtonWithToolTip
               text={
-                !selectedfileslength ? tooltips.deleteFile : `${selectedfileslength} ${tooltips.deleteSelectedFiles}`
+                !isAuthenticated
+                  ? 'Please log in first'
+                  : !selectedfileslength
+                    ? 'Please select file to delete'
+                    : `${selectedfileslength} ${tooltips.deleteSelectedFiles}`
               }
               placement='top'
               onClick={() => setShowDeletePopUp(true)}
@@ -1049,15 +1078,25 @@ const Content: React.FC<ContentProps> = ({
               className='ml-0.5'
               label='Delete Files'
               size={isTablet ? 'small' : 'medium'}
+              alwaysShowTooltip={true}
             >
               {buttonCaptions.deleteFiles}
               {selectedfileslength != undefined && selectedfileslength > 0 && `(${selectedfileslength})`}
             </ButtonWithToolTip>
             <SpotlightTarget id='visualizegraphbtn'>
               <Flex flexDirection='row' gap='0'>
-                <Button
+                <ButtonWithToolTip
+                  text={
+                    !selectedfileslength || selectedfileslength === 0
+                      ? 'Please select file to Preview Graph'
+                      : completedfileNo === 0
+                        ? 'Please select completed file(s) to Preview Graph'
+                        : `${selectedfileslength} selected, ${completedfileNo} file(s) ready to preview`
+                  }
+                  label='Preview Graph'
                   onClick={handleGraphView}
-                  isDisabled={showGraphCheck}
+                  alwaysShowTooltip={true}
+                  disabled={showGraphCheck}
                   className='px-0! flex! items-center justify-between gap-4 graphbtn'
                   size={isTablet ? 'small' : 'medium'}
                 >
@@ -1065,7 +1104,7 @@ const Content: React.FC<ContentProps> = ({
                     {buttonCaptions.showPreviewGraph}{' '}
                     {selectedfileslength && completedfileNo ? `(${completedfileNo})` : ''}
                   </span>
-                </Button>
+                </ButtonWithToolTip>
                 <div
                   className={`ndl-icon-btn ndl-clean dropdownbtn ${colorMode === 'dark' ? 'darktheme' : ''} ${
                     isTablet ? 'small' : 'medium'

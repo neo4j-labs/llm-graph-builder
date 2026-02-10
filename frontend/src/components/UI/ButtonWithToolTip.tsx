@@ -14,6 +14,7 @@ const ButtonWithToolTip = ({
   fill = 'filled',
   type = 'button',
   color,
+  alwaysShowTooltip = false,
 }: {
   text: string | React.ReactNode;
   children: React.ReactNode;
@@ -29,6 +30,7 @@ const ButtonWithToolTip = ({
   fill?: 'filled' | 'outlined' | 'text';
   type?: 'submit' | 'button' | 'reset';
   color?: 'primary' | 'danger' | undefined;
+  alwaysShowTooltip?: boolean;
 }) => {
   const [isHovered, setIsHovered] = useState<boolean>(false);
   return (
@@ -52,7 +54,9 @@ const ButtonWithToolTip = ({
           {children}
         </Button>
       </Tooltip.Trigger>
-      {isHovered && <Tooltip.Content style={{ whiteSpace: 'nowrap' }}>{text}</Tooltip.Content>}
+      {(isHovered || (disabled && alwaysShowTooltip)) && (
+        <Tooltip.Content style={{ whiteSpace: 'nowrap' }}>{text}</Tooltip.Content>
+      )}
     </Tooltip>
   );
 };
