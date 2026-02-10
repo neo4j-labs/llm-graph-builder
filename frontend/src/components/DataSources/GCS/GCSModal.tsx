@@ -107,7 +107,6 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
                 gcsBucketFolder: item.gcsBucketFolder,
                 googleProjectId: item.gcsProjectId,
                 id: uuidv4(),
-                token_usage: 0,
                 accessToken: codeResponse.access_token,
                 ...defaultValues,
                 uploadProgress: 100,
@@ -126,7 +125,6 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
                 processingProgress: defaultValues.processingProgress,
                 accessToken: codeResponse.access_token,
                 uploadProgress: 100,
-                token_usage: defaultValues.token_usage,
                 embedding_model: defaultValues.embedding_model,
               });
             }
