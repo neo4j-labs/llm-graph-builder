@@ -387,10 +387,29 @@ def track_token_usage(
     - Increments daily, monthly and total usage.
     """
     try:
-        logging.info("inside new function of track_token_usage")
         normalized_email = (email or "").strip().lower() or None
         normalized_db_url = (uri or "").strip() or None
-
+        logging.info(f"Tracking token usage for email: {normalized_email}, uri: {normalized_db_url}, usage: {usage}, operation_type: {operation_type}")
+        is_neo4j_user = bool(normalized_email and normalized_email.endswith("@neo4j.com"))
+        
+        if operation_type == "precheck":
+            limits = get_remaining_token_limits(email, uri)
+            users_daily_limit = limits.get("daily_limit", 0)
+            users_monthly_limit = limits.get("monthly_limit", 0)
+            users_daily_used = limits.get("daily_used", 0)
+            users_monthly_used = limits.get("monthly_used", 0)
+            
+            if get_value_from_env("LIMIT_TOKEN_USAGE_PER_USER", "False", bool):
+                if ((users_daily_used > users_daily_limit) or (users_monthly_used > users_monthly_limit)) and not is_neo4j_user:
+                    raise LLMGraphBuilderException(
+                        "Token usage limit exceeded. Please contact the team to increase your limit."
+                    )
+            logging.info(
+                "Precheck passed:  daily=%s/%s, monthly=%s/%s",
+                users_daily_used, users_daily_limit, users_monthly_used, users_monthly_limit
+            )
+            return None
+        
         if not normalized_email and not normalized_db_url:
             raise ValueError("Either email or db_url must be provided for token tracking.")
 
@@ -405,8 +424,6 @@ def track_token_usage(
         graph = create_graph_database_connection(credentials)
         daily_tokens_limit = get_value_from_env("DAILY_TOKENS_LIMIT", "250000", "int")
         monthly_tokens_limit = get_value_from_env("MONTHLY_TOKENS_LIMIT", "1000000", "int")
-        is_neo4j_user = bool(normalized_email and normalized_email.endswith("@neo4j.com"))
-
         auth_required = get_value_from_env("AUTHENTICATION_REQUIRED", False, bool)
 
         params = {
