@@ -35,6 +35,7 @@ import {
 } from '@tanstack/react-table';
 import { useFileContext } from '../context/UsersFiles';
 import { getSourceNodes } from '../services/GetFiles';
+import { getTokenLimits } from '../services/TokenLimits';
 import { v4 as uuidv4 } from 'uuid';
 import {
   statusCheck,
@@ -733,6 +734,9 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
           return;
         }
         const res = await getSourceNodes(userCredentials);
+        getTokenLimits(userCredentials).catch((error) => {
+          console.error('Failed to refresh token limits:', error);
+        });
         if (!res.data) {
           throw new Error('Please check backend connection');
         }
@@ -864,6 +868,9 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
     }
     try {
       const res = await getSourceNodes(userCredentials);
+      getTokenLimits(userCredentials).catch((error) => {
+        console.error('Failed to refresh token limits:', error);
+      });
       if (res.data && res.data.status !== 'Failed' && res.data.data.length) {
         const updatedFiles = res.data.data
           .map((item: SourceNode) => {
