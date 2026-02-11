@@ -114,7 +114,7 @@ Run the application using the default `docker-compose` configuration.
    By default, only OpenAI and Diffbot are enabled. Gemini requires additional GCP configurations.  
    Use the `VITE_LLM_MODELS_PROD` variable to configure the models you need. Example:
    ```bash
-   VITE_LLM_MODELS_PROD="openai_gpt_5_mini,diffbot,gemini_2.5_flash"
+   VITE_LLM_MODELS_PROD="gemini_2.5_flash,openai_gpt_5_mini,diffbot,anthropic_claude_4.5_haiku"
    ```
 
 2. **Input Sources:**  
@@ -236,8 +236,6 @@ gcloud run deploy dev-backend \
 ---
 
 ## [ENV][env-sheet]
-
-## [ENV][env-sheet]
 | Env Variable Name       | Mandatory/Optional | Default Value | Description                                                                                      |
 |------------------------ |-------------------|---------------|--------------------------------------------------------------------------------------------------|
 |                        |                   |               |                                                                                                  |
@@ -282,7 +280,7 @@ gcloud run deploy dev-backend \
 | VITE_TOKENS_PER_CHUNK  | Optional           | 100           | Variable to configure tokens count per chunk. This gives flexibility for users who may require different chunk sizes for various tokenization tasks |
 | VITE_CHUNK_TO_COMBINE  | Optional           | 1             | Variable to configure number of chunks to combine for parallel processing                        |
 
-### Refer to this link for additional  [Environment Variables][env-vars].
+### Check example.env(Frontend) file for additional Environment Variables
 
 ---
 
