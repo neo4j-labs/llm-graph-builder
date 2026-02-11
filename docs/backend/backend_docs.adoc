@@ -441,8 +441,8 @@ The API responsible for a chatbot system designed to leverage multiple AI models
 
 **Components :** 
  
-** Embedding Models - Includes OpenAI Embeddings, VertexAI Embeddings, and SentenceTransformer Embeddings(Default) to support vector-based query operations.
-** AI Models - OpenAI GPT 3.5, GPT 4o, GPT 40 mini, gemini_1.5_flash can be configured for the chatbot backend to generate responses and process natural language.
+** Embedding Models - Includes OpenAI Embeddings, VertexAI Embeddings, BedrockEmbeddings and SentenceTransformer Embeddings(Default) to support vector-based query operations.
+** AI Models - OpenAI GPT 5 mini, gemini_2.5_flash, anthropic claude 4.5 haiku can be configured for the chatbot backend to generate responses and process natural language.
 ** Graph Database (Neo4jGraph) - Manages interactions with the Neo4j database, retrieving, and storing conversation histories.
 ** Response Generation - Utilizes Vector Embeddings from the Neo4j database, chat history, and the knowledge base of the LLM used.
 ** Chat Modes - Vector , Graph, Vector + Graph, Fulltext, Vector + Graph+Fulltext, Entity Search + Vector, Global search Vector 
