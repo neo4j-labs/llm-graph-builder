@@ -249,7 +249,7 @@ gcloud run deploy dev-backend \
 | DUPLICATE_TEXT_DISTANCE | Optional          | 5             | This value is used to find distance for all node pairs in the graph and is calculated based on node properties |
 | DUPLICATE_SCORE_VALUE   | Optional          | 0.97          | Node score value to match duplicate nodes                                                        |
 | EFFECTIVE_SEARCH_RATIO  | Optional          | 1             | Ratio used for effective search calculations                                                     |
-| GRAPH_CLEANUP_MODEL     | Optional          | openai_gpt_4o_mini | Model name to clean up graph in post processing                                            |
+| GRAPH_CLEANUP_MODEL     | Optional          | openai_gpt_5_mini | Model name to clean up graph in post processing                                            |
 | MAX_TOKEN_CHUNK_SIZE    | Optional          | 10000         | Maximum token size to process file content                                                       |
 | YOUTUBE_TRANSCRIPT_PROXY| Mandatory         |               | Proxy key to process YouTube videos for getting transcripts                                      |
 | IS_EMBEDDING           | Optional           | true          | Flag to enable text embedding                                                                    |
@@ -280,7 +280,7 @@ gcloud run deploy dev-backend \
 | VITE_TOKENS_PER_CHUNK  | Optional           | 100           | Variable to configure tokens count per chunk. This gives flexibility for users who may require different chunk sizes for various tokenization tasks |
 | VITE_CHUNK_TO_COMBINE  | Optional           | 1             | Variable to configure number of chunks to combine for parallel processing                        |
 
-### Check example.env(Frontend) file for additional Environment Variables
+### Check example.env(Frontend & Backend) file for additional Environment Variables
 
 ---
 
