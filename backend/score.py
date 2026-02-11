@@ -549,12 +549,14 @@ async def connect(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)
     try:
         start = time.time()
         graph = create_graph_database_connection(credentials)
+        graph_DB_dataAccess = graphDBdataAccess(graph)
         auth_required = get_value_from_env("AUTHENTICATION_REQUIRED", False, bool)
         if auth_required:
             if not getattr(credentials, "email", None) or not getattr(credentials, "uri", None):
                 error_message = "Authentication required: Your session is missing required credentials. Please log in to the application."
                 raise Exception(error_message)
-        result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, credentials.database, credentials.email, credentials.uri)
+        result = await asyncio.to_thread(graph_DB_dataAccess.connection_check_and_get_vector_dimensions, credentials)
+        await asyncio.to_thread(graph_DB_dataAccess.save_user_information, credentials)
         gcs_cache = get_value_from_env("GCS_FILE_CACHE","False","bool")
         end = time.time()
         elapsed_time = end - start
@@ -630,9 +632,6 @@ async def get_structured_schema(credentials: Neo4jCredentials = Depends(get_neo4
             
 def decode_password(pwd):
     return base64.b64decode(pwd).decode("utf-8")
-
-def encode_password(pwd):
-    return base64.b64encode(pwd.encode('ascii'))
 
 @app.get("/update_extract_status/{file_name}")
 async def update_extract_status(
@@ -1089,12 +1088,18 @@ async def backend_connection_configuration():
         database= get_value_from_env("NEO4J_DATABASE")
         password= get_value_from_env("NEO4J_PASSWORD")
         gcs_cache = get_value_from_env("GCS_FILE_CACHE","False","bool")
+        graph_credentials = Neo4jCredentials(
+                    uri=uri,
+                    userName=username,
+                    password=password,
+                    database=database,
+                )
         if all([uri, username, database, password]):
             graph = Neo4jGraph()
             logging.info(f'login connection status of object: {graph}')
             if graph is not None:
                 graph_connection = True        
-                result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, database, None, uri)
+                result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, graph_credentials)
                 result['gcs_file_cache'] = gcs_cache
                 result['uri'] = uri
                 end = time.time()
