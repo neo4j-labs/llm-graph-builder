@@ -280,7 +280,12 @@ gcloud run deploy dev-backend \
 | VITE_TOKENS_PER_CHUNK  | Optional           | 100           | Variable to configure tokens count per chunk. This gives flexibility for users who may require different chunk sizes for various tokenization tasks |
 | VITE_CHUNK_TO_COMBINE  | Optional           | 1             | Variable to configure number of chunks to combine for parallel processing                        |
 
-### Check example.env(Frontend & Backend) file for additional Environment Variables
+### Example Environment Files
+
+Refer to the example environment files for additional variables and configuration:
+
+- [Backend example.env](https://github.com/neo4j-labs/llm-graph-builder/blob/main/backend/example.env)
+- [Frontend example.env](https://github.com/neo4j-labs/llm-graph-builder/blob/main/frontend/example.env)
 
 ---
 
