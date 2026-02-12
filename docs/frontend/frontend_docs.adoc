@@ -444,7 +444,7 @@ Followed best practices for optimizing performance and security of the deployed 
  * VITE_BACKEND_API_URL=
  * VITE_BLOOM_URL=
  * VITE_BACKEND_PROCESSING_URL=
- * VITE_LLM_MODELS_PROD="openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash"
+ * VITE_LLM_MODELS_PROD="openai_gpt_5_mini,diffbot,gemini_2.5_flash"
  * VITE_BATCH_SIZE=2
 ----
 * ***Cloud Deployment:***
@@ -633,8 +633,9 @@ The API responsible for a chatbot system designed to leverage multiple AI models
 
 **Components :** 
  
-** Embedding Models - Includes OpenAI Embeddings, VertexAI Embeddings, and SentenceTransformer Embeddings to support vector-based query operations.
-** AI Models - OpenAI GPT 3.5, GPT 4o, Gemini Pro, Gemini 1.5 Pro and Groq llama3 can be configured for the chatbot backend to generate responses and process natural language.
+** Embedding Models - Includes OpenAI Embeddings, VertexAI Embeddings, BedrockEmbeddings and SentenceTransformer Embeddings(Default) to support vector-based query operations.
+** Embedding Models - Includes OpenAI Embeddings, VertexAI Embeddings,  and SentenceTransformer Embeddings to support vector-based query operations.
+** AI Models - OpenAI GPT 5 mini, gemini_2.5_flash, anthropic claude 4.5 haiku can be configured for the chatbot backend to generate responses and process natural language.
 ** Graph Database (Neo4jGraph) - Manages interactions with the Neo4j database, retrieving, and storing conversation histories.
 ** Response Generation - Utilizes Vector Embeddings from the Neo4j database, chat history, and the knowledge base of the LLM used.
 
