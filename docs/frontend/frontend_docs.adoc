@@ -325,6 +325,16 @@ image::images/UserDefinedSchema.jpg[UserDefinedSchema, 600]
 
 image::images/ProcessingConfiguration.jpg[ProcessingConfiguration, 600]
 
+* ***Embedding Model Dropdown:*** 
+Displays the list of available embedding models for vector generation.
+
+image::images/EmbeddingModelDropdown.jpg[Embedding Model Dropdown, 600]
+
+* ***Apply Button with Updated Configuration:*** 
+Saves the updated processing and embedding configuration.
+
+image::images/ProcessingConfigurationUpdated.jpg[Processing Configuration Updated, 600]
+
 * ***/delete_unconnected_nodes:***
   ** to remove the lonely entities.
 
@@ -444,7 +454,7 @@ Followed best practices for optimizing performance and security of the deployed 
  * VITE_BACKEND_API_URL=
  * VITE_BLOOM_URL=
  * VITE_BACKEND_PROCESSING_URL=
- * VITE_LLM_MODELS_PROD="openai_gpt_4o,openai_gpt_4o_mini,diffbot,gemini_1.5_flash"
+ * VITE_LLM_MODELS_PROD="openai_gpt_5_mini,diffbot,gemini_2.5_flash"
  * VITE_BATCH_SIZE=2
 ----
 * ***Cloud Deployment:***
@@ -473,13 +483,39 @@ Neo4j database connection on frontend is done with this API.
 
 === 2) Backend Database connection 
 ----
-POST /backend_connection_configuation
+POST /backend_connection_configuration
 ----
 
 The API responsible for create the connection obj from Neo4j DB based on environment variable and return the status for show/hide login dialog on UI 
 
+=== 3) Get Token Limits
+----
+POST /get_token_limits
+----
+This API retrieves the token usage limits or quota available for the configured LLM provider. It is used by the frontend to determine remaining usage and adjust model availability or warnings.
 
-=== 3) Upload Files from Local
+**API Parameters :**
+* `uri`      = Neo4j URI
+*`userName`  = Neo4j database username
+*`password`  = Neo4j database password
+*`database`  = Neo4j database name
+*`email`     = (Optional) Registered email for the LLM provider account
+
+=== 4) Fetch Embedding Models
+----
+POST /fetch_embedding_model
+----
+
+Retrieves the list of available embedding providers and embedding models that the user can select in the Processing Configuration panel.
+
+**API Parameters :**
+* `uri`        = Neo4j URI
+* `userName`   = Neo4j database username
+* `password`   = Neo4j database password
+* `database`   = Neo4j database name
+* `email`      = User email for model permissions (optional)
+
+=== 5) Upload Files from Local
 ----
 POST /upload
 ----
@@ -499,7 +535,7 @@ The upload endpoint is designed to handle the uploading of large files by breaki
 * `database`= Neo4j database name
 
 
-=== 4) User Defined Schema
+=== 6) User Defined Schema
 ----
 POST /schema
 ----
@@ -513,7 +549,7 @@ User can set schema for graph generation (i.e. Nodes and relationship labels) in
 * `password`= Neo4j db password, 
 * `database`= Neo4j database name
 
-=== 5) Graph schema from Input Text
+=== 7) Graph schema from Input Text
 ----
 POST /populate_graph_schema
 ----
@@ -526,7 +562,7 @@ The API is used to populate a graph schema based on the provided input text, mod
 * `model`=The model to be used for populating the graph schema.
 * `is_schema_description_checked`=A flag indicating whether the schema description should be considered.
 
-=== 6) Unstructured Sources
+=== 8) Unstructured Sources
 ----
 POST /url/scan 
 ----
@@ -552,7 +588,7 @@ Create Document node for other sources - s3 bucket, gcs bucket, wikipedia, youtu
 * `access_token`=Form(None)
 
 
-=== 7) Extration of Nodes and Relations from Data
+=== 9) Extration of Nodes and Relations from Data
 ----
 POST /extract
 ----
@@ -594,7 +630,7 @@ allowedNodes=Node labels passed from settings panel,
 * `allowedRelationship`=Relationship labels passed from settings panel,
 * `language`=Language in which wikipedia content will be extracted
      
-=== 8) Get list of sources
+=== 10) Get list of sources
 ----
 GET /sources_list
 ----
@@ -609,7 +645,7 @@ List all sources (Document nodes) present in Neo4j graph database.
 * `database`= Neo4j database name
 
 
-=== 9) Post processing after graph generation
+=== 11) Post processing after graph generation
 ----
 POST /post_processing :
 ----
@@ -624,7 +660,7 @@ This API is called at the end of processing of whole document to get create k-ne
 * `database`= Neo4j database name
 * `tasks`= List of tasks to perform
 
-=== 10) Chat with Data
+=== 12) Chat with Data
 ----
 POST /chat_bot
 ----
@@ -633,8 +669,9 @@ The API responsible for a chatbot system designed to leverage multiple AI models
 
 **Components :** 
  
-** Embedding Models - Includes OpenAI Embeddings, VertexAI Embeddings, and SentenceTransformer Embeddings to support vector-based query operations.
-** AI Models - OpenAI GPT 3.5, GPT 4o, Gemini Pro, Gemini 1.5 Pro and Groq llama3 can be configured for the chatbot backend to generate responses and process natural language.
+** Embedding Models - Includes OpenAI Embeddings, VertexAI Embeddings, BedrockEmbeddings and SentenceTransformer Embeddings(Default) to support vector-based query operations.
+** Embedding Models - Includes OpenAI Embeddings, VertexAI Embeddings,  and SentenceTransformer Embeddings to support vector-based query operations.
+** AI Models - OpenAI GPT 5 mini, gemini_2.5_flash, anthropic claude 4.5 haiku can be configured for the chatbot backend to generate responses and process natural language.
 ** Graph Database (Neo4jGraph) - Manages interactions with the Neo4j database, retrieving, and storing conversation histories.
 ** Response Generation - Utilizes Vector Embeddings from the Neo4j database, chat history, and the knowledge base of the LLM used.
 
@@ -647,7 +684,7 @@ The API responsible for a chatbot system designed to leverage multiple AI models
 * `question`= User query for the chatbot
 * `session_id`= Session ID used to maintain the history of chats during the user's connection
 
-=== 11) Get entities from chunks
+=== 13) Get entities from chunks
 ----
 POST/chunk_entities
 ----
@@ -663,7 +700,7 @@ This API is used to  get the entities and relations associated with a particular
 * `chunk_ids` = Chunk ids of document
 
 
-=== 12) Clear chat history
+=== 14) Clear chat history
 ----
 POST /clear_chat_bot
 ----
@@ -678,7 +715,7 @@ This API is used to clear the chat history which is saved in Neo4j DB.
 * `database`= Neo4j database name,
 * `session_id` = User session id for QA chat
 
-=== 13) View graph for a file
+=== 15) View graph for a file
 ----
 POST /graph_query
 ----
@@ -693,7 +730,7 @@ This API is used to view graph for a particular file.
 * `query_type`= Neo4j database name
 * `document_names` = File name for which user wants to view graph
 
-=== 14) Get neighbour nodes 
+=== 16) Get neighbour nodes 
 ----
 POST /get_neighbours
 ----
@@ -708,7 +745,7 @@ This API is used to retrive the neighbor nodes of the given element id of the no
 * `database`= Neo4j database name,
 * `elementId` = Element id of the node to retrive its neighbours
 
-=== 15) SSE event to update processing status
+=== 17) SSE event to update processing status
 ----
 GET /update_extract_status 
 ----
@@ -737,7 +774,7 @@ The API gives the extraction status of a specified file. It uses Server-Sent Eve
 * `password`= Neo4j db password, 
 * `database`= Neo4j database name
 
-=== 16) Delete selected documents
+=== 18) Delete selected documents
 ----
 POST /delete_document_and_entities
 ----
@@ -754,7 +791,7 @@ Deleteion of nodes and relations for multiple files is done through this API. Us
 * `source_types`= Document sources(Wikipedia, youtube, etc.),
 * `deleteEntities`= Boolean value to check entities deletion is requested or not
 
-=== 17) Cancel processing job
+=== 19) Cancel processing job
 ----
 POST/cancelled_job
 ----
@@ -770,7 +807,7 @@ This API is responsible for cancelling an in process job.
 * `filenames`= Name of the file whose processing need to be stopped, 
 * `source_types`= Source of the file
 
-=== 18) Deletion of orpahn nodes
+=== 20) Deletion of orpahn nodes
 ----
 POST /delete_unconnected_nodes
 ----
@@ -785,7 +822,7 @@ The API is used to delete unconnected entities from database.
 * `database`= Neo4j database name,
 * `unconnected_entities_list`=selected entities list to delete of unconnected entities.
 
-=== 19) Get the list of orphan nodes
+=== 21) Get the list of orphan nodes
 ----
 POST /get_unconnected_nodes_list
 ----
@@ -799,7 +836,7 @@ The API retrieves a list of nodes in the graph database that are not connected t
 * `password`= Neo4j db password, 
 * `database`= Neo4j database name
 
-=== 20) Get duplicate nodes
+=== 22) Get duplicate nodes
 ----
 POST /get_duplicate_nodes
 ----
@@ -814,7 +851,7 @@ The API is used to fetch duplicate entities from database.
 * `database`= Neo4j database name,
 
 
-=== 21) Merge duplicate nodes
+=== 23) Merge duplicate nodes
 ----
 POST /merge_duplicate_nodes
 ----
@@ -829,7 +866,23 @@ The API is used to merge duplicate entities from database selected by user.
 * `database`= Neo4j database name,
 * `duplicate_nodes_list`= selected entities list to merge of with similar entities.
 
-=== 22) Drop and create vector index
+=== 24) Change embedding model
+----
+POST /change_embedding_model
+----
+
+This API is used to change the embedding model and/or embedding provider in the backend.
+
+**API Parameters :**
+
+* `uri`                 = Neo4j URI,
+* `userName`           = Neo4j db username,
+* `password`           = Neo4j db password,
+* `database`            = Neo4j db name,
+* `embedding_provider`  = Selected embedding provider (e.g., openai, bedrock, vertexai, sentence_transformer),
+* `embedding_model`     = Name of the selected embedding model,
+
+=== 25) Drop and create vector index
 ----
 POST /drop_create_vector_index
 ----
@@ -846,7 +899,7 @@ The API is used to drop and create the vector index when vector index dimesion a
 * `embedding_provider`= Embedding provider selected by user
 * `embedding_model`= Embedding model selected by user
 
-=== 23) Reprocessing of sources
+=== 26) Reprocessing of sources
 ----
 POST /retry_processing
 ----
