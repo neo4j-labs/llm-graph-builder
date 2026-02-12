@@ -209,7 +209,6 @@ const Content: React.FC<ContentProps> = ({
                           communityRelCount: c.communityRelCount ?? 0,
                           nodesCount: c.nodeCount,
                           relationshipsCount: c.relationshipCount,
-                          token_usage: c.token_usage ?? 0,
                         };
                       }
                       return f;
@@ -478,7 +477,6 @@ const Content: React.FC<ContentProps> = ({
               communityRelCount: c.communityRelCount ?? 0,
               nodesCount: c.nodeCount,
               relationshipsCount: c.relationshipCount,
-              token_usage: c.token_usage ?? 0,
             };
           };
 
