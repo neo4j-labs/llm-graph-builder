@@ -36,6 +36,64 @@ Based on the response from this API, the frontend UI displays the connection sta
 }
 ----
 
+=== Get Token Limits
+----
+POST /get_token_limits
+----
+
+Fetches the token usage limits/quota for the configured LLM provider (OpenAI, Gemini, Anthropic, etc.) for the logged‑in user.
+
+**API Parameters :**
+* `uri` = Neo4j URI
+* `userName` = Neo4j database username
+* `password` = Neo4j database password
+* `database` = Neo4j database name
+* `email` = Logged in User Email
+
+**Response :**
+[source,json,indent=0]
+----
+{
+    "status": "Success",
+    "data": {
+        "daily_remaining": 250000,
+        "monthly_remaining": 815234,
+        "daily_limit": 250000,
+        "monthly_limit": 1000000,
+        "daily_used": 0,
+        "monthly_used": 184766
+    },
+    "message": "Token limits fetched successfully"
+}
+----
+
+=== Fetch Embedding Models
+----
+POST /fetch_embedding_model
+----
+
+This API returns the currently selected embedding provider, embedding model, embedding dimension, and whether the vector index needs to be recreated.
+
+**API Parameters :**
+* `uri`        = Neo4j URI
+* `userName`   = Neo4j database username
+* `password`   = Neo4j database password
+* `database`   = Neo4j database name
+* `email`      = Logged in User Email
+
+**Response :**
+[source,json,indent=0]
+----
+{
+    "status": "Success",
+    "data": [
+        "openai",
+        "text-embedding-3-small",
+        1536,
+        true
+    ]
+}
+----
 
 === Upload Files from Local
 ----
@@ -441,8 +499,8 @@ The API responsible for a chatbot system designed to leverage multiple AI models
 
 **Components :** 
  
-** Embedding Models - Includes OpenAI Embeddings, VertexAI Embeddings, and SentenceTransformer Embeddings(Default) to support vector-based query operations.
-** AI Models - OpenAI GPT 3.5, GPT 4o, GPT 40 mini, gemini_1.5_flash can be configured for the chatbot backend to generate responses and process natural language.
+** Embedding Models - Includes OpenAI Embeddings, VertexAI Embeddings, BedrockEmbeddings and SentenceTransformer Embeddings(Default) to support vector-based query operations.
+** AI Models - OpenAI GPT 5 mini, gemini_2.5_flash, anthropic claude 4.5 haiku can be configured for the chatbot backend to generate responses and process natural language.
 ** Graph Database (Neo4jGraph) - Manages interactions with the Neo4j database, retrieving, and storing conversation histories.
 ** Response Generation - Utilizes Vector Embeddings from the Neo4j database, chat history, and the knowledge base of the LLM used.
 ** Chat Modes - Vector , Graph, Vector + Graph, Fulltext, Vector + Graph+Fulltext, Entity Search + Vector, Global search Vector 
@@ -1140,6 +1198,40 @@ The API is used to merge duplicate entities from database selected by user.
     "message": "Duplicate entities merged successfully"
 }
 ....
+
+=== Change Embedding Model
+----
+POST /change_embedding_model
+----
+
+This API updates the active embedding provider and embedding model for the backend.  
+If the selected model has a different embedding dimension from the existing vector index,  
+the backend automatically drops and recreates the vector index.
+
+**API Parameters :**
+* `uri`                 = Neo4j URI
+* `userName`            = Neo4j database username
+* `password`            = Neo4j database password
+* `database`            = Neo4j database name
+* `embedding_provider`  = Selected embedding provider (openai, gemini, vertexai, bedrock, sentence_transformer)
+* `embedding_model`     = Embedding model chosen by the user
+* `email`               = Logged in User Email
+
+**Response :**
+[source,json,indent=0]
+----
+{
+    "status": "Success",
+    "data": {
+        "embedding_provider": "gemini",
+        "embedding_model": "gemini-embedding-001",
+        "embedding_dimension": 3072,
+        "change_index": true
+    },
+    "message": "Embedding model changed successfully. Vector index was dropped and recreated."
+}
+----
+
 === Drop and create vector index
 ----
 POST /drop_create_vector_index
