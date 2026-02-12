@@ -325,8 +325,8 @@ image::images/UserDefinedSchema.jpg[UserDefinedSchema, 600]
 
 image::images/ProcessingConfiguration.jpg[ProcessingConfiguration, 600]
 
-* ***Embedding Model Dropdown:*** 
-Displays the list of available embedding models for vector generation.
+* ***/change_embedding_model:*** 
+**Displays the list of available embedding models for vector generation.
 
 image::images/EmbeddingModelDropdown.jpg[Embedding Model Dropdown, 600]
 
