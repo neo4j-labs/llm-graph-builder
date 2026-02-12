@@ -515,7 +515,7 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
       logging.info(obj_source_node)
       #pre checking if user is allowed to process the file
       if get_value_from_env("TRACK_USER_USAGE", "false", "bool"):
-      track_token_usage(credentials.email, credentials.uri, 0, params.model, operation_type="precheck")
+        track_token_usage(credentials.email, credentials.uri, 0, params.model, operation_type="precheck")
       start_update_source_node = time.time()
       graphDb_data_Access.update_source_node(obj_source_node)
       graphDb_data_Access.update_node_relationship_count(params.file_name)
