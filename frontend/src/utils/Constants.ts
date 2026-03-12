@@ -12,10 +12,10 @@ export const llms =
   import.meta.env?.VITE_LLM_MODELS?.trim() != ''
     ? (import.meta.env.VITE_LLM_MODELS?.split(',') as string[])
     : [
-        'gemini_2.5_flash',
+        'gemini_flash_latest',
         'openai_gpt_5.2',
         'openai_gpt_5_mini',
-        'gemini_2.5_pro',
+        'gemini_pro_latest',
         'diffbot',
         'groq_llama3.1_8b',
         'anthropic_claude_4.5_sonnet',
@@ -33,7 +33,7 @@ export const llms =
 export const prodllms =
   import.meta.env.VITE_LLM_MODELS_PROD?.trim() != ''
     ? (import.meta.env.VITE_LLM_MODELS_PROD?.split(',') as string[])
-    : ['gemini_2.5_flash', 'openai_gpt_5_mini', 'diffbot', 'anthropic_claude_4.5_haiku'];
+    : ['gemini_flash_latest', 'openai_gpt_5_mini', 'diffbot', 'anthropic_claude_4.5_haiku'];
 
 export const chatModeLables = {
   vector: 'vector',
@@ -218,7 +218,7 @@ export const tooltips = {
   predinedSchema: 'Predefined Schema',
   dataImporterJson: 'Data Importer JSON',
 };
-export const PRODMODELS = ['gemini_2.5_flash', 'openai_gpt_5_mini', 'diffbot', 'anthropic_claude_4.5_haiku'];
+export const PRODMODELS = ['gemini_flash_latest', 'openai_gpt_5_mini', 'diffbot', 'anthropic_claude_4.5_haiku'];
 export const buttonCaptions = {
   exploreGraphWithBloom: 'Explore Graph',
   showPreviewGraph: 'Preview Graph',
