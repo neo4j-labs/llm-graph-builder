@@ -62,3 +62,4 @@ rouge_score==0.1.2
 langchain-neo4j==0.6.0
 pypandoc-binary==1.15
 chardet==5.2.0
+cryptography==46.0.4

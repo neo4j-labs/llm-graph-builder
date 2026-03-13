@@ -1,17 +1,63 @@
+import base64
 import logging
 import os
 import time
+from src.entities.user_credential import Neo4jCredentials
 from neo4j.exceptions import TransientError
 from langchain_neo4j import Neo4jGraph
-from src.shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file, load_embedding_model, get_value_from_env, get_user_embedding_model
+from src.shared.common_fn import close_db_connection, create_gcs_bucket_folder_name_hashed, create_graph_database_connection, delete_uploaded_local_file, load_embedding_model, get_value_from_env, get_user_embedding_model
 from src.document_sources.gcs_bucket import delete_file_from_gcs
 from src.shared.constants import NODEREL_COUNT_QUERY_WITH_COMMUNITY, NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY
 from src.entities.source_node import sourceNode
 from src.communities import MAX_COMMUNITY_LEVELS
 import json
 from dotenv import load_dotenv
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.backends import default_backend
 
 load_dotenv()
+
+def derive_key_from_passphrase(passphrase: str, salt: bytes, iterations: int = 390000) -> bytes:
+    """
+    Derive a 32-byte key from passphrase + salt using PBKDF2 (SHA256).
+    """
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt,
+        iterations=iterations,
+        backend=default_backend()
+    )
+    return kdf.derive(passphrase.encode("utf-8"))
+
+def encrypt_text_aes_gcm(plaintext: str, passphrase: str) -> str:
+    """
+    Encrypt plaintext with AES-GCM using a key derived from passphrase+salt.
+    Returns base64-encoded (nonce + ciphertext + tag).
+    """
+    salt = os.urandom(16)                              # random per-secret salt
+    key = derive_key_from_passphrase(passphrase, salt) # same KDF as before
+    aesgcm = AESGCM(key)
+    nonce = os.urandom(12)
+    ciphertext = aesgcm.encrypt(nonce, plaintext.encode(), None)
+    # encode and store as: base64(salt) + "$" + base64(nonce + ciphertext)
+    return base64.b64encode(salt).decode() + "$" + base64.b64encode(nonce + ciphertext).decode()
+
+def decrypt_text_aes_gcm(encoded_combined: str, passphrase: str) -> str:
+    """
+    Decrypt base64(nonce + ciphertext + tag) using passphrase+salt.
+    """
+    salt_b64, combined_b64 = encoded_combined.split("$", 1)
+    salt = base64.b64decode(salt_b64)
+    combined = base64.b64decode(combined_b64)
+    nonce = combined[:12]
+    ciphertext = combined[12:]
+    key = derive_key_from_passphrase(passphrase, salt)
+    aesgcm = AESGCM(key)
+    plaintext = aesgcm.decrypt(nonce, ciphertext, None)
+    return plaintext.decode()
 
 class graphDBdataAccess:
 
@@ -216,7 +262,7 @@ class graphDBdataAccess:
             logging.error(f"An error occurred while checking GDS version: {e}")
             return False
             
-    def connection_check_and_get_vector_dimensions(self, database, email, uri):
+    def connection_check_and_get_vector_dimensions(self, credentials):
         """
         Get the vector index dimension from database and application configuration and DB connection status
         
@@ -238,10 +284,10 @@ class graphDBdataAccess:
                                                     count(c.embedding) as hasEmbedding
                                 """,session_params={"database":self.graph._database})
         
-        embedding_provider, embedding_model, application_dimension, _ = get_user_embedding_model(email, uri)
+        embedding_provider, embedding_model, application_dimension, _ = get_user_embedding_model(credentials.email, credentials.uri)
 
         gds_status = self.check_gds_version()
-        write_access = self.check_account_access(database=database)
+        write_access = self.check_account_access(database=credentials.database)
         
         if self.graph:
             if len(db_vector_dimension) > 0:
@@ -607,3 +653,81 @@ class graphDBdataAccess:
                 """
         param = {"file_name" : file_name}
         return self.execute_query(query, param)
+
+    def save_user_information(self, credentials):
+        """
+        Save user's DB details keyed by email. Password is stored encrypted using
+        passphrase+salt.
+        """
+        try:
+            encrypted_password = None
+            if credentials.password:
+                passphrase = get_value_from_env("ENCRYPTION_PASSPHRASE", None, "str")
+                if not passphrase:
+                    return {"status": "Failed", "message": "Encryption passphrase not configured in environment."}
+                try:
+                    encrypted_password = encrypt_text_aes_gcm(credentials.password, passphrase)
+                except Exception as e:
+                    logging.error("Error encrypting password: %s", e, exc_info=True)
+                    return {"status": "Failed", "message": f"Encryption error: {e}"}
+
+            # Determine tracker DB connection (priority)
+            token_uri = get_value_from_env("TOKEN_TRACKER_DB_URI")
+            token_user = get_value_from_env("TOKEN_TRACKER_DB_USERNAME")
+            token_password = get_value_from_env("TOKEN_TRACKER_DB_PASSWORD")
+            token_database = get_value_from_env("TOKEN_TRACKER_DB_DATABASE", "neo4j")
+
+            graph = None
+            if token_uri and token_user and token_password:
+                graph_credentials = Neo4jCredentials(
+                    uri=token_uri,
+                    userName=token_user,
+                    password=token_password,
+                    database=token_database,
+                )
+                graph = create_graph_database_connection(graph_credentials)
+            else:
+                graph_credentials = Neo4jCredentials(
+                    uri=credentials.uri,
+                    userName=credentials.userName,
+                    password=credentials.password,
+                    database=credentials.database,
+                )
+                graph = create_graph_database_connection(graph_credentials)
+
+            # Prepare MERGE params; we store db info on User node keyed by email
+            params = {
+                "email": credentials.email,
+                "db_url": credentials.uri or "",
+                "username": credentials.userName or "",
+                "password": encrypted_password or "",
+                "database": credentials.database or "neo4j",
+            }
+
+            # Use MERGE to either create or update user info
+            query = """
+            MERGE (u:User {email: $email})
+            ON CREATE SET
+                u.db_url = $db_url,
+                u.username = $username,
+                u.password = $password,
+                u.database = $database,
+                u.createdAt = datetime(),
+                u.updatedAt = datetime()
+            ON MATCH SET
+                u.db_url = $db_url,
+                u.username = $username,
+                u.password = $password,
+                u.database = $database,
+                u.updatedAt = datetime()
+            RETURN u
+            """
+
+            result = graph.query(query, params, session_params={"database": graph._database})
+
+            return {"status": "Success", "email": credentials.email, "result_count": len(result) if result else 0}
+        except Exception as e:
+            logging.error("Exception in save_user_information: %s", e, exc_info=True)
+            return {"status": "Failed", "message": str(e)}
+        finally:
+            close_db_connection(graph, 'save_user_information')
