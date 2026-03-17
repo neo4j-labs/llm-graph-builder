@@ -74,7 +74,11 @@ def get_total_tokens(ai_response, llm):
             total_tokens = ai_response.response_metadata.get('token_usage', {}).get('total_tokens', 0)
         
         elif isinstance(llm, ChatGoogleGenerativeAI):
-            total_tokens = ai_response.response_metadata.get('usage_metadata', {}).get('prompt_token_count', 0)
+            if hasattr(ai_response, 'usage_metadata') and ai_response.usage_metadata:
+                total_tokens = ai_response.usage_metadata.get('total_tokens', 0)
+            else:
+                usage = ai_response.response_metadata.get('token_usage', {}) or ai_response.response_metadata.get('usage_metadata', {})
+                total_tokens = usage.get('total_tokens', 0)
         
         elif isinstance(llm, ChatBedrock):
             total_tokens = ai_response.response_metadata.get('usage', {}).get('total_tokens', 0)

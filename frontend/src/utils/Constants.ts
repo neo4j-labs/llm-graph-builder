@@ -8,32 +8,30 @@ export const APP_SOURCES =
     ? (import.meta.env.VITE_REACT_APP_SOURCES?.split(',') as string[])
     : ['s3', 'local', 'wiki', 'youtube', 'web'];
 
-export const llms =
-  import.meta.env?.VITE_LLM_MODELS?.trim() != ''
-    ? (import.meta.env.VITE_LLM_MODELS?.split(',') as string[])
-    : [
-        'gemini_flash_latest',
-        'openai_gpt_5.2',
-        'openai_gpt_5_mini',
-        'gemini_pro_latest',
-        'diffbot',
-        'groq_llama3.1_8b',
-        'anthropic_claude_4.5_sonnet',
-        'anthropic_claude_4.5_haiku',
-        'llama4_maverick',
-        'bedrock_nova_micro_v1',
-        'bedrock_nova_lite_v1',
-        'bedrock_nova_pro_v1',
-        'fireworks_deepseek_v3',
-        'fireworks_qwen3_30b',
-        'fireworks_gpt_oss',
-        'fireworks_kimi_k2p5',
-      ];
+export const llms = import.meta.env?.VITE_LLM_MODELS?.trim()
+  ? (import.meta.env.VITE_LLM_MODELS.split(',') as string[])
+  : [
+      'gemini_flash_latest',
+      'openai_gpt_5.2',
+      'openai_gpt_5_mini',
+      'gemini_pro_latest',
+      'diffbot',
+      'groq_llama3.1_8b',
+      'anthropic_claude_4.5_sonnet',
+      'anthropic_claude_4.5_haiku',
+      'llama4_maverick',
+      'bedrock_nova_micro_v1',
+      'bedrock_nova_lite_v1',
+      'bedrock_nova_pro_v1',
+      'fireworks_deepseek_v3',
+      'fireworks_qwen3_30b',
+      'fireworks_gpt_oss',
+      'fireworks_kimi_k2p5',
+    ];
 
-export const prodllms =
-  import.meta.env.VITE_LLM_MODELS_PROD?.trim() != ''
-    ? (import.meta.env.VITE_LLM_MODELS_PROD?.split(',') as string[])
-    : ['gemini_flash_latest', 'openai_gpt_5_mini', 'diffbot', 'anthropic_claude_4.5_haiku'];
+export const prodllms = import.meta.env.VITE_LLM_MODELS_PROD?.trim()
+  ? (import.meta.env.VITE_LLM_MODELS_PROD.split(',') as string[])
+  : ['gemini_flash_latest', 'openai_gpt_5_mini', 'diffbot', 'anthropic_claude_4.5_haiku'];
 
 export const chatModeLables = {
   vector: 'vector',
