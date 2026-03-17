@@ -21,7 +21,7 @@ from langchain_core.callbacks import StdOutCallbackHandler, BaseCallbackHandler
 # from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 # LangChain chat models
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
-from langchain_google_vertexai import ChatVertexAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_groq import ChatGroq
 from langchain_anthropic import ChatAnthropic
 from langchain_fireworks import ChatFireworks
@@ -73,7 +73,7 @@ def get_total_tokens(ai_response, llm):
         if isinstance(llm, (ChatOpenAI, AzureChatOpenAI, ChatFireworks, ChatGroq)):
             total_tokens = ai_response.response_metadata.get('token_usage', {}).get('total_tokens', 0)
         
-        elif isinstance(llm, ChatVertexAI):
+        elif isinstance(llm, ChatGoogleGenerativeAI):
             total_tokens = ai_response.response_metadata.get('usage_metadata', {}).get('prompt_token_count', 0)
         
         elif isinstance(llm, ChatBedrock):
