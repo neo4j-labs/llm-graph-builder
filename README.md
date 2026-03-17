@@ -114,7 +114,7 @@ Run the application using the default `docker-compose` configuration.
    By default, only OpenAI and Diffbot are enabled. Gemini requires additional GCP configurations.  
    Use the `VITE_LLM_MODELS_PROD` variable to configure the models you need. Example:
    ```bash
-   VITE_LLM_MODELS_PROD="gemini_2.5_flash,openai_gpt_5_mini,diffbot,anthropic_claude_4.5_haiku"
+   VITE_LLM_MODELS_PROD="gemini_flash_latest,openai_gpt_5_mini,diffbot,anthropic_claude_4.5_haiku"
    ```
 
 2. **Input Sources:**  
@@ -267,12 +267,12 @@ gcloud run deploy dev-backend \
 | VITE_REACT_APP_SOURCES | Mandatory          | local,youtube,wiki,s3 | List of input sources that will be available                                 |
 | VITE_CHAT_MODES        | Mandatory          | vector,graph+vector,graph,hybrid | Chat modes available for Q&A                                |
 | VITE_ENV               | Mandatory          | DEV or PROD   | Environment variable for the app                                                                 |
-| VITE_LLM_MODELS        | Optional           | openai_gpt_5_mini,gemini_2.5_flash,anthropic_claude_4.5_haiku | Supported models for the application |
+| VITE_LLM_MODELS        | Optional           | openai_gpt_5_mini,gemini_flash_latest,anthropic_claude_4.5_haiku | Supported models for the application |
 | VITE_BACKEND_API_URL   | Optional           | [localhost][backend-url] | URL for backend API                                        |
 | VITE_TIME_PER_PAGE     | Optional           | 50            | Time per page for processing                                                                     |
 | VITE_CHUNK_SIZE        | Optional           | 5242880       | Size of each chunk of file for upload                                                            |
 | VITE_GOOGLE_CLIENT_ID  | Optional           |               | Client ID for Google authentication                                                              |
-| VITE_LLM_MODELS_PROD   | Optional           | openai_gpt_5_mini,gemini_2.5_flash,anthropic_claude_4.5_haiku | To distinguish models based on environment (PROD or DEV) |
+| VITE_LLM_MODELS_PROD   | Optional           | openai_gpt_5_mini,gemini_flash_latest,anthropic_claude_4.5_haiku | To distinguish models based on environment (PROD or DEV) |
 | VITE_AUTH0_CLIENT_ID   | Mandatory if you are enabling Authentication otherwise it is optional |  | Okta OAuth Client ID for authentication |
 | VITE_AUTH0_DOMAIN      | Mandatory if you are enabling Authentication otherwise it is optional |  | Okta OAuth Client Domain                                  |
 | VITE_SKIP_AUTH         | Optional           | true          | Flag to skip authentication                                                                      |
