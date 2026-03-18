@@ -10,7 +10,7 @@ from threading import Lock
 import logging
 from urllib.parse import urlparse,parse_qs
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
-from langchain_google_vertexai import VertexAIEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_openai import OpenAIEmbeddings
 from langchain_neo4j import Neo4jGraph
 from neo4j.exceptions import TransientError
@@ -200,7 +200,7 @@ def load_embedding_model(embedding_provider: str, embedding_model_name: str):
     if provider == "openai":
         embeddings = OpenAIEmbeddings(model=model)
     elif provider == "gemini":
-        embeddings = VertexAIEmbeddings(model=model)
+        embeddings = GoogleGenerativeAIEmbeddings(model=model, vertexai= True)
     elif provider == "titan":
         embeddings = _get_bedrock_embeddings(model)
     elif provider == "sentence-transformer":

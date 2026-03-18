@@ -139,12 +139,14 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       }
       return nodeRelationshipData;
     } catch (error: any) {
+      if (error.code === 'ERR_CANCELED' || error.name === 'CanceledError' || error.name === 'AbortError') {
+        const cancelErr = new Error('Request was cancelled.');
+        (cancelErr as any).isCancelled = true;
+        throw cancelErr;
+      }
       console.error('Error fetching graph data:', error);
       if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
         throw new Error('Request timed out. The dataset might be too large to preview. Try selecting fewer documents.');
-      }
-      if (error.name === 'AbortError') {
-        throw new Error('Request was cancelled.');
       }
       throw new Error(error.response?.data?.error || error.message || 'Failed to fetch graph data. Please try again.');
     }
@@ -203,6 +205,10 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       setDisableRefresh(false);
       setShowLargeDatasetWarning(false);
     } catch (error: any) {
+      if (error?.isCancelled) {
+        setLoading(false);
+        return;
+      }
       console.error('Graph API error:', error);
       setLoading(false);
       setStatus('danger');
@@ -213,7 +219,14 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   useEffect(() => {
     if (open) {
       setLoading(true);
+      setStatus('unknown');
+      setStatusMessage('');
       setGraphType([]);
+      setNode([]);
+      setRelationship([]);
+      setAllNodes([]);
+      setAllRelationships([]);
+      setScheme({});
       if (viewPoint === graphLabels.showGraphView && selectedRows && selectedRows.length > 8) {
         setShowLargeDatasetWarning(true);
       }
