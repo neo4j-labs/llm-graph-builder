@@ -11,6 +11,8 @@ import { ChatProps, connectionState, Messages, UserCredentials } from '../../typ
 import { getIsLoading } from '../../utils/Utils';
 import ThemeWrapper from '../../context/ThemeWrapper';
 import { SpotlightProvider } from '@neo4j-ndl/react';
+import { envConnectionAPI } from '../../services/ConnectAPI';
+import { showErrorToast } from '../../utils/Toasts';
 
 const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
   const { clearHistoryData, messages, setMessages, setClearHistoryData, setIsDeleteChatLoading, isDeleteChatLoading } =
@@ -23,10 +25,47 @@ const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
     vectorIndexMisMatch: false,
     chunksExistsWithDifferentDimension: false,
   });
-  /**
-   * Initializes connection settings based on URL parameters.
-   */
-  const initialiseConnection = useCallback(() => {
+  const resolveConnectionFromBackend = useCallback(async (): Promise<boolean> => {
+    try {
+      const backendApiResponse = await envConnectionAPI();
+      const connectionData = backendApiResponse.data;
+      if (connectionData.data && connectionData.status === 'Success') {
+        const credentials: UserCredentials = {
+          uri: connectionData.data.uri,
+          connection: 'backendApi',
+          email: '',
+        };
+        setUserCredentials(credentials);
+        setConnectionStatus(Boolean(connectionData.data.graph_connection));
+        setShowDisconnectButton(true);
+        if (chatMessages.length) {
+          setMessages(chatMessages);
+        }
+        return true;
+      }
+      if (!connectionData.data && connectionData.status === 'Success') {
+        const storedCredentials = localStorage.getItem('neo4j.connection');
+        if (storedCredentials) {
+          const parsed = JSON.parse(storedCredentials) as UserCredentials;
+          parsed.password = atob(parsed.password as string);
+          setUserCredentials(parsed);
+          setConnectionStatus(Boolean(parsed.connection === 'connectAPI'));
+          setShowDisconnectButton(true);
+          if (chatMessages.length) {
+            setMessages(chatMessages);
+          }
+          return true;
+        }
+      }
+    } catch (_err) {
+      const message =
+        _err instanceof Error ? _err.message : 'Unable to reach the backend. Please check your connection.';
+      showErrorToast(message);
+    }
+    return false;
+  }, [chatMessages, setUserCredentials, setConnectionStatus, setShowDisconnectButton, setMessages]);
+
+  const initialiseConnection = useCallback(async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const uri = urlParams.get('uri');
     const user = urlParams.get('user');
@@ -40,9 +79,14 @@ const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
       if (connectionStatus) {
         setShowBackButton();
         setConnectionStatus(connectionStatus);
-        setMessages(chatMessages);
+        if (chatMessages.length) {
+          setMessages(chatMessages);
+        }
       } else {
-        setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
+        const resolved = await resolveConnectionFromBackend();
+        if (!resolved) {
+          setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
+        }
       }
     } else {
       const credentialsForAPI: UserCredentials = {
@@ -56,11 +100,13 @@ const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
       setShowBackButton();
       setUserCredentials(credentialsForAPI);
       setConnectionStatus(true);
-      setMessages(chatMessages);
-      // Remove query params from URL
+      setShowDisconnectButton(true);
+      if (chatMessages.length) {
+        setMessages(chatMessages);
+      }
       window.history.replaceState({}, document.title, window.location.pathname);
     }
-  }, [chatMessages, setUserCredentials, setConnectionStatus, setMessages]);
+  }, [chatMessages, setUserCredentials, setConnectionStatus, setMessages, resolveConnectionFromBackend]);
 
   useEffect(() => {
     initialiseConnection();
@@ -92,7 +138,7 @@ const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
       }
     } catch (error) {
       setIsDeleteChatLoading(false);
-      console.error('Error clearing chat history:', error);
+      showErrorToast(error instanceof Error ? error.message : 'Error clearing chat history');
       setClearHistoryData(false);
     }
   };

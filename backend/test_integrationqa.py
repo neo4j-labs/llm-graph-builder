@@ -415,8 +415,8 @@ if __name__ == "__main__":
     models = [
             'openai_gpt_5.2',
             'openai_gpt_5_mini',
-            'gemini_2.5_flash',
-            'gemini_2.5_pro',
+            'gemini_flash_latest',
+            'gemini_pro_latest',
             'groq_llama3.1_8b',
             'anthropic_claude_4.5_sonnet',
             'llama4_maverick',

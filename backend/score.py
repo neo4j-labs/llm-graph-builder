@@ -1019,12 +1019,14 @@ async def calculate_additional_metrics(question: str = Form(),
                                         reference: str = Form(),
                                         model: str = Form(),
                                         mode: str = Form(),
+                                        embedding_provider: str = Form(None),
+                                        embedding_model: str = Form(None)
 ):
    try:
        context_list = [str(item).strip() for item in json.loads(context)] if context else []
        answer_list = [str(item).strip() for item in json.loads(answer)] if answer else []
        mode_list = [str(item).strip() for item in json.loads(mode)] if mode else []
-       result = await get_additional_metrics(question, context_list,answer_list, reference, model)
+       result = await get_additional_metrics(question, context_list,answer_list, reference, model, embedding_provider, embedding_model)
        if result is None or "error" in result:
            return create_api_response(
                'Failed',

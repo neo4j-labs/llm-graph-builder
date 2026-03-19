@@ -33,7 +33,17 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
   const downloadLinkRef = useRef<HTMLAnchorElement>(null);
   const { loginWithRedirect, isAuthenticated } = useAuth0();
   const firstTourTarget = useRef<HTMLDivElement>(null);
-  const { connectionStatus } = useCredentials();
+  const { connectionStatus, showDisconnectButton, setConnectionStatus, setUserCredentials, setShowDisconnectButton } =
+    useCredentials();
+  const chatOnlyDisconnect = useCallback(() => {
+    setConnectionStatus(false);
+    setShowDisconnectButton(false);
+    setUserCredentials({ uri: '', password: '', userName: '', database: '', email: '' });
+    localStorage.removeItem('neo4j.connection');
+    if (setOpenConnection) {
+      setOpenConnection((prev) => ({ ...prev, openPopUp: true }));
+    }
+  }, [setConnectionStatus, setUserCredentials, setShowDisconnectButton, setOpenConnection]);
   const chatAnchor = useRef<HTMLDivElement>(null);
   const { pathname } = useLocation();
   const [showChatModeOption, setShowChatModeOption] = useState<boolean>(false);
@@ -167,7 +177,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                 className='inline-flex gap-x-1'
                 style={{ display: 'flex', flexGrow: 0, alignItems: 'center', gap: '4px' }}
               >
-                {!connectionStatus && (
+                {!connectionStatus ? (
                   <Button
                     size={'medium'}
                     className={`${chatOnly ? '' : 'mr-2.5'}`}
@@ -179,6 +189,12 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                   >
                     {buttonCaptions.connectToNeo4j}
                   </Button>
+                ) : (
+                  showDisconnectButton && (
+                    <Button size={'medium'} className='mr-2.5' onClick={chatOnlyDisconnect}>
+                      {buttonCaptions.disconnect}
+                    </Button>
+                  )
                 )}
                 {showBackButton && (
                   <IconButtonWithToolTip
@@ -219,6 +235,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                     text='Chat mode'
                     placement='bottom'
                     label='Chat mode'
+                    disabled={!connectionStatus}
                   >
                     <RiChatSettingsLine />
                   </IconButtonWithToolTip>
@@ -235,7 +252,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                         'graph-builder-conversation.json'
                       )
                     }
-                    disabled={messages.length === 1 || getIsLoading(messages)}
+                    disabled={!connectionStatus || messages.length === 1 || getIsLoading(messages)}
                     placement={chatOnly ? 'left' : 'bottom'}
                     label={tooltips.downloadChat}
                   >
@@ -253,7 +270,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                   aria-label='Remove chat history'
                   clean
                   onClick={deleteOnClick}
-                  disabled={messages.length === 1 || getIsLoading(messages)}
+                  disabled={!connectionStatus || messages.length === 1 || getIsLoading(messages)}
                   placement={chatOnly ? 'left' : 'bottom'}
                   label={tooltips.clearChat}
                 >
