@@ -211,6 +211,8 @@ def create_source_node_graph_web_url(graph, params):
     success_count=0
     failed_count=0
     lst_file_name = []
+    if not params.source_url.startswith(('http://', 'https://')):
+        params.source_url = 'https://' + params.source_url
     pages = WebBaseLoader(params.source_url, verify_ssl=False).load()
     if pages==None or len(pages)==0:
       failed_count+=1

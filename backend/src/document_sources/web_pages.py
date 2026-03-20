@@ -15,6 +15,8 @@ def get_documents_from_web_page(source_url: str):
         LLMGraphBuilderException: If loading the web page fails.
     """
     try:
+        if not source_url.startswith(('http://', 'https://')):
+            source_url = 'https://' + source_url
         pages = WebBaseLoader(source_url, verify_ssl=False).load()
         return pages
     except Exception as exc:

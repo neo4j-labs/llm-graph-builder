@@ -2,7 +2,7 @@ import { Tooltip, useMediaQuery, Select, SpotlightTarget } from '@neo4j-ndl/reac
 import { OptionType, ReusableDropdownProps } from '../types';
 import { memo, useMemo } from 'react';
 import { capitalize, capitalizeWithUnderscore } from '../utils/Utils';
-import { prodllms } from '../utils/Constants';
+import { modelTooltipMap, prodllms } from '../utils/Constants';
 
 const DropdownComponent: React.FC<ReusableDropdownProps> = ({
   options,
@@ -42,6 +42,7 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
                 const label = typeof option === 'string' ? capitalizeWithUnderscore(option) : capitalize(option.label);
                 const value = typeof option === 'string' ? option : option.value;
                 const isModelSupported = !isProdEnv || prodllms?.includes(value);
+                const modelTooltip = modelTooltipMap[value];
                 return {
                   label: !isModelSupported ? (
                     <Tooltip type='simple' placement={isLargeDesktop ? 'left' : 'right'}>
@@ -49,6 +50,13 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
                         <span className='text-nowrap'>{label}</span>
                       </Tooltip.Trigger>
                       <Tooltip.Content>Available In Development Version</Tooltip.Content>
+                    </Tooltip>
+                  ) : modelTooltip ? (
+                    <Tooltip type='simple' placement={isLargeDesktop ? 'left' : 'right'}>
+                      <Tooltip.Trigger>
+                        <span className='text-nowrap'>{label}</span>
+                      </Tooltip.Trigger>
+                      <Tooltip.Content>{modelTooltip}</Tooltip.Content>
                     </Tooltip>
                   ) : (
                     <span className='text-nowrap'>{label}</span>

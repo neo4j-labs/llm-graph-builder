@@ -18,7 +18,10 @@ export const graphQueryAPI = async (
       timeout: 120000,
     });
     return response;
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.code === 'ERR_CANCELED' || error?.name === 'CanceledError') {
+      throw error;
+    }
     console.error('Error getting the Nodes or Relationships:', error);
     throw error;
   }

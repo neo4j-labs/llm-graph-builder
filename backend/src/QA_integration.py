@@ -8,9 +8,7 @@ from datetime import datetime
 from typing import Any
 from dotenv import load_dotenv
 
-from langchain_neo4j import Neo4jVector
-from langchain_neo4j import Neo4jChatMessageHistory
-from langchain_neo4j import GraphCypherQAChain
+from langchain_neo4j import Neo4jVector, Neo4jChatMessageHistory, GraphCypherQAChain
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableBranch
@@ -20,10 +18,10 @@ from langchain_text_splitters import TokenTextSplitter
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_community.chat_message_histories import ChatMessageHistory 
 from langchain_core.callbacks import StdOutCallbackHandler, BaseCallbackHandler
-from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
+# from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 # LangChain chat models
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
-from langchain_google_vertexai import ChatVertexAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_groq import ChatGroq
 from langchain_anthropic import ChatAnthropic
 from langchain_fireworks import ChatFireworks
@@ -75,8 +73,12 @@ def get_total_tokens(ai_response, llm):
         if isinstance(llm, (ChatOpenAI, AzureChatOpenAI, ChatFireworks, ChatGroq)):
             total_tokens = ai_response.response_metadata.get('token_usage', {}).get('total_tokens', 0)
         
-        elif isinstance(llm, ChatVertexAI):
-            total_tokens = ai_response.response_metadata.get('usage_metadata', {}).get('prompt_token_count', 0)
+        elif isinstance(llm, ChatGoogleGenerativeAI):
+            if hasattr(ai_response, 'usage_metadata') and ai_response.usage_metadata:
+                total_tokens = ai_response.usage_metadata.get('total_tokens', 0)
+            else:
+                usage = ai_response.response_metadata.get('token_usage', {}) or ai_response.response_metadata.get('usage_metadata', {})
+                total_tokens = usage.get('total_tokens', 0)
         
         elif isinstance(llm, ChatBedrock):
             total_tokens = ai_response.response_metadata.get('usage', {}).get('total_tokens', 0)
@@ -224,6 +226,13 @@ def format_documents(documents, model,chat_mode_settings):
     
     return "\n\n".join(formatted_docs), sources,entities,global_communities
 
+def get_clean_text(msg):
+    if isinstance(msg.content, str):
+        return msg.content
+    return msg.additional_kwargs.get("text", "") or "".join(
+        [p.get("text", "") for p in msg.content if isinstance(p, dict)]
+    )
+    
 def process_documents(docs, question, messages, llm, model,chat_mode_settings):
     start_time = time.time()
     
@@ -256,7 +265,7 @@ def process_documents(docs, question, messages, llm, model,chat_mode_settings):
         result["nodedetails"] = node_details
         result["entities"] = entities
 
-        content = ai_response.content
+        content = get_clean_text(ai_response)
         total_tokens = get_total_tokens(ai_response, llm)
         
         predict_time = time.time() - start_time
@@ -508,33 +517,41 @@ def summarize_and_log(history, stored_messages, llm):
     try:
         start_time = time.time()
 
-        summarization_prompt = ChatPromptTemplate.from_messages(
-            [
-                MessagesPlaceholder(variable_name="chat_history"),
-                (
-                    "human",
-                    "Summarize the above chat messages into a concise message, focusing on key points and relevant details that could be useful for future conversations. Exclude all introductions and extraneous information."
-                ),
-            ]
-        )
+        summarization_prompt = ChatPromptTemplate.from_messages([
+            MessagesPlaceholder(variable_name="chat_history"),
+            ("human", "Summarize the above chat messages into a concise message..."),
+        ])
+
         summarization_chain = summarization_prompt | llm
 
-        summary_message = summarization_chain.invoke({"chat_history": stored_messages})
+        raw_summary = summarization_chain.invoke({"chat_history": stored_messages})
+
+        if hasattr(raw_summary, "content"):
+            content = raw_summary.content
+            if isinstance(content, list):
+                summary_text = "".join([
+                    block.get("text", "") if isinstance(block, dict) else str(block) 
+                    for block in content
+                ])
+            else:
+                summary_text = str(content)
+        else:
+            summary_text = str(raw_summary)
+
+        summary_message_for_db = AIMessage(content=summary_text)
 
         with threading.Lock():
             history.clear()
             history.add_user_message("Our current conversation summary till now")
-            history.add_message(summary_message)
+            history.add_message(summary_message_for_db)
 
-        history_summarized_time = time.time() - start_time
-        logging.info(f"Chat History summarized in {history_summarized_time:.2f} seconds")
-
+        logging.info(f"Chat History summarized in {time.time() - start_time:.2f} seconds")
         return True
 
     except Exception as e:
         logging.error(f"An error occurred while summarizing messages: {e}", exc_info=True)
-        return False 
-    
+        return False
+      
 def create_graph_chain(model, graph):
     try:
         logging.info(f"Graph QA Chain using LLM model: {model}")

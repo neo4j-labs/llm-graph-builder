@@ -199,22 +199,27 @@ class graphDBdataAccess:
             return False
 
     def check_gds_version(self):
-        try:
-            gds_procedure_count = """
-            SHOW FUNCTIONS YIELD name WHERE name STARTS WITH 'gds.version' RETURN COUNT(*) AS totalGdsProcedures
-            """
-            result = self.graph.query(gds_procedure_count,session_params={"database":self.graph._database})
-            total_gds_procedures = result[0]['totalGdsProcedures'] if result else 0
+            try:
+                gds_check_query = "RETURN gds.version() AS gdsVersion"
+                result = self.graph.query(gds_check_query, session_params={"database": self.graph._database})
+                
+                version = result[0]['gdsVersion'] if result else None
 
-            if total_gds_procedures > 0:
-                logging.info("GDS is available in the database.")
-                return True
-            else:
-                logging.info("GDS is not available in the database.")
-                return False
-        except Exception as e:
-            logging.error(f"An error occurred while checking GDS version: {e}")
-            return False
+                if version:
+                    logging.info(f"GDS compute engine is available. Version: {version}")
+                    return True
+                else:
+                    logging.info("GDS check returned empty.")
+                    return False
+                    
+            except Exception as e:
+                error_msg = str(e)
+                if "versionless" in error_msg or "Unknown function" in error_msg:
+                    logging.info("GDS compute engine is not provisioned on this database instance.")
+                    return False
+                else:
+                    logging.error(f"An unexpected error occurred while verifying GDS: {e}")
+                    return False
             
     def connection_check_and_get_vector_dimensions(self, database, email, uri):
         """
