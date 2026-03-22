@@ -63,7 +63,8 @@ This application allows you to upload files from various sources (local machine,
 8. Amazon Bedrock (dev deployed version)
 9. Ollama (dev deployed version)
 10. Deepseek (dev deployed version)
-11. Other OpenAI-compatible base URL models (dev deployed version)
+11. MiniMax (dev deployed version)
+12. Other OpenAI-compatible base URL models (dev deployed version)
 
 
 ### **Token Usage Tracking**
