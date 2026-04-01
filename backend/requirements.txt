@@ -35,7 +35,7 @@ nltk==3.9.3
 openai==2.26.0
 psutil==7.2.2
 pydantic==2.12.5
-python-dotenv==1.1.1
+python-dotenv==1.2.2
 python-magic==0.4.27
 PyPDF2==3.0.1
 PyMuPDF==1.27.2
