@@ -51,7 +51,7 @@ uvicorn==0.41.0
 gunicorn==25.1.0
 wikipedia==1.4.0
 wrapt==1.17.3
-yarl==1.20.1
+yarl==1.23.0
 youtube-transcript-api==1.2.4
 zipp==3.23.0
 sentence-transformers==5.1.0
