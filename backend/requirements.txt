@@ -63,4 +63,4 @@ ragas==0.4.3
 rouge_score==0.1.2
 langchain-neo4j==0.7.0
 pypandoc-binary==1.16.2
-chardet==5.2.0
+chardet==7.4.0.post2
