@@ -9,8 +9,8 @@ export const APP_SOURCES =
     : ['s3', 'local', 'wiki', 'youtube', 'web'];
 
 export const llms =
-  import.meta.env?.VITE_LLM_MODELS?.trim() != ''
-    ? (import.meta.env.VITE_LLM_MODELS?.split(',') as string[])
+  import.meta.env?.VITE_LLM_MODELS?.trim()
+    ? (import.meta.env.VITE_LLM_MODELS.split(',') as string[])
     : [
         'gemini_2.5_flash',
         'openai_gpt_5.2',
@@ -31,8 +31,8 @@ export const llms =
       ];
 
 export const prodllms =
-  import.meta.env.VITE_LLM_MODELS_PROD?.trim() != ''
-    ? (import.meta.env.VITE_LLM_MODELS_PROD?.split(',') as string[])
+  import.meta.env.VITE_LLM_MODELS_PROD?.trim()
+    ? (import.meta.env.VITE_LLM_MODELS_PROD.split(',') as string[])
     : ['gemini_2.5_flash', 'openai_gpt_5_mini', 'diffbot', 'anthropic_claude_4.5_haiku'];
 
 export const chatModeLables = {
@@ -58,10 +58,13 @@ export const chatModeReadableLables: Record<string, string> = {
   global_vector: 'global search+vector+fulltext',
 };
 export const chatModes = import.meta.env?.VITE_CHAT_MODES?.trim()
-  ? import.meta.env.VITE_CHAT_MODES?.split(',').map((mode: string) => ({
-      mode: mode.trim(),
-      description: getDescriptionForChatMode(mode.trim()),
-    }))
+  ? import.meta.env.VITE_CHAT_MODES?.split(',')
+      .map((mode: string) => {
+        const trimmed = mode.trim();
+        const internalMode = chatModeLables[trimmed as keyof typeof chatModeLables] ?? trimmed;
+        return { mode: internalMode, description: getDescriptionForChatMode(trimmed) };
+      })
+      .filter((m) => chatModeReadableLables[m.mode] !== undefined)
   : [
       {
         mode: chatModeLables.vector,
