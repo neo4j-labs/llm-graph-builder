@@ -399,7 +399,7 @@
 }
 
 .layout-wrapper.drawerdropzoneclosed {
-  grid-template-columns: 64px 4fr 1.1fr 64px;
+  grid-template-columns: 64px 4fr 1.5fr 64px;
 
 }
 
