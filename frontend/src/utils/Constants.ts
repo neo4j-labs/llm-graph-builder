@@ -219,10 +219,10 @@ export const tooltips = {
   predinedSchema: 'Predefined Schema',
   dataImporterJson: 'Data Importer JSON',
 };
-export const PRODMODELS = ['gemini_flash_latest', 'openai_gpt_5_mini', 'diffbot', 'anthropic_claude_4.5_haiku'];
+export const PRODMODELS = ['gemini_3.1_flash_preview', 'openai_gpt_5_mini', 'diffbot', 'anthropic_claude_4.5_haiku'];
 export const modelTooltipMap: Record<string, string> = {
-  gemini_flash_latest: 'gemini-3.1-flash-lite-preview',
-  gemini_pro_latest: 'gemini-3.1-pro-preview',
+  'gemini_3.1_flash_preview': 'gemini-3.1-flash-lite-preview',
+  'gemini_3.1_pro_preview': 'gemini-3.1-pro-preview',
 };
 export const buttonCaptions = {
   exploreGraphWithBloom: 'Explore Graph',
