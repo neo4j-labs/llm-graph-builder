@@ -454,7 +454,7 @@ Followed best practices for optimizing performance and security of the deployed 
  * VITE_BACKEND_API_URL=
  * VITE_BLOOM_URL=
  * VITE_BACKEND_PROCESSING_URL=
- * VITE_LLM_MODELS_PROD="openai_gpt_5_mini,diffbot,gemini_flash_latest"
+ * VITE_LLM_MODELS_PROD="openai_gpt_5.4_mini,diffbot,gemini_3.1_flash_preview,anthropic_claude_4.6_sonnet"
  * VITE_BATCH_SIZE=2
 ----
 * ***Cloud Deployment:***

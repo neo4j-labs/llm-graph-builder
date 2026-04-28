@@ -156,7 +156,7 @@ def graph_schema_consolidation(graph):
         messages=[("system", GRAPH_CLEANUP_PROMPT), ("human", "{input}")],
         partial_variables={"format_instructions": parser.get_format_instructions()}
     )
-    graph_cleanup_model = get_value_from_env("GRAPH_CLEANUP_MODEL", 'openai_gpt_5_mini')
+    graph_cleanup_model = get_value_from_env("GRAPH_CLEANUP_MODEL", 'openai_gpt_5.4_mini')
     llm, _, _ = get_llm(graph_cleanup_model)
     chain = prompt | llm | parser
 

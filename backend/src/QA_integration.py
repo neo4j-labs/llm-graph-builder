@@ -423,7 +423,7 @@ def setup_chat(model, graph, document_names, chat_mode_settings, embedding_provi
     start_time = time.time()
     try:
         if model == "diffbot":
-             model = get_value_from_env("DEFAULT_DIFFBOT_CHAT_MODEL","openai_gpt_5_mini")
+             model = get_value_from_env("DEFAULT_DIFFBOT_CHAT_MODEL","openai_gpt_5.4_mini")
         
         llm, model_name, _ = get_llm(model=model)
         logging.info(f"Model called in chat: {model} (version: {model_name})")
