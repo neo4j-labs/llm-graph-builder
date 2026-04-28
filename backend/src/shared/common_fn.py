@@ -30,6 +30,14 @@ from langchain_core.callbacks import BaseCallbackHandler
 _embedding_instances = {}
 _embedding_locks = {}
 
+
+def _canonical_sentence_transformer_model_name(model_name: str) -> str:
+    """Map short aliases to canonical Hugging Face sentence-transformer IDs."""
+    aliases = {
+        "all-MiniLM-L6-v2": "sentence-transformers/all-MiniLM-L6-v2",
+    }
+    return aliases.get(model_name, model_name)
+
 def _ensure_sentence_transformer_model_downloaded(model_name: str, model_path: str):
     """
     Download and cache the sentence-transformer model if not already present.
@@ -37,9 +45,10 @@ def _ensure_sentence_transformer_model_downloaded(model_name: str, model_path: s
     if os.path.isdir(model_path):
         logging.info(f"Model already downloaded at: {model_path}")
         return
-    logging.info(f"Downloading model {model_name} to: {model_path}")
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModel.from_pretrained(model_name)
+    download_name = _canonical_sentence_transformer_model_name(model_name)
+    logging.info(f"Downloading model {download_name} to: {model_path}")
+    tokenizer = AutoTokenizer.from_pretrained(download_name)
+    model = AutoModel.from_pretrained(download_name)
     tokenizer.save_pretrained(model_path)
     model.save_pretrained(model_path)
     logging.info("Model downloaded and saved.")
@@ -186,6 +195,7 @@ def load_embedding_model(embedding_provider: str, embedding_model_name: str):
         },
         "sentence-transformer": {
             "all-MiniLM-L6-v2": 384,
+            "sentence-transformers/all-MiniLM-L6-v2": 384,
         },
     }
 
