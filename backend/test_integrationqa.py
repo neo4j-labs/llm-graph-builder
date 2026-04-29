@@ -413,12 +413,12 @@ def generate_summary_report(summaries: List[Dict[str, Any]], report_path: Path) 
 # Usage in main
 if __name__ == "__main__":
     models = [
-            'openai_gpt_5.2',
-            'openai_gpt_5_mini',
-            'gemini_flash_latest',
-            'gemini_pro_latest',
+            'openai_gpt_5.5',
+            'openai_gpt_5.4_mini',
+            'gemini_3.1_flash_preview',
+            'gemini_3.1_pro_preview',
             'groq_llama3.1_8b',
-            'anthropic_claude_4.5_sonnet',
+            'anthropic_claude_4.6_sonnet',
             'llama4_maverick',
             'fireworks_gpt_oss',
             'fireworks_deepseek_v3',
