@@ -85,9 +85,15 @@ def get_llm(model: str):
 
         elif "ANTHROPIC" in model:
             model_name, api_key = env_value.split(",")
-            llm = ChatAnthropic(
-                api_key=api_key, model=model_name, temperature=0, timeout=None,callbacks=callback_manager, 
-            )
+            anthropic_kwargs = {
+                "api_key": api_key,
+                "model": model_name,
+                "timeout": None,
+                "callbacks": callback_manager,
+            }
+            if not model_name.startswith("claude-opus-4-7"):
+                anthropic_kwargs["temperature"] = 0
+            llm = ChatAnthropic(**anthropic_kwargs)
 
         elif "FIREWORKS" in model:
             model_name, api_key = env_value.split(",")
