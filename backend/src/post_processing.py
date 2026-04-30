@@ -22,6 +22,7 @@ COMMUNITY_INDEX_FULL_TEXT_QUERY = "CREATE FULLTEXT INDEX community_keyword FOR (
 # Constants for Vector Indexes
 CHUNK_VECTOR_INDEX_NAME = "vector"
 ENTITY_VECTOR_INDEX_NAME = "entity_vector"
+COMMUNITY_VECTOR_INDEX_NAME = "community_vector"
 VECTOR_EMBEDDING_DEFAULT_DIMENSION = 384
 
 CREATE_VECTOR_INDEX_QUERY = """
@@ -43,7 +44,8 @@ FULLTEXT_INDEXES = [
 
 VECTOR_INDEXES = [
     {"name": CHUNK_VECTOR_INDEX_NAME, "label": "Chunk", "property": "embedding"},
-    {"name": ENTITY_VECTOR_INDEX_NAME, "label": "__Entity__", "property": "embedding"}
+    {"name": ENTITY_VECTOR_INDEX_NAME, "label": "__Entity__", "property": "embedding"},
+    {'name': COMMUNITY_VECTOR_INDEX_NAME, 'label': '__Community__', 'property': 'embedding'}
 ]
 
 def create_vector_index(session, index_name, node_label, embedding_property, embedding_dimension):
