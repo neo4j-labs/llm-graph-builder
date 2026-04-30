@@ -342,7 +342,7 @@ async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_cred
         count_response = []
         start = time.time()
         if "materialize_text_chunk_similarities" in tasks:
-            await asyncio.to_thread(update_graph, graph)
+            await asyncio.to_thread(update_graph, graph, embedding_provider, embedding_model)
             api_name = 'post_processing/update_similarity_graph'
             logging.info(f'Updated KNN Graph')
 

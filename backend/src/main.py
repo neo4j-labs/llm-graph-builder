@@ -769,12 +769,12 @@ def get_source_list_from_graph(credentials):
       graph._driver.close()
   return result
 
-def update_graph(graph):
+def update_graph(graph, embedding_provider, embedding_model):
   """
   Update the graph node with SIMILAR relationship where embedding scrore match
   """
   graph_DB_dataAccess = graphDBdataAccess(graph)
-  graph_DB_dataAccess.update_KNN_graph()
+  graph_DB_dataAccess.update_KNN_graph(embedding_provider, embedding_model)
 
 def connection_check_and_get_vector_dimensions(graph, database, email, uri):
   """
