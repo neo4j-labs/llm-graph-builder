@@ -19,6 +19,7 @@ import { showErrorToast } from '../../utils/Toasts';
 import { APP_SOURCES } from '../../utils/Constants';
 import { createDefaultFormData } from '../../API/Index';
 import LoadDBSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/LoadExistingSchema';
+import LoadDBSchemaWithPropertiesDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/LoadExistingSchemaWithProperties';
 import PredefinedSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/PredefinedSchemaDialog';
 import { SKIP_AUTH } from '../../utils/Constants';
 import { useNavigate } from 'react-router';
@@ -179,6 +180,13 @@ const PageLayout: React.FC = () => {
     setSchemaTextPattern,
     schemaLoadDialog,
     setSchemaLoadDialog,
+    schemaLoadWithPropertiesDialog,
+    setSchemaLoadWithPropertiesDialog,
+    setDbWithPropsPattern,
+    setDbWithPropsNodes,
+    setDbWithPropsRels,
+    setDbNodeProperties,
+    setDbRelProperties,
     setPredefinedSchemaDialog,
     setDbPattern,
     setSchemaValNodes,
@@ -473,6 +481,44 @@ const PageLayout: React.FC = () => {
     },
     []
   );
+  const handleDbWithPropsApply = useCallback(
+    (
+      newPatterns: string[],
+      nodes: OptionType[],
+      rels: OptionType[],
+      updatedSource: OptionType[],
+      updatedTarget: OptionType[],
+      updatedType: OptionType[],
+      nodeProperties: Record<string, string[]>,
+      relProperties: Record<string, string[]>
+    ) => {
+      setDbWithPropsPattern((prevPatterns: string[]) => {
+        const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
+        return uniquePatterns;
+      });
+      setCombinedPatternsVal((prevPatterns: string[]) => {
+        const uniquePatterns = Array.from(new Set([...newPatterns, ...prevPatterns]));
+        return uniquePatterns;
+      });
+      setSchemaLoadWithPropertiesDialog({ triggeredFrom: 'loadExistingSchemaWithPropertiesApply', show: true });
+      setDbWithPropsNodes(nodes);
+      setCombinedNodesVal((prevNodes: OptionType[]) => {
+        const combined = [...nodes, ...prevNodes];
+        return deduplicateNodeByValue(combined);
+      });
+      setDbWithPropsRels(rels);
+      setCombinedRelsVal((prevRels: OptionType[]) => {
+        const combined = [...rels, ...prevRels];
+        return deduplicateByFullPattern(combined);
+      });
+      setDbNodeProperties(nodeProperties);
+      setDbRelProperties(relProperties);
+      setSourceOptions((prev) => [...prev, ...updatedSource]);
+      setTargetOptions((prev) => [...prev, ...updatedTarget]);
+      setTypeOptions((prev) => [...prev, ...updatedType]);
+    },
+    []
+  );
   const handlePredinedApply = useCallback(
     (
       newPatterns: string[],
@@ -557,6 +603,10 @@ const PageLayout: React.FC = () => {
     setSchemaLoadDialog({ triggeredFrom: 'loadDialog', show: true });
   }, []);
 
+  const openLoadSchemaWithProperties = useCallback(() => {
+    setSchemaLoadWithPropertiesDialog({ triggeredFrom: 'loadDialog', show: true });
+  }, []);
+
   const openTextSchema = useCallback(() => {
     setShowTextFromSchemaDialog({ triggeredFrom: 'schemadialog', show: true });
   }, []);
@@ -639,6 +689,20 @@ const PageLayout: React.FC = () => {
         }}
         onApply={handleDbApply}
       />
+      <LoadDBSchemaWithPropertiesDialog
+        open={schemaLoadWithPropertiesDialog.show}
+        onClose={() => {
+          setSchemaLoadWithPropertiesDialog({ triggeredFrom: '', show: false });
+          switch (schemaLoadWithPropertiesDialog.triggeredFrom) {
+            case 'enhancementtab':
+              toggleEnhancementDialog();
+              break;
+            default:
+              break;
+          }
+        }}
+        onApply={handleDbWithPropsApply}
+      />
       <PredefinedSchemaDialog
         open={predefinedSchemaDialog.show}
         onClose={() => {
@@ -697,6 +761,7 @@ const PageLayout: React.FC = () => {
             showChatBot={showChatBot}
             openTextSchema={openTextSchema}
             openLoadSchema={openLoadSchema}
+            openLoadSchemaWithProperties={openLoadSchemaWithProperties}
             openPredefinedSchema={openPredefinedSchema}
             openDataImporterSchema={openDataImporterSchema}
             showEnhancementDialog={showEnhancementDialog}
@@ -772,6 +837,7 @@ const PageLayout: React.FC = () => {
               showChatBot={showChatBot}
               openTextSchema={openTextSchema}
               openLoadSchema={openLoadSchema}
+              openLoadSchemaWithProperties={openLoadSchemaWithProperties}
               openPredefinedSchema={openPredefinedSchema}
               openDataImporterSchema={openDataImporterSchema}
               showEnhancementDialog={showEnhancementDialog}

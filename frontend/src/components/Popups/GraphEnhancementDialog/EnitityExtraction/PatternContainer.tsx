@@ -4,6 +4,7 @@ import { appLabels, tooltips } from '../../../../utils/Constants';
 import { ExploreIcon } from '@neo4j-ndl/react/icons';
 import { OptionType } from '../../../../types';
 import { IconButtonWithToolTip } from '../../../UI/IconButtonToolTip';
+import TooltipWrapper from '../../../UI/TipWrapper';
 
 interface PatternContainerProps {
   pattern: string[];
@@ -12,7 +13,36 @@ interface PatternContainerProps {
   highlightPattern?: string;
   nodes?: OptionType[];
   rels?: OptionType[];
+  nodeProperties?: Record<string, string[]>;
+  relProperties?: Record<string, string[]>;
 }
+
+const PATTERN_RE = /^(.+?)\s-\[:([A-Z_]+)\]->\s(.+)$/;
+
+const buildPropertyTooltip = (
+  pattern: string,
+  nodeProperties?: Record<string, string[]>,
+  relProperties?: Record<string, string[]>
+): string => {
+  const m = pattern.match(PATTERN_RE);
+  if (!m) {
+    return '';
+  }
+  const [, source, rel, target] = m;
+  const lines: string[] = [];
+  const nProps = nodeProperties ?? {};
+  const rProps = relProperties ?? {};
+  if (nProps[source]?.length) {
+    lines.push(`${source}: ${nProps[source].join(', ')}`);
+  }
+  if (rProps[rel]?.length) {
+    lines.push(`[:${rel}]: ${rProps[rel].join(', ')}`);
+  }
+  if (target !== source && nProps[target]?.length) {
+    lines.push(`${target}: ${nProps[target].join(', ')}`);
+  }
+  return lines.join(' • ');
+};
 
 const PatternContainer = ({
   pattern,
@@ -21,6 +51,8 @@ const PatternContainer = ({
   highlightPattern,
   nodes,
   rels,
+  nodeProperties,
+  relProperties,
 }: PatternContainerProps) => {
   const nodeCount = useMemo(() => nodes?.length ?? 0, [nodes]);
   const relCount = useMemo(() => rels?.length ?? 0, [rels]);
@@ -48,20 +80,30 @@ const PatternContainer = ({
             </IconButtonWithToolTip>
           </div>
           <div className='flex flex-wrap gap-2'>
-            {pattern.map((pattern) => (
-              <Tag
-                key={pattern}
-                onRemove={() => handleRemove(pattern)}
-                isRemovable={true}
-                type='default'
-                size='medium'
-                className={`rounded-full px-4 py-1 shadow-sm transition-all duration-300 ${
-                  pattern === highlightPattern ? 'animate-highlight' : ''
-                }`}
-              >
-                {pattern}
-              </Tag>
-            ))}
+            {pattern.map((p) => {
+              const propsTooltip = buildPropertyTooltip(p, nodeProperties, relProperties);
+              const tag = (
+                <Tag
+                  key={p}
+                  onRemove={() => handleRemove(p)}
+                  isRemovable={true}
+                  type='default'
+                  size='medium'
+                  className={`rounded-full px-4 py-1 shadow-sm transition-all duration-300 ${
+                    p === highlightPattern ? 'animate-highlight' : ''
+                  }`}
+                >
+                  {p}
+                </Tag>
+              );
+              return propsTooltip ? (
+                <TooltipWrapper key={p} placement='top' tooltip={propsTooltip}>
+                  {tag}
+                </TooltipWrapper>
+              ) : (
+                tag
+              );
+            })}
           </div>
         </div>
       </div>

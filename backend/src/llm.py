@@ -1,3 +1,4 @@
+import json
 import logging
 from langchain_core.documents import Document
 import os
@@ -187,7 +188,8 @@ def get_chunk_id_as_doc_metadata(chunkId_chunkDoc_list):
       
 
 async def get_graph_document_list(
-    llm, combined_chunk_document_list, allowedNodes, allowedRelationship,callback_handler, additional_instructions=None
+    llm, combined_chunk_document_list, allowedNodes, allowedRelationship, callback_handler,
+    additional_instructions=None, node_properties_map=None, relationship_properties_map=None
 ):
     if additional_instructions:
         additional_instructions = sanitize_additional_instruction(additional_instructions)
@@ -208,11 +210,24 @@ async def get_graph_document_list(
                 relationship_properties = ["description"]
                 ignore_tool_usage = False
             else:
-                logging.info("LLM does not support structured output; excluding descriptions in graph") 
+                logging.info("LLM does not support structured output; excluding descriptions in graph")
                 node_properties = False
                 relationship_properties = False
                 ignore_tool_usage = True
-            
+
+            # If the user supplied per-label property maps (from "Load Existing Schema with Properties"),
+            # union those into the flat list LangChain accepts and append per-label JSON guidance to
+            # additional_instructions so the LLM knows which props belong to which label/rel-type.
+            extra_instructions = ""
+            if node_properties_map and node_properties is not False:
+                extra_node_props = {p for ps in node_properties_map.values() for p in ps if p}
+                node_properties = sorted({"description", *extra_node_props})
+                extra_instructions += " Per-node-label properties to extract when applicable: " + json.dumps(node_properties_map, separators=(",", ":")) + "."
+            if relationship_properties_map and relationship_properties is not False:
+                extra_rel_props = {p for ps in relationship_properties_map.values() for p in ps if p}
+                relationship_properties = sorted({"description", *extra_rel_props})
+                extra_instructions += " Per-relationship-type properties to extract when applicable: " + json.dumps(relationship_properties_map, separators=(",", ":")) + "."
+
             llm_transformer = LLMGraphTransformer(
                 llm=llm,
                 node_properties=node_properties,
@@ -220,7 +235,7 @@ async def get_graph_document_list(
                 allowed_nodes=allowedNodes,
                 allowed_relationships=allowedRelationship,
                 ignore_tool_usage=ignore_tool_usage,
-                additional_instructions=ADDITIONAL_INSTRUCTIONS+ (additional_instructions if additional_instructions else "")
+                additional_instructions=ADDITIONAL_INSTRUCTIONS + (additional_instructions if additional_instructions else "") + extra_instructions
             )
         
         if isinstance(llm,DiffbotGraphTransformer):
@@ -240,20 +255,20 @@ async def get_graph_document_list(
 
     return graph_document_list, token_usage
 
-async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship, chunks_to_combine, additional_instructions=None):
+async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship, chunks_to_combine, additional_instructions=None, nodeProperties=None, relationshipProperties=None):
    try:
        llm, model_name,callback_handler = get_llm(model)
        logging.info(f"Using model: {model_name}")
-    
+
        combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list, chunks_to_combine)
        logging.info(f"Combined {len(combined_chunk_document_list)} chunks")
-    
+
        if allowedNodes:
            allowed_nodes = [node.strip() for node in allowedNodes.split(',') if node.strip()]
        else:
            allowed_nodes = []
        logging.info(f"Allowed nodes: {allowed_nodes}")
-    
+
        allowed_relationships = []
        if allowedRelationship:
            items = [item.strip() for item in allowedRelationship.split(',') if item.strip()]
@@ -271,6 +286,13 @@ async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowed
        else:
            logging.info("No allowed relationships provided")
 
+       node_properties_map = _parse_property_map(nodeProperties, "nodeProperties")
+       relationship_properties_map = _parse_property_map(relationshipProperties, "relationshipProperties")
+       if node_properties_map:
+           logging.info(f"Node properties map: {node_properties_map}")
+       if relationship_properties_map:
+           logging.info(f"Relationship properties map: {relationship_properties_map}")
+
        graph_document_list,token_usage = await get_graph_document_list(
            llm,
            combined_chunk_document_list,
@@ -278,12 +300,35 @@ async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowed
            allowed_relationships,
            callback_handler,
            additional_instructions,
+           node_properties_map,
+           relationship_properties_map,
        )
        logging.info(f"Generated {len(graph_document_list)} graph documents")
        return graph_document_list, token_usage
    except Exception as e:
        logging.error(f"Error in get_graph_from_llm: {e}", exc_info=True)
        raise LLMGraphBuilderException(f"Error in getting graph from llm: {e}")
+
+
+def _parse_property_map(raw, label):
+    """Parse a JSON-encoded Dict[str, List[str]] from extract params; tolerate empty/invalid input."""
+    if not raw:
+        return None
+    try:
+        parsed = json.loads(raw)
+    except (TypeError, ValueError) as e:
+        logging.warning(f"Could not parse {label} as JSON, ignoring: {e}")
+        return None
+    if not isinstance(parsed, dict) or not parsed:
+        return None
+    cleaned = {}
+    for k, v in parsed.items():
+        if not isinstance(k, str) or not isinstance(v, list):
+            continue
+        props = [p for p in v if isinstance(p, str) and p]
+        if props:
+            cleaned[k] = props
+    return cleaned or None
 
 def sanitize_additional_instruction(instruction: str) -> str:
    """

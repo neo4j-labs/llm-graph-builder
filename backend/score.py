@@ -35,7 +35,8 @@ from src.main import (
     create_graph_database_connection, create_source_node_graph_url_wikipedia,
     extract_graph_from_file_Wikipedia, extract_graph_from_file_gcs,
     extract_graph_from_file_local_file, extract_graph_from_file_s3, extract_graph_from_file_youtube,
-    extract_graph_from_web_page, failed_file_process, get_labels_and_relationtypes, get_source_list_from_graph,
+    extract_graph_from_web_page, failed_file_process, get_labels_and_relationtypes,
+    get_labels_relationtypes_and_properties, get_source_list_from_graph,
     manually_cancelled_job, populate_graph_schema_from_text, set_status_retry, update_graph, upload_file
 )
 from src.neighbours import get_neighbour_nodes
@@ -118,7 +119,7 @@ app.add_middleware(
     compresslevel=5,
     paths=[
         "/sources_list", "/url/scan", "/extract", "/chat_bot", "/chunk_entities", "/get_neighbours", "/graph_query",
-        "/schema", "/populate_graph_schema", "/get_unconnected_nodes_list", "/get_duplicate_nodes", "/fetch_chunktext",
+        "/schema", "/schema_with_properties", "/populate_graph_schema", "/get_unconnected_nodes_list", "/get_duplicate_nodes", "/fetch_chunktext",
         "/schema_visualization"
     ]
 )
@@ -621,6 +622,26 @@ async def get_structured_schema(credentials: Neo4jCredentials = Depends(get_neo4
         return create_api_response('Success', data=result,message=f"Total elapsed API time {elapsed_time:.2f}")
     except Exception as e:
         message="Unable to get the labels and relationtypes from neo4j database"
+        error_message = str(e)
+        logging.info(message)
+        logging.exception(f'Exception:{error_message}')
+        return create_api_response("Failed", message=message, error=error_message)
+    finally:
+        gc.collect()
+
+@app.post("/schema_with_properties")
+async def get_structured_schema_with_properties(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
+    """Like /schema, but also returns property names per node label and per relationship type."""
+    try:
+        start = time.time()
+        result = await asyncio.to_thread(get_labels_relationtypes_and_properties, credentials)
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {'api_name':'schema_with_properties','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
+        logger.log_struct(json_obj, "INFO")
+        return create_api_response('Success', data=result, message=f"Total elapsed API time {elapsed_time:.2f}")
+    except Exception as e:
+        message = "Unable to get the labels, relationtypes, and properties from neo4j database"
         error_message = str(e)
         logging.info(message)
         logging.exception(f'Exception:{error_message}')

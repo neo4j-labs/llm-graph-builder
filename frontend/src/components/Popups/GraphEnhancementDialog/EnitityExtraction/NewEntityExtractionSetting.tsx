@@ -23,6 +23,7 @@ export default function NewEntityExtractionSetting({
   onClose,
   openTextSchema,
   openLoadSchema,
+  openLoadSchemaWithProperties,
   openPredefinedSchema,
   settingView,
   onContinue,
@@ -40,6 +41,7 @@ export default function NewEntityExtractionSetting({
   onClose?: () => void;
   openTextSchema: () => void;
   openLoadSchema: () => void;
+  openLoadSchemaWithProperties: () => void;
   openPredefinedSchema: () => void;
   settingView: 'contentView' | 'headerView';
   onContinue?: () => void;
@@ -76,6 +78,14 @@ export default function NewEntityExtractionSetting({
     setImporterRels,
     setImporterPattern,
     importerPattern,
+    dbWithPropsPattern,
+    setDbWithPropsPattern,
+    setDbWithPropsNodes,
+    setDbWithPropsRels,
+    dbNodeProperties,
+    setDbNodeProperties,
+    dbRelProperties,
+    setDbRelProperties,
   } = useFileContext();
   const { userCredentials } = useCredentials();
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
@@ -132,6 +142,12 @@ export default function NewEntityExtractionSetting({
     setImporterNodes([]);
     setImporterRels([]);
     setImporterPattern([]);
+    // DB-with-properties clear
+    setDbWithPropsPattern([]);
+    setDbWithPropsNodes([]);
+    setDbWithPropsRels([]);
+    setDbNodeProperties({});
+    setDbRelProperties({});
   };
 
   const handleFinalApply = (pattern: string[], nodeLables: OptionType[], relationshipLabels: OptionType[]) => {
@@ -259,6 +275,9 @@ export default function NewEntityExtractionSetting({
     if (importerPattern.includes(patternToRemove)) {
       updateStore(importerPattern, patternToRemove, setImporterPattern, setImporterNodes, setImporterRels);
     }
+    if (dbWithPropsPattern.includes(patternToRemove)) {
+      updateStore(dbWithPropsPattern, patternToRemove, setDbWithPropsPattern, setDbWithPropsNodes, setDbWithPropsRels);
+    }
     const updatedCombinedPatterns = combinedPatterns.filter((p) => p !== patternToRemove);
     setCombinedPatterns(updatedCombinedPatterns);
     const updatedTuples: TupleType[] = updatedCombinedPatterns
@@ -313,6 +332,16 @@ export default function NewEntityExtractionSetting({
     openLoadSchema();
   }, []);
 
+  const onLoadExistingSchemaWithPropertiesClick: MouseEventHandler<HTMLButtonElement> = useCallback(async () => {
+    if (view === 'Dialog' && onClose != undefined) {
+      onClose();
+    }
+    if (view === 'Tabs' && closeEnhanceGraphSchemaDialog != undefined) {
+      closeEnhanceGraphSchemaDialog();
+    }
+    openLoadSchemaWithProperties();
+  }, []);
+
   const onDataImporterSchemaCLick: MouseEventHandler<HTMLButtonElement> = useCallback(async () => {
     if (view === 'Dialog' && onClose != undefined) {
       onClose();
@@ -357,6 +386,8 @@ export default function NewEntityExtractionSetting({
           highlightPattern={highlightPattern ?? ''}
           nodes={combinedNodes}
           rels={combinedRels}
+          nodeProperties={dbNodeProperties}
+          relProperties={dbRelProperties}
         ></PatternContainer>
         <Flex className='my-8! mb-2 flex! items-center' flexDirection='row' justifyContent='flex-end'>
           <DropdownButton
@@ -389,6 +420,18 @@ export default function NewEntityExtractionSetting({
                   </TooltipWrapper>
                 }
                 onClick={onLoadExistingSchemaCLick}
+              />
+              <Menu.Item
+                title={
+                  <TooltipWrapper
+                    hasButtonWrapper={true}
+                    placement='right'
+                    tooltip='Pull labels, relationship types, AND property names from the connected database, and use them as guidance for property extraction.'
+                  >
+                    Load Existing Schema (with properties)
+                  </TooltipWrapper>
+                }
+                onClick={onLoadExistingSchemaWithPropertiesClick}
               />
               <Menu.Item
                 title={

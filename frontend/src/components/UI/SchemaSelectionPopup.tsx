@@ -15,6 +15,8 @@ const SchemaSelectionDialog = ({
   onApply,
   onCancel,
   message,
+  nodeProperties,
+  relProperties,
 }: SchemaSelectionProps) => {
   return (
     <Dialog size='medium' isOpen={open} onClose={onClose} htmlAttributes={{ 'aria-labelledby': 'form-dialog-title' }}>
@@ -32,6 +34,8 @@ const SchemaSelectionDialog = ({
             highlightPattern={highlightPattern ?? ''}
             nodes={nodes}
             rels={rels}
+            nodeProperties={nodeProperties}
+            relProperties={relProperties}
           ></PatternContainer>
         ) : (
           <div className='my-40 flex! items-center justify-center'>

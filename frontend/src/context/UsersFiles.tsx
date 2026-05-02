@@ -6,6 +6,7 @@ import {
   OptionType,
   showTextFromSchemaDialogType,
   schemaLoadDialogType,
+  schemaLoadWithPropertiesDialogType,
   predefinedSchemaDialogType,
   dataImporterSchemaDialogType,
 } from '../types';
@@ -104,6 +105,15 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   const [importerNodes, setImporterNodes] = useState<OptionType[]>([]);
   const [importerRels, setImporterRels] = useState<OptionType[]>([]);
   const [importerPattern, setImporterPattern] = useState<string[]>([]);
+
+  // Load Existing schema from db (with properties)
+  const [schemaLoadWithPropertiesDialog, setSchemaLoadWithPropertiesDialog] =
+    useState<schemaLoadWithPropertiesDialogType>({ triggeredFrom: '', show: false });
+  const [dbWithPropsNodes, setDbWithPropsNodes] = useState<OptionType[]>([]);
+  const [dbWithPropsRels, setDbWithPropsRels] = useState<OptionType[]>([]);
+  const [dbWithPropsPattern, setDbWithPropsPattern] = useState<string[]>([]);
+  const [dbNodeProperties, setDbNodeProperties] = useState<Record<string, string[]>>({});
+  const [dbRelProperties, setDbRelProperties] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
     if (selectedNodeLabelstr != null) {
@@ -217,6 +227,18 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     setImporterRels,
     importerPattern,
     setImporterPattern,
+    schemaLoadWithPropertiesDialog,
+    setSchemaLoadWithPropertiesDialog,
+    dbWithPropsNodes,
+    setDbWithPropsNodes,
+    dbWithPropsRels,
+    setDbWithPropsRels,
+    dbWithPropsPattern,
+    setDbWithPropsPattern,
+    dbNodeProperties,
+    setDbNodeProperties,
+    dbRelProperties,
+    setDbRelProperties,
   };
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };

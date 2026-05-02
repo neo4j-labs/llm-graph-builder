@@ -546,7 +546,7 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
           break
         else:
           processing_chunks_start_time = time.time()
-          node_count,rel_count,latency_processed_chunk,token_usage = await processing_chunks(selected_chunks,graph,credentials,params.file_name,params.model,params.allowedNodes,params.allowedRelationship,params.chunks_to_combine,node_count, rel_count, params.additional_instructions, params.embedding_provider, params.embedding_model)
+          node_count,rel_count,latency_processed_chunk,token_usage = await processing_chunks(selected_chunks,graph,credentials,params.file_name,params.model,params.allowedNodes,params.allowedRelationship,params.chunks_to_combine,node_count, rel_count, params.additional_instructions, params.embedding_provider, params.embedding_model, params.nodeProperties, params.relationshipProperties)
           logging.info("Token used in processing chunks: %s", token_usage)
           tokens_per_file += token_usage
           logging.info("Total token used per file: %s", tokens_per_file)
@@ -647,7 +647,7 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
     logging.error(error_message)
     raise LLMGraphBuilderException(error_message)
 
-async def processing_chunks(chunkId_chunkDoc_list,graph,credentials,file_name,model,allowedNodes,allowedRelationship, chunks_to_combine, node_count, rel_count, additional_instructions, embedding_provider, embedding_model):
+async def processing_chunks(chunkId_chunkDoc_list,graph,credentials,file_name,model,allowedNodes,allowedRelationship, chunks_to_combine, node_count, rel_count, additional_instructions, embedding_provider, embedding_model, nodeProperties=None, relationshipProperties=None):
   #create vector index and update chunk node with embedding
   latency_processing_chunk = {}
   if graph is not None:
@@ -665,7 +665,7 @@ async def processing_chunks(chunkId_chunkDoc_list,graph,credentials,file_name,mo
   logging.info("Get graph document list from models")
   
   start_entity_extraction = time.time()
-  graph_documents, token_usage =  await get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship, chunks_to_combine, additional_instructions)
+  graph_documents, token_usage =  await get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship, chunks_to_combine, additional_instructions, nodeProperties, relationshipProperties)
   end_entity_extraction = time.time()
   elapsed_entity_extraction = end_entity_extraction - start_entity_extraction
   logging.info(f'Time taken to extract enitities from LLM Graph Builder: {elapsed_entity_extraction:.2f} seconds')
@@ -920,6 +920,60 @@ def get_labels_and_relationtypes(credentials):
           continue
       triples.add(f"{from_label}-{rel_type}->{to_label}")
   return {"triplets": list(triples)}
+
+def get_labels_relationtypes_and_properties(credentials):
+  """
+  Like get_labels_and_relationtypes, but additionally returns the property names
+  declared per node label and per relationship type, so the client can use those
+  as the property schema for LLM extraction.
+
+  Returns:
+      dict: {
+          "triplets": ["Label1-RELTYPE->Label2", ...],
+          "nodeProperties": {"Label1": ["prop1", "prop2"], ...},
+          "relationshipProperties": {"RELTYPE": ["prop1", ...], ...},
+      }
+  """
+  excluded_labels = {'Document', 'Chunk', '_Bloom_Perspective_', '__Community__', '__Entity__', 'Session', 'Message'}
+  excluded_relationships = {
+      'NEXT_CHUNK', '_Bloom_Perspective_', 'FIRST_CHUNK',
+      'SIMILAR', 'IN_COMMUNITY', 'PARENT_COMMUNITY', 'NEXT', 'LAST_MESSAGE',
+      'PART_OF', 'HAS_ENTITY',
+  }
+  excluded_properties = {'embedding', 'fastrp_embedding', 'id', 'elementId'}
+
+  base = get_labels_and_relationtypes(credentials)
+  triplets = base["triplets"]
+
+  node_props = {}
+  rel_props = {}
+
+  driver = get_graphDB_driver(credentials)
+  with driver.session(database=credentials.database) as session:
+    for record in session.run("CALL db.schema.nodeTypeProperties()"):
+      labels = record.get("nodeLabels") or []
+      prop = record.get("propertyName")
+      if not prop or prop in excluded_properties:
+          continue
+      for label in labels:
+        if label in excluded_labels:
+            continue
+        node_props.setdefault(label, set()).add(prop)
+
+    for record in session.run("CALL db.schema.relTypeProperties()"):
+      rel_type = (record.get("relType") or "").strip(":`")
+      prop = record.get("propertyName")
+      if not rel_type or rel_type in excluded_relationships:
+          continue
+      if not prop or prop in excluded_properties:
+          continue
+      rel_props.setdefault(rel_type, set()).add(prop)
+
+  return {
+      "triplets": triplets,
+      "nodeProperties": {k: sorted(v) for k, v in node_props.items()},
+      "relationshipProperties": {k: sorted(v) for k, v in rel_props.items()},
+  }
 
 def manually_cancelled_job(graph, filenames, source_types, merged_dir, uri):
   

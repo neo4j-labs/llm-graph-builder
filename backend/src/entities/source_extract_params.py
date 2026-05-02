@@ -17,6 +17,8 @@ class SourceScanExtractParams(BaseModel):
     file_name: Optional[str] = Field(None, description="File name")
     allowedNodes: Optional[str] = Field(None, description="Allowed nodes")
     allowedRelationship: Optional[str] = Field(None, description="Allowed relationships")
+    nodeProperties: Optional[str] = Field(None, description="JSON-encoded Dict[label, List[propName]] for per-label property guidance")
+    relationshipProperties: Optional[str] = Field(None, description="JSON-encoded Dict[relType, List[propName]] for per-rel-type property guidance")
     token_chunk_size: Optional[int] = Field(None, description="Token chunk size")
     chunk_overlap: Optional[int] = Field(None, description="Chunk overlap")
     chunks_to_combine: Optional[int] = Field(None, description="Chunks to combine")
@@ -41,6 +43,8 @@ def get_source_scan_extract_params(
     file_name: Optional[str] = Form(None),
     allowedNodes: Optional[str] = Form(None),
     allowedRelationship: Optional[str] = Form(None),
+    nodeProperties: Optional[str] = Form(None),
+    relationshipProperties: Optional[str] = Form(None),
     token_chunk_size: Optional[int] = Form(None),
     chunk_overlap: Optional[int] = Form(None),
     chunks_to_combine: Optional[int] = Form(None),
@@ -65,6 +69,8 @@ def get_source_scan_extract_params(
         file_name=file_name,
         allowedNodes=allowedNodes,
         allowedRelationship=allowedRelationship,
+        nodeProperties=nodeProperties,
+        relationshipProperties=relationshipProperties,
         token_chunk_size=token_chunk_size,
         chunk_overlap=chunk_overlap,
         chunks_to_combine=chunks_to_combine,

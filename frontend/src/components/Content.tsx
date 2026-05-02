@@ -127,6 +127,8 @@ const Content: React.FC<ContentProps> = ({
     model,
     additionalInstructions,
     setAdditionalInstructions,
+    dbNodeProperties,
+    dbRelProperties,
   } = useFileContext();
   const [viewPoint, setViewPoint] = useState<
     'tableView' | 'showGraphView' | 'chatInfoView' | 'neighborView' | 'showSchemaView'
@@ -332,6 +334,18 @@ const Content: React.FC<ContentProps> = ({
         triggerStatusUpdateAPI(name as string, userCredentials, updateStatusForLargeFiles);
       }
 
+      // Restrict property maps to labels/rel-types that are still in the user's selected schema.
+      // dbNodeProperties / dbRelProperties only get populated by the
+      // "Load Existing Schema (with properties)" path; otherwise they're empty objects.
+      const selectedNodeLabelSet = new Set(selectedNodes.map((l) => l.value));
+      const selectedRelTypeSet = new Set(selectedRels.map((t) => t.value.split(',')[1]));
+      const scopedNodeProperties = Object.fromEntries(
+        Object.entries(dbNodeProperties ?? {}).filter(([label]) => selectedNodeLabelSet.has(label))
+      );
+      const scopedRelProperties = Object.fromEntries(
+        Object.entries(dbRelProperties ?? {}).filter(([relType]) => selectedRelTypeSet.has(relType))
+      );
+
       const apiResponse = await extractAPI(
         model,
         fileItem.fileSource,
@@ -350,7 +364,9 @@ const Content: React.FC<ContentProps> = ({
         fileItem.googleProjectId,
         fileItem.language,
         fileItem.accessToken,
-        additionalInstructions
+        additionalInstructions,
+        scopedNodeProperties,
+        scopedRelProperties
       );
       if (apiResponse?.status === 'Failed') {
         let errorobj = { error: apiResponse.error, message: apiResponse.message, fileName: apiResponse.file_name };

@@ -35,6 +35,7 @@ export default function GraphEnhancementDialog({
   const {
     setShowTextFromSchemaDialog,
     setSchemaLoadDialog,
+    setSchemaLoadWithPropertiesDialog,
     setPredefinedSchemaDialog,
     setUserDefinedPattern,
     setUserDefinedNodes,
@@ -193,6 +194,9 @@ export default function GraphEnhancementDialog({
                 setShowTextFromSchemaDialog({ triggeredFrom: 'enhancementtab', show: true });
               }}
               openLoadSchema={() => setSchemaLoadDialog({ triggeredFrom: 'enhancementtab', show: true })}
+              openLoadSchemaWithProperties={() =>
+                setSchemaLoadWithPropertiesDialog({ triggeredFrom: 'enhancementtab', show: true })
+              }
               openPredefinedSchema={() => {
                 setPredefinedSchemaDialog({ triggeredFrom: 'enhancementtab', show: true });
               }}

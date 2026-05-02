@@ -87,10 +87,22 @@ export type ExtractParams = Pick<CustomFile, 'wikiQuery' | 'model' | 'sourceUrl'
   file_name?: string;
   allowedNodes?: string[];
   allowedRelationship?: string[];
+  nodeProperties?: string;
+  relationshipProperties?: string;
   gcs_project_id?: string;
   retry_condition: string;
   additional_instructions?: string;
 } & { [key: string]: any };
+
+export interface SchemaWithPropertiesResponse {
+  status: string;
+  data: {
+    triplets: string[];
+    nodeProperties: Record<string, string[]>;
+    relationshipProperties: Record<string, string[]>;
+  };
+  message?: string;
+}
 
 export type UploadParams = {
   file: Blob;
@@ -157,6 +169,7 @@ export interface ContentProps {
   openChatBot: () => void;
   openTextSchema: () => void;
   openLoadSchema: () => void;
+  openLoadSchemaWithProperties: () => void;
   openPredefinedSchema: () => void;
   showEnhancementDialog: boolean;
   toggleEnhancementDialog: () => void;
@@ -883,6 +896,12 @@ export interface dataImporterSchemaDialogType {
   onApply?: (selectedPattern: string[], nodes: OptionType[], rels: OptionType[]) => void;
 }
 
+export interface schemaLoadWithPropertiesDialogType {
+  triggeredFrom: string;
+  show: boolean;
+  onApply?: (selectedPattern: string[], nodes: OptionType[], rels: OptionType[]) => void;
+}
+
 export interface FileContextType {
   files: (File | null)[] | [];
   filesData: CustomFile[] | [];
@@ -939,6 +958,19 @@ export interface FileContextType {
   setDbRels: Dispatch<SetStateAction<OptionType[]>>;
   dbPattern: string[];
   setDbPattern: Dispatch<SetStateAction<string[]>>;
+  // Load Existing schema from db (with properties)
+  schemaLoadWithPropertiesDialog: schemaLoadWithPropertiesDialogType;
+  setSchemaLoadWithPropertiesDialog: React.Dispatch<React.SetStateAction<schemaLoadWithPropertiesDialogType>>;
+  dbWithPropsNodes: OptionType[];
+  setDbWithPropsNodes: Dispatch<SetStateAction<OptionType[]>>;
+  dbWithPropsRels: OptionType[];
+  setDbWithPropsRels: Dispatch<SetStateAction<OptionType[]>>;
+  dbWithPropsPattern: string[];
+  setDbWithPropsPattern: Dispatch<SetStateAction<string[]>>;
+  dbNodeProperties: Record<string, string[]>;
+  setDbNodeProperties: Dispatch<SetStateAction<Record<string, string[]>>>;
+  dbRelProperties: Record<string, string[]>;
+  setDbRelProperties: Dispatch<SetStateAction<Record<string, string[]>>>;
   // Predefined schema
   predefinedSchemaDialog: predefinedSchemaDialogType;
   setPredefinedSchemaDialog: React.Dispatch<React.SetStateAction<predefinedSchemaDialogType>>;
@@ -1119,4 +1151,6 @@ export interface SchemaSelectionProps {
   onCancel: () => void;
   view?: string;
   message?: string;
+  nodeProperties?: Record<string, string[]>;
+  relProperties?: Record<string, string[]>;
 }
