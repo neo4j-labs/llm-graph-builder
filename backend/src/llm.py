@@ -216,17 +216,25 @@ async def get_graph_document_list(
                 ignore_tool_usage = True
 
             # If the user supplied per-label property maps (from "Load Existing Schema with Properties"),
-            # union those into the flat list LangChain accepts and append per-label JSON guidance to
+            # union those into the flat list LangChain accepts and append per-label guidance to
             # additional_instructions so the LLM knows which props belong to which label/rel-type.
+            #
+            # IMPORTANT: avoid curly braces in the appended text — LLMGraphTransformer feeds this
+            # into a ChatPromptTemplate which treats `{name}` as a template variable. JSON.dumps
+            # would emit `{"Person":[...]}` and break the prompt build with INVALID_PROMPT_INPUT.
+            # Use a brace-free text format instead.
+            def _format_props_hint(props_map):
+                return "; ".join(f"{label}: [{', '.join(props)}]" for label, props in props_map.items())
+
             extra_instructions = ""
             if node_properties_map and node_properties is not False:
                 extra_node_props = {p for ps in node_properties_map.values() for p in ps if p}
                 node_properties = sorted({"description", *extra_node_props})
-                extra_instructions += " Per-node-label properties to extract when applicable: " + json.dumps(node_properties_map, separators=(",", ":")) + "."
+                extra_instructions += " Per-node-label properties to extract when applicable: " + _format_props_hint(node_properties_map) + "."
             if relationship_properties_map and relationship_properties is not False:
                 extra_rel_props = {p for ps in relationship_properties_map.values() for p in ps if p}
                 relationship_properties = sorted({"description", *extra_rel_props})
-                extra_instructions += " Per-relationship-type properties to extract when applicable: " + json.dumps(relationship_properties_map, separators=(",", ":")) + "."
+                extra_instructions += " Per-relationship-type properties to extract when applicable: " + _format_props_hint(relationship_properties_map) + "."
 
             llm_transformer = LLMGraphTransformer(
                 llm=llm,
