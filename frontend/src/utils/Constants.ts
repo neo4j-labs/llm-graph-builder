@@ -218,7 +218,10 @@ export const tooltips = {
   predinedSchema: 'Predefined Schema',
   dataImporterJson: 'Data Importer JSON',
 };
-export const PRODMODELS = ['gemini_2.5_flash', 'openai_gpt_5_mini', 'diffbot', 'anthropic_claude_4.5_haiku'];
+// Keep PRODMODELS in sync with the VITE-driven prodllms so the default model
+// (used by UsersFiles when no persisted selection exists) reflects the user's
+// configured model list — not a stale hardcoded "gemini_2.5_flash" first entry.
+export const PRODMODELS = prodllms;
 export const buttonCaptions = {
   exploreGraphWithBloom: 'Explore Graph',
   showPreviewGraph: 'Preview Graph',

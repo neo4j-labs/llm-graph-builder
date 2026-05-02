@@ -311,10 +311,28 @@ def create_source_node_graph_url_wikipedia(graph, params):
     lst_file_name=[]
     wiki_query_id, language = check_url_source(source_type=params.source_type, wiki_query=params.wiki_query)
     logging.info(f"Creating source node for {wiki_query_id.strip()}, {language}")
-    pages = WikipediaLoader(query=wiki_query_id.strip(), lang=language, load_max_docs=1, load_all_available_meta=True).load()
-    if pages==None or len(pages)==0:
-      failed_count+=1
-      message = f"Unable to read data for given Wikipedia url : {params.wiki_query}"
+    # WikipediaLoader (and the underlying `wikipedia` package) occasionally raises
+    # json.JSONDecodeError when MediaWiki returns an empty/HTML body (rate limits,
+    # transient 5xx, disambiguation edge cases). Retry once before giving up so the
+    # user gets a clear "couldn't fetch" instead of a raw "Expecting value: line 1
+    # column 1 (char 0)" stack trace.
+    pages = None
+    last_err = None
+    for attempt in range(2):
+      try:
+        pages = WikipediaLoader(query=wiki_query_id.strip(), lang=language, load_max_docs=1, load_all_available_meta=True).load()
+        break
+      except json.JSONDecodeError as e:
+        last_err = e
+        logging.warning(f"Wikipedia JSON decode error (attempt {attempt + 1}): {e}")
+        time.sleep(1)
+      except Exception as e:
+        last_err = e
+        break
+    if pages is None or len(pages) == 0:
+      failed_count += 1
+      detail = f": {last_err}" if last_err else ""
+      message = f"Unable to read data for given Wikipedia url: {params.wiki_query}{detail}"
       raise LLMGraphBuilderException(message)
     else:
       obj_source_node = sourceNode()

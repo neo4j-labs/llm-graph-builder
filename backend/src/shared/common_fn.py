@@ -8,7 +8,7 @@ from transformers import AutoTokenizer, AutoModel
 from langchain_huggingface import HuggingFaceEmbeddings
 from threading import Lock
 import logging
-from urllib.parse import urlparse,parse_qs
+from urllib.parse import urlparse,parse_qs,unquote
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from langchain_google_vertexai import VertexAIEmbeddings
 from langchain_openai import OpenAIEmbeddings
@@ -120,17 +120,20 @@ def check_url_source(source_type, yt_url:str=None, wiki_query:str=None):
       elif  source_type == 'Wikipedia':
         wiki_query_id=''
 
-        wikipedia_url_regex = r'https?:\/\/(www\.)?([a-zA-Z]{2,3})\.wikipedia\.org\/wiki\/(.*)'
-        
+        # Strip a trailing #fragment before regex (anchors break the WikipediaLoader),
+        # then URL-decode the article slug so titles like "Caf%C3%A9" → "Café" are
+        # passed to the loader as the human-readable title.
+        wikipedia_url_regex = r'https?:\/\/(www\.)?([a-zA-Z]{2,3})\.wikipedia\.org\/wiki\/(.*?)(?:#.*)?$'
+
         match = re.search(wikipedia_url_regex, wiki_query.strip())
         if match:
                 language = match.group(2)
-                wiki_query_id = match.group(3)
+                wiki_query_id = unquote(match.group(3))
         else:
             raise Exception(f'Not a valid wikipedia url: {wiki_query} ')
 
-        logging.info(f"wikipedia query id = {wiki_query_id}")     
-        return wiki_query_id, language     
+        logging.info(f"wikipedia query id = {wiki_query_id}")
+        return wiki_query_id, language
     except Exception as e:
       logging.error(f"Error in recognize URL: {e}")
       raise Exception(e)
