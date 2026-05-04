@@ -1,10 +1,17 @@
 import json
 import logging
 import time
+import wikipedia
 from langchain_community.document_loaders import WikipediaLoader
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 
 logger = logging.getLogger(__name__)
+
+# Wikipedia's User-Agent policy now blocks the wikipedia package's default UA,
+# returning HTML 403/429 bodies that cause json.JSONDecodeError on parse. Set a
+# compliant UA at module load time. See:
+#   https://meta.wikimedia.org/wiki/User-Agent_policy
+wikipedia.set_user_agent("llm-graph-builder/1.0 (https://github.com/neo4j-labs/llm-graph-builder)")
 
 def get_documents_from_wikipedia(wiki_query: str, language: str):
     """
