@@ -102,3 +102,4 @@ const UploadJsonData = ({ onSchemaExtracted }: UploadJsonDataProps) => {
   );
 };
 export default UploadJsonData;
+export type { GraphSchema };

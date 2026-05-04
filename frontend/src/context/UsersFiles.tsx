@@ -9,6 +9,7 @@ import {
   schemaLoadWithPropertiesDialogType,
   predefinedSchemaDialogType,
   dataImporterSchemaDialogType,
+  ttlSchemaDialogType,
 } from '../types';
 import {
   chatModeLables,
@@ -70,6 +71,11 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
   });
 
   const [dataImporterSchemaDialog, setDataImporterSchemaDialog] = useState<dataImporterSchemaDialogType>({
+    triggeredFrom: '',
+    show: false,
+  });
+
+  const [ttlSchemaDialog, setTtlSchemaDialog] = useState<ttlSchemaDialogType>({
     triggeredFrom: '',
     show: false,
   });
@@ -221,6 +227,8 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     setTargetOptions,
     dataImporterSchemaDialog,
     setDataImporterSchemaDialog,
+    ttlSchemaDialog,
+    setTtlSchemaDialog,
     importerNodes,
     setImporterNodes,
     importerRels,

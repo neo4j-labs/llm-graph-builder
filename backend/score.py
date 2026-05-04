@@ -27,6 +27,8 @@ from src.communities import create_communities
 from src.entities.source_extract_params import SourceScanExtractParams, get_source_scan_extract_params
 from src.entities.user_credential import Neo4jCredentials, get_neo4j_credentials
 from src.graphDB_dataAccess import graphDBdataAccess
+from src.graphrag.schema_model import schema_spec_from_db_introspection
+from src.graphrag.ttl_parser import parse_owl_ttl
 from src.graph_query import get_chunktext_results, get_graph_results, visualize_schema
 from src.logger import CustomLogger
 from src.main import (
@@ -119,7 +121,7 @@ app.add_middleware(
     compresslevel=5,
     paths=[
         "/sources_list", "/url/scan", "/extract", "/chat_bot", "/chunk_entities", "/get_neighbours", "/graph_query",
-        "/schema", "/schema_with_properties", "/populate_graph_schema", "/get_unconnected_nodes_list", "/get_duplicate_nodes", "/fetch_chunktext",
+        "/schema", "/schema_with_properties", "/schema/converged", "/schema/from_ttl", "/populate_graph_schema", "/get_unconnected_nodes_list", "/get_duplicate_nodes", "/fetch_chunktext",
         "/schema_visualization"
     ]
 )
@@ -648,7 +650,79 @@ async def get_structured_schema_with_properties(credentials: Neo4jCredentials = 
         return create_api_response("Failed", message=message, error=error_message)
     finally:
         gc.collect()
-            
+
+
+@app.post("/schema/from_ttl")
+async def get_schema_from_ttl(file: UploadFile = File(...)):
+    """Parse an uploaded OWL ontology in Turtle (.ttl) format and return a typed
+    SchemaSpec plus a list of warnings for ignored constructs."""
+    try:
+        start = time.time()
+        contents = await file.read()
+        try:
+            text = contents.decode("utf-8")
+        except UnicodeDecodeError:
+            text = contents.decode("latin-1")
+        spec, warnings = parse_owl_ttl(text)
+        elapsed_time = time.time() - start
+        json_obj = {
+            'api_name': 'schema_from_ttl',
+            'filename': file.filename,
+            'logging_time': formatted_time(datetime.now(timezone.utc)),
+            'elapsed_api_time': f'{elapsed_time:.2f}',
+        }
+        logger.log_struct(json_obj, "INFO")
+        return create_api_response(
+            'Success',
+            data={'schemaSpec': spec.model_dump(by_alias=True), 'warnings': warnings},
+            message=f"Total elapsed API time {elapsed_time:.2f}",
+        )
+    except ValueError as ve:
+        return create_api_response("Failed", message=str(ve), error=str(ve))
+    except Exception as e:
+        message = "Unable to parse the uploaded TTL ontology"
+        error_message = str(e)
+        logging.exception(f'Exception:{error_message}')
+        return create_api_response("Failed", message=message, error=error_message)
+    finally:
+        gc.collect()
+
+
+@app.post("/schema/converged")
+async def get_converged_schema(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
+    """Return the connected DB's schema as a typed SchemaSpec (the shape that
+    backs all three "Add Schema from..." sources: DB introspection, Data Importer
+    JSON, and OWL TTL upload)."""
+    try:
+        start = time.time()
+        introspection = await asyncio.to_thread(get_labels_relationtypes_and_properties, credentials)
+        spec = schema_spec_from_db_introspection(introspection)
+        elapsed_time = time.time() - start
+        json_obj = {
+            'api_name': 'schema_converged',
+            'db_url': credentials.uri,
+            'userName': credentials.userName,
+            'database': credentials.database,
+            'logging_time': formatted_time(datetime.now(timezone.utc)),
+            'elapsed_api_time': f'{elapsed_time:.2f}',
+            'email': credentials.email,
+        }
+        logger.log_struct(json_obj, "INFO")
+        return create_api_response(
+            'Success',
+            data=spec.model_dump(by_alias=True),
+            message=f"Total elapsed API time {elapsed_time:.2f}",
+        )
+    except Exception as e:
+        message = "Unable to build converged schema from neo4j database"
+        error_message = str(e)
+        logging.info(message)
+        logging.exception(f'Exception:{error_message}')
+        return create_api_response("Failed", message=message, error=error_message)
+    finally:
+        gc.collect()
+
+
 def decode_password(pwd):
     return base64.b64decode(pwd).decode("utf-8")
 

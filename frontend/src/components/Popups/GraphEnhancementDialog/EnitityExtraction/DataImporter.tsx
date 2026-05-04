@@ -21,6 +21,27 @@ interface DataImporterDialogProps {
   ) => void;
 }
 
+// The Data Importer JSON property entries vary slightly by version. We accept
+// any of the shapes documented by the importer's schema:
+//   { name: "age", type: { type: "integer" } }
+//   { name: "age", types: [{ type: "integer" }] }
+//   { token: "age", ... }
+const propertyName = (p: any): string | null => {
+  if (typeof p?.name === 'string') return p.name;
+  if (typeof p?.token === 'string') return p.token;
+  return null;
+};
+
+const collectPropertyNames = (props: unknown): string[] => {
+  if (!Array.isArray(props)) return [];
+  const names: string[] = [];
+  for (const p of props) {
+    const n = propertyName(p);
+    if (n && !names.includes(n)) names.push(n);
+  }
+  return names;
+};
+
 const DataImporterSchemaDialog = ({ open, onClose, onApply }: DataImporterDialogProps) => {
   const {
     importerPattern,
@@ -35,6 +56,8 @@ const DataImporterSchemaDialog = ({ open, onClose, onApply }: DataImporterDialog
     setTargetOptions,
     typeOptions,
     setTypeOptions,
+    setDbNodeProperties,
+    setDbRelProperties,
   } = useFileContext();
 
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
@@ -44,6 +67,8 @@ const DataImporterSchemaDialog = ({ open, onClose, onApply }: DataImporterDialog
     setImporterPattern([]);
     setImporterNodes([]);
     setImporterRels([]);
+    setDbNodeProperties({});
+    setDbRelProperties({});
   };
 
   const handleImporterCheck = async () => {
@@ -66,6 +91,8 @@ const DataImporterSchemaDialog = ({ open, onClose, onApply }: DataImporterDialog
       setImporterPattern([]);
       setImporterNodes([]);
       setImporterRels([]);
+      setDbNodeProperties({});
+      setDbRelProperties({});
       return;
     }
     const updatedTuples: TupleType[] = updatedPatterns
@@ -103,25 +130,44 @@ const DataImporterSchemaDialog = ({ open, onClose, onApply }: DataImporterDialog
           <ImporterInput />
           <UploadJsonData
             onSchemaExtracted={({ nodeLabels, relationshipTypes, relationshipObjectTypes, nodeObjectTypes }) => {
-              const nodeLabelMap = Object.fromEntries(nodeLabels.map((n) => [n.$id, n.token]));
-              const relTypeMap = Object.fromEntries(relationshipTypes.map((r) => [r.$id, r.token]));
+              const nodeLabelMap = Object.fromEntries(nodeLabels.map((n: any) => [n.$id, n.token]));
+              const relTypeMap = Object.fromEntries(relationshipTypes.map((r: any) => [r.$id, r.token]));
               const nodeIdToLabel: Record<string, string> = {};
+              const nodeIdToProperties: Record<string, string[]> = {};
               nodeObjectTypes.forEach((nodeObj: any) => {
                 const labelRef = nodeObj.labels?.[0]?.$ref;
                 if (labelRef && nodeLabelMap[labelRef.slice(1)]) {
                   nodeIdToLabel[nodeObj.$id] = nodeLabelMap[labelRef.slice(1)];
+                  nodeIdToProperties[nodeObj.$id] = collectPropertyNames(nodeObj.properties);
                 }
               });
 
-              const patterns = relationshipObjectTypes.map((relObj) => {
+              const patterns: string[] = [];
+              const nodePropsByLabel: Record<string, string[]> = {};
+              const relPropsByType: Record<string, string[]> = {};
+
+              relationshipObjectTypes.forEach((relObj: any) => {
                 const fromId = relObj.from.$ref.slice(1);
                 const toId = relObj.to.$ref.slice(1);
                 const relId = relObj.type.$ref.slice(1);
                 const fromLabel = nodeIdToLabel[fromId] || 'source';
                 const toLabel = nodeIdToLabel[toId] || 'target';
                 const relLabel = relTypeMap[relId] || 'type';
-                const pattern = `${fromLabel} -[:${relLabel}]-> ${toLabel}`;
-                return pattern;
+                patterns.push(`${fromLabel} -[:${relLabel}]-> ${toLabel}`);
+                // Aggregate node properties for both endpoints
+                for (const [labelId, label] of [
+                  [fromId, fromLabel],
+                  [toId, toLabel],
+                ] as const) {
+                  const props = nodeIdToProperties[labelId] ?? [];
+                  if (!props.length) continue;
+                  nodePropsByLabel[label] = Array.from(new Set([...(nodePropsByLabel[label] ?? []), ...props]));
+                }
+                // Relationship properties
+                const relProps = collectPropertyNames(relObj.properties);
+                if (relProps.length) {
+                  relPropsByType[relLabel] = Array.from(new Set([...(relPropsByType[relLabel] ?? []), ...relProps]));
+                }
               });
 
               const importerTuples = patterns
@@ -144,6 +190,8 @@ const DataImporterSchemaDialog = ({ open, onClose, onApply }: DataImporterDialog
               setImporterNodes(nodeLabelOptions);
               setImporterRels(relationshipTypeOptions);
               setImporterPattern(patterns);
+              setDbNodeProperties(nodePropsByLabel);
+              setDbRelProperties(relPropsByType);
             }}
           />
           <PatternContainer

@@ -104,6 +104,47 @@ export interface SchemaWithPropertiesResponse {
   message?: string;
 }
 
+export type SchemaPropertyType =
+  | 'STRING'
+  | 'INTEGER'
+  | 'FLOAT'
+  | 'BOOLEAN'
+  | 'DATE'
+  | 'LOCAL_DATETIME'
+  | 'LIST';
+
+export interface PropertySpec {
+  name: string;
+  type: SchemaPropertyType;
+  description?: string | null;
+  required?: boolean;
+}
+
+export interface NodeSpec {
+  label: string;
+  description?: string | null;
+  properties: PropertySpec[];
+}
+
+export interface RelSpec {
+  label: string;
+  description?: string | null;
+  properties: PropertySpec[];
+}
+
+export interface PatternSpec {
+  sourceLabel: string;
+  relLabel: string;
+  targetLabel: string;
+}
+
+export interface SchemaSpec {
+  source: 'db' | 'importer' | 'ttl';
+  nodes: NodeSpec[];
+  relationships: RelSpec[];
+  patterns: PatternSpec[];
+}
+
 export type UploadParams = {
   file: Blob;
   model: string;
@@ -167,10 +208,7 @@ export interface DrawerProps {
 export interface ContentProps {
   showChatBot: boolean;
   openChatBot: () => void;
-  openTextSchema: () => void;
   openLoadSchema: () => void;
-  openLoadSchemaWithProperties: () => void;
-  openPredefinedSchema: () => void;
   showEnhancementDialog: boolean;
   toggleEnhancementDialog: () => void;
   setOpenConnection: Dispatch<SetStateAction<connectionState>>;
@@ -183,6 +221,7 @@ export interface ContentProps {
   combinedRels: OptionType[];
   setCombinedRels: Dispatch<SetStateAction<OptionType[]>>;
   openDataImporterSchema: () => void;
+  openTtlSchema: () => void;
 }
 
 export interface FileTableProps {
@@ -896,6 +935,12 @@ export interface dataImporterSchemaDialogType {
   onApply?: (selectedPattern: string[], nodes: OptionType[], rels: OptionType[]) => void;
 }
 
+export interface ttlSchemaDialogType {
+  triggeredFrom: string;
+  show: boolean;
+  onApply?: (selectedPattern: string[], nodes: OptionType[], rels: OptionType[]) => void;
+}
+
 export interface schemaLoadWithPropertiesDialogType {
   triggeredFrom: string;
   show: boolean;
@@ -1003,6 +1048,10 @@ export interface FileContextType {
   // importer defined schema
   dataImporterSchemaDialog: dataImporterSchemaDialogType;
   setDataImporterSchemaDialog: React.Dispatch<React.SetStateAction<dataImporterSchemaDialogType>>;
+
+  // OWL TTL ontology import
+  ttlSchemaDialog: ttlSchemaDialogType;
+  setTtlSchemaDialog: React.Dispatch<React.SetStateAction<ttlSchemaDialogType>>;
   importerNodes: OptionType[];
   setImporterNodes: Dispatch<SetStateAction<OptionType[]>>;
   importerRels: OptionType[];
