@@ -1,6 +1,6 @@
 import { Method } from 'axios';
 import { url } from './Utils';
-import { ExtractParams, UploadParams } from '../types';
+import { ExtractParams, SchemaSpec, UploadParams } from '../types';
 import { apiCall } from '../services/CommonAPI';
 import { getEmbeddingProvider, getEmbeddingModel } from './EmbeddingConfigUtils';
 
@@ -40,7 +40,8 @@ export const extractAPI = async (
   access_token?: string,
   additional_instructions?: string,
   nodeProperties?: Record<string, string[]>,
-  relationshipProperties?: Record<string, string[]>
+  relationshipProperties?: Record<string, string[]>,
+  schemaSpec?: SchemaSpec | null
 ): Promise<any> => {
   const urlExtract = `${url()}/extract`;
   const method: Method = 'post';
@@ -54,6 +55,8 @@ export const extractAPI = async (
     relationshipProperties && Object.keys(relationshipProperties).length > 0
       ? JSON.stringify(relationshipProperties)
       : undefined;
+  const schemaSpecJson = schemaSpec ? JSON.stringify(schemaSpec) : undefined;
+  const schemaSpread = schemaSpecJson ? { schemaSpec: schemaSpecJson } : {};
   let additionalParams: ExtractParams;
   if (source_type === 's3 bucket') {
     additionalParams = {
@@ -72,6 +75,7 @@ export const extractAPI = async (
       additional_instructions,
       ...(nodePropertiesJson ? { nodeProperties: nodePropertiesJson } : {}),
       ...(relationshipPropertiesJson ? { relationshipProperties: relationshipPropertiesJson } : {}),
+      ...schemaSpread,
       embedding_provider: embeddingProvider,
       embedding_model: embeddingModel,
     };
@@ -91,6 +95,7 @@ export const extractAPI = async (
       additional_instructions,
       ...(nodePropertiesJson ? { nodeProperties: nodePropertiesJson } : {}),
       ...(relationshipPropertiesJson ? { relationshipProperties: relationshipPropertiesJson } : {}),
+      ...schemaSpread,
       embedding_provider: embeddingProvider,
       embedding_model: embeddingModel,
     };
@@ -113,6 +118,7 @@ export const extractAPI = async (
       additional_instructions,
       ...(nodePropertiesJson ? { nodeProperties: nodePropertiesJson } : {}),
       ...(relationshipPropertiesJson ? { relationshipProperties: relationshipPropertiesJson } : {}),
+      ...schemaSpread,
       embedding_provider: embeddingProvider,
       embedding_model: embeddingModel,
     };
@@ -131,6 +137,7 @@ export const extractAPI = async (
       additional_instructions,
       ...(nodePropertiesJson ? { nodeProperties: nodePropertiesJson } : {}),
       ...(relationshipPropertiesJson ? { relationshipProperties: relationshipPropertiesJson } : {}),
+      ...schemaSpread,
       embedding_provider: embeddingProvider,
       embedding_model: embeddingModel,
     };
@@ -149,6 +156,7 @@ export const extractAPI = async (
       additional_instructions,
       ...(nodePropertiesJson ? { nodeProperties: nodePropertiesJson } : {}),
       ...(relationshipPropertiesJson ? { relationshipProperties: relationshipPropertiesJson } : {}),
+      ...schemaSpread,
       embedding_provider: embeddingProvider,
       embedding_model: embeddingModel,
     };
@@ -166,6 +174,7 @@ export const extractAPI = async (
       additional_instructions,
       ...(nodePropertiesJson ? { nodeProperties: nodePropertiesJson } : {}),
       ...(relationshipPropertiesJson ? { relationshipProperties: relationshipPropertiesJson } : {}),
+      ...schemaSpread,
       embedding_provider: embeddingProvider,
       embedding_model: embeddingModel,
     };

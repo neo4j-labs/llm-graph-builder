@@ -13,6 +13,7 @@ import {
 import { useCredentials } from '../context/UserCredentials';
 import { useFileContext } from '../context/UsersFiles';
 import { extractAPI } from '../utils/FileAPI';
+import { buildSchemaSpec } from '../utils/buildSchemaSpec';
 import { BannerAlertProps, ContentProps, CustomFile, OptionType, chunkdata, FileTableHandle } from '../types';
 import deleteAPI from '../services/DeleteFiles';
 import { postProcessing } from '../services/PostProcessing';
@@ -366,7 +367,8 @@ const Content: React.FC<ContentProps> = ({
         fileItem.accessToken,
         additionalInstructions,
         scopedNodeProperties,
-        scopedRelProperties
+        scopedRelProperties,
+        buildSchemaSpec(selectedNodes, selectedRels, combinedPatterns, scopedNodeProperties, scopedRelProperties)
       );
       if (apiResponse?.status === 'Failed') {
         let errorobj = { error: apiResponse.error, message: apiResponse.message, fileName: apiResponse.file_name };

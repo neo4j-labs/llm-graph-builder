@@ -16,7 +16,6 @@ export const llms =
         'openai_gpt_5.2',
         'openai_gpt_5_mini',
         'gemini_2.5_pro',
-        'diffbot',
         'groq_llama3.1_8b',
         'anthropic_claude_4.5_sonnet',
         'anthropic_claude_4.5_haiku',
@@ -33,7 +32,7 @@ export const llms =
 export const prodllms =
   import.meta.env.VITE_LLM_MODELS_PROD?.trim() != ''
     ? (import.meta.env.VITE_LLM_MODELS_PROD?.split(',') as string[])
-    : ['gemini_2.5_flash', 'openai_gpt_5_mini', 'diffbot', 'anthropic_claude_4.5_haiku'];
+    : ['gemini_2.5_flash', 'openai_gpt_5_mini', 'anthropic_claude_4.5_haiku'];
 
 export const chatModeLables = {
   vector: 'vector',
