@@ -25,7 +25,7 @@ export const llms = import.meta.env?.VITE_LLM_MODELS?.trim()
       'bedrock_nova_pro_v1',
       'fireworks_deepseek_v3',
       'fireworks_deepseek_v4_flash',
-      'fireworks_qwen3_30b',
+      'fireworks_qwen3_6',
       'fireworks_gpt_oss',
       'fireworks_kimi_k2p5',
       'fireworks_kimi_k2p6',
