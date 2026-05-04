@@ -14,6 +14,7 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_openai import OpenAIEmbeddings
 from langchain_neo4j import Neo4jGraph
 from neo4j.exceptions import TransientError
+from neo4j.exceptions import ClientError as Neo4jClientError
 from langchain_community.graphs.graph_document import GraphDocument
 from typing import List
 import re
@@ -222,8 +223,26 @@ def load_embedding_model(embedding_provider: str, embedding_model_name: str):
     logging.info(f"Embedding: Using {provider} - {model}, Dimension: {dimension}")
     return embeddings, dimension
 
+def drop_entity_id_index_if_standalone(graph: Neo4jGraph):
+   """Drop any standalone (non-constraint-backing) index on (:__Entity__ {id}).
+   Such an index blocks LangChain from creating the required uniqueness constraint."""
+   try:
+       results = graph.query(
+           "SHOW INDEXES YIELD name, labelsOrTypes, properties, owningConstraint "
+           "WHERE '__Entity__' IN labelsOrTypes AND 'id' IN properties "
+           "AND owningConstraint IS NULL"
+       )
+       for row in results:
+           index_name = row.get("name")
+           if index_name:
+               logging.info(f"Dropping conflicting standalone index '{index_name}' on (:__Entity__ {{id}}) before creating constraint.")
+               graph.query(f"DROP INDEX `{index_name}` IF EXISTS")
+   except Exception as e:
+       logging.warning(f"Could not check/drop standalone __Entity__ index: {e}")
+
 def save_graphDocuments_in_neo4j(graph: Neo4jGraph, graph_document_list: List[GraphDocument], max_retries=3, delay=1):
    retries = 0
+   drop_entity_id_index_if_standalone(graph)
    while retries < max_retries:
        try:
            graph.add_graph_documents(graph_document_list, baseEntityLabel=True)
