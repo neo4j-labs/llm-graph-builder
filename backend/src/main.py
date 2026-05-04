@@ -46,7 +46,6 @@ from src.shared.constants import (
     START_FROM_BEGINNING, START_FROM_LAST_PROCESSED_POSITION
 )
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
-from src.shared.schema_extraction import schema_extraction_from_text
 
 warnings.filterwarnings("ignore")
 load_dotenv()
@@ -564,7 +563,7 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
           break
         else:
           processing_chunks_start_time = time.time()
-          node_count,rel_count,latency_processed_chunk,token_usage = await processing_chunks(selected_chunks,graph,credentials,params.file_name,params.model,params.allowedNodes,params.allowedRelationship,params.chunks_to_combine,node_count, rel_count, params.additional_instructions, params.embedding_provider, params.embedding_model, params.nodeProperties, params.relationshipProperties)
+          node_count,rel_count,latency_processed_chunk,token_usage = await processing_chunks(selected_chunks,graph,credentials,params.file_name,params.model,params.allowedNodes,params.allowedRelationship,params.chunks_to_combine,node_count, rel_count, params.additional_instructions, params.embedding_provider, params.embedding_model, params.nodeProperties, params.relationshipProperties, params.schemaSpec)
           logging.info("Token used in processing chunks: %s", token_usage)
           tokens_per_file += token_usage
           logging.info("Total token used per file: %s", tokens_per_file)
@@ -665,7 +664,7 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
     logging.error(error_message)
     raise LLMGraphBuilderException(error_message)
 
-async def processing_chunks(chunkId_chunkDoc_list,graph,credentials,file_name,model,allowedNodes,allowedRelationship, chunks_to_combine, node_count, rel_count, additional_instructions, embedding_provider, embedding_model, nodeProperties=None, relationshipProperties=None):
+async def processing_chunks(chunkId_chunkDoc_list,graph,credentials,file_name,model,allowedNodes,allowedRelationship, chunks_to_combine, node_count, rel_count, additional_instructions, embedding_provider, embedding_model, nodeProperties=None, relationshipProperties=None, schemaSpec=None):
   #create vector index and update chunk node with embedding
   latency_processing_chunk = {}
   if graph is not None:
@@ -683,7 +682,7 @@ async def processing_chunks(chunkId_chunkDoc_list,graph,credentials,file_name,mo
   logging.info("Get graph document list from models")
   
   start_entity_extraction = time.time()
-  graph_documents, token_usage =  await get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship, chunks_to_combine, additional_instructions, nodeProperties, relationshipProperties)
+  graph_documents, token_usage =  await get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship, chunks_to_combine, additional_instructions, nodeProperties, relationshipProperties, schemaSpec)
   end_entity_extraction = time.time()
   elapsed_entity_extraction = end_entity_extraction - start_entity_extraction
   logging.info(f'Time taken to extract enitities from LLM Graph Builder: {elapsed_entity_extraction:.2f} seconds')
@@ -1010,20 +1009,6 @@ def manually_cancelled_job(graph, filenames, source_types, merged_dir, uri):
       graphDb_data_Access.update_node_relationship_count(file_name)
       obj_source_node = None
   return "Cancelled the processing job successfully"
-
-def populate_graph_schema_from_text(text, model, is_schema_description_checked, is_local_storage):
-  """_summary_
-
-  Args:
-      graph (Neo4Graph): Neo4jGraph connection object
-      input_text (str): rendom text from PDF or user input.
-      model (str): AI model to use extraction from text
-
-  Returns:
-      data (list): list of lebels and relationTypes
-  """
-  result = schema_extraction_from_text(text, model, is_schema_description_checked, is_local_storage)
-  return result
 
 def set_status_retry(graph, file_name, retry_condition):
     """

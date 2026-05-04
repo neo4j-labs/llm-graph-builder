@@ -6,7 +6,7 @@ import pandas as pd
 from datetime import datetime as dt
 from dotenv import load_dotenv
 from src.shared.common_fn import Neo4jCredentials, create_graph_database_connection
-from src.main import extract_graph_from_file_local_file, extract_graph_from_file_Wikipedia, extract_graph_from_web_page, create_source_node_graph_url_wikipedia, create_source_node_graph_url_youtube, create_source_node_graph_web_url, populate_graph_schema_from_text, extract_graph_from_file_youtube
+from src.main import extract_graph_from_file_local_file, extract_graph_from_file_Wikipedia, extract_graph_from_web_page, create_source_node_graph_url_wikipedia, create_source_node_graph_url_youtube, create_source_node_graph_web_url, extract_graph_from_file_youtube
 from src.graphDB_dataAccess import graphDBdataAccess
 from src.QA_integration import QA_RAG
 from langserve import add_routes
@@ -178,11 +178,8 @@ def get_duplicate_nodes():
        else:
            return "False"
       
-#Test populate_graph_schema
-def test_populate_graph_schema_from_text(model):
-   result_schema = populate_graph_schema_from_text('When Amazon was founded in 1993 by creator Jeff Benzos, it was mostly an online bookstore. Initially Amazon’s growth was very slow, not turning a profit until over 7 years after its founding. This was thanks to the great momentum provided by the dot-com bubble.', model, True)
-   print(result_schema)
-   return result_schema
+# Removed: populate_graph_schema_from_text was deleted along with the
+# "Get Schema From Text" UI option; see migration plan, Phase 9.
 
 # def compare_graph_results(results):
 #     """

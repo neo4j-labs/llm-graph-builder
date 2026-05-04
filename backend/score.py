@@ -39,7 +39,7 @@ from src.main import (
     extract_graph_from_file_local_file, extract_graph_from_file_s3, extract_graph_from_file_youtube,
     extract_graph_from_web_page, failed_file_process, get_labels_and_relationtypes,
     get_labels_relationtypes_and_properties, get_source_list_from_graph,
-    manually_cancelled_job, populate_graph_schema_from_text, set_status_retry, update_graph, upload_file
+    manually_cancelled_job, set_status_retry, update_graph, upload_file
 )
 from src.neighbours import get_neighbour_nodes
 from src.post_processing import create_entity_embedding, create_vector_fulltext_indexes, graph_schema_consolidation
@@ -121,7 +121,7 @@ app.add_middleware(
     compresslevel=5,
     paths=[
         "/sources_list", "/url/scan", "/extract", "/chat_bot", "/chunk_entities", "/get_neighbours", "/graph_query",
-        "/schema", "/schema_with_properties", "/schema/converged", "/schema/from_ttl", "/populate_graph_schema", "/get_unconnected_nodes_list", "/get_duplicate_nodes", "/fetch_chunktext",
+        "/schema_with_properties", "/schema/converged", "/schema/from_ttl", "/get_unconnected_nodes_list", "/get_duplicate_nodes", "/fetch_chunktext",
         "/schema_visualization"
     ]
 )
@@ -424,7 +424,38 @@ async def chat_bot(
         
         graphDb_data_Access = graphDBdataAccess(graph)
         write_access = graphDb_data_Access.check_account_access(database=credentials.database)
-        result = await asyncio.to_thread(QA_RAG, graph=graph, model=model, question=question, document_names=document_names, session_id=session_id, mode=mode, write_access=write_access, email=credentials.email, uri=credentials.uri, embedding_provider=embedding_provider, embedding_model=embedding_model)
+
+        use_graphrag_chat = get_value_from_env("USE_GRAPHRAG_CHAT", "False", "bool")
+        result = None
+        if use_graphrag_chat:
+            from src.graphrag.qa_rag import (
+                NotYetImplementedInGraphragPath,
+                chat_via_graphrag,
+                supports_mode,
+            )
+
+            if supports_mode(mode):
+                try:
+                    result = await asyncio.to_thread(
+                        chat_via_graphrag,
+                        credentials=credentials,
+                        model=model,
+                        question=question,
+                        document_names=document_names,
+                        session_id=session_id,
+                        mode=mode,
+                        write_access=write_access,
+                        email=credentials.email,
+                        embedding_provider=embedding_provider,
+                        embedding_model=embedding_model,
+                    )
+                except NotYetImplementedInGraphragPath:
+                    result = None
+            if result is None:
+                logging.info("graphrag chat path not used (mode=%s); falling back to legacy QA_RAG", mode)
+
+        if result is None:
+            result = await asyncio.to_thread(QA_RAG, graph=graph, model=model, question=question, document_names=document_names, session_id=session_id, mode=mode, write_access=write_access, email=credentials.email, uri=credentials.uri, embedding_provider=embedding_provider, embedding_model=embedding_model)
 
         total_call_time = time.time() - qa_rag_start_time
         logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
@@ -610,27 +641,6 @@ async def upload_large_file_into_chunks(
     finally:
         gc.collect()
             
-@app.post("/schema")
-async def get_structured_schema(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
-    """Get the structured schema (labels and relation types) from Neo4j."""
-    try:
-        start = time.time()
-        result = await asyncio.to_thread(get_labels_and_relationtypes, credentials)
-        end = time.time()
-        elapsed_time = end - start
-        logging.info(f'Schema result from DB: {result}')
-        json_obj = {'api_name':'schema','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
-        logger.log_struct(json_obj, "INFO")
-        return create_api_response('Success', data=result,message=f"Total elapsed API time {elapsed_time:.2f}")
-    except Exception as e:
-        message="Unable to get the labels and relationtypes from neo4j database"
-        error_message = str(e)
-        logging.info(message)
-        logging.exception(f'Exception:{error_message}')
-        return create_api_response("Failed", message=message, error=error_message)
-    finally:
-        gc.collect()
-
 @app.post("/schema_with_properties")
 async def get_structured_schema_with_properties(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
     """Like /schema, but also returns property names per node label and per relationship type."""
@@ -887,32 +897,6 @@ async def cancelled_job(
     finally:
         gc.collect()
 
-@app.post("/populate_graph_schema")
-async def populate_graph_schema(
-    input_text=Form(None),
-    model=Form(None),
-    is_schema_description_checked=Form(None),
-    is_local_storage=Form(None),
-    email=Form(None)
-):
-    """Populate the graph schema from input text."""
-    try:
-        start = time.time()
-        result = populate_graph_schema_from_text(input_text, model, is_schema_description_checked, is_local_storage)
-        end = time.time()
-        elapsed_time = end - start
-        json_obj = {'api_name':'populate_graph_schema', 'model':model, 'is_schema_description_checked':is_schema_description_checked, 'input_text':input_text, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
-        logger.log_struct(json_obj, "INFO")
-        return create_api_response('Success',data=result)
-    except Exception as e:
-        job_status = "Failed"
-        message="Unable to get the schema from text"
-        error_message = str(e)
-        logging.exception(f'Exception in getting the schema from text:{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
-    finally:
-        gc.collect()
-        
 @app.post("/get_unconnected_nodes_list")
 async def get_unconnected_nodes_list(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
     """Get the list of unconnected nodes in the graph database."""

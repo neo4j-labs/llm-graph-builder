@@ -19,6 +19,7 @@ class SourceScanExtractParams(BaseModel):
     allowedRelationship: Optional[str] = Field(None, description="Allowed relationships")
     nodeProperties: Optional[str] = Field(None, description="JSON-encoded Dict[label, List[propName]] for per-label property guidance")
     relationshipProperties: Optional[str] = Field(None, description="JSON-encoded Dict[relType, List[propName]] for per-rel-type property guidance")
+    schemaSpec: Optional[str] = Field(None, description="JSON-encoded SchemaSpec (typed) — when set, supersedes the legacy nodeProperties/relationshipProperties pair and is forwarded to neo4j-graphrag")
     token_chunk_size: Optional[int] = Field(None, description="Token chunk size")
     chunk_overlap: Optional[int] = Field(None, description="Chunk overlap")
     chunks_to_combine: Optional[int] = Field(None, description="Chunks to combine")
@@ -45,6 +46,7 @@ def get_source_scan_extract_params(
     allowedRelationship: Optional[str] = Form(None),
     nodeProperties: Optional[str] = Form(None),
     relationshipProperties: Optional[str] = Form(None),
+    schemaSpec: Optional[str] = Form(None),
     token_chunk_size: Optional[int] = Form(None),
     chunk_overlap: Optional[int] = Form(None),
     chunks_to_combine: Optional[int] = Form(None),
@@ -71,6 +73,7 @@ def get_source_scan_extract_params(
         allowedRelationship=allowedRelationship,
         nodeProperties=nodeProperties,
         relationshipProperties=relationshipProperties,
+        schemaSpec=schemaSpec,
         token_chunk_size=token_chunk_size,
         chunk_overlap=chunk_overlap,
         chunks_to_combine=chunks_to_combine,

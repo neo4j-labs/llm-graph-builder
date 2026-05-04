@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from src.entities.source_node import sourceNode
 from src.graphDB_dataAccess import graphDBdataAccess
 from src.shared.common_fn import Neo4jCredentials, get_value_from_env
-from src.main import create_graph_database_connection, extract_graph_from_file_local_file, populate_graph_schema_from_text,extract_graph_from_file_Wikipedia, extract_graph_from_file_gcs, extract_graph_from_file_s3, extract_graph_from_file_youtube, extract_graph_from_web_page, execute_graph_query, create_source_node_graph_url_wikipedia, create_source_node_graph_url_youtube, create_source_node_graph_web_url
+from src.main import create_graph_database_connection, extract_graph_from_file_local_file, extract_graph_from_file_Wikipedia, extract_graph_from_file_gcs, extract_graph_from_file_s3, extract_graph_from_file_youtube, extract_graph_from_web_page, execute_graph_query, create_source_node_graph_url_wikipedia, create_source_node_graph_url_youtube, create_source_node_graph_web_url
 from src.QA_integration import QA_RAG
 from pathlib import Path
 import time
@@ -227,17 +227,9 @@ def delete_disconnected_nodes(lst_element_id):
        logging.error(f"Error in delete_disconnected_nodes: {e}")
        return "Error in deletion"
 
-def test_populate_graph_schema_from_text(model_name):
-   """Tests schema population from text."""
-   try:
-       schema_text = "Amazon was founded on July 5, 1994, by Jeff Bezos in Bellevue, Washington."
-       result_schema = populate_graph_schema_from_text(schema_text, model_name, True, False)
-       logging.info(f"Schema test result: {result_schema}")
-       return result_schema
-   except Exception as e:
-       logging.error(f"Error in populate_graph_schema_from_text: {e}")
-       return {"status": "Failed", "error": str(e)}
-   
+# Removed test_populate_graph_schema_from_text — populate_graph_schema_from_text
+# was dropped along with the "Get Schema From Text" UI option; see Phase 9.
+
 def get_duplicate_nodes():
        graphDb_data_Access = graphDBdataAccess(graph)
        nodes_list, total_nodes = graphDb_data_Access.get_duplicate_nodes_list()
@@ -321,21 +313,7 @@ def run_model_tests(model_name: str, chatbot_modes: List[str]) -> Dict[str, Any]
                     chatbot_error_list.append((model_name, f"test_chatbot_qna ({mode})", str(e), round(elapsed, 2)))
                     save_result_csv({"model": model_name, "function": "test_chatbot_qna", "mode": mode, "error": str(e), "time_taken_sec": round(elapsed, 2)}, f"chatbot_Integration_TestResult_{model_name}.csv")
                 chatbot_bar.update(1)
-        # Schema test
-        start_time = time.time()
-        try:
-            schema_result = test_populate_graph_schema_from_text(model_name)
-            elapsed = time.time() - start_time
-            logging.info(f"test_populate_graph_schema_from_text for {model_name} completed in {elapsed:.2f} seconds.")
-            schema_result_with_time = schema_result.copy() if isinstance(schema_result, dict) else {"result": schema_result}
-            schema_result_with_time["time_taken_sec"] = round(elapsed, 2)
-            save_result_json(schema_result_with_time, f"schema_result_{model_name}.json")
-            other_api_list.append({f"{model_name}": schema_result_with_time})
-        except Exception as e:
-            elapsed = time.time() - start_time
-            logging.error(f"Error in test_populate_graph_schema_from_text for {model_name}: {e} (Time taken: {elapsed:.2f}s)")
-            other_api_list.append({f"{model_name}": str(e)})
-            save_result_json({"model": model_name, "error": str(e), "time_taken_sec": round(elapsed, 2)}, f"schema_result_{model_name}.json")
+        # Schema-from-text test removed (Phase 9 of migration)
     return {
         "model": model_name,
         "extract_errors": extract_error_list,
