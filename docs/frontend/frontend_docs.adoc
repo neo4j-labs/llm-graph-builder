@@ -457,7 +457,7 @@ Followed best practices for optimizing performance and security of the deployed 
  * VITE_LLM_MODELS_PROD="openai_gpt_5.4_mini,diffbot,gemini_3.1_flash_preview,anthropic_claude_4.6_sonnet"
  * VITE_BATCH_SIZE=2
 ----
-     ** If you enable `fireworks_qwen3_6` in `VITE_LLM_MODELS`, configure the backend env key `LLM_MODEL_CONFIG_FIREWORKS_QWEN3_6` to use the Fireworks provider slug `accounts/fireworks/models/qwen3p6-35b-a3b`.
+     ** If you enable `fireworks_qwen3_6` in `VITE_LLM_MODELS`, configure the backend env key `LLM_MODEL_CONFIG_FIREWORKS_QWEN3_6` to use the Fireworks serverless slug `accounts/fireworks/models/qwen3p6-plus`.
 * ***Cloud Deployment:***
   ** To deploy the app install the gcloud cli , run the following command in the terminal specifically from frontend root folder.
     *** gcloud run deploy 
