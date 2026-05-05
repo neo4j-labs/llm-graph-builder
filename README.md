@@ -327,7 +327,7 @@ You can deploy the backend and the frontend to Google Cloud Run using Cloud Buil
        _EMBEDDING_PROVIDER=...,_BEDROCK_EMBEDDING_MODEL_KEY=...,_LLM_MODEL_CONFIG_OPENAI_GPT_5_2=...,_LLM_MODEL_CONFIG_OPENAI_GPT_5_MINI=...,_LLM_MODEL_CONFIG_GEMINI_2_5_FLASH=...,_LLM_MODEL_CONFIG_GEMINI_2_5_PRO=...,_LLM_MODEL_CONFIG_DIFFBOT=...,_LLM_MODEL_CONFIG_GROQ_LLAMA3_1_8B=...,_LLM_MODEL_CONFIG_ANTHROPIC_CLAUDE_4_5_SONNET=...,_LLM_MODEL_CONFIG_ANTHROPIC_CLAUDE_4_5_HAIKU=...,_LLM_MODEL_CONFIG_LLAMA4_MAVERICK=...,_LLM_MODEL_CONFIG_FIREWORKS_QWEN3_6=...,_LLM_MODEL_CONFIG_FIREWORKS_GPT_OSS=...,_LLM_MODEL_CONFIG_FIREWORKS_DEEPSEEK_V3=...,_LLM_MODEL_CONFIG_BEDROCK_NOVA_MICRO_V1=...,_LLM_MODEL_CONFIG_BEDROCK_NOVA_LITE_V1=...,_LLM_MODEL_CONFIG_BEDROCK_NOVA_PRO_V1=...,_LLM_MODEL_CONFIG_OLLAMA_LLAMA3=...
    ```
    - Replace the values in angle brackets with your actual configuration and secrets.
-   - `LLM_MODEL_CONFIG_FIREWORKS_QWEN3_6` is the app-facing config key for the `fireworks_qwen3_6` model option and should map to the Fireworks provider slug `accounts/fireworks/models/qwen3p6-35b-a3b`.
+   - `LLM_MODEL_CONFIG_FIREWORKS_QWEN3_6` is the app-facing config key for the `fireworks_qwen3_6` model option and should map to the Fireworks serverless slug `accounts/fireworks/models/qwen3p6-plus`.
    - You can omit or add substitutions as needed for your deployment.
 
 3. **Monitor the build:**
