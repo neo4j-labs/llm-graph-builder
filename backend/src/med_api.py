@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from pydantic import BaseModel
 from typing import Optional
+from sse_starlette.sse import EventSourceResponse
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -280,6 +281,134 @@ async def get_integration_report():
         "decisions": decisions,
         "examples": examples,
     })
+
+
+# ─── SSE Stream Endpoints ────────────────────────────────────────
+
+@router.get("/kg/build/stream")
+async def build_kg_stream(textbook_id: str):
+    """SSE stream for knowledge graph building progress."""
+    tb = _textbooks.get(textbook_id)
+    if not tb:
+        raise HTTPException(status_code=404, detail=f"Textbook {textbook_id} not found")
+
+    async def event_generator():
+        queue: asyncio.Queue = asyncio.Queue()
+
+        async def on_progress(event: dict):
+            await queue.put(event)
+
+        async def run_task():
+            try:
+                from src.knowledge_extract import extract_knowledge_from_textbook
+                kg = await extract_knowledge_from_textbook(tb, on_progress=on_progress)
+                _kg_data[textbook_id] = kg
+                nodes = [_format_node(n) for n in kg.get("nodes", [])]
+                relations = [_format_relation(r) for r in kg.get("relations", [])]
+                await queue.put({"event": "result", "data": {"nodes": nodes, "relations": relations}})
+            except Exception as e:
+                await queue.put({"event": "error", "step": str(e)})
+            finally:
+                await queue.put(None)
+
+        task = asyncio.create_task(run_task())
+
+        while True:
+            msg = await queue.get()
+            if msg is None:
+                break
+            yield {"event": msg.get("event", "progress"), "data": json.dumps(msg, ensure_ascii=False)}
+
+    return EventSourceResponse(event_generator())
+
+
+@router.get("/kg/integrate/stream")
+async def integrate_kg_stream(textbook_ids: str):
+    """SSE stream for cross-textbook integration progress."""
+    ids = textbook_ids.split(",")
+    textbook_data = []
+    for tid in ids:
+        kg = _kg_data.get(tid)
+        if kg:
+            tb = _textbooks.get(tid, {})
+            textbook_data.append({
+                "textbook_id": tid,
+                "textbook_name": tb.get("title", tid),
+                "nodes": kg.get("nodes", []),
+                "relations": kg.get("relations", []),
+            })
+
+    if len(textbook_data) < 2:
+        raise HTTPException(status_code=400, detail="至少需要2本已构建图谱的教材")
+
+    async def event_generator():
+        queue: asyncio.Queue = asyncio.Queue()
+
+        async def on_progress(event: dict):
+            await queue.put(event)
+
+        async def run_task():
+            try:
+                from src.integration import integrate_knowledge_graphs as do_integrate
+                result = await do_integrate(textbook_data, on_progress=on_progress)
+                global _integration_result
+                _integration_result = result
+                await queue.put({"event": "result", "data": result})
+            except Exception as e:
+                await queue.put({"event": "error", "step": str(e)})
+            finally:
+                await queue.put(None)
+
+        task = asyncio.create_task(run_task())
+
+        while True:
+            msg = await queue.get()
+            if msg is None:
+                break
+            yield {"event": msg.get("event", "progress"), "data": json.dumps(msg, ensure_ascii=False, default=str)}
+
+    return EventSourceResponse(event_generator())
+
+
+@router.get("/rag/index/stream")
+async def build_rag_index_stream(textbook_ids: str):
+    """SSE stream for RAG index building progress."""
+    ids = textbook_ids.split(",")
+    textbooks = [_textbooks[tid] for tid in ids if tid in _textbooks]
+    if not textbooks:
+        raise HTTPException(status_code=400, detail="No valid textbooks found")
+
+    async def event_generator():
+        queue: asyncio.Queue = asyncio.Queue()
+
+        async def on_progress(event: dict):
+            await queue.put(event)
+
+        def run_sync():
+            from src.rag_pipeline import build_index
+            return build_index(textbooks, on_progress=on_progress)
+
+        async def run_task():
+            try:
+                result = await asyncio.to_thread(run_sync)
+                await queue.put({
+                    "event": "result",
+                    "data": {"indexed": result["indexed_books"], "chunks": result["total_chunks"]}
+                })
+            except Exception as e:
+                await queue.put({"event": "error", "step": str(e)})
+            finally:
+                await queue.put(None)
+
+        task = asyncio.create_task(run_task())
+
+        while True:
+            msg = await queue.get()
+            if msg is None:
+                break
+            yield {"event": msg.get("event", "progress"), "data": json.dumps(msg, ensure_ascii=False)}
+
+    return EventSourceResponse(event_generator())
 
 
 # ─── Helpers ─────────────────────────────────────────────────────
