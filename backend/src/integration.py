@@ -655,7 +655,8 @@ async def integrate_knowledge_graphs(
     all_textbook_data: List[Dict[str, Any]],
     llm: Optional[ChatOpenAI] = None,
     embedding_model: Optional[SentenceTransformer] = None,
-    target_compression_ratio: float = 0.30
+    target_compression_ratio: float = 0.30,
+    on_progress: Optional[Any] = None
 ) -> Dict[str, Any]:
     """
     知识图谱整合主入口函数
@@ -705,23 +706,71 @@ async def integrate_knowledge_graphs(
     # 执行整合流程
     try:
         # 阶段一：语义对齐
+        if on_progress:
+            await on_progress({
+                "event": "progress", "phase": "alignment",
+                "step": "阶段一：语义对齐 — 计算节点嵌入向量",
+                "current": 1, "total": 4, "percent": 10,
+                "partialResult": {"totalNodes": len(all_nodes)}
+            })
         candidate_pairs = await integrator.compute_semantic_alignment(all_nodes)
         
         # 阶段二：LLM 验证
+        if on_progress:
+            await on_progress({
+                "event": "progress", "phase": "verification",
+                "step": f"阶段二：LLM 验证 — 共 {len(candidate_pairs)} 对候选",
+                "current": 2, "total": 4, "percent": 35,
+                "partialResult": {"candidatePairs": len(candidate_pairs)}
+            })
         verified_results = await integrator.llm_verify_alignment(candidate_pairs)
         
         # 阶段三：生成决策
+        if on_progress:
+            await on_progress({
+                "event": "progress", "phase": "decision",
+                "step": "阶段三：生成整合决策",
+                "current": 3, "total": 4, "percent": 65,
+                "partialResult": {"verifiedPairs": len(verified_results)}
+            })
         decisions = integrator.make_integration_decisions(verified_results, all_nodes)
         
         # 阶段四：调整压缩比
+        if on_progress:
+            await on_progress({
+                "event": "progress", "phase": "compression",
+                "step": "阶段四：调整压缩比",
+                "current": 4, "total": 4, "percent": 85,
+                "partialResult": {}
+            })
         final_decisions = await integrator.adjust_compression(decisions, all_nodes)
         
         logger.info("Knowledge graph integration completed successfully")
+        
+        if on_progress:
+            stats = final_decisions.get("statistics", {})
+            await on_progress({
+                "event": "complete", "phase": "done",
+                "step": "跨教材整合完成",
+                "current": 4, "total": 4, "percent": 100,
+                "partialResult": {
+                    "compressionRatio": stats.get("compression_ratio", 0),
+                    "mergeCount": stats.get("merge_count", 0),
+                    "decisionsCount": len(final_decisions.get("decisions", []))
+                }
+            })
         
         return final_decisions
         
     except Exception as e:
         logger.error(f"Error during knowledge graph integration: {e}", exc_info=True)
+        if on_progress:
+            await on_progress({
+                "event": "error", "phase": "error",
+                "step": f"整合失败: {str(e)}",
+                "current": 0, "total": 0, "percent": 0,
+                "partialResult": {}
+            })
         raise
 
 
