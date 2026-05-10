@@ -44,3 +44,39 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes scan-line {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+@keyframes number-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-scan-line {
+  animation: scan-line 2s ease-in-out infinite;
+}
+
+.animate-number-pop {
+  animation: number-pop 0.3s ease-out;
+}
+
+.progress-bar-gradient {
+  background: linear-gradient(90deg, #1677ff 0%, #52c41a 100%);
+}
+
+.progress-bar-track {
+  background: rgba(255, 255, 255, 0.06);
+}
