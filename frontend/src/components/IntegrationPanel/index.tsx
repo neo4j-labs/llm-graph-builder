@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button, Input, List, Tag, Card, message, Divider, Progress } from 'antd';
 import { MergeCellsOutlined, SendOutlined } from '@ant-design/icons';
-import type { TextbookFile, GraphData, IntegrationStats, IntegrationDecision, ChatMessage } from '../../types';
+import type { TextbookFile, GraphData, IntegrationStats, IntegrationDecision, ChatMessage, TaskState, TaskType } from '../../types';
 import * as api from '../../services/api';
 
 interface Props {
   files: TextbookFile[];
   setGraphData: React.Dispatch<React.SetStateAction<GraphData>>;
   setIntegrationStats: React.Dispatch<React.SetStateAction<IntegrationStats | null>>;
+  startTask: (taskType: TaskType, params: Record<string, string>, label: string) => void;
+  task: TaskState;
 }
 
 const actionTag: Record<string, { color: string; text: string }> = {
@@ -16,30 +18,32 @@ const actionTag: Record<string, { color: string; text: string }> = {
   remove: { color: 'default', text: '删除' },
 };
 
-export default function IntegrationPanel({ files, setGraphData, setIntegrationStats }: Props) {
-  const [integrating, setIntegrating] = useState(false);
+export default function IntegrationPanel({ files, setGraphData, setIntegrationStats, startTask, task }: Props) {
   const [decisions, setDecisions] = useState<IntegrationDecision[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const [sessionId] = useState(() => `session_${Date.now()}`);
 
-  const handleIntegrate = async () => {
+  useEffect(() => {
+    if (
+      task.taskType === 'integrate' &&
+      task.status === 'completed' &&
+      task.finalResult
+    ) {
+      const result = task.finalResult;
+      if (result.decisions) setDecisions(result.decisions);
+      if (result.statistics) setIntegrationStats(result.statistics);
+      const ids = files.filter((f) => f.status === 'completed').map((f) => f.id);
+      api.getGraphVisualization(ids).then(setGraphData).catch(() => {});
+      message.success('整合完成');
+    }
+  }, [task.status, task.taskType, task.finalResult, files, setGraphData, setIntegrationStats]);
+
+  const handleIntegrate = () => {
     const ids = files.filter((f) => f.status === 'completed').map((f) => f.id);
     if (ids.length < 2) return message.warning('至少需要2本教材进行整合');
-    setIntegrating(true);
-    try {
-      const result = await api.integrateKnowledgeGraphs(ids);
-      setDecisions(result.decisions);
-      setIntegrationStats(result.statistics);
-      const graph = await api.getGraphVisualization(ids);
-      setGraphData(graph);
-      message.success(`整合完成，压缩比 ${(result.statistics.compressionRatio * 100).toFixed(1)}%`);
-    } catch (err: any) {
-      message.error(`整合失败: ${err.message}`);
-    } finally {
-      setIntegrating(false);
-    }
+    startTask('integrate', { textbook_ids: ids.join(',') }, `${ids.length} 本教材`);
   };
 
   const handleChatSend = async () => {
@@ -61,6 +65,8 @@ export default function IntegrationPanel({ files, setGraphData, setIntegrationSt
     }
   };
 
+  const isIntegrating = task.taskType === 'integrate' && task.status === 'running';
+
   return (
     <div className="flex flex-col h-full">
       <div className="p-3 border-b border-[#303030]">
@@ -69,14 +75,13 @@ export default function IntegrationPanel({ files, setGraphData, setIntegrationSt
           block
           icon={<MergeCellsOutlined />}
           onClick={handleIntegrate}
-          loading={integrating}
-          disabled={files.filter((f) => f.status === 'completed').length < 2}
+          loading={isIntegrating}
+          disabled={files.filter((f) => f.status === 'completed').length < 2 || isIntegrating}
         >
           执行跨教材整合
         </Button>
       </div>
 
-      {/* Decisions List */}
       <div className="flex-1 overflow-y-auto p-3">
         {decisions.length > 0 ? (
           <List
@@ -137,7 +142,6 @@ export default function IntegrationPanel({ files, setGraphData, setIntegrationSt
         )}
       </div>
 
-      {/* Chat Input */}
       {decisions.length > 0 && (
         <div className="p-3 border-t border-[#303030]">
           <Input

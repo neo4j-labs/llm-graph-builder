@@ -1,14 +1,15 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Upload, Button, List, Tag, message, Divider } from 'antd';
-import { UploadOutlined, CloudUploadOutlined, DatabaseOutlined } from '@ant-design/icons';
-import type { UploadFile } from 'antd/es/upload/interface';
-import type { TextbookFile, GraphData } from '../../types';
+import { CloudUploadOutlined, DatabaseOutlined } from '@ant-design/icons';
+import type { TextbookFile, GraphData, TaskState, TaskType } from '../../types';
 import * as api from '../../services/api';
 
 interface Props {
   files: TextbookFile[];
   setFiles: React.Dispatch<React.SetStateAction<TextbookFile[]>>;
   setGraphData: React.Dispatch<React.SetStateAction<GraphData>>;
+  startTask: (taskType: TaskType, params: Record<string, string>, label: string) => void;
+  task: TaskState;
 }
 
 const statusColor: Record<string, string> = {
@@ -25,9 +26,19 @@ const statusText: Record<string, string> = {
   failed: '失败',
 };
 
-export default function FileManager({ files, setFiles, setGraphData }: Props) {
+export default function FileManager({ files, setFiles, setGraphData, startTask, task }: Props) {
   const [loading, setLoading] = useState(false);
-  const [buildingKG, setBuildingKG] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (
+      task.taskType === 'kg_build' &&
+      task.status === 'completed' &&
+      task.finalResult
+    ) {
+      setGraphData(task.finalResult);
+      message.success('知识图谱构建成功');
+    }
+  }, [task.status, task.taskType, task.finalResult, setGraphData]);
 
   const handleUpload = useCallback(
     async (options: any) => {
@@ -59,19 +70,10 @@ export default function FileManager({ files, setFiles, setGraphData }: Props) {
   }, [setFiles]);
 
   const handleBuildKG = useCallback(
-    async (textbookId: string) => {
-      setBuildingKG(textbookId);
-      try {
-        const graph = await api.buildKnowledgeGraph(textbookId);
-        setGraphData(graph);
-        message.success('知识图谱构建成功');
-      } catch (err: any) {
-        message.error(`构建失败: ${err.message}`);
-      } finally {
-        setBuildingKG(null);
-      }
+    (textbookId: string, title: string) => {
+      startTask('kg_build', { textbook_id: textbookId }, title);
     },
-    [setGraphData]
+    [startTask]
   );
 
   const handleViewAll = useCallback(async () => {
@@ -84,6 +86,8 @@ export default function FileManager({ files, setFiles, setGraphData }: Props) {
       message.error(`加载图谱失败: ${err.message}`);
     }
   }, [files, setGraphData]);
+
+  const isBuildingKG = task.taskType === 'kg_build' && task.status === 'running';
 
   return (
     <div>
@@ -133,8 +137,9 @@ export default function FileManager({ files, setFiles, setGraphData }: Props) {
                 <Button
                   type="link"
                   size="small"
-                  loading={buildingKG === file.id}
-                  onClick={() => handleBuildKG(file.id)}
+                  loading={isBuildingKG && task.label === (file.title || file.filename)}
+                  disabled={isBuildingKG}
+                  onClick={() => handleBuildKG(file.id, file.title || file.filename)}
                 >
                   构建图谱
                 </Button>

@@ -1,19 +1,20 @@
 import { useState, useRef, useEffect } from 'react';
 import { Input, Button, Card, Tag, Collapse, Empty, Statistic, Row, Col } from 'antd';
 import { SendOutlined, BookOutlined } from '@ant-design/icons';
-import type { TextbookFile, ChatMessage, RAGCitation } from '../../types';
+import type { TextbookFile, ChatMessage, RAGCitation, TaskState, TaskType } from '../../types';
 import * as api from '../../services/api';
 
 interface Props {
   files: TextbookFile[];
+  startTask: (taskType: TaskType, params: Record<string, string>, label: string) => void;
+  task: TaskState;
 }
 
-export default function RAGChat({ files }: Props) {
+export default function RAGChat({ files, startTask, task }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [indexStatus, setIndexStatus] = useState<{ indexedBooks: number; totalChunks: number } | null>(null);
-  const [indexing, setIndexing] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -24,16 +25,23 @@ export default function RAGChat({ files }: Props) {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages]);
 
-  const handleBuildIndex = async () => {
+  useEffect(() => {
+    if (
+      task.taskType === 'rag_index' &&
+      task.status === 'completed' &&
+      task.finalResult
+    ) {
+      setIndexStatus({
+        indexedBooks: task.finalResult.indexed,
+        totalChunks: task.finalResult.chunks,
+      });
+    }
+  }, [task.status, task.taskType, task.finalResult]);
+
+  const handleBuildIndex = () => {
     const ids = files.filter((f) => f.status === 'completed').map((f) => f.id);
     if (ids.length === 0) return;
-    setIndexing(true);
-    try {
-      const result = await api.buildRAGIndex(ids);
-      setIndexStatus({ indexedBooks: result.indexed, totalChunks: result.chunks });
-    } catch { /* ignore */ } finally {
-      setIndexing(false);
-    }
+    startTask('rag_index', { textbook_ids: ids.join(',') }, `${ids.length} 本教材`);
   };
 
   const handleSend = async () => {
@@ -61,9 +69,10 @@ export default function RAGChat({ files }: Props) {
     }
   };
 
+  const isIndexing = task.taskType === 'rag_index' && task.status === 'running';
+
   return (
     <div className="flex flex-col h-full">
-      {/* Index Status Bar */}
       <div className="p-3 border-b border-[#303030]">
         <Row gutter={12} align="middle">
           <Col>
@@ -82,14 +91,13 @@ export default function RAGChat({ files }: Props) {
             />
           </Col>
           <Col flex="auto" className="text-right">
-            <Button size="small" onClick={handleBuildIndex} loading={indexing}>
+            <Button size="small" onClick={handleBuildIndex} loading={isIndexing} disabled={isIndexing}>
               建立索引
             </Button>
           </Col>
         </Row>
       </div>
 
-      {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-3">
         {messages.length === 0 && (
           <Empty description="输入问题开始问答" className="mt-12" />
@@ -150,7 +158,6 @@ export default function RAGChat({ files }: Props) {
         )}
       </div>
 
-      {/* Input */}
       <div className="p-3 border-t border-[#303030]">
         <Input.Search
           placeholder="输入医学问题，如：什么是动作电位？"
