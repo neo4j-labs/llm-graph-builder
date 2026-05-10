@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { ConfigProvider, theme, Layout, Tabs } from 'antd';
 import {
-  FileTextOutlined,
   NodeIndexOutlined,
   MessageOutlined,
   BarChartOutlined,

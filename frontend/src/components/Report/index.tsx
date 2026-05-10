@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Card, Statistic, Row, Col, Empty, Table, Tag, Divider } from 'antd';
+import { Card, Statistic, Row, Col, Empty, Tag, Divider } from 'antd';
 import { ArrowRightOutlined } from '@ant-design/icons';
 import type { IntegrationStats, IntegrationDecision } from '../../types';
 import * as api from '../../services/api';
