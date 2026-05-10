@@ -24,7 +24,7 @@ services:
       dockerfile: Dockerfile
     container_name: med-kg-backend
     ports:
-      - "8000:8000"
+      - "8765:8765"
     env_file:
       - ./backend/.env
     volumes:

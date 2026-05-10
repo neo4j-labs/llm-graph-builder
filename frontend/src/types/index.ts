@@ -8,6 +8,22 @@ export interface TextbookFile {
   totalPages?: number;
   totalChars?: number;
   chapterCount?: number;
+  hasKgCache?: boolean;
+}
+
+export interface ChapterPreview {
+  title: string;
+  charCount: number;
+  preview: string;
+}
+
+export interface TextbookPreview {
+  id: string;
+  title: string;
+  totalChars: number;
+  totalPages: number;
+  chapterCount: number;
+  chapters: ChapterPreview[];
 }
 
 export interface KnowledgeNode {

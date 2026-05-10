@@ -82,8 +82,8 @@ export HF_ENDPOINT=https://hf-mirror.com   # HuggingFace 镜像
 
 | 服务 | 端口 | 说明 |
 |------|------|------|
-| 前端 Vite Dev | 3000 | 开发模式，proxy /api → 8000 |
-| 后端 FastAPI | 8000 | `uvicorn score:app` |
+| 前端 Vite Dev | 3000 | 开发模式，proxy /api → 8765 |
+| 后端 FastAPI | 8765 | `uvicorn score:app` |
 | Neo4j Bolt | 7690 | 映射自容器 7687 |
 | Neo4j Browser | 7475 | 映射自容器 7474 |
 
@@ -149,3 +149,36 @@ python test_e2e.py
 ```
 
 测试覆盖 9 个阶段：环境变量 → MinerU 加载 → LLM 连通 → 知识点提取 → Embedding → RAG → Neo4j → FastAPI → 前端构建产物。预期结果：18 PASS / 0 FAIL。
+
+## 8. Phase 5 新增功能踩坑记录（2026-05-10）
+
+### 前端 `.env` 与 Vite Proxy 冲突
+
+**现象**：浏览器报 "Network Error"，API 请求全部失败  
+**原因**：`frontend/.env` 中 `VITE_API_BASE_URL=http://localhost:8000` 让浏览器直连后端端口。通过 SSH 远程访问时，浏览器只能访问转发的 3000 端口，无法直连 8765。Vite 环境变量优先级高于代码中的默认值。  
+**解决**：`frontend/.env` 中 `VITE_API_BASE_URL=`（留空），所有 `/api/*` 请求走相对路径，由 Vite proxy 在服务端转发到后端 8765。  
+**教训**：前端 `.env` 被 `.gitignore` 忽略了，搜索代码时容易遗漏。排查网络问题时记得 `curl http://localhost:3000/src/services/api.ts` 查看 Vite 注入的实际环境变量值。
+
+### 上传文件未注册到内存
+
+**现象**：上传 .txt 文件后点击"构建图谱"，SSE 连接立即断开  
+**原因**：`/api/upload` 端点只把文件保存到磁盘，没有将教材数据注册到 `_textbooks` 字典。SSE 端点 `_textbooks.get(textbook_id)` 返回 None → 404 → EventSource 触发 onerror  
+**解决**：upload 端点现在会解析文件内容并注册到 `_textbooks`（作为单章处理）
+
+### SSE 端点必须用 GET 方法
+
+**现象**：前端 EventSource 无法连接 POST 类型的 SSE 端点  
+**原因**：浏览器原生 `EventSource` API 只支持 GET 请求  
+**解决**：SSE 端点统一用 `GET` 方法 + query params。原有 POST 端点保留不动，保持向后兼容。
+
+### npm run build 会终止 dev server
+
+**现象**：运行 `npm run build` 验证前端后，刷新浏览器发现 3000 端口无响应  
+**原因**：在同一个 shell 进程中 `npm run build` 可能影响 dev server 的 node 进程  
+**解决**：验证前端构建时用独立的 shell 进程，不要在 dev server 运行的终端中执行
+
+### KG 缓存持久化
+
+**机制**：KG 构建完成后自动保存到 `warehouse/kg_cache/{textbook_id}.json`。加载教材时自动扫描缓存目录，标记已有缓存的教材。SSE 端点命中缓存时直接返回，不调用 LLM。  
+**缓存位置**：`/data/lidubai/lidubai/hackathon/warehouse/kg_cache/`  
+**清除缓存**：删除对应 JSON 文件即可强制重新构建

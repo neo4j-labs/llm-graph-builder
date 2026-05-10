@@ -34,8 +34,8 @@ echo "[2/4] 检查后端依赖..."
 cd backend
 
 # 3. 启动后端
-echo "[3/4] 启动后端 (port 8000)..."
-uvicorn score:app --host 0.0.0.0 --port 8000 --reload &
+echo "[3/4] 启动后端 (port 8765)..."
+uvicorn score:app --host 0.0.0.0 --port 8765 --reload &
 BACKEND_PID=$!
 cd ..
 
@@ -49,7 +49,7 @@ cd ..
 echo ""
 echo "=== 启动完成 ==="
 echo "  前端: http://localhost:3000"
-echo "  后端: http://localhost:8000"
+echo "  后端: http://localhost:8765"
 echo "  Neo4j: http://localhost:7475"
 echo ""
 echo "按 Ctrl+C 停止所有服务"

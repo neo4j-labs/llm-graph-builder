@@ -1,6 +1,7 @@
 import axios from 'axios';
 import type {
   TextbookFile,
+  TextbookPreview,
   GraphData,
   IntegrationDecision,
   IntegrationStats,
@@ -8,7 +9,7 @@ import type {
   ChatMessage,
 } from '../types';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
 const api = axios.create({
   baseURL: API_BASE,
@@ -94,6 +95,11 @@ export async function getIntegrationReport(): Promise<{
   examples: IntegrationDecision[];
 }> {
   const { data } = await api.get('/api/report');
+  return data.data;
+}
+
+export async function getTextbookPreview(textbookId: string): Promise<TextbookPreview> {
+  const { data } = await api.get(`/api/textbook/${textbookId}/preview`);
   return data.data;
 }
 

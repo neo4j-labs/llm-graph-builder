@@ -73,11 +73,24 @@ async def upload_file(file: UploadFile = File(...)):
     dest.write_bytes(content)
 
     file_id = f"upload_{uuid.uuid4().hex[:8]}"
+    title = filename.rsplit(".", 1)[0] if "." in filename else filename
+    text = content.decode("utf-8", errors="replace")
+
+    chapters = [{"title": title, "content": text}]
+    _textbooks[file_id] = {
+        "textbook_id": file_id,
+        "filename": filename,
+        "title": title,
+        "chapters": chapters,
+    }
+
     return ok({
         "id": file_id,
         "filename": filename,
+        "title": title,
         "format": filename.rsplit(".", 1)[-1] if "." in filename else "unknown",
         "size": len(content),
+        "chapterCount": len(chapters),
         "status": "completed",
     })
 
@@ -85,14 +98,20 @@ async def upload_file(file: UploadFile = File(...)):
 @router.post("/parse/mineru")
 async def load_mineru_textbooks():
     """Load all MinerU pre-extracted textbooks."""
-    global _textbooks
+    global _textbooks, _kg_data
     try:
         from src.mineru_loader import load_all_textbooks
         textbooks = load_all_textbooks(WAREHOUSE_PATH)
+        cached_ids = _scan_kg_cache()
         result = []
         for tb in textbooks:
             tid = tb["textbook_id"]
             _textbooks[tid] = tb
+            has_kg = tid in cached_ids
+            if has_kg and tid not in _kg_data:
+                kg = _load_kg_cache(tid)
+                if kg:
+                    _kg_data[tid] = kg
             result.append({
                 "id": tid,
                 "filename": tb.get("filename", ""),
@@ -103,6 +122,7 @@ async def load_mineru_textbooks():
                 "totalPages": tb.get("total_pages", 0),
                 "totalChars": tb.get("total_chars", 0),
                 "chapterCount": len(tb.get("chapters", [])),
+                "hasKgCache": has_kg,
             })
         return ok(result, f"已加载 {len(textbooks)} 本教材")
     except Exception as e:
@@ -129,20 +149,89 @@ async def get_source_list():
     return ok(result)
 
 
+# ─── Textbook Preview ─────────────────────────────────────────────
+
+@router.get("/textbook/{textbook_id}/preview")
+async def preview_textbook(textbook_id: str):
+    """Preview MinerU extracted content for a textbook."""
+    tb = _textbooks.get(textbook_id)
+    if not tb:
+        raise HTTPException(status_code=404, detail=f"Textbook {textbook_id} not found")
+
+    chapters = []
+    for ch in tb.get("chapters", []):
+        content = ch.get("content", "")
+        chapters.append({
+            "title": ch.get("title", "未知章节"),
+            "charCount": ch.get("char_count", len(content)),
+            "preview": content[:500] + ("..." if len(content) > 500 else ""),
+        })
+
+    return ok({
+        "id": textbook_id,
+        "title": tb.get("title", ""),
+        "totalChars": tb.get("total_chars", 0),
+        "totalPages": tb.get("total_pages", 0),
+        "chapterCount": len(chapters),
+        "chapters": chapters,
+    })
+
+
+# ─── KG Cache Persistence ────────────────────────────────────────
+
+KG_CACHE_DIR = Path(WAREHOUSE_PATH) / "kg_cache"
+
+
+def _kg_cache_path(textbook_id: str) -> Path:
+    return KG_CACHE_DIR / f"{textbook_id}.json"
+
+
+def _save_kg_cache(textbook_id: str, kg_data: dict):
+    KG_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    with open(_kg_cache_path(textbook_id), "w", encoding="utf-8") as f:
+        json.dump(kg_data, f, ensure_ascii=False, indent=2)
+    logger.info(f"KG cache saved: {textbook_id}")
+
+
+def _load_kg_cache(textbook_id: str) -> dict | None:
+    p = _kg_cache_path(textbook_id)
+    if p.exists():
+        with open(p, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        logger.info(f"KG cache hit: {textbook_id}")
+        return data
+    return None
+
+
+def _scan_kg_cache() -> set:
+    """Return set of textbook_ids that have cached KG data."""
+    if not KG_CACHE_DIR.exists():
+        return set()
+    return {p.stem for p in KG_CACHE_DIR.glob("*.json")}
+
+
 # ─── Knowledge Graph ─────────────────────────────────────────────
 
 @router.post("/kg/build")
 async def build_knowledge_graph(req: KGBuildRequest):
-    """Build knowledge graph for a single textbook."""
+    """Build knowledge graph for a single textbook (with cache)."""
     global _kg_data
     tb = _textbooks.get(req.textbook_id)
     if not tb:
         raise HTTPException(status_code=404, detail=f"Textbook {req.textbook_id} not found")
 
+    cached = _load_kg_cache(req.textbook_id)
+    if cached:
+        _kg_data[req.textbook_id] = cached
+        nodes = [_format_node(n) for n in cached.get("nodes", [])]
+        relations = [_format_relation(r) for r in cached.get("relations", [])]
+        return ok({"nodes": nodes, "relations": relations})
+
     try:
         from src.knowledge_extract import extract_knowledge_from_textbook
         kg = await extract_knowledge_from_textbook(tb)
         _kg_data[req.textbook_id] = kg
+        _save_kg_cache(req.textbook_id, kg)
 
         nodes = [_format_node(n) for n in kg.get("nodes", [])]
         relations = [_format_relation(r) for r in kg.get("relations", [])]
@@ -287,10 +376,23 @@ async def get_integration_report():
 
 @router.get("/kg/build/stream")
 async def build_kg_stream(textbook_id: str):
-    """SSE stream for knowledge graph building progress."""
+    """SSE stream for knowledge graph building progress (with cache)."""
     tb = _textbooks.get(textbook_id)
     if not tb:
         raise HTTPException(status_code=404, detail=f"Textbook {textbook_id} not found")
+
+    cached = _load_kg_cache(textbook_id)
+    if cached:
+        _kg_data[textbook_id] = cached
+        nodes = [_format_node(n) for n in cached.get("nodes", [])]
+        relations = [_format_relation(r) for r in cached.get("relations", [])]
+
+        async def cached_generator():
+            yield {"event": "progress", "data": json.dumps({"event": "progress", "phase": "cache", "step": "命中本地缓存，正在加载...", "current": 1, "total": 1, "percent": 90, "partialResult": {"nodesCount": len(nodes), "relationsCount": len(relations)}}, ensure_ascii=False)}
+            yield {"event": "complete", "data": json.dumps({"event": "complete", "phase": "done", "step": "从缓存加载完成", "current": 1, "total": 1, "percent": 100, "partialResult": {"nodesCount": len(nodes), "relationsCount": len(relations)}}, ensure_ascii=False)}
+            yield {"event": "result", "data": json.dumps({"event": "result", "data": {"nodes": nodes, "relations": relations}}, ensure_ascii=False)}
+
+        return EventSourceResponse(cached_generator())
 
     async def event_generator():
         queue: asyncio.Queue = asyncio.Queue()
@@ -303,6 +405,7 @@ async def build_kg_stream(textbook_id: str):
                 from src.knowledge_extract import extract_knowledge_from_textbook
                 kg = await extract_knowledge_from_textbook(tb, on_progress=on_progress)
                 _kg_data[textbook_id] = kg
+                _save_kg_cache(textbook_id, kg)
                 nodes = [_format_node(n) for n in kg.get("nodes", [])]
                 relations = [_format_relation(r) for r in kg.get("relations", [])]
                 await queue.put({"event": "result", "data": {"nodes": nodes, "relations": relations}})

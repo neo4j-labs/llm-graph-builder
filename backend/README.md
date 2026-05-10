@@ -46,14 +46,14 @@ Docker: https://www.docker.com/
    Replace `your_image_name` with the meaningful name for your Docker image
 
 2. Run the Docker Container
-   > docker run -it -p 8000:8000 your_image_name
+   > docker run -it -p 8765:8765 your_image_name
    
-   Replace `8000` with the desired port.
+   Replace `8765` with the desired port.
 
 ## Access the API Documentation
 Open your browser and navigate to
-http://127.0.0.1:8000/docs for Swagger UI or
-http://127.0.0.1:8000/redocs for ReDoc.
+http://127.0.0.1:8765/docs for Swagger UI or
+http://127.0.0.1:8765/redocs for ReDoc.
 
 ## Project Structure
 `score.py`: Score entry point for FastAPI application

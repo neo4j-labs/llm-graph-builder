@@ -10,16 +10,20 @@
 | Phase 2 | 全新前端（Vite + React + AntV G6 + Ant Design） | 已完成 |
 | Phase 3 | 部署配置（Docker Compose + Dockerfile + nginx + 启动脚本） | 已完成 |
 | Phase 4 | 文档编写（README + 依赖补全） | 已完成 |
+| Phase 5 | 实时进度显示（SSE）+ 教材预览 + KG 缓存持久化 | 已完成 |
 | E2E 测试 | 18/18 全部通过（GPU Embedding、LLM、Neo4j、FastAPI、RAG、前端构建） | 已通过 |
 
-**当前状态：** 系统已完成基础功能开发，端到端流程可跑通。待优化方向见 [docs/Agent架构说明.md](docs/Agent架构说明.md) 中的"改进方向"章节。
+**当前状态：** 系统功能完整，支持实时进度追踪、教材内容预览和 KG 缓存加速。开发分支 `feat/realtime-progress`。待优化方向见 [docs/Agent架构说明.md](docs/Agent架构说明.md) 中的"改进方向"章节。
 
 ## 系统功能
 
 - **多教材解析**：基于 MinerU 的结构化教材提取（7 本教材、90 章、203 万字已验证）
+- **教材内容预览**：加载教材后可预览每章的提取内容（章节目录 + 前 500 字摘要）
 - **知识图谱构建**：LLM 驱动的知识点提取，支持 8 种概念分类、6 种关系类型
+- **KG 缓存持久化**：构建结果自动保存到本地，再次加载秒级完成（`warehouse/kg_cache/`）
 - **跨教材整合**：双重语义对齐（嵌入 + LLM）实现知识去重，压缩比 ≤ 30%
 - **RAG 问答**：基于 FAISS 向量检索的精准问答，每条回答附带教材引用
+- **实时进度显示**：所有耗时操作（KG 构建、整合、索引）通过 SSE 实时推送进度到前端
 - **知识图谱可视化**：AntV G6 力导向图，支持搜索、筛选、节点详情
 
 ## 技术架构
@@ -67,7 +71,7 @@ docker start med-kg-neo4j
 
 # 后端
 cd backend
-uvicorn score:app --host 0.0.0.0 --port 8000 --reload
+uvicorn score:app --host 0.0.0.0 --port 8765 --reload
 
 # 前端
 cd frontend
@@ -79,17 +83,20 @@ npm run dev
 | 服务 | 地址 |
 |------|------|
 | 前端 | http://localhost:3000 |
-| 后端 API 文档 | http://localhost:8000/docs |
+| 后端 API 文档 | http://localhost:8765/docs |
 | Neo4j Browser | http://localhost:7475 |
 
 ## API 端点
 
+### 核心端点
+
 | 端点 | 方法 | 说明 |
 |------|------|------|
-| `/api/upload` | POST | 上传教材文件 |
-| `/api/parse/mineru` | POST | 加载 MinerU 预提取教材 |
+| `/api/upload` | POST | 上传教材文件（自动注册到内存） |
+| `/api/parse/mineru` | POST | 加载 MinerU 预提取教材（含 KG 缓存检测） |
 | `/api/sources` | GET | 获取教材列表 |
-| `/api/kg/build` | POST | 构建单本教材知识图谱 |
+| `/api/textbook/{id}/preview` | GET | 预览教材提取内容（章节目录 + 摘要） |
+| `/api/kg/build` | POST | 构建单本教材知识图谱（有缓存秒级返回） |
 | `/api/kg/visualize` | GET | 获取图谱可视化数据 |
 | `/api/kg/integrate` | POST | 执行跨教材整合 |
 | `/api/rag/index` | POST | 建立向量索引 |
@@ -97,6 +104,16 @@ npm run dev
 | `/api/rag/status` | GET | 获取索引状态 |
 | `/api/chat` | POST | 多轮对话 |
 | `/api/report` | GET | 获取整合报告 |
+
+### SSE 实时进度端点
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/api/kg/build/stream?textbook_id=xxx` | GET | KG 构建进度流（有缓存时直接返回） |
+| `/api/kg/integrate/stream?textbook_ids=a,b` | GET | 跨教材整合进度流 |
+| `/api/rag/index/stream?textbook_ids=a,b` | GET | RAG 索引构建进度流 |
+
+SSE 事件格式：`event: progress|complete|result|error`，data 为 JSON（含 phase、step、percent、partialResult）。
 
 ## 核心模块
 
@@ -111,12 +128,15 @@ backend/src/
 
 frontend/src/
 ├── components/
-│   ├── FileManager/      # 文件上传 + MinerU 加载
+│   ├── FileManager/      # 文件上传 + MinerU 加载 + 内容预览弹窗
 │   ├── KnowledgeGraph/   # AntV G6 图谱可视化
 │   ├── RAGChat/          # RAG 问答对话
 │   ├── IntegrationPanel/ # 跨教材整合面板
-│   └── Report/           # 整合报告统计
-├── services/api.ts       # API 调用封装
+│   ├── Report/           # 整合报告统计
+│   └── TaskProgress/     # ⭐ SSE 实时进度面板（动画、部分结果展示）
+├── hooks/
+│   └── useTaskProgress.ts # ⭐ SSE 连接管理 + 进度状态 hook
+├── services/api.ts       # API 调用封装（含 SSE 路径常量）
 └── types/index.ts        # TypeScript 类型定义
 ```
 

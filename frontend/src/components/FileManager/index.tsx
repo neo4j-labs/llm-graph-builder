@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Upload, Button, List, Tag, message, Divider } from 'antd';
-import { CloudUploadOutlined, DatabaseOutlined } from '@ant-design/icons';
-import type { TextbookFile, GraphData, TaskState, TaskType } from '../../types';
+import { Upload, Button, List, Tag, message, Divider, Modal, Collapse, Spin } from 'antd';
+import { CloudUploadOutlined, DatabaseOutlined, EyeOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import type { TextbookFile, GraphData, TaskState, TaskType, TextbookPreview } from '../../types';
 import * as api from '../../services/api';
 
 interface Props {
@@ -28,6 +28,9 @@ const statusText: Record<string, string> = {
 
 export default function FileManager({ files, setFiles, setGraphData, startTask, task }: Props) {
   const [loading, setLoading] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewData, setPreviewData] = useState<TextbookPreview | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   useEffect(() => {
     if (
@@ -75,6 +78,21 @@ export default function FileManager({ files, setFiles, setGraphData, startTask, 
     },
     [startTask]
   );
+
+  const handlePreview = useCallback(async (textbookId: string) => {
+    setPreviewOpen(true);
+    setPreviewLoading(true);
+    setPreviewData(null);
+    try {
+      const data = await api.getTextbookPreview(textbookId);
+      setPreviewData(data);
+    } catch (err: any) {
+      message.error(`加载预览失败: ${err.message}`);
+      setPreviewOpen(false);
+    } finally {
+      setPreviewLoading(false);
+    }
+  }, []);
 
   const handleViewAll = useCallback(async () => {
     try {
@@ -135,13 +153,22 @@ export default function FileManager({ files, setFiles, setGraphData, startTask, 
             actions={[
               file.status === 'completed' && (
                 <Button
+                  type="text"
+                  size="small"
+                  icon={<EyeOutlined />}
+                  onClick={() => handlePreview(file.id)}
+                  title="预览内容"
+                />
+              ),
+              file.status === 'completed' && (
+                <Button
                   type="link"
                   size="small"
                   loading={isBuildingKG && task.label === (file.title || file.filename)}
                   disabled={isBuildingKG}
                   onClick={() => handleBuildKG(file.id, file.title || file.filename)}
                 >
-                  构建图谱
+                  {file.hasKgCache ? '查看图谱' : '构建图谱'}
                 </Button>
               ),
             ].filter(Boolean)}
@@ -157,6 +184,11 @@ export default function FileManager({ files, setFiles, setGraphData, startTask, 
                   <Tag color={statusColor[file.status]} className="text-xs">
                     {statusText[file.status]}
                   </Tag>
+                  {file.hasKgCache && (
+                    <Tag icon={<CheckCircleOutlined />} color="blue" className="text-xs">
+                      已有图谱
+                    </Tag>
+                  )}
                   {file.chapterCount && <span className="text-gray-500">{file.chapterCount} 章</span>}
                 </div>
               }
@@ -164,6 +196,44 @@ export default function FileManager({ files, setFiles, setGraphData, startTask, 
           </List.Item>
         )}
       />
+
+      <Modal
+        title={previewData?.title || '教材预览'}
+        open={previewOpen}
+        onCancel={() => setPreviewOpen(false)}
+        footer={null}
+        width={640}
+        styles={{ body: { maxHeight: '70vh', overflow: 'auto' } }}
+      >
+        {previewLoading ? (
+          <div className="flex justify-center py-12"><Spin size="large" /></div>
+        ) : previewData ? (
+          <div>
+            <div className="flex gap-4 mb-4 text-sm text-gray-400">
+              <span>共 {previewData.chapterCount} 章</span>
+              <span>{(previewData.totalChars / 10000).toFixed(1)} 万字</span>
+              {previewData.totalPages > 0 && <span>{previewData.totalPages} 页</span>}
+            </div>
+            <Collapse
+              size="small"
+              items={previewData.chapters.map((ch, i) => ({
+                key: i,
+                label: (
+                  <div className="flex justify-between items-center w-full pr-4">
+                    <span>{ch.title}</span>
+                    <span className="text-xs text-gray-500">{(ch.charCount / 1000).toFixed(1)}k 字</span>
+                  </div>
+                ),
+                children: (
+                  <div className="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed">
+                    {ch.preview}
+                  </div>
+                ),
+              }))}
+            />
+          </div>
+        ) : null}
+      </Modal>
     </div>
   );
 }
