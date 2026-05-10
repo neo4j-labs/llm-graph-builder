@@ -97,4 +97,15 @@ export async function getIntegrationReport(): Promise<{
   return data.data;
 }
 
+export function getStreamUrl(path: string, params: Record<string, string>): string {
+  const query = new URLSearchParams(params).toString();
+  return `/api${path}?${query}`;
+}
+
+export const STREAM_PATHS = {
+  kg_build: '/kg/build/stream',
+  integrate: '/kg/integrate/stream',
+  rag_index: '/rag/index/stream',
+} as const;
+
 export default api;

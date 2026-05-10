@@ -75,3 +75,31 @@ export interface GraphData {
   nodes: KnowledgeNode[];
   relations: KnowledgeRelation[];
 }
+
+export interface TaskEvent {
+  event: 'progress' | 'complete' | 'result' | 'error';
+  phase: string;
+  step: string;
+  current: number;
+  total: number;
+  percent: number;
+  partialResult?: Record<string, any>;
+  data?: any;
+}
+
+export type TaskType = 'kg_build' | 'integrate' | 'rag_index';
+
+export interface TaskState {
+  taskType: TaskType;
+  status: 'idle' | 'running' | 'completed' | 'error';
+  label: string;
+  phase: string;
+  step: string;
+  current: number;
+  total: number;
+  percent: number;
+  partialResults: Record<string, any>;
+  elapsed: number;
+  error?: string;
+  finalResult?: any;
+}
