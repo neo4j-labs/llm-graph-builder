@@ -474,7 +474,8 @@ async def extract_knowledge_from_long_chapter(
 
 async def extract_knowledge_from_textbook(
     textbook: Dict[str, Any],
-    llm: Optional[ChatOpenAI] = None
+    llm: Optional[ChatOpenAI] = None,
+    on_progress: Optional[Any] = None
 ) -> Dict[str, List]:
     """
     从整本教材提取知识点（遍历所有章节）
@@ -482,6 +483,7 @@ async def extract_knowledge_from_textbook(
     Args:
         textbook: 教材信息字典，包含 textbook_id, title, chapters (list)
         llm: LLM 实例
+        on_progress: 可选的异步进度回调函数，接收进度事件字典
     
     Returns:
         dict: 整合后的知识点和关系
@@ -518,7 +520,19 @@ async def extract_knowledge_from_textbook(
     all_relations = []
     
     for i, chapter in enumerate(chapters):
-        logger.info(f"处理章节 {i+1}/{len(chapters)}: {chapter.get('title', 'unknown')}")
+        chapter_title = chapter.get('title', 'unknown')
+        logger.info(f"处理章节 {i+1}/{len(chapters)}: {chapter_title}")
+        
+        if on_progress:
+            await on_progress({
+                "event": "progress",
+                "phase": "extracting",
+                "step": f"正在提取第{i+1}章: {chapter_title}",
+                "current": i + 1,
+                "total": len(chapters),
+                "percent": round((i + 1) / len(chapters) * 90),
+                "partialResult": {"nodesCount": len(all_nodes), "relationsCount": len(all_relations)}
+            })
         
         result = await extract_knowledge_from_chapter(chapter, textbook_info, llm)
         
@@ -530,6 +544,17 @@ async def extract_knowledge_from_textbook(
             await asyncio.sleep(1)
     
     logger.info(f"教材 {textbook_title} 提取完成：{len(all_nodes)} 个知识点，{len(all_relations)} 个关系")
+    
+    if on_progress:
+        await on_progress({
+            "event": "complete",
+            "phase": "done",
+            "step": "知识图谱构建完成",
+            "current": len(chapters),
+            "total": len(chapters),
+            "percent": 100,
+            "partialResult": {"nodesCount": len(all_nodes), "relationsCount": len(all_relations)}
+        })
     
     return {
         "nodes": all_nodes,
