@@ -175,3 +175,23 @@ files
 startupbackend.sh
 startupfrontend.sh
 /backend/local_model
+
+# Textbook PDFs (too large for GitHub, provided by organizers)
+*.pdf
+warehouse/
+data/textbooks/
+
+# Frontend build output
+frontend/dist/
+frontend/node_modules/
+
+# Backend runtime
+backend/merged_files/
+backend/chunks/
+
+# Local model cache
+models/
+*.bin
+*.safetensors
+
+backend/data/parsed_textbooks/

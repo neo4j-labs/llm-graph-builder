@@ -45,6 +45,7 @@ from src.shared.common_fn import formatted_time, get_value_from_env, get_remaini
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from Secweb.XContentTypeOptions import XContentTypeOptions
 from Secweb.XFrameOptions import XFrame
+from src.med_api import router as med_router
 
 load_dotenv(override=True)
 
@@ -110,6 +111,7 @@ class CustomGZipMiddleware:
 
 
 app = FastAPI()
+app.include_router(med_router)
 app.add_middleware(XContentTypeOptions)
 app.add_middleware(XFrame, Option={'X-Frame-Options': 'DENY'})
 app.add_middleware(

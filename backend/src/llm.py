@@ -23,6 +23,38 @@ from src.shared.common_fn import UniversalTokenUsageHandler,get_value_from_env
 
 def get_llm(model: str):
     """Retrieve the specified language model based on the model name."""
+    
+    # 优先检查统一模式的环境变量
+    base_url = get_value_from_env("LLM_BASE_URL")
+    if base_url:
+        api_key = get_value_from_env("LLM_API_KEY")
+        model_name = get_value_from_env("LLM_MODEL_NAME")
+        
+        if not api_key or not model_name:
+            err = "LLM_BASE_URL is set, but LLM_API_KEY or LLM_MODEL_NAME is missing"
+            logging.error(err)
+            raise Exception(err)
+        
+        logging.info(f"Using unified LLM mode: base_url={base_url}, model={model_name}")
+        callback_handler = UniversalTokenUsageHandler()
+        callback_manager = CallbackManager([callback_handler])
+        
+        try:
+            llm = ChatOpenAI(
+                api_key=api_key,
+                base_url=base_url,
+                model=model_name,
+                temperature=0,
+                callbacks=callback_manager,
+            )
+            logging.info(f"Unified LLM created successfully - Model: {model_name}")
+            return llm, model_name, callback_handler
+        except Exception as e:
+            err = f"Error while creating unified LLM: {str(e)}"
+            logging.error(err)
+            raise Exception(err)
+    
+    # Fallback 到原有的 LLM_MODEL_CONFIG_* 逻辑
     model = model.upper().replace('.', '_').strip()
     env_key = f"LLM_MODEL_CONFIG_{model}"
     env_value = get_value_from_env(env_key)
