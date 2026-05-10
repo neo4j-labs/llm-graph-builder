@@ -7,6 +7,7 @@ import os
 import json
 import logging
 import hashlib
+import asyncio
 from pathlib import Path
 from typing import Optional
 
@@ -106,20 +107,47 @@ def _chunk_textbook(textbook: dict) -> list[Document]:
     return docs
 
 
-def build_index(textbooks: list[dict]) -> dict:
+def build_index(textbooks: list[dict], on_progress=None) -> dict:
     """Build FAISS index from parsed textbooks."""
     global _faiss_store, _index_meta
 
     from langchain_community.vectorstores import FAISS
 
     all_docs: list[Document] = []
-    for tb in textbooks:
+    for i, tb in enumerate(textbooks):
+        if on_progress:
+            try:
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    asyncio.ensure_future(on_progress({
+                        "event": "progress", "phase": "chunking",
+                        "step": f"分块处理: {tb.get('title', '?')}",
+                        "current": i + 1, "total": len(textbooks),
+                        "percent": round((i + 1) / len(textbooks) * 50),
+                        "partialResult": {"chunksCount": len(all_docs)}
+                    }))
+            except RuntimeError:
+                pass
         docs = _chunk_textbook(tb)
         all_docs.extend(docs)
         logger.info(f"Chunked {tb.get('title', '?')}: {len(docs)} chunks")
 
     if not all_docs:
         raise ValueError("No documents to index")
+
+    if on_progress:
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                asyncio.ensure_future(on_progress({
+                    "event": "progress", "phase": "embedding",
+                    "step": f"构建向量索引 — 共 {len(all_docs)} 个知识块",
+                    "current": len(textbooks), "total": len(textbooks),
+                    "percent": 70,
+                    "partialResult": {"chunksCount": len(all_docs)}
+                }))
+        except RuntimeError:
+            pass
 
     embedding = _get_embedding_fn()
     _faiss_store = FAISS.from_documents(all_docs, embedding)
@@ -129,6 +157,20 @@ def build_index(textbooks: list[dict]) -> dict:
     index_dir.mkdir(parents=True, exist_ok=True)
     _faiss_store.save_local(str(index_dir))
     logger.info(f"FAISS index saved: {len(all_docs)} chunks from {len(textbooks)} books")
+
+    if on_progress:
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                asyncio.ensure_future(on_progress({
+                    "event": "complete", "phase": "done",
+                    "step": "RAG 索引构建完成",
+                    "current": len(textbooks), "total": len(textbooks),
+                    "percent": 100,
+                    "partialResult": {"indexedBooks": len(textbooks), "totalChunks": len(all_docs)}
+                }))
+        except RuntimeError:
+            pass
 
     return _index_meta
 
