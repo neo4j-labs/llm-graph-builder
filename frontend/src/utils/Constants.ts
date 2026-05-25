@@ -11,36 +11,23 @@ export const APP_SOURCES =
 export const llms = import.meta.env?.VITE_LLM_MODELS?.trim()
   ? (import.meta.env.VITE_LLM_MODELS.split(',') as string[])
   : [
-      'gemini_3.1_flash_preview',
+      'gemini_3.5_flash_lite',
       'openai_gpt_5.5',
-      'openai_gpt_5.4_mini',
-      'gemini_3.1_pro_preview',
       'diffbot',
       'groq_llama3.1_8b',
-      'anthropic_claude_4.6_sonnet',
       'anthropic_claude_4.7_opus',
       'llama4_maverick',
-      'bedrock_nova_micro_v1',
-      'bedrock_nova_lite_v1',
       'bedrock_nova_pro_v1',
-      'fireworks_deepseek_v3',
       'fireworks_deepseek_v4_flash',
       'fireworks_qwen3_6',
       'fireworks_gpt_oss',
-      'fireworks_kimi_k2p5',
       'fireworks_kimi_k2p6',
       'fireworks_glm_5.1',
     ];
 
 export const prodllms = import.meta.env.VITE_LLM_MODELS_PROD?.trim()
   ? (import.meta.env.VITE_LLM_MODELS_PROD.split(',') as string[])
-  : [
-      'gemini_3.1_flash_preview',
-      'openai_gpt_5.4_mini',
-      'diffbot',
-      'anthropic_claude_4.6_sonnet',
-      'anthropic_claude_4.7_opus',
-    ];
+  : ['gemini_3.5_flash_lite', 'openai_gpt_5.5', 'diffbot', 'anthropic_claude_4.7_opus'];
 
 export const chatModeLables = {
   vector: 'vector',
@@ -225,16 +212,9 @@ export const tooltips = {
   predinedSchema: 'Predefined Schema',
   dataImporterJson: 'Data Importer JSON',
 };
-export const PRODMODELS = [
-  'gemini_3.1_flash_preview',
-  'openai_gpt_5.4_mini',
-  'diffbot',
-  'anthropic_claude_4.6_sonnet',
-  'anthropic_claude_4.7_opus',
-];
+export const PRODMODELS = ['gemini_3.5_flash_lite', 'openai_gpt_5.5', 'diffbot', 'anthropic_claude_4.7_opus'];
 export const modelTooltipMap: Record<string, string> = {
-  'gemini_3.1_flash_preview': 'gemini-3.1-flash-lite-preview',
-  'gemini_3.1_pro_preview': 'gemini-3.1-pro-preview',
+  'gemini_3.5_flash_lite': 'gemini-3.5-flash-lite',
 };
 export const buttonCaptions = {
   exploreGraphWithBloom: 'Explore Graph',
