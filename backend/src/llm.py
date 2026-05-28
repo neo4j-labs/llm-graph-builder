@@ -1,6 +1,5 @@
 import logging
 from langchain_core.documents import Document
-import os
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_groq import ChatGroq
@@ -10,13 +9,12 @@ from langchain_experimental.graph_transformers.llm import _Graph
 from langchain_anthropic import ChatAnthropic
 from langchain_fireworks import ChatFireworks
 from langchain_aws import ChatBedrock
-from langchain_community.chat_models import ChatOllama
+from langchain_ollama import ChatOllama
 import boto3
 import google.auth
 from src.shared.constants import ADDITIONAL_INSTRUCTIONS
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 import re
-from typing import List
 from langchain_core.callbacks.manager import CallbackManager
 from src.shared.common_fn import UniversalTokenUsageHandler,get_value_from_env
 

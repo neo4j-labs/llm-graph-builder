@@ -24,7 +24,7 @@ class graphDBdataAccess:
             result = self.get_current_status_document_node(file_name)
             if len(result) > 0:
                 is_cancelled_status = result[0]['is_cancelled']
-                if bool(is_cancelled_status) == True:
+                if bool(is_cancelled_status):
                     job_status = 'Cancelled'
             if retry_condition is not None: 
                 retry_condition = None
@@ -391,11 +391,11 @@ class graphDBdataAccess:
         param = {"filename_list" : filename_list, "source_types_list": source_types_list}
         community_param = {"max_level":MAX_COMMUNITY_LEVELS}
         if deleteEntities == "true":
-            result = self.execute_query(query_to_delete_document_and_entities, param)
+            _ = self.execute_query(query_to_delete_document_and_entities, param)
             _ = self.execute_query(query_to_delete_communities,community_param)
             logging.info(f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' from database")
         else :
-            result = self.execute_query(query_to_delete_document, param)    
+            _ = self.execute_query(query_to_delete_document, param)    
             logging.info(f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' with their entities from database")
         return len(filename_list)
     

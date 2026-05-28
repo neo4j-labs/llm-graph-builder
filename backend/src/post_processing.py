@@ -1,8 +1,5 @@
-from neo4j import GraphDatabase
 import logging
-import time
 from langchain_neo4j import Neo4jGraph
-import os
 from src.graph_query import get_graphDB_driver
 from src.shared.common_fn import load_embedding_model,execute_graph_query,get_value_from_env
 from langchain_core.output_parsers import JsonOutputParser
@@ -10,7 +7,6 @@ from langchain_core.prompts import ChatPromptTemplate
 from src.shared.constants import GRAPH_CLEANUP_PROMPT
 from src.llm import get_llm
 from src.graphDB_dataAccess import graphDBdataAccess
-import time 
 
 # Constants for Full-Text Indexes
 LABELS_QUERY = "CALL db.labels()"
@@ -140,7 +136,7 @@ def fetch_entities_for_embedding(graph):
 
 def update_embeddings(rows, graph, embedding_provider, embedding_model):
     embeddings, dimension = load_embedding_model(embedding_provider, embedding_model)
-    logging.info(f"update embedding for entities")
+    logging.info("update embedding for entities")
     for row in rows:
         row['embedding'] = embeddings.embed_query(row['text'])                        
     query = """

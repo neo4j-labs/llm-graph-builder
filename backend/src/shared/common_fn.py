@@ -3,11 +3,11 @@ import os
 import json
 import logging
 from typing import Any
+
 from src.entities.user_credential import Neo4jCredentials
 from transformers import AutoTokenizer, AutoModel
 from langchain_huggingface import HuggingFaceEmbeddings
 from threading import Lock
-import logging
 from urllib.parse import urlparse,parse_qs
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
@@ -17,10 +17,8 @@ from neo4j.exceptions import TransientError
 from langchain_community.graphs.graph_document import GraphDocument
 from typing import List
 import re
-import os
 import time
 from pathlib import Path
-from urllib.parse import urlparse
 import boto3
 from langchain_community.embeddings import BedrockEmbeddings
 from langchain_core.callbacks import BaseCallbackHandler
@@ -155,12 +153,8 @@ def get_chunk_and_graphDocument(graph_document_list, chunkId_chunkDoc_list):
   return lst_chunk_chunkId_document  
                  
 def create_graph_database_connection(credentials):
-  enable_user_agent = get_value_from_env("ENABLE_USER_AGENT", "False" ,"bool")
-  if enable_user_agent:
-    graph = Neo4jGraph(url=credentials.uri, database=credentials.database, username=credentials.userName, password=credentials.password, refresh_schema=False, sanitize=True,driver_config={'user_agent':get_value_from_env("USER_AGENT","LLM-Graph-Builder")}) 
-  else:
     graph = Neo4jGraph(url=credentials.uri, database=credentials.database, username=credentials.userName, password=credentials.password, refresh_schema=False, sanitize=True)    
-  return graph
+    return graph
 
 
 
