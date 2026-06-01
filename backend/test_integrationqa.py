@@ -411,15 +411,14 @@ def generate_summary_report(summaries: List[Dict[str, Any]], report_path: Path) 
 if __name__ == "__main__":
     models = [
             'openai_gpt_5.5',
-            'openai_gpt_5.4_mini',
-            'gemini_3.1_flash_preview',
-            'gemini_3.1_pro_preview',
+            'gemini_3.5_flash_lite',
             'groq_llama3.1_8b',
-            'anthropic_claude_4.6_sonnet',
+            'anthropic_claude_4.7_opus',
             'llama4_maverick',
             'fireworks_gpt_oss',
-            'fireworks_deepseek_v3',
-            'bedrock_nova_lite_v1',
+            'fireworks_deepseek_v4_flash',
+            'fireworks_kimi_k2p6',
+            'bedrock_nova_pro_v1',
             ]
     chatbot_modes = [
         "vector",
