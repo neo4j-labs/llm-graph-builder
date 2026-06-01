@@ -4,7 +4,6 @@ from src.llm import get_llm
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser 
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import os
 from src.shared.common_fn import get_value_from_env
 from src.shared.common_fn import load_embedding_model,track_token_usage
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
@@ -506,11 +505,11 @@ def clear_communities(gds):
 
         logging.info("Dropping communities...")
         gds.run_cypher(DROP_COMMUNITIES)
-        logging.info(f"Communities dropped successfully")
+        logging.info("Communities dropped successfully")
 
         logging.info("Dropping community property from entities...")
         gds.run_cypher(DROP_COMMUNITY_PROPERTY)
-        logging.info(f"Community property dropped successfully")
+        logging.info("Community property dropped successfully")
 
     except Exception as e:
         logging.error(f"An error occurred while clearing communities: {e}")

@@ -251,7 +251,7 @@ gcloud run deploy dev-backend \
 | DIFFBOT_API_KEY         | Mandatory         |               | API key is required to use Diffbot's NLP service to extract entities and relationships from unstructured data |
 | BUCKET_UPLOAD_FILE      | Optional          |               | Bucket name to store uploaded file on GCS                                                        |
 | BUCKET_FAILED_FILE      | Optional          |               | Bucket name to store failed file on GCS while extraction                                         |
-| NEO4J_USER_AGENT        | Optional          | llm-graph-builder | Name of the user agent to track Neo4j database activity                                      |
+| USER_AGENT              | Optional          | llm-graph-builder | Name of the user agent to track Neo4j database activity                                      |
 | ENABLE_USER_AGENT       | Optional          | true          | Boolean value to enable/disable Neo4j user agent                                                 |
 | DUPLICATE_TEXT_DISTANCE | Optional          | 5             | This value is used to find distance for all node pairs in the graph and is calculated based on node properties |
 | DUPLICATE_SCORE_VALUE   | Optional          | 0.97          | Node score value to match duplicate nodes                                                        |

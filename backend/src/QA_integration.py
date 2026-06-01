@@ -1,4 +1,3 @@
-import os
 import json
 import time
 import logging
@@ -17,7 +16,7 @@ from langchain_classic.retrievers.document_compressors import EmbeddingsFilter, 
 from langchain_text_splitters import TokenTextSplitter
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_community.chat_message_histories import ChatMessageHistory 
-from langchain_core.callbacks import StdOutCallbackHandler, BaseCallbackHandler
+from langchain_core.callbacks import BaseCallbackHandler
 # from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 # LangChain chat models
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
@@ -26,11 +25,11 @@ from langchain_groq import ChatGroq
 from langchain_anthropic import ChatAnthropic
 from langchain_fireworks import ChatFireworks
 from langchain_aws import ChatBedrock
-from langchain_community.chat_models import ChatOllama
+from langchain_ollama import ChatOllama
 
 # Local imports
 from src.llm import get_llm
-from src.shared.common_fn import load_embedding_model, track_token_usage,get_value_from_env
+from src.shared.common_fn import load_embedding_model, get_value_from_env
 from src.shared.constants import (
     CHAT_SYSTEM_TEMPLATE, CHAT_TOKEN_CUT_OFF, CHAT_ENTITY_VECTOR_MODE,
     CHAT_GLOBAL_VECTOR_FULLTEXT_MODE, CHAT_SEARCH_KWARG_SCORE_THRESHOLD,CHAT_MODE_CONFIG_MAP, CHAT_DEFAULT_MODE, CHAT_GRAPH_MODE,CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD, CHAT_DOC_SPLIT_SIZE, QUESTION_TRANSFORM_TEMPLATE
@@ -440,7 +439,7 @@ def setup_chat(model, graph, document_names, chat_mode_settings, embedding_provi
     
     return llm, doc_retriever, model_name
 
-def process_chat_response(messages, history, question, model, graph, document_names, chat_mode_settings, email=None, uri=None, embedding_provider=None, embedding_model=None):
+def process_chat_response(messages, history, question, model, graph, document_names, chat_mode_settings, email=None, uri=None, embedding_provider=None, embedding_model=None, session_id=None):
     try:
         # if get_value_from_env("TRACK_USER_USAGE", "false", "bool"):
         #     try:
@@ -466,7 +465,7 @@ def process_chat_response(messages, history, question, model, graph, document_na
         ai_response = AIMessage(content=content)
         messages.append(ai_response)
 
-        summarization_thread = threading.Thread(target=summarize_and_log, args=(history, messages, llm))
+        summarization_thread = threading.Thread(target=summarize_and_log, args=(history, messages, llm, session_id))
         summarization_thread.start()
         logging.info("Summarization thread started.")
         # summarize_and_log(history, messages, llm)
@@ -508,7 +507,7 @@ def process_chat_response(messages, history, question, model, graph, document_na
             "user": "chatbot"
         }
 
-def summarize_and_log(history, stored_messages, llm):
+def summarize_and_log(history, stored_messages, llm, session_id=None, use_local=False):
     logging.info("Starting summarization in a separate thread.")
     if not stored_messages:
         logging.info("No messages to summarize.")
@@ -541,9 +540,16 @@ def summarize_and_log(history, stored_messages, llm):
         summary_message_for_db = AIMessage(content=summary_text)
 
         with threading.Lock():
-            history.clear()
-            history.add_user_message("Our current conversation summary till now")
-            history.add_message(summary_message_for_db)
+            try:
+                history.clear()
+                history.add_user_message("Our current conversation summary till now")
+                history.add_message(summary_message_for_db)
+            except Exception as e:
+                logging.warning(f"Could not save to database history (driver likely closed): {e}. Falling back to local history.")
+                if session_id:
+                    local_history = SessionChatHistory.get_chat_history(session_id)
+                    local_history.add_message(HumanMessage(content="Our current conversation summary till now"))
+                    local_history.add_message(summary_message_for_db)
 
         logging.info(f"Chat History summarized in {time.time() - start_time:.2f} seconds")
         return True
@@ -598,7 +604,7 @@ def get_graph_response(graph_chain, question):
     except Exception as e:
         logging.error(f"An error occurred while getting the graph response : {e}")
 
-def process_graph_response(model, graph, question, messages, history):
+def process_graph_response(model, graph, question, messages, history, session_id=None):
     try:
         graph_chain, qa_llm, model_version = create_graph_chain(model, graph)
         
@@ -609,7 +615,7 @@ def process_graph_response(model, graph, question, messages, history):
         
         messages.append(ai_response)
         # summarize_and_log(history, messages, qa_llm)
-        summarization_thread = threading.Thread(target=summarize_and_log, args=(history, messages, qa_llm))
+        summarization_thread = threading.Thread(target=summarize_and_log, args=(history, messages, qa_llm, session_id))
         summarization_thread.start()
         logging.info("Summarization thread started.")
         metric_details = {"question":question,"contexts":graph_response.get("context", ""),"answer":ai_response_content}
@@ -689,7 +695,7 @@ def QA_RAG(graph, model, question, document_names, session_id, mode, write_acces
     messages.append(user_question)
 
     if mode == CHAT_GRAPH_MODE:
-        result = process_graph_response(model, graph, question, messages, history)
+        result = process_graph_response(model, graph, question, messages, history, session_id)
     else:
         chat_mode_settings = get_chat_mode_settings(mode=mode)
         document_names= list(map(str.strip, json.loads(document_names)))
@@ -710,7 +716,7 @@ def QA_RAG(graph, model, question, document_names, session_id, mode, write_acces
                 "user": "chatbot"
             }
         else:
-            result = process_chat_response(messages,history, question, model, graph, document_names,chat_mode_settings, email, uri, embedding_provider, embedding_model)
+            result = process_chat_response(messages,history, question, model, graph, document_names,chat_mode_settings, email, uri, embedding_provider, embedding_model, session_id)
 
     result["session_id"] = session_id
     
