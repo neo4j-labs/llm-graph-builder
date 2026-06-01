@@ -207,9 +207,9 @@ class graphDBdataAccess:
 
             if edition == "enterprise":
                 write_query = """
-                SHOW USER PRIVILEGES 
+                SHOW USER PRIVILEGES
                 YIELD action, graph
-                WHERE graph = $database AND action = 'write'
+                WHERE (graph = $database OR graph = '*') AND action = 'write'
                 RETURN COUNT(*) AS writeAccessCount
                 """
                 logging.info(f"Checking write access for database: {database}")
