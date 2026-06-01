@@ -34,7 +34,7 @@ pydantic==2.12.5
 python-dotenv==1.2.2
 python-magic==0.4.27
 PyPDF2==3.0.1
-PyMuPDF==1.27.2
+PyMuPDF==1.27.2.3
 starlette==0.52.1
 sse-starlette==3.4.4
 starlette-session==0.4.3
