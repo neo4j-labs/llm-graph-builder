@@ -13,6 +13,7 @@ This application allows you to upload files from various sources (local machine,
 ### **Prerequisites**
 - **Python 3.12 or higher** (for local/separate backend deployment)
 - Neo4j Database **5.23 or later** with APOC installed.
+  - Neo4j 5.23 is required because the backend uses the Cypher variable-scope subquery syntax (`CALL (variable) { ... }`), which is not supported by earlier Neo4j 5.x releases such as 5.20.
   - **Neo4j Aura** databases (including the free tier) are supported.
   - If using **Neo4j Desktop**, you will need to deploy the backend and frontend separately (docker-compose is not supported).
 
@@ -98,6 +99,7 @@ You have two ways to configure the embedding model locally:
 
 ### **Prerequisites**
 - Neo4j Database **5.23 or later** with APOC installed.
+  - Neo4j 5.23 is required because the backend uses the Cypher variable-scope subquery syntax (`CALL (variable) { ... }`), which is not supported by earlier Neo4j 5.x releases such as 5.20.
   - **Neo4j Aura** databases (including the free tier) are supported.
   - If using **Neo4j Desktop**, you will need to deploy the backend and frontend separately (docker-compose is not supported).
 
