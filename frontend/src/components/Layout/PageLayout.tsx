@@ -294,6 +294,7 @@ const PageLayout: React.FC = () => {
             chunksTobeProcess: Number(connectionData.data.chunk_to_be_created),
             email: user?.email ?? '',
             connection: 'backendApi',
+            database: connectionData.data.database,
           };
           setIsGCSActive(credentials.isGCSActive);
           setUserCredentials(credentials);
