@@ -1095,6 +1095,7 @@ async def backend_connection_configuration():
                 result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, database, None, uri)
                 result['gcs_file_cache'] = gcs_cache
                 result['uri'] = uri
+                result['database'] = database
                 end = time.time()
                 elapsed_time = end - start
                 result['api_name'] = 'backend_connection_configuration'
