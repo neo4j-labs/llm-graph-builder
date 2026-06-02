@@ -411,7 +411,7 @@ def generate_summary_report(summaries: List[Dict[str, Any]], report_path: Path) 
 if __name__ == "__main__":
     models = [
             'openai_gpt_5.5',
-            'gemini_3.5_flash_lite',
+            'gemini_3.5_flash',
             'groq_llama3.1_8b',
             'anthropic_claude_4.7_opus',
             'llama4_maverick',

@@ -48,9 +48,7 @@ from src.shared.constants import (
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from src.shared.schema_extraction import schema_extraction_from_text
 
-import wikipedia
-wikipedia.set_user_agent("llm-graph-builder/1.0")
-from langchain_community.document_loaders import WikipediaLoader, WebBaseLoader
+from langchain_community.document_loaders import WebBaseLoader
 
 warnings.filterwarnings("ignore")
 load_dotenv()
@@ -312,38 +310,45 @@ def create_source_node_graph_url_wikipedia(graph, params):
     Returns:
         tuple: (list of file info dicts, success_count, failed_count)
     """
-    success_count=0
-    failed_count=0
-    lst_file_name=[]
+    success_count = 0
+    failed_count = 0
+    lst_file_name = []
     wiki_query_id, language = check_url_source(source_type=params.source_type, wiki_query=params.wiki_query)
-    wiki_query_formatted = wiki_query_id.strip().replace('_', ' ')
-    logging.info(f"Creating source node for {wiki_query_formatted}, {language}")
-    pages = WikipediaLoader(query=wiki_query_formatted, lang=language, load_max_docs=1, load_all_available_meta=True).load()
-    if pages is None or len(pages)==0:
-      failed_count+=1
-      message = f"Unable to read data for given Wikipedia url : {params.wiki_query}"
-      raise LLMGraphBuilderException(message)
-    else:
-      obj_source_node = sourceNode()
-      obj_source_node.file_name = wiki_query_id.strip()
-      obj_source_node.file_type = 'text'
-      obj_source_node.file_source = params.source_type
-      obj_source_node.file_size = sys.getsizeof(pages[0].page_content)
-      obj_source_node.model = params.model
-      obj_source_node.url = urllib.parse.unquote(pages[0].metadata['source'])
-      obj_source_node.created_at = datetime.now()
-      obj_source_node.language = language
-      obj_source_node.chunkNodeCount=0
-      obj_source_node.chunkRelCount=0
-      obj_source_node.entityNodeCount=0
-      obj_source_node.entityEntityRelCount=0
-      obj_source_node.communityNodeCount=0
-      obj_source_node.communityRelCount=0
-      graphDb_data_Access = graphDBdataAccess(graph)
-      graphDb_data_Access.create_source_node(obj_source_node)
-      success_count+=1
-      lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'language':obj_source_node.language, 'status':'Success'})
-    return lst_file_name,success_count,failed_count
+    logging.info(f"Creating source node for {wiki_query_id.strip()}, {language}")
+
+    file_name, pages = get_documents_from_wikipedia(wiki_query_id, language)
+    if pages is None or len(pages) == 0:
+        failed_count += 1
+        message = f"Unable to read data for given Wikipedia url : {params.wiki_query}"
+        raise LLMGraphBuilderException(message)
+
+    obj_source_node = sourceNode()
+    obj_source_node.file_name = file_name.strip()
+    obj_source_node.file_type = 'text'
+    obj_source_node.file_source = params.source_type
+    obj_source_node.file_size = sys.getsizeof(pages[0].page_content)
+    obj_source_node.model = params.model
+    obj_source_node.url = urllib.parse.unquote(pages[0].metadata['source'])
+    obj_source_node.created_at = datetime.now()
+    obj_source_node.language = language
+    obj_source_node.chunkNodeCount = 0
+    obj_source_node.chunkRelCount = 0
+    obj_source_node.entityNodeCount = 0
+    obj_source_node.entityEntityRelCount = 0
+    obj_source_node.communityNodeCount = 0
+    obj_source_node.communityRelCount = 0
+
+    graphDb_data_Access = graphDBdataAccess(graph)
+    graphDb_data_Access.create_source_node(obj_source_node)
+    success_count += 1
+    lst_file_name.append({
+        'fileName': obj_source_node.file_name,
+        'fileSize': obj_source_node.file_size,
+        'url': obj_source_node.url,
+        'language': obj_source_node.language,
+        'status': 'Success'
+    })
+    return lst_file_name, success_count, failed_count
     
 async def extract_graph_from_file_local_file(credentials, params, merged_file_path):
 
