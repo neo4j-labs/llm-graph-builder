@@ -24,7 +24,6 @@ ENV LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
 COPY requirements.txt /code/
 # --no-cache-dir --upgrade 
 RUN pip install --upgrade pip
-RUN pip install torch==2.10.0+cpu torchvision==0.25.0+cpu torchaudio==2.10.0+cpu --index-url https://download.pytorch.org/whl/cpu
 RUN pip install -r requirements.txt
 
 RUN python -c "from transformers import AutoTokenizer, AutoModel; \
