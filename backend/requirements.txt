@@ -1,6 +1,6 @@
 --extra-index-url https://download.pytorch.org/whl/cpu
 torch==2.10.0+cpu
-torchvision==0.26.0+cpu
+torchvision==0.25.0+cpu
 torchaudio==2.10.0+cpu
 asyncio==4.0.0
 boto3==1.43.16
