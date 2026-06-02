@@ -24,9 +24,8 @@ def get_documents_from_wikipedia(wiki_query: str, language: str):
     """
     try:
         # Convert underscores to spaces for Wikipedia API search
-        wiki_query_formatted = wiki_query.strip().replace('_', ' ')
         pages = WikipediaLoader(
-            query=wiki_query_formatted,
+            query=wiki_query,
             lang=language,
             load_all_available_meta=False,
             doc_content_chars_max=100000,
