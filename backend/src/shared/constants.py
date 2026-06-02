@@ -247,7 +247,7 @@ CHAT_DOC_SPLIT_SIZE = 3000
 CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD = 0.10
 
 CHAT_TOKEN_CUT_OFF = {
-  ("gemini_3.5_flash_lite","groq-llama3",'groq_llama3_70b','anthropic_claude_4') : 4,
+  ("gemini_3.5_flash","groq-llama3",'groq_llama3_70b','anthropic_claude_4') : 4,
   ("openai_gpt_5.5","diffbot","anthropic_claude_4.7_opus") : 28,
      ("ollama_llama3") : 2  
 }  

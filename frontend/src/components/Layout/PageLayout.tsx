@@ -229,16 +229,6 @@ const PageLayout: React.FC = () => {
     }
   }, [isAuthenticated, user?.email]);
 
-  useEffect(() => {
-    if (!isLargeDesktop) {
-      setIsLeftExpanded(false);
-      setIsRightExpanded(false);
-      setShowDrawerChatbot(false);
-    } else {
-      setShowDrawerChatbot(true);
-    }
-  }, [isLargeDesktop]);
-
   const { cancel } = useSpeechSynthesis();
   const { setActiveSpotlight } = useSpotlightContext();
   const isYoutubeOnly = useMemo(
@@ -304,6 +294,7 @@ const PageLayout: React.FC = () => {
             chunksTobeProcess: Number(connectionData.data.chunk_to_be_created),
             email: user?.email ?? '',
             connection: 'backendApi',
+            database: connectionData.data.database,
           };
           setIsGCSActive(credentials.isGCSActive);
           setUserCredentials(credentials);
