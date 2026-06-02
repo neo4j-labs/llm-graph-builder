@@ -41,7 +41,7 @@ starlette-session==0.4.3
 tqdm==4.67.3
 unstructured[all-docs]==0.22.31
 unstructured-client==0.44.1
-unstructured-inference==1.6.11
+unstructured-inference>=1.5.2
 urllib3==2.2.2
 uvicorn==0.48.0
 gunicorn==26.0.0
@@ -50,7 +50,7 @@ wrapt==2.2.1
 yarl==1.24.2
 youtube-transcript-api==1.2.4
 zipp==4.1.0
-sentence-transformers==5.5.1
+sentence-transformers>=5.3.0
 google-cloud-logging==3.15.0
 graphdatascience==1.21
 Secweb==1.30.10

@@ -31,7 +31,7 @@ This application allows you to upload files from various sources (local machine,
    cd backend
    python3.12 -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
-   pip install -r requirements.txt -c constraints.txt
+   pip install -r requirements.txt
    uvicorn score:app --reload
    ```
 
