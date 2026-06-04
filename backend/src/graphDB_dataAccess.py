@@ -24,7 +24,7 @@ class graphDBdataAccess:
             result = self.get_current_status_document_node(file_name)
             if len(result) > 0:
                 is_cancelled_status = result[0]['is_cancelled']
-                if bool(is_cancelled_status) == True:
+                if bool(is_cancelled_status):
                     job_status = 'Cancelled'
             if retry_condition is not None: 
                 retry_condition = None
@@ -148,24 +148,51 @@ class graphDBdataAccess:
         list_of_json_objects = [entry['d'] for entry in result]
         return list_of_json_objects
         
-    def update_KNN_graph(self):
+    def update_KNN_graph(self, embedding_provider, embedding_model):
         """
         Update the graph node with SIMILAR relationship where embedding score match
         """
-        index = self.graph.query("""show indexes yield * where type = 'VECTOR' and name = 'vector'""",session_params={"database":self.graph._database})
-        # logging.info(f'show index vector: {index}')
-        knn_min_score = get_value_from_env("KNN_MIN_SCORE",0.8,"float")
-        if len(index) > 0:
-            logging.info('update KNN graph')
-            self.graph.query("""MATCH (c:Chunk)
-                                    WHERE c.embedding IS NOT NULL AND count { (c)-[:SIMILAR]-() } < 5
-                                    CALL db.index.vector.queryNodes('vector', 6, c.embedding) yield node, score
-                                    WHERE node <> c and score >= $score MERGE (c)-[rel:SIMILAR]-(node) SET rel.score = score
-                                """,
-                                {"score":float(knn_min_score)}
-                                ,session_params={"database":self.graph._database})
-        else:
+        embeddings, dimension = load_embedding_model(embedding_provider, embedding_model)
+        # Check if a vector index named `vector` exists and read its configured dimensions
+        index = self.graph.query(
+            """
+            SHOW INDEXES YIELD *
+            WHERE type = 'VECTOR' AND name = 'vector'
+            RETURN options.indexConfig['vector.dimensions'] AS vector_dimensions
+            """,
+            session_params={"database": self.graph._database},
+        )
+
+        knn_min_score = get_value_from_env("KNN_MIN_SCORE", 0.8, "float")
+
+        if len(index) == 0:
             logging.info("Vector index does not exist, So KNN graph not update")
+            return
+
+        try:
+            index_dim = int(index[0].get('vector_dimensions')) if index[0].get('vector_dimensions') is not None else None
+        except Exception:
+            index_dim = None
+
+        # If index dimension is known and doesn't match the model dimension, skip to avoid errors
+        if index_dim is not None and int(dimension) != int(index_dim):
+            logging.info(f"Vector index dimension ({index_dim}) doesn't match embedding model dimension ({dimension}); skipping KNN update to avoid errors")
+            return
+
+        logging.info('update KNN graph')
+
+        # Only match chunks and candidate nodes whose embedding vector size equals the model dimension
+        self.graph.query(
+            """
+            MATCH (c:Chunk)
+            WHERE c.embedding IS NOT NULL AND size(c.embedding) = $dim AND count { (c)-[:SIMILAR]-() } < 5
+            CALL db.index.vector.queryNodes('vector', 6, c.embedding) yield node, score
+            WHERE node <> c AND node.embedding IS NOT NULL AND size(node.embedding) = $dim AND score >= $score
+            MERGE (c)-[rel:SIMILAR]-(node) SET rel.score = score
+            """,
+            {"score": float(knn_min_score), "dim": int(dimension)},
+            session_params={"database": self.graph._database},
+        )
 
     def check_account_access(self, database):
         """
@@ -180,9 +207,9 @@ class graphDBdataAccess:
 
             if edition == "enterprise":
                 write_query = """
-                SHOW USER PRIVILEGES 
+                SHOW USER PRIVILEGES
                 YIELD action, graph
-                WHERE graph = $database AND action = 'write'
+                WHERE (graph = $database OR graph = '*') AND action = 'write'
                 RETURN COUNT(*) AS writeAccessCount
                 """
                 logging.info(f"Checking write access for database: {database}")
@@ -364,11 +391,11 @@ class graphDBdataAccess:
         param = {"filename_list" : filename_list, "source_types_list": source_types_list}
         community_param = {"max_level":MAX_COMMUNITY_LEVELS}
         if deleteEntities == "true":
-            result = self.execute_query(query_to_delete_document_and_entities, param)
+            _ = self.execute_query(query_to_delete_document_and_entities, param)
             _ = self.execute_query(query_to_delete_communities,community_param)
             logging.info(f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' from database")
         else :
-            result = self.execute_query(query_to_delete_document, param)    
+            _ = self.execute_query(query_to_delete_document, param)    
             logging.info(f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' with their entities from database")
         return len(filename_list)
     
@@ -491,6 +518,7 @@ class graphDBdataAccess:
         if str(isVectorIndexExist or '').lower().strip() == 'true':
             self.graph.query("""DROP INDEX vector IF EXISTS""",session_params={"database":self.graph._database})
             self.graph.query("""DROP INDEX entity_vector IF EXISTS""",session_params={"database":self.graph._database})
+            self.graph.query("""DROP INDEX community_vector IF EXISTS""",session_params={"database":self.graph._database})
         
         self.graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
                             OPTIONS {indexConfig: {
@@ -513,6 +541,18 @@ class graphDBdataAccess:
                             "dimensions" : dimension
                         },session_params={"database":self.graph._database}
                         )
+        
+        self.graph.query("""CREATE VECTOR INDEX `community_vector` if not exists for (n:`__Community__`) on (n.embedding)
+                            OPTIONS {indexConfig: {
+                            `vector.dimensions`: $dimensions,       
+                            `vector.similarity_function`: 'cosine'
+                            }}
+                        """,
+                        {
+                            "dimensions" : dimension
+                        },session_params={"database":self.graph._database}
+                        )
+            
         return "Drop and Re-Create vector index succesfully"
 
 

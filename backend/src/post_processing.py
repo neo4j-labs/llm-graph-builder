@@ -1,8 +1,5 @@
-from neo4j import GraphDatabase
 import logging
-import time
 from langchain_neo4j import Neo4jGraph
-import os
 from src.graph_query import get_graphDB_driver
 from src.shared.common_fn import load_embedding_model,execute_graph_query,get_value_from_env
 from langchain_core.output_parsers import JsonOutputParser
@@ -10,7 +7,6 @@ from langchain_core.prompts import ChatPromptTemplate
 from src.shared.constants import GRAPH_CLEANUP_PROMPT
 from src.llm import get_llm
 from src.graphDB_dataAccess import graphDBdataAccess
-import time 
 
 # Constants for Full-Text Indexes
 LABELS_QUERY = "CALL db.labels()"
@@ -22,6 +18,7 @@ COMMUNITY_INDEX_FULL_TEXT_QUERY = "CREATE FULLTEXT INDEX community_keyword FOR (
 # Constants for Vector Indexes
 CHUNK_VECTOR_INDEX_NAME = "vector"
 ENTITY_VECTOR_INDEX_NAME = "entity_vector"
+COMMUNITY_VECTOR_INDEX_NAME = "community_vector"
 VECTOR_EMBEDDING_DEFAULT_DIMENSION = 384
 
 CREATE_VECTOR_INDEX_QUERY = """
@@ -43,7 +40,8 @@ FULLTEXT_INDEXES = [
 
 VECTOR_INDEXES = [
     {"name": CHUNK_VECTOR_INDEX_NAME, "label": "Chunk", "property": "embedding"},
-    {"name": ENTITY_VECTOR_INDEX_NAME, "label": "__Entity__", "property": "embedding"}
+    {"name": ENTITY_VECTOR_INDEX_NAME, "label": "__Entity__", "property": "embedding"},
+    {'name': COMMUNITY_VECTOR_INDEX_NAME, 'label': '__Community__', 'property': 'embedding'}
 ]
 
 def create_vector_index(session, index_name, node_label, embedding_property, embedding_dimension):
@@ -138,7 +136,7 @@ def fetch_entities_for_embedding(graph):
 
 def update_embeddings(rows, graph, embedding_provider, embedding_model):
     embeddings, dimension = load_embedding_model(embedding_provider, embedding_model)
-    logging.info(f"update embedding for entities")
+    logging.info("update embedding for entities")
     for row in rows:
         row['embedding'] = embeddings.embed_query(row['text'])                        
     query = """
@@ -156,7 +154,7 @@ def graph_schema_consolidation(graph):
         messages=[("system", GRAPH_CLEANUP_PROMPT), ("human", "{input}")],
         partial_variables={"format_instructions": parser.get_format_instructions()}
     )
-    graph_cleanup_model = get_value_from_env("GRAPH_CLEANUP_MODEL", 'openai_gpt_5_mini')
+    graph_cleanup_model = get_value_from_env("GRAPH_CLEANUP_MODEL", 'openai_gpt_5.4_mini')
     llm, _, _ = get_llm(graph_cleanup_model)
     chain = prompt | llm | parser
 

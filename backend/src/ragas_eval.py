@@ -3,10 +3,9 @@ import logging
 import time
 from src.llm import get_llm
 from datasets import Dataset
-from dotenv import load_dotenv
 from ragas import evaluate
 from ragas.metrics import answer_relevancy, faithfulness,context_entity_recall
-from src.shared.common_fn import get_value_from_env,load_embedding_model 
+from src.shared.common_fn import load_embedding_model 
 from ragas.dataset_schema import SingleTurnSample
 from ragas.metrics import RougeScore, SemanticSimilarity
 from ragas.llms import LangchainLLMWrapper
@@ -31,9 +30,6 @@ def get_ragas_metrics(question: str, context: list, answer: list, model: str, em
         logging.info("Evaluation dataset created successfully.")
         if ("diffbot" in model) or ("ollama" in model):
             raise ValueError(f"Unsupported model for evaluation: {model}")
-        elif ("gemini" in model):
-            llm, model_name, _ = get_llm(model=model)
-            llm = LangchainLLMWrapper(llm,is_finished_parser=custom_is_finished_parser)
         else:
             llm, model_name, _ = get_llm(model=model)
             llm = LangchainLLMWrapper(llm)
@@ -93,27 +89,3 @@ async def get_additional_metrics(question: str, contexts: list, answers: list, r
    except Exception as e:
        logging.exception("Error in get_additional_metrics")
        return {"error": str(e)}
-   
-
-def custom_is_finished_parser(response):
-    is_finished_list = []
-    for g in response.flatten():
-        resp = g.generations[0][0]
-        if resp.generation_info is not None:
-            if resp.generation_info.get("finish_reason") is not None:
-                is_finished_list.append(
-                    resp.generation_info.get("finish_reason") == "STOP"
-                )
-
-        elif (
-            isinstance(resp, ChatGeneration)
-            and t.cast(ChatGeneration, resp).message is not None
-        ):
-            resp_message: BaseMessage = t.cast(ChatGeneration, resp).message
-            if resp_message.response_metadata.get("finish_reason") is not None:
-                is_finished_list.append(
-                    resp_message.response_metadata.get("finish_reason") == "STOP"
-                )
-        else:
-            is_finished_list.append(True)
-    return all(is_finished_list)

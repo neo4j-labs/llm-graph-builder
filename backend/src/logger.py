@@ -1,4 +1,3 @@
-import os
 from google.cloud import logging as gclogger
 from src.shared.common_fn import get_value_from_env
 

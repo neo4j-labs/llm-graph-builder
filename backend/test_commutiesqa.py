@@ -9,8 +9,6 @@ from src.shared.common_fn import Neo4jCredentials, create_graph_database_connect
 from src.main import extract_graph_from_file_local_file, extract_graph_from_file_Wikipedia, extract_graph_from_web_page, create_source_node_graph_url_wikipedia, create_source_node_graph_url_youtube, create_source_node_graph_web_url, populate_graph_schema_from_text, extract_graph_from_file_youtube
 from src.graphDB_dataAccess import graphDBdataAccess
 from src.QA_integration import QA_RAG
-from langserve import add_routes
-from graphdatascience import GraphDataScience
 from src.entities.source_node import sourceNode
 
 # Load environment variables if needed

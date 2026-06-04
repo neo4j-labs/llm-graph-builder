@@ -13,6 +13,7 @@ This application allows you to upload files from various sources (local machine,
 ### **Prerequisites**
 - **Python 3.12 or higher** (for local/separate backend deployment)
 - Neo4j Database **5.23 or later** with APOC installed.
+  - Neo4j 5.23 is required because the backend uses the Cypher variable-scope subquery syntax (`CALL (variable) { ... }`), which is not supported by earlier Neo4j 5.x releases such as 5.20.
   - **Neo4j Aura** databases (including the free tier) are supported.
   - If using **Neo4j Desktop**, you will need to deploy the backend and frontend separately (docker-compose is not supported).
 
@@ -30,7 +31,7 @@ This application allows you to upload files from various sources (local machine,
    cd backend
    python3.12 -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
-   pip install -r requirements.txt -c constraints.txt
+   pip install -r requirements.txt
    uvicorn score:app --reload
    ```
 
@@ -98,6 +99,7 @@ You have two ways to configure the embedding model locally:
 
 ### **Prerequisites**
 - Neo4j Database **5.23 or later** with APOC installed.
+  - Neo4j 5.23 is required because the backend uses the Cypher variable-scope subquery syntax (`CALL (variable) { ... }`), which is not supported by earlier Neo4j 5.x releases such as 5.20.
   - **Neo4j Aura** databases (including the free tier) are supported.
   - If using **Neo4j Desktop**, you will need to deploy the backend and frontend separately (docker-compose is not supported).
 
@@ -114,10 +116,16 @@ Run the application using the default `docker-compose` configuration.
    By default, only OpenAI and Diffbot are enabled. Gemini requires additional GCP configurations.  
    Use the `VITE_LLM_MODELS_PROD` variable to configure the models you need. Example:
    ```bash
-   VITE_LLM_MODELS_PROD="gemini_flash_latest,openai_gpt_5_mini,diffbot,anthropic_claude_4.5_haiku"
+   VITE_LLM_MODELS_PROD="gemini_3.5_flash,openai_gpt_5.4_mini,diffbot,anthropic_claude_4.5_haiku"
    ```
 
-2. **Input Sources:**  
+2. **Anthropic Models:**
+   Use the latest Claude model in your config:
+   ```bash
+   LLM_MODEL_CONFIG_ANTHROPIC_CLAUDE_4_7_OPUS="claude-opus-4-7,anthropic_api_key"
+   ```
+
+3. **Input Sources:**  
    By default, the following sources are enabled: `local`, `YouTube`, `Wikipedia`, `AWS S3`, and `web`.  
    To add Google Cloud Storage (GCS) integration, include `gcs` and your Google client ID:
    ```bash
@@ -244,7 +252,7 @@ gcloud run deploy dev-backend \
 | DIFFBOT_API_KEY         | Mandatory         |               | API key is required to use Diffbot's NLP service to extract entities and relationships from unstructured data |
 | BUCKET_UPLOAD_FILE      | Optional          |               | Bucket name to store uploaded file on GCS                                                        |
 | BUCKET_FAILED_FILE      | Optional          |               | Bucket name to store failed file on GCS while extraction                                         |
-| NEO4J_USER_AGENT        | Optional          | llm-graph-builder | Name of the user agent to track Neo4j database activity                                      |
+| USER_AGENT              | Optional          | llm-graph-builder | Name of the user agent to track Neo4j database activity                                      |
 | ENABLE_USER_AGENT       | Optional          | true          | Boolean value to enable/disable Neo4j user agent                                                 |
 | DUPLICATE_TEXT_DISTANCE | Optional          | 5             | This value is used to find distance for all node pairs in the graph and is calculated based on node properties |
 | DUPLICATE_SCORE_VALUE   | Optional          | 0.97          | Node score value to match duplicate nodes                                                        |
@@ -317,9 +325,10 @@ You can deploy the backend and the frontend to Google Cloud Run using Cloud Buil
    ```bash
    gcloud builds submit --config cloudbuild.yaml \
      --substitutions=_REGION=us-central1,_REPO=cloud-run-repo,_OPENAI_API_KEY=<your-openai-key>,_DIFFBOT_API_KEY=<your-diffbot-key>,_BUCKET_UPLOAD_FILE=<your-bucket>,_BUCKET_FAILED_FILE=<your-bucket>,_PROJECT_ID=<your-project-id>,_GCS_FILE_CACHE=False,_TRACK_USER_USAGE=False,_TOKEN_TRACKER_DB_URI=...,_TOKEN_TRACKER_DB_USERNAME=...,_TOKEN_TRACKER_DB_PASSWORD=...,_TOKEN_TRACKER_DB_DATABASE=...,_DEFAULT_DIFFBOT_CHAT_MODEL=...,_YOUTUBE_TRANSCRIPT_PROXY=...,_EMBEDDING_MODEL=...,
-     _EMBEDDING_PROVIDER=...,_BEDROCK_EMBEDDING_MODEL_KEY=...,_LLM_MODEL_CONFIG_OPENAI_GPT_5_2=...,_LLM_MODEL_CONFIG_OPENAI_GPT_5_MINI=...,_LLM_MODEL_CONFIG_GEMINI_2_5_FLASH=...,_LLM_MODEL_CONFIG_GEMINI_2_5_PRO=...,_LLM_MODEL_CONFIG_DIFFBOT=...,_LLM_MODEL_CONFIG_GROQ_LLAMA3_1_8B=...,_LLM_MODEL_CONFIG_ANTHROPIC_CLAUDE_4_5_SONNET=...,_LLM_MODEL_CONFIG_ANTHROPIC_CLAUDE_4_5_HAIKU=...,_LLM_MODEL_CONFIG_LLAMA4_MAVERICK=...,_LLM_MODEL_CONFIG_FIREWORKS_QWEN3_30B=...,_LLM_MODEL_CONFIG_FIREWORKS_GPT_OSS=...,_LLM_MODEL_CONFIG_FIREWORKS_DEEPSEEK_V3=...,_LLM_MODEL_CONFIG_BEDROCK_NOVA_MICRO_V1=...,_LLM_MODEL_CONFIG_BEDROCK_NOVA_LITE_V1=...,_LLM_MODEL_CONFIG_BEDROCK_NOVA_PRO_V1=...,_LLM_MODEL_CONFIG_OLLAMA_LLAMA3=...
+       _EMBEDDING_PROVIDER=...,_BEDROCK_EMBEDDING_MODEL_KEY=...,_LLM_MODEL_CONFIG_OPENAI_GPT_5_2=...,_LLM_MODEL_CONFIG_OPENAI_GPT_5_MINI=...,_LLM_MODEL_CONFIG_GEMINI_2_5_FLASH=...,_LLM_MODEL_CONFIG_GEMINI_2_5_PRO=...,_LLM_MODEL_CONFIG_DIFFBOT=...,_LLM_MODEL_CONFIG_GROQ_LLAMA3_1_8B=...,_LLM_MODEL_CONFIG_ANTHROPIC_CLAUDE_4_5_SONNET=...,_LLM_MODEL_CONFIG_ANTHROPIC_CLAUDE_4_5_HAIKU=...,_LLM_MODEL_CONFIG_LLAMA4_MAVERICK=...,_LLM_MODEL_CONFIG_FIREWORKS_QWEN3_6=...,_LLM_MODEL_CONFIG_FIREWORKS_GPT_OSS=...,_LLM_MODEL_CONFIG_FIREWORKS_DEEPSEEK_V3=...,_LLM_MODEL_CONFIG_BEDROCK_NOVA_MICRO_V1=...,_LLM_MODEL_CONFIG_BEDROCK_NOVA_LITE_V1=...,_LLM_MODEL_CONFIG_BEDROCK_NOVA_PRO_V1=...,_LLM_MODEL_CONFIG_OLLAMA_LLAMA3=...
    ```
    - Replace the values in angle brackets with your actual configuration and secrets.
+   - `LLM_MODEL_CONFIG_FIREWORKS_QWEN3_6` is the app-facing config key for the `fireworks_qwen3_6` model option and should map to the Fireworks serverless slug `accounts/fireworks/models/qwen3p6-plus`.
    - You can omit or add substitutions as needed for your deployment.
 
 3. **Monitor the build:**

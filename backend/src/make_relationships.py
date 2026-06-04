@@ -3,7 +3,6 @@ from langchain_core.documents import Document
 from src.shared.common_fn import load_embedding_model,execute_graph_query,get_value_from_env
 import logging
 from typing import List
-import os
 import hashlib
 import time
 from langchain_neo4j import Neo4jVector
@@ -39,7 +38,7 @@ def create_chunk_embeddings(graph, chunkId_chunkDoc_list, file_name, embedding_p
     embeddings, dimension = load_embedding_model(embedding_provider, embedding_model)
     logging.info(f'embedding model:{embeddings} and dimesion:{dimension}')
     data_for_query = []
-    logging.info(f"update embedding and vector index for chunks")
+    logging.info("update embedding and vector index for chunks")
     for row in chunkId_chunkDoc_list:
         if isEmbedding:
             embeddings_arr = embeddings.embed_query(row['chunk_doc'].page_content)

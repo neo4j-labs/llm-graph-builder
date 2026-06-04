@@ -34,6 +34,7 @@ const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
           uri: connectionData.data.uri,
           connection: 'backendApi',
           email: '',
+          database: connectionData.data.database,
         };
         setUserCredentials(credentials);
         setConnectionStatus(Boolean(connectionData.data.graph_connection));

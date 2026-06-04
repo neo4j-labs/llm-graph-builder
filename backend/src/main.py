@@ -1,4 +1,3 @@
-import hashlib
 import json
 import logging
 import os
@@ -6,15 +5,16 @@ import re
 import shutil
 import sys
 import time
-import unicodedata
 import urllib.parse
 import warnings
 from datetime import datetime
 
+
+
 from dotenv import load_dotenv
 from langchain_core.documents import Document
-from langchain_community.document_loaders import WikipediaLoader, WebBaseLoader
 from langchain_neo4j import Neo4jGraph
+
 
 from src.create_chunks import CreateChunksofDocument
 from src.document_sources.gcs_bucket import (
@@ -47,6 +47,8 @@ from src.shared.constants import (
 )
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from src.shared.schema_extraction import schema_extraction_from_text
+
+from langchain_community.document_loaders import WebBaseLoader
 
 warnings.filterwarnings("ignore")
 load_dotenv()
@@ -191,7 +193,7 @@ def create_source_node_graph_url_gcs(graph, params, credentials):
           success_count+=1
           lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url,'status':'Success', 
                                 'gcsBucketName': params.gcs_bucket_name, 'gcsBucketFolder':obj_source_node.gcsBucketFolder, 'gcsProjectId':obj_source_node.gcsProjectId})
-      except Exception as e:
+      except Exception:
         failed_count+=1
         lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url,'status':'Failed', 
                               'gcsBucketName': params.gcs_bucket_name, 'gcsBucketFolder':obj_source_node.gcsBucketFolder, 'gcsProjectId':obj_source_node.gcsProjectId})
@@ -214,7 +216,7 @@ def create_source_node_graph_web_url(graph, params):
     if not params.source_url.startswith(('http://', 'https://')):
         params.source_url = 'https://' + params.source_url
     pages = WebBaseLoader(params.source_url, verify_ssl=False).load()
-    if pages==None or len(pages)==0:
+    if pages is None or len(pages)==0:
       failed_count+=1
       message = f"Unable to read data for given url : {params.source_url}"
       raise LLMGraphBuilderException(message)
@@ -228,7 +230,7 @@ def create_source_node_graph_web_url(graph, params):
       else:
         title = last_url_segment(params.source_url)
       language = pages[0].metadata['language']
-    except:
+    except Exception:
       title = last_url_segment(params.source_url)
       language = "N/A"
 
@@ -285,7 +287,7 @@ def create_source_node_graph_url_youtube(graph, params):
     obj_source_node.file_name = match.group(1)
     transcript= get_youtube_combined_transcript(match.group(1))
     # logging.info(f"Youtube transcript : {transcript}")
-    if transcript==None or len(transcript)==0:
+    if transcript is None or len(transcript)==0:
       message = f"Youtube transcript is not available for : {obj_source_node.file_name}"
       raise LLMGraphBuilderException(message)
     else:  
@@ -308,37 +310,45 @@ def create_source_node_graph_url_wikipedia(graph, params):
     Returns:
         tuple: (list of file info dicts, success_count, failed_count)
     """
-    success_count=0
-    failed_count=0
-    lst_file_name=[]
+    success_count = 0
+    failed_count = 0
+    lst_file_name = []
     wiki_query_id, language = check_url_source(source_type=params.source_type, wiki_query=params.wiki_query)
     logging.info(f"Creating source node for {wiki_query_id.strip()}, {language}")
-    pages = WikipediaLoader(query=wiki_query_id.strip(), lang=language, load_max_docs=1, load_all_available_meta=True).load()
-    if pages==None or len(pages)==0:
-      failed_count+=1
-      message = f"Unable to read data for given Wikipedia url : {params.wiki_query}"
-      raise LLMGraphBuilderException(message)
-    else:
-      obj_source_node = sourceNode()
-      obj_source_node.file_name = wiki_query_id.strip()
-      obj_source_node.file_type = 'text'
-      obj_source_node.file_source = params.source_type
-      obj_source_node.file_size = sys.getsizeof(pages[0].page_content)
-      obj_source_node.model = params.model
-      obj_source_node.url = urllib.parse.unquote(pages[0].metadata['source'])
-      obj_source_node.created_at = datetime.now()
-      obj_source_node.language = language
-      obj_source_node.chunkNodeCount=0
-      obj_source_node.chunkRelCount=0
-      obj_source_node.entityNodeCount=0
-      obj_source_node.entityEntityRelCount=0
-      obj_source_node.communityNodeCount=0
-      obj_source_node.communityRelCount=0
-      graphDb_data_Access = graphDBdataAccess(graph)
-      graphDb_data_Access.create_source_node(obj_source_node)
-      success_count+=1
-      lst_file_name.append({'fileName':obj_source_node.file_name,'fileSize':obj_source_node.file_size,'url':obj_source_node.url, 'language':obj_source_node.language, 'status':'Success'})
-    return lst_file_name,success_count,failed_count
+
+    file_name, pages = get_documents_from_wikipedia(wiki_query_id, language)
+    if pages is None or len(pages) == 0:
+        failed_count += 1
+        message = f"Unable to read data for given Wikipedia url : {params.wiki_query}"
+        raise LLMGraphBuilderException(message)
+
+    obj_source_node = sourceNode()
+    obj_source_node.file_name = file_name.strip()
+    obj_source_node.file_type = 'text'
+    obj_source_node.file_source = params.source_type
+    obj_source_node.file_size = sys.getsizeof(pages[0].page_content)
+    obj_source_node.model = params.model
+    obj_source_node.url = urllib.parse.unquote(pages[0].metadata['source'])
+    obj_source_node.created_at = datetime.now()
+    obj_source_node.language = language
+    obj_source_node.chunkNodeCount = 0
+    obj_source_node.chunkRelCount = 0
+    obj_source_node.entityNodeCount = 0
+    obj_source_node.entityEntityRelCount = 0
+    obj_source_node.communityNodeCount = 0
+    obj_source_node.communityRelCount = 0
+
+    graphDb_data_Access = graphDBdataAccess(graph)
+    graphDb_data_Access.create_source_node(obj_source_node)
+    success_count += 1
+    lst_file_name.append({
+        'fileName': obj_source_node.file_name,
+        'fileSize': obj_source_node.file_size,
+        'url': obj_source_node.url,
+        'language': obj_source_node.language,
+        'status': 'Success'
+    })
+    return lst_file_name, success_count, failed_count
     
 async def extract_graph_from_file_local_file(credentials, params, merged_file_path):
 
@@ -349,7 +359,7 @@ async def extract_graph_from_file_local_file(credentials, params, merged_file_pa
       file_name, pages = get_documents_from_gcs( PROJECT_ID, BUCKET_UPLOAD_FILE, folder_name, params.file_name)
     else:
       file_name, pages, file_extension = get_documents_from_file_by_path(merged_file_path, params.file_name)
-    if pages==None or len(pages)==0:
+    if pages is None or len(pages)==0:
       raise LLMGraphBuilderException(f'File content is not available for file : {file_name}')
     return await processing_source(credentials, params, pages, merged_file_path, True)
   else:
@@ -372,7 +382,7 @@ async def extract_graph_from_file_s3(credentials, params):
     else:
       logging.info("Insert in S3 Block")
       file_name, pages = get_documents_from_s3(params.source_url, params.aws_access_key_id, params.aws_secret_access_key)
-    if pages==None or len(pages)==0:
+    if pages is None or len(pages)==0:
       raise LLMGraphBuilderException(f'File content is not available for file : {file_name}')
     return await processing_source(credentials, params, pages)
   else:
@@ -391,7 +401,7 @@ async def extract_graph_from_web_page(credentials, params):
   """
   if params.retry_condition in ["", None] or params.retry_condition not in [DELETE_ENTITIES_AND_START_FROM_BEGINNING, START_FROM_LAST_PROCESSED_POSITION]:
     pages = get_documents_from_web_page(params.source_url)
-    if pages==None or len(pages)==0:
+    if pages is None or len(pages)==0:
       raise LLMGraphBuilderException(f'Content is not available for given URL : {params.source_url}')
     return await processing_source(credentials, params, pages)
   else:
@@ -411,7 +421,7 @@ async def extract_graph_from_file_youtube(credentials, params):
   if params.retry_condition in ["", None] or params.retry_condition not in [DELETE_ENTITIES_AND_START_FROM_BEGINNING, START_FROM_LAST_PROCESSED_POSITION]:
     file_name, pages = get_documents_from_youtube(params.source_url)
 
-    if pages==None or len(pages)==0:
+    if pages is None or len(pages)==0:
       raise LLMGraphBuilderException(f'Youtube transcript is not available for file : {file_name}')
     return await processing_source(credentials, params, pages)
   else:
@@ -430,7 +440,7 @@ async def extract_graph_from_file_Wikipedia(credentials, params):
   """
   if params.retry_condition in ["", None] or params.retry_condition not in [DELETE_ENTITIES_AND_START_FROM_BEGINNING, START_FROM_LAST_PROCESSED_POSITION]:
     file_name, pages = get_documents_from_wikipedia(params.wiki_query, params.language)
-    if pages==None or len(pages)==0:
+    if pages is None or len(pages)==0:
       raise LLMGraphBuilderException(f'Wikipedia page is not available for file : {file_name}')
     return await processing_source(credentials, params, pages)
   else:
@@ -449,7 +459,7 @@ async def extract_graph_from_file_gcs(credentials, params):
   """
   if params.retry_condition in ["", None] or params.retry_condition not in [DELETE_ENTITIES_AND_START_FROM_BEGINNING, START_FROM_LAST_PROCESSED_POSITION]:
     file_name, pages = get_documents_from_gcs(params.gcs_project_id, params.gcs_bucket_name, params.gcs_bucket_folder, params.gcs_blob_filename, params.access_token)
-    if pages==None or len(pages)==0:
+    if pages is None or len(pages)==0:
       raise LLMGraphBuilderException(f'File content is not available for file : {file_name}')
     return await processing_source(credentials, params, pages)
   else:
@@ -542,7 +552,7 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
         result = graphDb_data_Access.get_current_status_document_node(params.file_name)
         is_cancelled_status = result[0]['is_cancelled']
         logging.info(f"Value of is_cancelled : {result[0]['is_cancelled']}")
-        if bool(is_cancelled_status) == True:
+        if bool(is_cancelled_status):
           job_status = "Cancelled"
           logging.info('Exit from running loop of processing file')
           break
@@ -597,8 +607,8 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
           graphDb_data_Access.update_node_relationship_count(params.file_name)
       result = graphDb_data_Access.get_current_status_document_node(params.file_name)
       is_cancelled_status = result[0]['is_cancelled']
-      if bool(is_cancelled_status) == True:
-        logging.info(f'Is_cancelled True at the end extraction')
+      if bool(is_cancelled_status):
+        logging.info('Is_cancelled True at the end extraction')
         job_status = 'Cancelled'
       logging.info(f'Job Status at the end : {job_status}')
       end_time = datetime.now()
@@ -617,7 +627,7 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
 
       # merged_file_path have value only when file uploaded from local
       
-      if is_uploaded_from_local and bool(is_cancelled_status) == False:
+      if is_uploaded_from_local and not bool(is_cancelled_status):
         if GCS_FILE_CACHE:
           folder_name = create_gcs_bucket_folder_name_hashed(credentials.uri, params.file_name)
           delete_file_from_gcs(BUCKET_UPLOAD_FILE,folder_name,params.file_name)
@@ -741,7 +751,7 @@ def get_chunkId_chunkDoc_list(graph, file_name, pages, token_chunk_size, chunk_o
         chunkId_chunkDoc_list.append({'chunk_id': chunk['id'], 'chunk_doc': chunk_doc})
       
       if retry_condition ==  START_FROM_LAST_PROCESSED_POSITION:
-        logging.info(f"Retry : start_from_last_processed_position")
+        logging.info("Retry : start_from_last_processed_position")
         starting_chunk = execute_graph_query(graph,QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION, params={"filename":file_name})
         
         if starting_chunk and starting_chunk[0]["position"] < len(chunkId_chunkDoc_list):
@@ -765,16 +775,16 @@ def get_source_list_from_graph(credentials):
   graph_DB_dataAccess = graphDBdataAccess(graph)
   result = graph_DB_dataAccess.get_source_list()
   if not graph._driver._closed:
-      logging.info(f"closing connection for sources_list api")
+      logging.info("closing connection for sources_list api")
       graph._driver.close()
   return result
 
-def update_graph(graph):
+def update_graph(graph, embedding_provider, embedding_model):
   """
   Update the graph node with SIMILAR relationship where embedding scrore match
   """
   graph_DB_dataAccess = graphDBdataAccess(graph)
-  graph_DB_dataAccess.update_KNN_graph()
+  graph_DB_dataAccess.update_KNN_graph(embedding_provider, embedding_model)
 
 def connection_check_and_get_vector_dimensions(graph, database, email, uri):
   """

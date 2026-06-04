@@ -115,19 +115,19 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
         id: 'select',
         header: ({ table }: { table: Table<CustomFile> }) => {
           const processingcheck = table
-            .getRowModel()
+            .getPaginationRowModel()
             .rows.map((i) => i.original.status)
             .includes('Processing');
           return (
             <Checkbox
               ariaLabel='header-checkbox'
-              isChecked={table.getIsAllRowsSelected()}
-              onChange={table.getToggleAllRowsSelectedHandler()}
+              isChecked={table.getIsAllPageRowsSelected()}
+              onChange={table.getToggleAllPageRowsSelectedHandler()}
               isDisabled={processingcheck}
               htmlAttributes={{
                 title: processingcheck
                   ? `Files are still processing please select individual checkbox for deletion`
-                  : 'select all rows for deletion',
+                  : 'select all rows on current page for deletion',
               }}
             />
           );
