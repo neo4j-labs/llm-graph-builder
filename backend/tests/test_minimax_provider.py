@@ -26,6 +26,12 @@ def _load_llm_module():
 class TestMiniMaxModelRouting:
     """Tests for MiniMax model detection in the get_llm() routing logic."""
 
+    def test_minimax_m3_keyword_in_model_string(self):
+        """Test that 'MINIMAX' is detected for the M3 variant."""
+        model = "minimax_m3"
+        upper = model.upper().replace(".", "_").strip()
+        assert "MINIMAX" in upper
+
     def test_minimax_keyword_in_model_string(self):
         """Test that 'MINIMAX' is detected when the model key is uppercased."""
         model = "minimax_m2.7"
@@ -77,6 +83,12 @@ class TestMiniMaxModelRouting:
 class TestMiniMaxEnvConfig:
     """Tests for MiniMax environment variable configuration format."""
 
+    def test_env_key_m3_model(self):
+        """Test env key generation for MiniMax M3 model."""
+        model = "minimax_m3"
+        env_key = f"LLM_MODEL_CONFIG_{model.upper().replace('.', '_').strip()}"
+        assert env_key == "LLM_MODEL_CONFIG_MINIMAX_M3"
+
     def test_env_key_standard_model(self):
         """Test env key generation for standard MiniMax model."""
         model = "minimax_m2.7"
@@ -88,6 +100,13 @@ class TestMiniMaxEnvConfig:
         model = "minimax_m2.7_highspeed"
         env_key = f"LLM_MODEL_CONFIG_{model.upper().replace('.', '_').strip()}"
         assert env_key == "LLM_MODEL_CONFIG_MINIMAX_M2_7_HIGHSPEED"
+
+    def test_env_value_parsing_m3(self):
+        """Test parsing of M3 model env value."""
+        env_value = "MiniMax-M3,sk-test-key-789"
+        model_name, api_key = env_value.split(",")
+        assert model_name == "MiniMax-M3"
+        assert api_key == "sk-test-key-789"
 
     def test_env_value_parsing_two_fields(self):
         """Test parsing of 'model_name,api_key' format."""
@@ -120,7 +139,7 @@ class TestMiniMaxChatOpenAIParams:
 
     def test_minimax_model_names_valid(self):
         """Test that MiniMax model names match the API specification."""
-        valid_models = ["MiniMax-M2.7", "MiniMax-M2.7-highspeed"]
+        valid_models = ["MiniMax-M3", "MiniMax-M2.7", "MiniMax-M2.7-highspeed"]
         for model in valid_models:
             assert model.startswith("MiniMax-")
 
@@ -183,6 +202,7 @@ class TestMiniMaxExampleEnv:
         with open(env_path) as f:
             content = f.read()
 
+        assert "LLM_MODEL_CONFIG_minimax_m3=" in content
         assert "LLM_MODEL_CONFIG_minimax_m2.7=" in content
         assert "LLM_MODEL_CONFIG_minimax_m2.7_highspeed=" in content
 
@@ -194,9 +214,11 @@ class TestMiniMaxExampleEnv:
         )
         with open(env_path) as f:
             for line in f:
-                if "minimax_m2.7=" in line.lower() and not line.strip().startswith("#"):
-                    # Extract value part
-                    _, value = line.strip().split("=", 1)
+                stripped = line.strip()
+                if stripped.startswith("#"):
+                    continue
+                if stripped.startswith("LLM_MODEL_CONFIG_minimax_"):
+                    _, value = stripped.split("=", 1)
                     value = value.strip('"')
                     parts = value.split(",")
                     assert len(parts) == 2, f"MiniMax config should have 2 parts: {line}"
@@ -216,6 +238,7 @@ class TestMiniMaxFrontendConfig:
         with open(constants_path) as f:
             content = f.read()
 
+        assert "minimax_m3" in content
         assert "minimax_m2.7" in content
         assert "minimax_m2.7_highspeed" in content
 
