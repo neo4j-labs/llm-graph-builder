@@ -28,6 +28,9 @@ export const llms =
         'fireworks_qwen3_30b',
         'fireworks_gpt_oss',
         'fireworks_kimi_k2p5',
+        'minimax_m3',
+        'minimax_m2.7',
+        'minimax_m2.7_highspeed',
       ];
 
 export const prodllms =

@@ -110,6 +110,16 @@ def get_llm(model: str):
                 client=bedrock_client,region_name=region_name, model_id=model_name, model_kwargs=dict(temperature=0),callbacks=callback_manager, 
             )
 
+        elif "MINIMAX" in model:
+            model_name, api_key = env_value.split(",")
+            llm = ChatOpenAI(
+                api_key=api_key,
+                base_url="https://api.minimax.io/v1",
+                model=model_name,
+                temperature=0,
+                callbacks=callback_manager,
+            )
+
         elif "OLLAMA" in model:
             model_name, base_url = env_value.split(",")
             llm = ChatOllama(base_url=base_url, model=model_name,callbacks=callback_manager)
