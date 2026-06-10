@@ -44,8 +44,6 @@ def get_neighbour_nodes(credentials, element_id, query=NEIGHBOURS_FROM_ELEMENT_I
         logging.info(f"Querying neighbours for element_id: {element_id}")
         
         driver = get_graphDB_driver(credentials)
-        driver.verify_connectivity()
-        logging.info("Database connectivity verified.")
 
         records, summary, keys = driver.execute_query(query,element_id=element_id)
         nodes = records[0].get("nodes", [])

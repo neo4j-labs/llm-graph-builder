@@ -92,8 +92,6 @@ def create_vector_fulltext_indexes(credentials, embedding_provider, embedding_mo
 
     try:
         driver = get_graphDB_driver(credentials)
-        driver.verify_connectivity()
-        logging.info("Database connectivity verified.")
 
         with driver.session() as session:
             # Create Full-Text Indexes

@@ -23,19 +23,28 @@ def get_graphDB_driver(credentials):
 
         enable_user_agent = get_value_from_env("ENABLE_USER_AGENT", "False", "bool")
         if enable_user_agent:
-            driver = GraphDatabase.driver(
-                credentials.uri,
-                auth=(username, password),
-                database=database,
-                user_agent=get_value_from_env("USER_AGENT", "LLM-Graph-Builder")
-            )
+            try:
+                driver = GraphDatabase.driver(
+                    credentials.uri,
+                    auth=(username, password),
+                    database=database,
+                    user_agent=get_value_from_env("USER_AGENT", "LLM-Graph-Builder")
+                )
+                driver.verify_connectivity()
+            except Exception as e:
+                logging.error(f"Failed to connect with user agent. Error: {str(e)}", exc_info=True)
+                raise
         else:
-            driver = GraphDatabase.driver(
-                credentials.uri,
-                auth=(username, password),
-                database=database
-            )
-        logging.info("Connection successful")
+            try:
+                driver = GraphDatabase.driver(
+                    credentials.uri,
+                    auth=(username, password),
+                    database=database
+                )
+                driver.verify_connectivity()
+            except Exception as e:
+                logging.error(f"Failed to connect without user agent. Error: {str(e)}", exc_info=True)
+                raise
         return driver
     except Exception:
         error_message = f"graph_query module: Failed to connect to the database at {credentials.uri}."

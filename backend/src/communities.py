@@ -203,6 +203,7 @@ def get_gds_driver(uri, username, password, database):
             auth=(username, password),
             database=database
         )
+        gds._driver.verify_connectivity()
         logging.info("Successfully created GDS driver.")
         return gds
     except Exception as e:
