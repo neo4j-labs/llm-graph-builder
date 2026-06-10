@@ -966,7 +966,7 @@ const Content: React.FC<ContentProps> = ({
             <ButtonWithToolTip
               placement='top'
               text={
-                !isAuthenticated
+                !isAuthenticated && !SKIP_AUTH
                   ? 'Please log in first'
                   : !connectionStatus
                     ? 'Please connect to Neo4j'
@@ -1049,7 +1049,7 @@ const Content: React.FC<ContentProps> = ({
           <Flex flexDirection='row' gap='4' className='self-end mb-2.5' flexWrap='wrap'>
             <SpotlightTarget id='generategraphbtn'>
               <ButtonWithToolTip
-                text={!isAuthenticated ? 'Please log in first' : tooltips.generateGraph}
+                text={!isAuthenticated && !SKIP_AUTH ? 'Please log in first' : tooltips.generateGraph}
                 placement='top'
                 label='generate graph'
                 onClick={onClickHandler}
@@ -1064,7 +1064,7 @@ const Content: React.FC<ContentProps> = ({
             </SpotlightTarget>
             <ButtonWithToolTip
               text={
-                !isAuthenticated
+                !isAuthenticated && !SKIP_AUTH
                   ? 'Please log in first'
                   : !selectedfileslength
                     ? 'Please select file to delete'

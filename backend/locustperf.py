@@ -1,7 +1,5 @@
 import os
-import time
 from locust import HttpUser, TaskSet, task, between, events
-from requests.auth import HTTPBasicAuth
 import json
 
 # Global variables to store results
@@ -21,7 +19,6 @@ class UserBehavior(TaskSet):
             "userName": ""
         }
         with self.client.post("/connect", json=payload, catch_response=True) as response:
-            # https://prod-backend-dcavk67s4a-uc.a.run.app/connect
             results["total_requests"] += 1
             if response.status_code == 200:
                 results["response_times"].append(response.elapsed.total_seconds())
@@ -40,7 +37,7 @@ class UserBehavior(TaskSet):
                 response.failure("Failed GET request")
 
     @task
-    def get_request(self):
+    def get_sources_list(self):
         with self.client.get("/sources_list", catch_response=True) as response:
             results["total_requests"] += 1
             if response.status_code == 200:

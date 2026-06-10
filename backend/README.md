@@ -28,7 +28,7 @@ Follow these steps to set up and run the project locally:
 
 3. Install Dependency :
 
-> pip install -r requirements.txt -c constraints.txt
+> pip install -r requirements.txt
 
 ## Run backend project using unicorn
 Run the server:

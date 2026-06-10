@@ -1,4 +1,4 @@
-import { Banner, Box, DataGrid, DataGridComponents, Flex, IconButton, Popover, Typography } from '@neo4j-ndl/react';
+import { Banner, Box, DataGrid, DataGridComponents, Flex, Typography } from '@neo4j-ndl/react';
 import { memo, useContext, useMemo, useRef } from 'react';
 import {
   useReactTable,
@@ -13,6 +13,13 @@ import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
 import { metricsinfo } from '../../utils/Constants';
 import NotAvailableMetric from './NotAvailableMetric';
+import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
+
+type MetricRow = {
+  metric: string;
+  score: number | string;
+};
+
 function MetricsTab({
   metricsLoading,
   metricDetails,
@@ -26,45 +33,56 @@ function MetricsTab({
     | undefined;
   error: string;
 }) {
-  const columnHelper = createColumnHelper<{ metric: string; score: number | string }>();
-  const tableRef = useRef(null);
+  const columnHelper = createColumnHelper<MetricRow>();
+  const tableRef = useRef<HTMLDivElement | null>(null);
   const { colorMode } = useContext(ThemeWrapperContext);
 
   const columns = useMemo(
     () => [
       columnHelper.accessor((row) => row.metric, {
         id: 'Metric',
+        header: () => <span>Metric</span>,
         cell: (info) => {
           const metric = info.getValue();
-          const capitilizedMetric = metric.includes('_')
+          const capitalizedMetric = metric.includes('_')
             ? metric
                 .split('_')
                 .map((w) => capitalize(w))
                 .join(' ')
             : capitalize(metric);
           return (
-            <Flex flexDirection='row' alignItems='center'>
+            <Flex flexDirection='row' alignItems='center' gap='2'>
               <div className='textellipsis'>
-                <span title={metric}>{capitilizedMetric}</span>
+                <span title={metric}>{capitalizedMetric}</span>
               </div>
-              <Popover placement='top-middle-bottom-middle' hasAnchorPortal={true}>
-                <Popover.Trigger hasButtonWrapper>
-                  <IconButton size='small' isClean ariaLabel='infoicon'>
-                    <InformationCircleIconOutline />
-                  </IconButton>
-                </Popover.Trigger>
-                <Popover.Content className='p-2'>
-                  <Typography variant='body-small'>{metricsinfo[metric]}</Typography>
-                </Popover.Content>
-              </Popover>
+
+              <IconButtonWithToolTip
+                label='Metric info'
+                text={
+                  <Box
+                    style={{
+                      maxWidth: '260px',
+                      whiteSpace: 'normal',
+                      wordBreak: 'break-word',
+                    }}
+                  >
+                    {metricsinfo[metric]}
+                  </Box>
+                }
+                size='small'
+                clean
+                placement='top'
+              >
+                <InformationCircleIconOutline />
+              </IconButtonWithToolTip>
             </Flex>
           );
         },
-        header: () => <span>Metric</span>,
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor((row) => row.score as number, {
         id: 'Score',
+        header: () => <span>Score</span>,
         cell: (info) => {
           const value = isNaN(info.getValue()) ? 'N.A' : info.getValue()?.toFixed(2);
           if (value === 'N.A') {
@@ -76,34 +94,37 @@ function MetricsTab({
     ],
     []
   );
+
   const table = useReactTable({
     data:
-      metricDetails != null && !metricsLoading
-        ? Object.entries(metricDetails).map(([key, value]) => {
-            return { metric: key, score: value };
-          })
+      metricDetails && !metricsLoading
+        ? Object.entries(metricDetails).map(([key, value]) => ({
+            metric: key,
+            score: value,
+          }))
         : [],
     columns,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     enableGlobalFilter: false,
     autoResetPageIndex: false,
     enableRowSelection: true,
     enableMultiRowSelection: true,
     enableSorting: true,
-    getSortedRowModel: getSortedRowModel(),
   });
+
   return (
     <Box>
-      {error != undefined && error?.trim() != '' ? (
+      {error?.trim() ? (
         <Banner type='danger' usage='inline'>
           {error}
         </Banner>
       ) : (
         <DataGrid
           ref={tableRef}
-          isResizable={true}
+          isResizable
           tableInstance={table}
           styling={{
             borderStyle: 'all-sides',
@@ -115,7 +136,7 @@ function MetricsTab({
             Body: () => (
               <DataGridComponents.Body
                 innerProps={{
-                  className: colorMode == 'dark' ? 'tbody-dark' : 'tbody-light',
+                  className: colorMode === 'dark' ? 'tbody-dark' : 'tbody-light',
                 }}
               />
             ),
@@ -127,4 +148,5 @@ function MetricsTab({
     </Box>
   );
 }
+
 export default memo(MetricsTab);

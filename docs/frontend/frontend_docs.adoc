@@ -325,8 +325,8 @@ image::images/UserDefinedSchema.jpg[UserDefinedSchema, 600]
 
 image::images/ProcessingConfiguration.jpg[ProcessingConfiguration, 600]
 
-* ***Embedding Model Dropdown:*** 
-Displays the list of available embedding models for vector generation.
+* ***/change_embedding_model:*** 
+**Displays the list of available embedding models for vector generation.
 
 image::images/EmbeddingModelDropdown.jpg[Embedding Model Dropdown, 600]
 
@@ -454,9 +454,10 @@ Followed best practices for optimizing performance and security of the deployed 
  * VITE_BACKEND_API_URL=
  * VITE_BLOOM_URL=
  * VITE_BACKEND_PROCESSING_URL=
- * VITE_LLM_MODELS_PROD="openai_gpt_5_mini,diffbot,gemini_2.5_flash"
+ * VITE_LLM_MODELS_PROD="openai_gpt_5.4_mini,diffbot,gemini_3.5_flash,anthropic_claude_4.5_haiku"
  * VITE_BATCH_SIZE=2
 ----
+     ** If you enable `fireworks_qwen3_6` in `VITE_LLM_MODELS`, configure the backend env key `LLM_MODEL_CONFIG_FIREWORKS_QWEN3_6` to use the Fireworks serverless slug `accounts/fireworks/models/qwen3p6-plus`.
 * ***Cloud Deployment:***
   ** To deploy the app install the gcloud cli , run the following command in the terminal specifically from frontend root folder.
     *** gcloud run deploy 
@@ -671,7 +672,7 @@ The API responsible for a chatbot system designed to leverage multiple AI models
  
 ** Embedding Models - Includes OpenAI Embeddings, VertexAI Embeddings, BedrockEmbeddings and SentenceTransformer Embeddings(Default) to support vector-based query operations.
 ** Embedding Models - Includes OpenAI Embeddings, VertexAI Embeddings,  and SentenceTransformer Embeddings to support vector-based query operations.
-** AI Models - OpenAI GPT 5 mini, gemini_2.5_flash, anthropic claude 4.5 haiku can be configured for the chatbot backend to generate responses and process natural language.
+** AI Models - OpenAI GPT 5 mini, gemini_flash_latest, anthropic claude 4.5 haiku can be configured for the chatbot backend to generate responses and process natural language.
 ** Graph Database (Neo4jGraph) - Manages interactions with the Neo4j database, retrieving, and storing conversation histories.
 ** Response Generation - Utilizes Vector Embeddings from the Neo4j database, chat history, and the knowledge base of the LLM used.
 

@@ -1,23 +1,20 @@
 import logging
 from langchain_core.documents import Document
-import os
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
-from langchain_google_vertexai import ChatVertexAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_groq import ChatGroq
-from langchain_google_vertexai import HarmBlockThreshold, HarmCategory
 from langchain_experimental.graph_transformers.diffbot import DiffbotGraphTransformer
 from langchain_experimental.graph_transformers import LLMGraphTransformer
 from langchain_experimental.graph_transformers.llm import _Graph
 from langchain_anthropic import ChatAnthropic
 from langchain_fireworks import ChatFireworks
 from langchain_aws import ChatBedrock
-from langchain_community.chat_models import ChatOllama
+from langchain_ollama import ChatOllama
 import boto3
 import google.auth
 from src.shared.constants import ADDITIONAL_INSTRUCTIONS
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 import re
-from typing import List
 from langchain_core.callbacks.manager import CallbackManager
 from src.shared.common_fn import UniversalTokenUsageHandler,get_value_from_env
 
@@ -39,18 +36,19 @@ def get_llm(model: str):
         if "GEMINI" in model:
             model_name = env_value
             credentials, project_id = google.auth.default()
-            llm = ChatVertexAI(
-                model_name=model_name,
+            llm = ChatGoogleGenerativeAI(
+                model=model_name,
+                vertexai=True,
                 credentials=credentials,
                 project=project_id,
                 temperature=0,
                 callbacks=callback_manager,
                 safety_settings={
-                    HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+                    "HARM_CATEGORY_UNSPECIFIED": "BLOCK_NONE",
+                    "HARM_CATEGORY_DANGEROUS_CONTENT": "BLOCK_NONE",
+                    "HARM_CATEGORY_HATE_SPEECH": "BLOCK_NONE",
+                    "HARM_CATEGORY_HARASSMENT": "BLOCK_NONE",
+                    "HARM_CATEGORY_SEXUALLY_EXPLICIT": "BLOCK_NONE",
                 },
             
             )
@@ -85,9 +83,15 @@ def get_llm(model: str):
 
         elif "ANTHROPIC" in model:
             model_name, api_key = env_value.split(",")
-            llm = ChatAnthropic(
-                api_key=api_key, model=model_name, temperature=0, timeout=None,callbacks=callback_manager, 
-            )
+            anthropic_kwargs = {
+                "api_key": api_key,
+                "model": model_name,
+                "timeout": None,
+                "callbacks": callback_manager,
+            }
+            if not model_name.startswith("claude-opus-4-7"):
+                anthropic_kwargs["temperature"] = 0
+            llm = ChatAnthropic(**anthropic_kwargs)
 
         elif "FIREWORKS" in model:
             model_name, api_key = env_value.split(",")

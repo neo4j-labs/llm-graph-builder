@@ -2,7 +2,6 @@ import logging
 from neo4j import time 
 from neo4j import GraphDatabase
 from src.shared.common_fn import get_value_from_env
-import os
 import json
 
 from src.shared.constants import GRAPH_CHUNK_LIMIT,GRAPH_QUERY,CHUNK_TEXT_QUERY,COUNT_CHUNKS_QUERY,SCHEMA_VISUALIZATION_QUERY
@@ -38,7 +37,7 @@ def get_graphDB_driver(credentials):
             )
         logging.info("Connection successful")
         return driver
-    except Exception as e:
+    except Exception:
         error_message = f"graph_query module: Failed to connect to the database at {credentials.uri}."
         logging.error(error_message, exc_info=True)
 
@@ -96,7 +95,7 @@ def process_node(node):
                 node_element["properties"][key] = value
 
         return node_element
-    except Exception as e:
+    except Exception:
         logging.error("graph_query module:An unexpected error occurred while processing the node")
 
 def extract_node_elements(records):
@@ -126,7 +125,7 @@ def extract_node_elements(records):
                 # logging.info(f"Processed node with ID: {node.element_id}")
 
         return node_elements
-    except Exception as e:
+    except Exception:
         logging.error("graph_query module: An error occurred while extracting node elements from records")
 
 def extract_relationships(records):
@@ -171,7 +170,7 @@ def extract_relationships(records):
                     logging.error(f"graph_query module: Failed to process relationship with ID {relation.element_id}. Error: {inner_e}", exc_info=True)
             all_relationships.extend(relationships)
         return all_relationships
-    except Exception as e:
+    except Exception:
         logging.error("graph_query module: An error occurred while extracting relationships from records", exc_info=True)
 
 
@@ -207,7 +206,7 @@ def get_graph_results(credentials, document_names):
     dict: Contains the session ID, user-defined messages with nodes and relationships, and the user module identifier.
     """
     try:
-        logging.info(f"Starting graph query process")
+        logging.info("Starting graph query process")
         driver = get_graphDB_driver(credentials)  
         document_names= list(map(str, json.loads(document_names)))
         query = GRAPH_QUERY.format(graph_chunk_limit=GRAPH_CHUNK_LIMIT)
@@ -222,11 +221,11 @@ def get_graph_results(credentials, document_names):
             "relationships": document_relationships
         }
 
-        logging.info(f"Query process completed successfully")
+        logging.info("Query process completed successfully")
         return result
     except Exception as e:
         logging.error(f"graph_query module: An error occurred in get_graph_results. Error: {str(e)}")
-        raise Exception(f"graph_query module: An error occurred in get_graph_results. Please check the logs for more details.") from e
+        raise Exception("graph_query module: An error occurred in get_graph_results. Please check the logs for more details.") from e
     finally:
         logging.info("Closing connection for graph_query api")
         driver.close()

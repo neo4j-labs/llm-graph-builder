@@ -1,6 +1,5 @@
 import json
 import asyncio
-import os
 import shutil
 import logging
 import pandas as pd
@@ -9,15 +8,13 @@ from dotenv import load_dotenv
 from src.entities.source_node import sourceNode
 from src.graphDB_dataAccess import graphDBdataAccess
 from src.shared.common_fn import Neo4jCredentials, get_value_from_env
-from src.main import create_graph_database_connection, extract_graph_from_file_local_file, populate_graph_schema_from_text,extract_graph_from_file_Wikipedia, extract_graph_from_file_gcs, extract_graph_from_file_s3, extract_graph_from_file_youtube, extract_graph_from_web_page, execute_graph_query, create_source_node_graph_url_wikipedia, create_source_node_graph_url_youtube, create_source_node_graph_web_url
+from src.main import create_graph_database_connection, extract_graph_from_file_local_file, populate_graph_schema_from_text,extract_graph_from_file_Wikipedia, extract_graph_from_file_youtube, extract_graph_from_web_page, create_source_node_graph_url_wikipedia, create_source_node_graph_url_youtube, create_source_node_graph_web_url
 from src.QA_integration import QA_RAG
 from pathlib import Path
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 import ast
 from typing import Callable, List, Dict, Any, Tuple
-import pandas as pd
 
 # Load environment variables
 load_dotenv()
@@ -376,11 +373,11 @@ def run_tests_sequential(models: List[str], chatbot_modes: List[str]) -> None:
         if summary["extract_errors"]:
             df_errors = pd.DataFrame(summary["extract_errors"], columns=['Model', 'Function', 'Error', 'TimeTakenSec'])
             df_errors['execution_date'] = dt.today().strftime('%Y-%m-%d')
-            df_errors.to_csv(RESULTS_DIR / f"Extract_Error_details.csv", mode='a', header=not (RESULTS_DIR / f"Extract_Error_details.csv").exists(), index=False)
+            df_errors.to_csv(RESULTS_DIR / "Extract_Error_details.csv", mode='a', header=not (RESULTS_DIR / "Extract_Error_details.csv").exists(), index=False)
         if summary["chatbot_errors"]:
             df_errors = pd.DataFrame(summary["chatbot_errors"], columns=['Model', 'Function', 'Error', 'TimeTakenSec'])
             df_errors['execution_date'] = dt.today().strftime('%Y-%m-%d')
-            df_errors.to_csv(RESULTS_DIR / f"chatbot_Error_details.csv", mode='a', header=not (RESULTS_DIR / f"chatbot_Error_details.csv").exists(), index=False)
+            df_errors.to_csv(RESULTS_DIR / "chatbot_Error_details.csv", mode='a', header=not (RESULTS_DIR / "chatbot_Error_details.csv").exists(), index=False)
     # Generate summary report
     generate_summary_report(all_summaries, RESULTS_DIR / "summary_report.md")
     logging.info("All tests completed.")
@@ -413,16 +410,15 @@ def generate_summary_report(summaries: List[Dict[str, Any]], report_path: Path) 
 # Usage in main
 if __name__ == "__main__":
     models = [
-            'openai_gpt_5.2',
-            'openai_gpt_5_mini',
-            'gemini_2.5_flash',
-            'gemini_2.5_pro',
+            'openai_gpt_5.5',
+            'gemini_3.5_flash',
             'groq_llama3.1_8b',
-            'anthropic_claude_4.5_sonnet',
+            'anthropic_claude_4.7_opus',
             'llama4_maverick',
             'fireworks_gpt_oss',
-            'fireworks_deepseek_v3',
-            'bedrock_nova_lite_v1',
+            'fireworks_deepseek_v4_flash',
+            'fireworks_kimi_k2p6',
+            'bedrock_nova_pro_v1',
             ]
     chatbot_modes = [
         "vector",

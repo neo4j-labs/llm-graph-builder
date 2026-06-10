@@ -342,36 +342,36 @@ async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_cred
         count_response = []
         start = time.time()
         if "materialize_text_chunk_similarities" in tasks:
-            await asyncio.to_thread(update_graph, graph)
+            await asyncio.to_thread(update_graph, graph, embedding_provider, embedding_model)
             api_name = 'post_processing/update_similarity_graph'
-            logging.info(f'Updated KNN Graph')
+            logging.info('Updated KNN Graph')
 
         if "enable_hybrid_search_and_fulltext_search_in_bloom" in tasks:
             await asyncio.to_thread(create_vector_fulltext_indexes, credentials, embedding_provider, embedding_model)
             api_name = 'post_processing/enable_hybrid_search_and_fulltext_search_in_bloom'
-            logging.info(f'Full Text index created')
+            logging.info('Full Text index created')
 
         if get_value_from_env("ENTITY_EMBEDDING","False","bool") and "materialize_entity_similarities" in tasks:
             await asyncio.to_thread(create_entity_embedding, graph, embedding_provider, embedding_model)
             api_name = 'post_processing/create_entity_embedding'
-            logging.info(f'Entity Embeddings created')
+            logging.info('Entity Embeddings created')
 
         if "graph_schema_consolidation" in tasks :
             await asyncio.to_thread(graph_schema_consolidation, graph)
             api_name = 'post_processing/graph_schema_consolidation'
-            logging.info(f'Updated nodes and relationship labels')
+            logging.info('Updated nodes and relationship labels')
             
         if "enable_communities" in tasks:
             api_name = 'create_communities'
             await asyncio.to_thread(create_communities, credentials.uri, credentials.userName, credentials.password, credentials.database, credentials.email, embedding_provider, embedding_model)
-            logging.info(f'created communities') 
+            logging.info('created communities') 
 
         graphDb_data_Access = graphDBdataAccess(graph)
         document_name = ""
         count_response = graphDb_data_Access.update_node_relationship_count(document_name)
         if count_response:
             count_response = [{"filename": filename, **counts} for filename, counts in count_response.items()]
-            logging.info(f'Updated source node with community related counts')
+            logging.info('Updated source node with community related counts')
         
         end = time.time()
         elapsed_time = end - start
@@ -392,7 +392,7 @@ async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_cred
     except Exception as e:
         job_status = "Failed"
         error_message = str(e)
-        message = f"Unable to complete tasks"
+        message = "Unable to complete tasks"
         logging.exception(f'Exception in post_processing tasks: {error_message}')
         return create_api_response(job_status, message=message, error=error_message)
     
@@ -728,10 +728,6 @@ async def get_document_status(file_name, url, userName, password, database):
     decoded_password = decode_password(password)
    
     try:
-        if " " in url:
-            uri= url.replace(" ","+")
-        else:
-            uri=url
         credentials= Neo4jCredentials(uri=url, userName=userName, password=decoded_password, database=database)
         graph = create_graph_database_connection(credentials)
         graphDb_data_Access = graphDBdataAccess(graph)
@@ -761,7 +757,7 @@ async def get_document_status(file_name, url, userName, password, database):
         logging.info(f'Result of document status in refresh : {result}')
         return create_api_response('Success',message="",file_name=status)
     except Exception as e:
-        message=f"Unable to get the document status"
+        message="Unable to get the document status"
         error_message = str(e)
         logging.exception(f'{message}:{error_message}')
         return create_api_response('Failed',message=message)
@@ -1019,12 +1015,14 @@ async def calculate_additional_metrics(question: str = Form(),
                                         reference: str = Form(),
                                         model: str = Form(),
                                         mode: str = Form(),
+                                        embedding_provider: str = Form(None),
+                                        embedding_model: str = Form(None)
 ):
    try:
        context_list = [str(item).strip() for item in json.loads(context)] if context else []
        answer_list = [str(item).strip() for item in json.loads(answer)] if answer else []
        mode_list = [str(item).strip() for item in json.loads(mode)] if mode else []
-       result = await get_additional_metrics(question, context_list,answer_list, reference, model)
+       result = await get_additional_metrics(question, context_list,answer_list, reference, model, embedding_provider, embedding_model)
        if result is None or "error" in result:
            return create_api_response(
                'Failed',
@@ -1097,6 +1095,7 @@ async def backend_connection_configuration():
                 result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, database, None, uri)
                 result['gcs_file_cache'] = gcs_cache
                 result['uri'] = uri
+                result['database'] = database
                 end = time.time()
                 elapsed_time = end - start
                 result['api_name'] = 'backend_connection_configuration'
@@ -1104,10 +1103,10 @@ async def backend_connection_configuration():
                 result['graph_connection'] = f'{graph_connection}',
                 result['connection_from'] = 'backendAPI'
                 logger.log_struct(result, "INFO")
-                return create_api_response('Success',message=f"Backend connection successful",data=result)
+                return create_api_response('Success',message="Backend connection successful",data=result)
         else:
             graph_connection = False
-            return create_api_response('Success',message=f"Backend connection is not successful",data=graph_connection)
+            return create_api_response('Success',message="Backend connection is not successful",data=graph_connection)
     except Exception as e:
         graph_connection = False
         job_status = "Failed"
@@ -1249,5 +1248,5 @@ async def change_embedding_model(
         gc.collect()
 
 if __name__ == "__main__":
-    uvicorn.run(app)
+    uvicorn.run(app,timeout_keep_alive=150)
 

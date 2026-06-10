@@ -3,24 +3,22 @@ import os
 import json
 import logging
 from typing import Any
+
 from src.entities.user_credential import Neo4jCredentials
 from transformers import AutoTokenizer, AutoModel
 from langchain_huggingface import HuggingFaceEmbeddings
 from threading import Lock
-import logging
 from urllib.parse import urlparse,parse_qs
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
-from langchain_google_vertexai import VertexAIEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_openai import OpenAIEmbeddings
 from langchain_neo4j import Neo4jGraph
 from neo4j.exceptions import TransientError
 from langchain_community.graphs.graph_document import GraphDocument
 from typing import List
 import re
-import os
 import time
 from pathlib import Path
-from urllib.parse import urlparse
 import boto3
 from langchain_community.embeddings import BedrockEmbeddings
 from langchain_core.callbacks import BaseCallbackHandler
@@ -30,6 +28,14 @@ from langchain_core.callbacks import BaseCallbackHandler
 _embedding_instances = {}
 _embedding_locks = {}
 
+
+def _canonical_sentence_transformer_model_name(model_name: str) -> str:
+    """Map short aliases to canonical Hugging Face sentence-transformer IDs."""
+    aliases = {
+        "all-MiniLM-L6-v2": "sentence-transformers/all-MiniLM-L6-v2",
+    }
+    return aliases.get(model_name, model_name)
+
 def _ensure_sentence_transformer_model_downloaded(model_name: str, model_path: str):
     """
     Download and cache the sentence-transformer model if not already present.
@@ -37,9 +43,10 @@ def _ensure_sentence_transformer_model_downloaded(model_name: str, model_path: s
     if os.path.isdir(model_path):
         logging.info(f"Model already downloaded at: {model_path}")
         return
-    logging.info(f"Downloading model {model_name} to: {model_path}")
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModel.from_pretrained(model_name)
+    download_name = _canonical_sentence_transformer_model_name(model_name)
+    logging.info(f"Downloading model {download_name} to: {model_path}")
+    tokenizer = AutoTokenizer.from_pretrained(download_name)
+    model = AutoModel.from_pretrained(download_name)
     tokenizer.save_pretrained(model_path)
     model.save_pretrained(model_path)
     logging.info("Model downloaded and saved.")
@@ -146,12 +153,8 @@ def get_chunk_and_graphDocument(graph_document_list, chunkId_chunkDoc_list):
   return lst_chunk_chunkId_document  
                  
 def create_graph_database_connection(credentials):
-  enable_user_agent = get_value_from_env("ENABLE_USER_AGENT", "False" ,"bool")
-  if enable_user_agent:
-    graph = Neo4jGraph(url=credentials.uri, database=credentials.database, username=credentials.userName, password=credentials.password, refresh_schema=False, sanitize=True,driver_config={'user_agent':get_value_from_env("USER_AGENT","LLM-Graph-Builder")}) 
-  else:
     graph = Neo4jGraph(url=credentials.uri, database=credentials.database, username=credentials.userName, password=credentials.password, refresh_schema=False, sanitize=True)    
-  return graph
+    return graph
 
 
 
@@ -186,6 +189,7 @@ def load_embedding_model(embedding_provider: str, embedding_model_name: str):
         },
         "sentence-transformer": {
             "all-MiniLM-L6-v2": 384,
+            "sentence-transformers/all-MiniLM-L6-v2": 384,
         },
     }
 
@@ -200,7 +204,7 @@ def load_embedding_model(embedding_provider: str, embedding_model_name: str):
     if provider == "openai":
         embeddings = OpenAIEmbeddings(model=model)
     elif provider == "gemini":
-        embeddings = VertexAIEmbeddings(model=model)
+        embeddings = GoogleGenerativeAIEmbeddings(model=model, vertexai= True)
     elif provider == "titan":
         embeddings = _get_bedrock_embeddings(model)
     elif provider == "sentence-transformer":
