@@ -11,7 +11,7 @@ import {
 import { Button, SpotlightTarget, TextLink, Typography, useSpotlightContext, Logo, Banner } from '@neo4j-ndl/react';
 import { useCallback, useContext, useEffect, useRef, useState, useMemo } from 'react';
 import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
-import { buttonCaptions, SKIP_AUTH, tooltips } from '../../utils/Constants';
+import { buttonCaptions, SKIP_AUTH, tooltips, URLS } from '../../utils/Constants';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 import { useCredentials } from '../../context/UserCredentials';
 import { useLocation, useNavigate } from 'react-router';
@@ -22,9 +22,6 @@ import { HeaderProp } from '../../types';
 import { downloadClickHandler, getIsLoading } from '../../utils/Utils';
 import Profile from '../User/Profile';
 import { useAuth0 } from '@auth0/auth0-react';
-const DOCUMENT_INTELLIGENCE_URL = 'https://console.neo4j.io/document-intelligence';
-const DOCUMENTATION_URL = 'https://neo4j.com/labs/genai-ecosystem/llm-graph-builder';
-const GITHUB_ISSUES_URL = 'https://github.com/neo4j-labs/llm-graph-builder/issues';
 
 const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnection, showBackButton }) => {
   const { colorMode, toggleColorMode } = useContext(ThemeWrapperContext);
@@ -110,7 +107,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                   <TextLink
                     as='a'
                     htmlAttributes={{
-                      href: DOCUMENT_INTELLIGENCE_URL,
+                      href: URLS.DOCUMENT_INTELLIGENCE,
                       target: '_blank',
                       rel: 'noopener noreferrer',
                     }}
@@ -132,7 +129,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                 >
                   <IconButtonWithToolTip
                     text={tooltips.documentation}
-                    onClick={() => handleURLClick(DOCUMENTATION_URL)}
+                    onClick={() => handleURLClick(URLS.DOCUMENT_INTELLIGENCE)}
                     size='large'
                     clean
                     placement='left'
@@ -143,7 +140,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
 
                   <IconButtonWithToolTip
                     label={tooltips.github}
-                    onClick={() => handleURLClick(GITHUB_ISSUES_URL)}
+                    onClick={() => handleURLClick(URLS.GITHUB_ISSUES)}
                     text={tooltips.github}
                     size='large'
                     clean
