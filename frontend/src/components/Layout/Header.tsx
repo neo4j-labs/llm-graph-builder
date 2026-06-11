@@ -129,7 +129,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                 >
                   <IconButtonWithToolTip
                     text={tooltips.documentation}
-                    onClick={() => handleURLClick(URLS.DOCUMENT_INTELLIGENCE)}
+                    onClick={() => handleURLClick(URLS.DOCUMENTATION)}
                     size='large'
                     clean
                     placement='left'
