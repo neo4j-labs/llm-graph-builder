@@ -8,10 +8,10 @@ import {
   ArrowLeftIconOutline,
   ArrowDownTrayIconOutline,
 } from '@neo4j-ndl/react/icons';
-import { Button, SpotlightTarget, TextLink, Typography, useSpotlightContext, Logo } from '@neo4j-ndl/react';
+import { Button, SpotlightTarget, TextLink, Typography, useSpotlightContext, Logo, Banner } from '@neo4j-ndl/react';
 import { useCallback, useContext, useEffect, useRef, useState, useMemo } from 'react';
 import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
-import { buttonCaptions, SKIP_AUTH, tooltips } from '../../utils/Constants';
+import { buttonCaptions, SKIP_AUTH, tooltips, URLS } from '../../utils/Constants';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 import { useCredentials } from '../../context/UserCredentials';
 import { useLocation, useNavigate } from 'react-router';
@@ -99,6 +99,27 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
               <Logo className='h-6 min-h-6 min-w-12 md:h-8 md:min-h-12 md:min-w-24 md:mr-2' type='full' />
             </Typography>
           </section>
+          {
+            <section className='flex items-center justify-center px-2 min-w-0'>
+              <div className='w-full max-w-[920px]'>
+                <Banner className='!py-1.5 !px-3 !min-h-0 text-xs leading-tight'>
+                  Try{' '}
+                  <TextLink
+                    as='a'
+                    htmlAttributes={{
+                      href: URLS.DOCUMENT_INTELLIGENCE,
+                      target: '_blank',
+                      rel: 'noopener noreferrer',
+                    }}
+                  >
+                    Document Intelligence
+                  </TextLink>{' '}
+                  in Neo4j Aura
+                </Banner>
+              </div>
+            </section>
+          }
+
           {!chatOnly ? (
             <section className='items-center justify-end w-1/3 grow-0 flex'>
               <div>
@@ -108,7 +129,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                 >
                   <IconButtonWithToolTip
                     text={tooltips.documentation}
-                    onClick={() => handleURLClick('https://neo4j.com/labs/genai-ecosystem/llm-graph-builder')}
+                    onClick={() => handleURLClick(URLS.DOCUMENTATION)}
                     size='large'
                     clean
                     placement='left'
@@ -119,7 +140,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
 
                   <IconButtonWithToolTip
                     label={tooltips.github}
-                    onClick={() => handleURLClick('https://github.com/neo4j-labs/llm-graph-builder/issues')}
+                    onClick={() => handleURLClick(URLS.GITHUB_ISSUES)}
                     text={tooltips.github}
                     size='large'
                     clean
