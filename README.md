@@ -67,6 +67,24 @@ This application allows you to upload files from various sources (local machine,
 11. Other OpenAI-compatible base URL models (dev deployed version)
 
 
+### Gemini (Vertex AI) — Credentials & Token Rotation
+- Gemini models are provided via Google Vertex AI and require appropriate GCP credentials and configuration.
+- Local / Development options:
+  - Use a service account JSON key and set the environment variable `GOOGLE_APPLICATION_CREDENTIALS` to point to the key file.
+  - Alternatively run `gcloud auth application-default login` on your development machine; the project ADC credentials will be used by the backend.
+  - When using docker-compose for local development, the compose file already mounts `~/.config/gcloud` into the backend container so application-default credentials can be reused inside the container.
+- Production / Cloud options:
+  - Prefer using Workload Identity (GKE), Cloud Run service accounts, or other short-lived credentials mechanisms rather than long-lived JSON keys.
+  - When deployed on GCP services, the runtime will provide short-lived credentials which avoid manual key rotation.
+- Token rotation guidance:
+  - The backend uses `google.auth.default()` (via the Google auth library) to obtain credentials; this supports short-lived access tokens when running on GCP-managed platforms.
+  - If you must use a JSON key in production, rotate keys regularly and consider storing secrets in Secret Manager with automatic rotation.
+  - See Google Cloud docs for best practices:
+    - Vertex AI: https://cloud.google.com/vertex-ai/docs
+    - Auth best practices: https://cloud.google.com/docs/authentication
+- Environment variables / config keys for Gemini models are set using the `LLM_MODEL_CONFIG_*` pattern (for example `LLM_MODEL_CONFIG_GEMINI_3_5_FLASH` in docker-compose / env files). Ensure these are configured when enabling Gemini models.
+
+
 ### **Token Usage Tracking**
 - Easily monitor and track your LLM token usage for each user and database connection.
 - Enable this feature by setting the `TRACK_USER_USAGE` environment variable to `true` in your backend configuration.
@@ -116,21 +134,21 @@ Run the application using the default `docker-compose` configuration.
    By default, only OpenAI and Diffbot are enabled. Gemini requires additional GCP configurations.  
    Use the `VITE_LLM_MODELS_PROD` variable to configure the models you need. Example:
    ```bash
-   VITE_LLM_MODELS_PROD="gemini_3.5_flash,openai_gpt_5.4_mini,diffbot,anthropic_claude_4.5_haiku"
+   VITE_LLM_MODELS_PROD=\"gemini_3.5_flash,openai_gpt_5.4_mini,diffbot,anthropic_claude_4.5_haiku\" 
    ```
 
 2. **Anthropic Models:**
    Use the latest Claude model in your config:
    ```bash
-   LLM_MODEL_CONFIG_ANTHROPIC_CLAUDE_4_7_OPUS="claude-opus-4-7,anthropic_api_key"
+   LLM_MODEL_CONFIG_ANTHROPIC_CLAUDE_4_7_OPUS=\"claude-opus-4-7,anthropic_api_key\"
    ```
 
 3. **Input Sources:**  
    By default, the following sources are enabled: `local`, `YouTube`, `Wikipedia`, `AWS S3`, and `web`.  
    To add Google Cloud Storage (GCS) integration, include `gcs` and your Google client ID:
    ```bash
-   VITE_REACT_APP_SOURCES="local,youtube,wiki,s3,gcs,web"
-   VITE_GOOGLE_CLIENT_ID="your-google-client-id"
+   VITE_REACT_APP_SOURCES=\"local,youtube,wiki,s3,gcs,web\"
+   VITE_GOOGLE_CLIENT_ID=\"your-google-client-id\"
    ```
 
 #### Chat Modes
@@ -138,7 +156,7 @@ Configure chat modes using the `VITE_CHAT_MODES` variable:
 - By default, all modes are enabled: `vector`, `graph_vector`, `graph`, `fulltext`, `graph_vector_fulltext`, `entity_vector`, and `global_vector`. 
 - To specify specific modes, update the variable. For example:
   ```bash
-  VITE_CHAT_MODES="vector,graph"
+  VITE_CHAT_MODES=\"vector,graph\"
   ```
 
 ---
@@ -206,33 +224,33 @@ gcloud run deploy dev-backend \
 
 ## For local llms (Ollama)
 1. Pull the docker image of ollama
-   ```bash
-   docker pull ollama/ollama
-   ```
+  ```bash
+  docker pull ollama/ollama
+  ```
 2. Run the ollama docker image
-   ```bash
-   docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
-   ```
+  ```bash
+  docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
+  ```
 3. Execute any llm model, e.g., llama3
-   ```bash
-   docker exec -it ollama ollama run llama3
-   ```
+  ```bash
+  docker exec -it ollama ollama run llama3
+  ```
 4. Configure env variable in docker compose.
-   ```env
-   LLM_MODEL_CONFIG_ollama_<model_name>
-   # example
-   LLM_MODEL_CONFIG_ollama_llama3=${LLM_MODEL_CONFIG_ollama_llama3-llama3,http://host.docker.internal:11434}
-   ```
+  ```env
+  LLM_MODEL_CONFIG_ollama_<model_name>
+  # example
+  LLM_MODEL_CONFIG_ollama_llama3=${LLM_MODEL_CONFIG_ollama_llama3-llama3,http://host.docker.internal:11434}
+  ```
 5. Configure the backend API url
-   ```env
-   VITE_BACKEND_API_URL=${VITE_BACKEND_API_URL-backendurl}
-   ```
+  ```env
+  VITE_BACKEND_API_URL=${VITE_BACKEND_API_URL-backendurl}
+  ```
 6. Open the application in browser and select the ollama model for the extraction.
 7. Enjoy Graph Building.
 ---
 
 ## Usage
-1. Connect to a Neo4j Aura Instance, which can be either AURA DS or AURA DB, by passing the URI and password through the backend environment, filling in the login dialog, or dragging and dropping the Neo4j credentials file.
+1. Connect to a Neo4j Aura Instance, which can be either AURA DS or AURA DB, by passing the URI and password through the backend environment, filling in the login dialog, or dragging and dropping the connection card.
 2. To differentiate, we have added different icons. For AURA DB, there is a database icon, and for AURA DS, there is a scientific molecule icon right under the Neo4j Connection details label.
 3. Choose your source from a list of unstructured sources to create a graph.
 4. Change the LLM (if required) from the dropdown, which will be used to generate the graph.
@@ -253,7 +271,7 @@ gcloud run deploy dev-backend \
 | BUCKET_UPLOAD_FILE      | Optional          |               | Bucket name to store uploaded file on GCS                                                        |
 | BUCKET_FAILED_FILE      | Optional          |               | Bucket name to store failed file on GCS while extraction                                         |
 | USER_AGENT              | Optional          | llm-graph-builder | Name of the user agent to track Neo4j database activity                                      |
-| ENABLE_USER_AGENT       | Optional          | true          | Boolean value to enable/disable Neo4j user agent                                                 |
+| ENABLE_USER_AGENT       | Optional           | true          | Boolean value to enable/disable Neo4j user agent                                                 |
 | DUPLICATE_TEXT_DISTANCE | Optional          | 5             | This value is used to find distance for all node pairs in the graph and is calculated based on node properties |
 | DUPLICATE_SCORE_VALUE   | Optional          | 0.97          | Node score value to match duplicate nodes                                                        |
 | EFFECTIVE_SEARCH_RATIO  | Optional          | 1             | Ratio used for effective search calculations                                                     |
@@ -265,27 +283,27 @@ gcloud run deploy dev-backend \
 | GCP_LOG_METRICS_ENABLED| Optional           | False         | Flag to enable Google Cloud logs                                                                 |
 | NEO4J_URI              | Optional           | neo4j://database:7687 | URI for Neo4j database                                                                  |
 | NEO4J_USERNAME         | Optional           | neo4j         | Username for Neo4j database                                                                      |
-| NEO4J_PASSWORD         | Optional           | password      | Password for Neo4j database                                                                      |                                               |
+| NEO4J_PASSWORD         | Optional           | password      | Password for Neo4j database                                                                      |                                 [...]
 | GCS_FILE_CACHE         | Optional           | False         | If set to True, will save files to process into GCS. If False, will save files locally           |                   |
 | ENTITY_EMBEDDING       | Optional           | False         | If set to True, it will add embeddings for each entity in the database                           |
 | LLM_MODEL_CONFIG_ollama_<model_name> | Optional |           | Set ollama config as model_name,model_local_url for local deployments                            |
 |                        |                   |               |                                                                                                  |
 | **FRONTEND ENV**        |                   |               |                                                                                                  |
 | VITE_BLOOM_URL         | Mandatory          | [Bloom URL][bloom-url] | URL for Bloom visualization                                |
-| VITE_REACT_APP_SOURCES | Mandatory          | local,youtube,wiki,s3 | List of input sources that will be available                                 |
-| VITE_CHAT_MODES        | Mandatory          | vector,graph+vector,graph,hybrid | Chat modes available for Q&A                                |
-| VITE_ENV               | Mandatory          | DEV or PROD   | Environment variable for the app                                                                 |
-| VITE_LLM_MODELS        | Optional           | openai_gpt_5_mini,gemini_flash_latest,anthropic_claude_4.5_haiku | Supported models for the application |
-| VITE_BACKEND_API_URL   | Optional           | [localhost][backend-url] | URL for backend API                                        |
-| VITE_TIME_PER_PAGE     | Optional           | 50            | Time per page for processing                                                                     |
-| VITE_CHUNK_SIZE        | Optional           | 5242880       | Size of each chunk of file for upload                                                            |
-| VITE_GOOGLE_CLIENT_ID  | Optional           |               | Client ID for Google authentication                                                              |
-| VITE_LLM_MODELS_PROD   | Optional           | openai_gpt_5_mini,gemini_flash_latest,anthropic_claude_4.5_haiku | To distinguish models based on environment (PROD or DEV) |
+| VITE_REACT_APP_SOURCES | Mandatory                            | local,youtube,wiki,s3 | List of input sources that will be available                                 |
+| VITE_CHAT_MODES        | Mandatory                            | vector,graph+vector,graph,hybrid | Chat modes available for Q&A                                |
+| VITE_ENV               | Mandatory                            | DEV or PROD   | Environment variable for the app                                                                 |
+| VITE_LLM_MODELS        | Optional                            | openai_gpt_5_mini,gemini_flash_latest,anthropic_claude_4.5_haiku | Supported models for the application |
+| VITE_BACKEND_API_URL   | Optional                             | [localhost][backend-url] | URL for backend API                                        |
+| VITE_TIME_PER_PAGE     | Optional                             | 50            | Time per page for processing                                                                     |
+| VITE_CHUNK_SIZE        | Optional                             | 5242880       | Size of each chunk of file for upload                                                            |
+| VITE_GOOGLE_CLIENT_ID  | Optional                             |               | Client ID for Google authentication                                                              |
+| VITE_LLM_MODELS_PROD   | Optional                             | openai_gpt_5_mini,gemini_flash_latest,anthropic_claude_4.5_haiku | To distinguish models based on environment (PROD or DEV) |
 | VITE_AUTH0_CLIENT_ID   | Mandatory if you are enabling Authentication otherwise it is optional |  | Okta OAuth Client ID for authentication |
 | VITE_AUTH0_DOMAIN      | Mandatory if you are enabling Authentication otherwise it is optional |  | Okta OAuth Client Domain                                  |
 | VITE_SKIP_AUTH         | Optional           | true          | Flag to skip authentication                                                                      |
 | VITE_CHUNK_OVERLAP     | Optional           | 20            | Variable to configure chunk overlap                                                              |
-| VITE_TOKENS_PER_CHUNK  | Optional           | 100           | Variable to configure tokens count per chunk. This gives flexibility for users who may require different chunk sizes for various tokenization tasks |
+| VITE_TOKENS_PER_CHUNK  | Optional           | 100           | Variable to configure tokens count per chunk. This gives flexibility for users who may require different chunk sizes for various to[...]
 | VITE_CHUNK_TO_COMBINE  | Optional           | 1             | Variable to configure number of chunks to combine for parallel processing                        |
 
 ### Example Environment Files
@@ -324,11 +342,10 @@ You can deploy the backend and the frontend to Google Cloud Run using Cloud Buil
 2. **Run Cloud Build manually:**
    ```bash
    gcloud builds submit --config cloudbuild.yaml \
-     --substitutions=_REGION=us-central1,_REPO=cloud-run-repo,_OPENAI_API_KEY=<your-openai-key>,_DIFFBOT_API_KEY=<your-diffbot-key>,_BUCKET_UPLOAD_FILE=<your-bucket>,_BUCKET_FAILED_FILE=<your-bucket>,_PROJECT_ID=<your-project-id>,_GCS_FILE_CACHE=False,_TRACK_USER_USAGE=False,_TOKEN_TRACKER_DB_URI=...,_TOKEN_TRACKER_DB_USERNAME=...,_TOKEN_TRACKER_DB_PASSWORD=...,_TOKEN_TRACKER_DB_DATABASE=...,_DEFAULT_DIFFBOT_CHAT_MODEL=...,_YOUTUBE_TRANSCRIPT_PROXY=...,_EMBEDDING_MODEL=...,
-       _EMBEDDING_PROVIDER=...,_BEDROCK_EMBEDDING_MODEL_KEY=...,_LLM_MODEL_CONFIG_OPENAI_GPT_5_2=...,_LLM_MODEL_CONFIG_OPENAI_GPT_5_MINI=...,_LLM_MODEL_CONFIG_GEMINI_2_5_FLASH=...,_LLM_MODEL_CONFIG_GEMINI_2_5_PRO=...,_LLM_MODEL_CONFIG_DIFFBOT=...,_LLM_MODEL_CONFIG_GROQ_LLAMA3_1_8B=...,_LLM_MODEL_CONFIG_ANTHROPIC_CLAUDE_4_5_SONNET=...,_LLM_MODEL_CONFIG_ANTHROPIC_CLAUDE_4_5_HAIKU=...,_LLM_MODEL_CONFIG_LLAMA4_MAVERICK=...,_LLM_MODEL_CONFIG_FIREWORKS_QWEN3_6=...,_LLM_MODEL_CONFIG_FIREWORKS_GPT_OSS=...,_LLM_MODEL_CONFIG_FIREWORKS_DEEPSEEK_V3=...,_LLM_MODEL_CONFIG_BEDROCK_NOVA_MICRO_V1=...,_LLM_MODEL_CONFIG_BEDROCK_NOVA_LITE_V1=...,_LLM_MODEL_CONFIG_BEDROCK_NOVA_PRO_V1=...,_LLM_MODEL_CONFIG_OLLAMA_LLAMA3=...
+     --substitutions=_REGION=us-central1,_REPO=cloud-run-repo,_OPENAI_API_KEY=<your-openai-key>,_DIFFBOT_API_KEY=<your-diffbot-key>,_BUCKET_UPLOAD_FILE=<your-bucket>,_BUCKET_FAILED_FILE=<your-buc[...]
    ```
    - Replace the values in angle brackets with your actual configuration and secrets.
-   - `LLM_MODEL_CONFIG_FIREWORKS_QWEN3_6` is the app-facing config key for the `fireworks_qwen3_6` model option and should map to the Fireworks serverless slug `accounts/fireworks/models/qwen3p6-plus`.
+   - `LLM_MODEL_CONFIG_FIREWORKS_QWEN3_6` is the app-facing config key for the `fireworks_qwen3_6` model option and should map to the Fireworks serverless slug `accounts/fireworks/models/qwen3p6-[...]
    - You can omit or add substitutions as needed for your deployment.
 
 3. **Monitor the build:**
