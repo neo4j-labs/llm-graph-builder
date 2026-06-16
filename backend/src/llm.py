@@ -18,6 +18,7 @@ import re
 from langchain_core.callbacks.manager import CallbackManager
 from src.shared.common_fn import UniversalTokenUsageHandler,get_value_from_env
 
+
 def get_llm(model: str):
     """Retrieve the specified language model based on the model name."""
     model = model.upper().replace('.', '_').strip()
@@ -33,25 +34,41 @@ def get_llm(model: str):
     callback_handler = UniversalTokenUsageHandler()
     callback_manager = CallbackManager([callback_handler])
     try:
+        # GEMINI handling: support both Vertex AI (service account) and Google AI Studio (API key rotation)
         if "GEMINI" in model:
             model_name = env_value
-            credentials, project_id = google.auth.default()
-            llm = ChatGoogleGenerativeAI(
-                model=model_name,
-                vertexai=True,
-                credentials=credentials,
-                project=project_id,
-                temperature=0,
-                callbacks=callback_manager,
-                safety_settings={
-                    "HARM_CATEGORY_UNSPECIFIED": "BLOCK_NONE",
-                    "HARM_CATEGORY_DANGEROUS_CONTENT": "BLOCK_NONE",
-                    "HARM_CATEGORY_HATE_SPEECH": "BLOCK_NONE",
-                    "HARM_CATEGORY_HARASSMENT": "BLOCK_NONE",
-                    "HARM_CATEGORY_SEXUALLY_EXPLICIT": "BLOCK_NONE",
-                },
-            
-            )
+
+            # If caller selected the Studio variant (e.g., "gemini_studio") we'll use API key rotation
+            if "STUDIO" in model:
+                try:
+                    # import here so projects without token_manager won't fail on import
+                    from src.token_manager import get_gemini_with_token_rotation
+
+                    llm, model_name, callback_handler, token_manager = get_gemini_with_token_rotation(
+                        model_name=model_name
+                    )
+                    logging.info("Using Gemini with Google AI Studio (Token rotation enabled)")
+                except Exception as e:
+                    logging.error(f"Error initializing Gemini with token rotation: {str(e)}")
+                    raise
+            else:
+                # Vertex AI (original implementation) using google.auth credentials
+                credentials, project_id = google.auth.default()
+                llm = ChatGoogleGenerativeAI(
+                    model=model_name,
+                    vertexai=True,
+                    credentials=credentials,
+                    project=project_id,
+                    temperature=0,
+                    callbacks=callback_manager,
+                    safety_settings={
+                        "HARM_CATEGORY_UNSPECIFIED": "BLOCK_NONE",
+                        "HARM_CATEGORY_DANGEROUS_CONTENT": "BLOCK_NONE",
+                        "HARM_CATEGORY_HATE_SPEECH": "BLOCK_NONE",
+                        "HARM_CATEGORY_HARASSMENT": "BLOCK_NONE",
+                        "HARM_CATEGORY_SEXUALLY_EXPLICIT": "BLOCK_NONE",
+                    },
+                )
         elif "OPENAI" in model:
             model_name, api_key = env_value.split(",")
             if "MINI" in model:
@@ -143,6 +160,7 @@ def get_llm(model: str):
  
     logging.info(f"Model created - Model Version: {model}")
     return llm, model_name, callback_handler
+
 
 def get_llm_model_name(llm):
     """Extract name of llm model from llm object"""
