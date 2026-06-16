@@ -11,7 +11,7 @@ from threading import Lock
 from urllib.parse import urlparse,parse_qs
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
-from langchain_openai import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings, AzureOpenAIEmbeddings
 from langchain_neo4j import Neo4jGraph
 from neo4j.exceptions import TransientError
 from langchain_community.graphs.graph_document import GraphDocument
@@ -100,6 +100,36 @@ def _get_bedrock_embeddings(model_name: str):
     except Exception as e:
         logging.error(f"An unexpected error occurred: {e}")
         raise
+
+
+def _get_azureopenai_embeddings(model_name: str):
+    """
+    Creates and returns a AzureOpenAIEmbeddings object using the specified model name.
+    Args:
+        model_name (str): The name of the model to use for embeddings.
+    Returns:
+        AzureEmbeddings: An instance of the AzureOpenAIEmbeddings class.
+    """
+    try:
+        env_value = get_value_from_env("AZURE_OPENAI_EMBEDDING")
+        if not env_value:
+            raise ValueError("Environment variable 'AZURE_OPENAI_EMBEDDING' is not set.")
+        try:
+            endpoint, key, api_version = env_value.split(',')
+        except ValueError:
+            raise ValueError(
+                "Environment variable 'AZURE_OPENAI_EMBEDDING' is improperly formatted. "
+                "Expected format: 'endpoint,key,api_version'."
+            )
+        azure_embeddings = AzureOpenAIEmbeddings(model=model_name,
+                                                api_key=key,
+                                                api_version=api_version,
+                                                azure_endpoint=endpoint
+                                                )
+        return azure_embeddings
+    except Exception as e:
+        logging.error(f"An unexpected error occurred: {e}")
+        raise
    
 def create_youtube_url(url):
     you_tu_url = "https://www.youtube.com/watch?v="
@@ -174,6 +204,11 @@ def load_embedding_model(embedding_provider: str, embedding_model_name: str):
     """
     # Mapping of model dimensions for each provider
     model_dimensions = {
+        "azureopenai": {
+            "text-embedding-3-large": 3072,
+            "text-embedding-3-small": 1536,
+            "text-embedding-ada-002": 1536,
+        },
         "openai": {
             "text-embedding-3-large": 3072,
             "text-embedding-3-small": 1536,
@@ -203,6 +238,8 @@ def load_embedding_model(embedding_provider: str, embedding_model_name: str):
 
     if provider == "openai":
         embeddings = OpenAIEmbeddings(model=model)
+    elif provider == "azureopenai":
+        embeddings = _get_azureopenai_embeddings(model)
     elif provider == "gemini":
         embeddings = GoogleGenerativeAIEmbeddings(model=model, vertexai= True)
     elif provider == "titan":
@@ -655,6 +692,7 @@ def get_user_embedding_model(email: str, uri: str) -> dict:
         if not track_user_usage:
             embedding_provider = get_value_from_env("EMBEDDING_PROVIDER","sentence-transformer")
             embedding_model = get_value_from_env("EMBEDDING_MODEL","all-MiniLM-L6-v2")
+            print(embedding_provider, embedding_model)
             if not embedding_provider or not embedding_model:
                 raise EnvironmentError("EMBEDDING_PROVIDER and EMBEDDING_MODEL environment variables must be set")
             _, embedding_dimension = load_embedding_model(embedding_provider, embedding_model)
