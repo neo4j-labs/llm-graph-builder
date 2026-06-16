@@ -1,8 +1,9 @@
 import logging
+from langchain_core.documents import Document
 import wikipedia
 wikipedia.set_user_agent("llm-graph-builder/1.0")
 
-from langchain_community.document_loaders import WikipediaLoader
+# from langchain_community.document_loaders import WikipediaLoader
 from requests.exceptions import JSONDecodeError
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 
@@ -24,16 +25,25 @@ def get_documents_from_wikipedia(wiki_query: str, language: str):
     """
     try:
         # Convert underscores to spaces for Wikipedia API search
-        pages = WikipediaLoader(
-            query=wiki_query,
-            lang=language,
-            load_all_available_meta=False,
-            doc_content_chars_max=100000,
-            load_max_docs=1
-        ).load()
+        results = wikipedia.search(wiki_query.replace('_', ' '), results=1, suggestion=False)
+        docs = []
+        print(f"Results from Wikipedia search for query '{wiki_query}': {results}")
+        try:
+            page = wikipedia.page(results[0], auto_suggest=False, redirect=True, preload=False)
+            docs.append(Document(page_content=page.content[:100000], metadata={"title": page.title,"source": page.url}))
+        # break  # Only load the first result
+        except wikipedia.exceptions.DisambiguationError as e:
+            logger.warning("Disambiguation error for query '%s': %s", wiki_query, str(e))
+        # pages = WikipediaLoader(
+        #     query=wiki_query,
+        #     lang=language,
+        #     load_all_available_meta=False,
+        #     doc_content_chars_max=100000,
+        #     load_max_docs=1
+        # ).load()
         file_name = wiki_query.strip()
-        logger.info("Total Pages from Wikipedia = %d", len(pages))
-        return file_name, pages
+        logger.info("Total Pages from Wikipedia = %d", len(docs))
+        return file_name, docs
     except JSONDecodeError as exc:
         message = "Wikipedia returned an invalid response, possibly due to rate limiting."
         logger.exception("Failed to process Wikipedia query: %s", str(exc))

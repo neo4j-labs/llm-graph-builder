@@ -1,11 +1,11 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useReducer, useState } from 'react';
+import { Dispatch, lazy, SetStateAction, Suspense, useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import SideNav from './SideNav';
 import DrawerDropzone from './DrawerDropzone';
 import DrawerChatbot from './DrawerChatbot';
 import Content from '../Content';
-import { clearChatAPI } from '../../services/QnaAPI';
+import { clearChatAPI, getChatHistoryAPI } from '../../services/QnaAPI';
 import { useCredentials } from '../../context/UserCredentials';
-import { connectionState, OptionType } from '../../types';
+import { connectionState, Messages, OptionType } from '../../types';
 import { useMessageContext } from '../../context/UserMessages';
 import { useMediaQuery, Spotlight, SpotlightTour, useSpotlightContext } from '@neo4j-ndl/react';
 import { useFileContext } from '../../context/UsersFiles';
@@ -22,8 +22,25 @@ import LoadDBSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtracti
 import PredefinedSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/PredefinedSchemaDialog';
 import { SKIP_AUTH } from '../../utils/Constants';
 import { useNavigate } from 'react-router';
-import { deduplicateByFullPattern, deduplicateNodeByValue, fetchAndStoreEmbeddingSettings } from '../../utils/Utils';
+import {
+  convertChatHistoryToMessages,
+  deduplicateByFullPattern,
+  deduplicateNodeByValue,
+  fetchAndStoreEmbeddingSettings,
+} from '../../utils/Utils';
 import DataImporterSchemaDialog from '../Popups/GraphEnhancementDialog/EnitityExtraction/DataImporter';
+
+const loadChatHistory = async (setMessages: Dispatch<SetStateAction<Messages[]>>) => {
+  try {
+    const chatHistoryResponse = await getChatHistoryAPI();
+    const history = chatHistoryResponse?.data?.data?.messages;
+    if (Array.isArray(history) && history.length) {
+      setMessages(convertChatHistoryToMessages(history));
+    }
+  } catch (error) {
+    console.log('Error loading chat history:', error);
+  }
+};
 const GCSModal = lazy(() => import('../DataSources/GCS/GCSModal'));
 const S3Modal = lazy(() => import('../DataSources/AWS/S3Modal'));
 const GenericModal = lazy(() => import('../WebSources/GenericSourceModal'));
@@ -314,6 +331,9 @@ const PageLayout: React.FC = () => {
           setIsReadOnlyUser(!connectionData.data.write_access);
           handleDisconnectButtonState(false);
           await fetchAndStoreEmbeddingSettings(credentials.uri, credentials.email ?? '');
+          if (connectionData.data.graph_connection) {
+            await loadChatHistory(setMessages);
+          }
         } else if (!connectionData.data && connectionData.status === 'Success') {
           const storedCredentials = localStorage.getItem('neo4j.connection');
           if (storedCredentials) {
@@ -338,6 +358,9 @@ const PageLayout: React.FC = () => {
             }
             handleDisconnectButtonState(true);
             await fetchAndStoreEmbeddingSettings(credentials.uri, credentials.email ?? '');
+            if (credentials.connection === 'connectAPI') {
+              await loadChatHistory(setMessages);
+            }
           } else {
             handleDisconnectButtonState(true);
           }

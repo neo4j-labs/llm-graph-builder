@@ -361,6 +361,23 @@ export const getDateTime = () => {
 export const getIsLoading = (messages: Messages[]) => {
   return messages.some((msg) => msg.isTyping || msg.isLoading);
 };
+
+export const convertChatHistoryToMessages = (history: { role: string; content: string }[]): Messages[] => {
+  const defaultMode = chatModeLables['graph+vector+fulltext'];
+  return history.map((entry, index) => {
+    const isUser = entry.role === 'human';
+    const message: Messages = {
+      id: Date.now() + index,
+      user: isUser ? 'user' : 'chatbot',
+      datetime: getDateTime(),
+      modes: {
+        [defaultMode]: { message: entry.content },
+      },
+      currentMode: defaultMode,
+    };
+    return message;
+  });
+};
 export const calculateProcessingTime = (fileSizeBytes: number, processingTimePerByteSeconds: number) => {
   const totalProcessingTimeSeconds = (fileSizeBytes / 1000) * processingTimePerByteSeconds;
   const minutes = Math.floor(totalProcessingTimeSeconds / 60);

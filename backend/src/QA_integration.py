@@ -1,3 +1,4 @@
+import hashlib
 import json
 import time
 import logging
@@ -15,7 +16,6 @@ from langchain_classic.retrievers import ContextualCompressionRetriever
 from langchain_classic.retrievers.document_compressors import EmbeddingsFilter, DocumentCompressorPipeline
 from langchain_text_splitters import TokenTextSplitter
 from langchain_core.messages import HumanMessage, AIMessage
-from langchain_community.chat_message_histories import ChatMessageHistory 
 from langchain_core.callbacks import BaseCallbackHandler
 # from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 # LangChain chat models
@@ -34,38 +34,18 @@ from src.shared.constants import (
     CHAT_SYSTEM_TEMPLATE, CHAT_TOKEN_CUT_OFF, CHAT_ENTITY_VECTOR_MODE,
     CHAT_GLOBAL_VECTOR_FULLTEXT_MODE, CHAT_SEARCH_KWARG_SCORE_THRESHOLD,CHAT_MODE_CONFIG_MAP, CHAT_DEFAULT_MODE, CHAT_GRAPH_MODE,CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD, CHAT_DOC_SPLIT_SIZE, QUESTION_TRANSFORM_TEMPLATE
 )
-load_dotenv() 
-
-class SessionChatHistory:
-    history_dict = {}
-
-    @classmethod
-    def get_chat_history(cls, session_id):
-        """Retrieve or create chat message history for a given session ID."""
-        if session_id not in cls.history_dict:
-            logging.info(f"Creating new ChatMessageHistory Local for session ID: {session_id}")
-            cls.history_dict[session_id] = ChatMessageHistory()
-        else:
-            logging.info(f"Retrieved existing ChatMessageHistory Local for session ID: {session_id}")
-        return cls.history_dict[session_id]
+load_dotenv()
 
 class CustomCallback(BaseCallbackHandler):
 
     def __init__(self):
         self.transformed_question = None
-    
+
     def on_llm_end(
         self,response, **kwargs: Any
     ) -> None:
         logging.info("question transformed")
         self.transformed_question = response.generations[0][0].text.strip()
-
-def get_history_by_session_id(session_id):
-    try:
-        return SessionChatHistory.get_chat_history(session_id)
-    except Exception as e:
-        logging.error(f"Failed to get history for session ID '{session_id}': {e}")
-        raise
 
 def get_total_tokens(ai_response, llm):
     try:
@@ -100,29 +80,50 @@ def get_total_tokens(ai_response, llm):
 
     return total_tokens
 
-def clear_chat_history(graph, session_id,local=False):
+def get_chat_history(graph, email, uri):
+    """
+    Retrieves the persisted chat history for the requesting user's fixed session.
+    """
     try:
-        if not local:
-            history = Neo4jChatMessageHistory(
-                graph=graph,
-                session_id=session_id
-            )
-        else:
-            history = get_history_by_session_id(session_id)
-        
+        session_id = get_user_session_id(email, uri)
+        print(f"session Id {session_id} to get chat history")
+        history = create_neo4j_chat_message_history(graph, session_id, email, uri)
+        messages = [
+            {"role": message.type, "content": message.content}
+            for message in history.messages
+        ]
+        return {
+            "session_id": session_id,
+            "messages": messages,
+            "user": "chatbot"
+        }
+
+    except Exception as e:
+        logging.error(f"Error retrieving chat history: {e}")
+        return {
+            "session_id": "",
+            "messages": [],
+            "user": "chatbot"
+        }
+
+def clear_chat_history(graph, email, uri):
+    session_id = get_user_session_id(email, uri)
+    print(f"session Id from DB {session_id}")
+    try:
+        history = create_neo4j_chat_message_history(graph, session_id, email, uri)
         history.clear()
 
         return {
-            "session_id": session_id, 
-            "message": "The chat history has been cleared.", 
+            "session_id": session_id,
+            "message": "The chat history has been cleared.",
             "user": "chatbot"
         }
-    
+
     except Exception as e:
         logging.error(f"Error clearing chat history for session {session_id}: {e}")
         return {
-            "session_id": session_id, 
-            "message": "Failed to clear chat history.", 
+            "session_id": session_id,
+            "message": "Failed to clear chat history.",
             "user": "chatbot"
         }
 
@@ -439,7 +440,7 @@ def setup_chat(model, graph, document_names, chat_mode_settings, embedding_provi
     
     return llm, doc_retriever, model_name
 
-def process_chat_response(messages, history, question, model, graph, document_names, chat_mode_settings, email=None, uri=None, embedding_provider=None, embedding_model=None, session_id=None):
+def process_chat_response(messages, history, question, model, graph, document_names, chat_mode_settings, email=None, uri=None, embedding_provider=None, embedding_model=None):
     try:
         # if get_value_from_env("TRACK_USER_USAGE", "false", "bool"):
         #     try:
@@ -465,10 +466,9 @@ def process_chat_response(messages, history, question, model, graph, document_na
         ai_response = AIMessage(content=content)
         messages.append(ai_response)
 
-        summarization_thread = threading.Thread(target=summarize_and_log, args=(history, messages, llm, session_id))
+        summarization_thread = threading.Thread(target=summarize_and_log, args=(history, messages, llm))
         summarization_thread.start()
         logging.info("Summarization thread started.")
-        # summarize_and_log(history, messages, llm)
         metric_details = {"question":question,"contexts":formatted_docs,"answer":content}
         return {
             "session_id": "",  
@@ -507,7 +507,7 @@ def process_chat_response(messages, history, question, model, graph, document_na
             "user": "chatbot"
         }
 
-def summarize_and_log(history, stored_messages, llm, session_id=None, use_local=False):
+def summarize_and_log(history, stored_messages, llm):
     logging.info("Starting summarization in a separate thread.")
     if not stored_messages:
         logging.info("No messages to summarize.")
@@ -540,16 +540,9 @@ def summarize_and_log(history, stored_messages, llm, session_id=None, use_local=
         summary_message_for_db = AIMessage(content=summary_text)
 
         with threading.Lock():
-            try:
-                history.clear()
-                history.add_user_message("Our current conversation summary till now")
-                history.add_message(summary_message_for_db)
-            except Exception as e:
-                logging.warning(f"Could not save to database history (driver likely closed): {e}. Falling back to local history.")
-                if session_id:
-                    local_history = SessionChatHistory.get_chat_history(session_id)
-                    local_history.add_message(HumanMessage(content="Our current conversation summary till now"))
-                    local_history.add_message(summary_message_for_db)
+            history.clear()
+            history.add_user_message("Our current conversation summary till now")
+            history.add_message(summary_message_for_db)
 
         logging.info(f"Chat History summarized in {time.time() - start_time:.2f} seconds")
         return True
@@ -604,18 +597,21 @@ def get_graph_response(graph_chain, question):
     except Exception as e:
         logging.error(f"An error occurred while getting the graph response : {e}")
 
-def process_graph_response(model, graph, question, messages, history, session_id=None):
+def process_graph_response(model, graph, question, messages, history):
     try:
         graph_chain, qa_llm, model_version = create_graph_chain(model, graph)
         
         graph_response = get_graph_response(graph_chain, question)
-        
-        ai_response_content = graph_response.get("response", "Something went wrong")
+
+        if not graph_response or not graph_response.get("response"):
+            graph_response = graph_response or {}
+            ai_response_content = "Something went wrong"
+        else:
+            ai_response_content = graph_response["response"]
         ai_response = AIMessage(content=ai_response_content)
         
         messages.append(ai_response)
-        # summarize_and_log(history, messages, qa_llm)
-        summarization_thread = threading.Thread(target=summarize_and_log, args=(history, messages, qa_llm, session_id))
+        summarization_thread = threading.Thread(target=summarize_and_log, args=(history, messages, qa_llm))
         summarization_thread.start()
         logging.info("Summarization thread started.")
         metric_details = {"question":question,"contexts":graph_response.get("context", ""),"answer":ai_response_content}
@@ -651,25 +647,43 @@ def process_graph_response(model, graph, question, messages, history, session_id
             "user": "chatbot"
         }
 
-def create_neo4j_chat_message_history(graph, session_id, write_access=True):
+def get_user_session_id(email, uri):
     """
-    Creates and returns a Neo4jChatMessageHistory instance.
+    Returns a chat session ID that is fixed for a given user, identified by
+    email (when available) or db_url, so each user has exactly one session.
+    """
+    normalized_email = (email or "").strip().lower() or None
+    normalized_db_url = (uri or "").strip() or None
+    identity = normalized_email or normalized_db_url
+    if not identity:
+        raise ValueError("Either email or db_url must be provided to determine a session ID.")
+    return hashlib.md5(identity.encode()).hexdigest()
 
+def create_neo4j_chat_message_history(graph, session_id, email=None, uri=None):
+    """
+    Creates and returns a Neo4jChatMessageHistory instance backed by the
+    user's own graph database, associated with the requesting user.
     """
     try:
-        if write_access: 
-            history = Neo4jChatMessageHistory(
-                graph=graph,
-                session_id=session_id
-            )
-            return history
-        
-        history = get_history_by_session_id(session_id)
+        history = Neo4jChatMessageHistory(graph=graph, session_id=session_id)
+
+        normalized_email = (email or "").strip().lower() or None
+        normalized_db_url = (uri or "").strip() or None
+        match_label, match_value = ("email", normalized_email) if normalized_email else ("db_url", normalized_db_url)
+        graph.query(
+            f"""
+            MATCH (s:Session {{id: $session_id}})
+            MERGE (u:User {{{match_label}: $match_value}})
+            MERGE (u)-[:HAS_SESSION]->(s)
+            """,
+            {"session_id": session_id, "match_value": match_value}
+        )
+
         return history
 
     except Exception as e:
         logging.error(f"Error creating Neo4jChatMessageHistory: {e}")
-        raise 
+        raise
 
 def get_chat_mode_settings(mode,settings_map=CHAT_MODE_CONFIG_MAP):
     default_settings = settings_map[CHAT_DEFAULT_MODE]
@@ -685,17 +699,20 @@ def get_chat_mode_settings(mode,settings_map=CHAT_MODE_CONFIG_MAP):
 
     return chat_mode_settings
     
-def QA_RAG(graph, model, question, document_names, session_id, mode, write_access=True, email=None, uri=None, embedding_provider=None, embedding_model=None):
+def QA_RAG(graph, model, question, document_names, mode, email=None, uri=None, embedding_provider=None, embedding_model=None):
     logging.info(f"Chat Mode: {mode}")
 
-    history = create_neo4j_chat_message_history(graph, session_id, write_access)
+    session_id = get_user_session_id(email, uri)
+    print(f"session Id from DB {session_id}")
+    print(f"Session ID for user {email} and db_url {uri}: {session_id}")
+    history = create_neo4j_chat_message_history(graph, session_id, email, uri)
     messages = history.messages
 
     user_question = HumanMessage(content=question)
     messages.append(user_question)
 
     if mode == CHAT_GRAPH_MODE:
-        result = process_graph_response(model, graph, question, messages, history, session_id)
+        result = process_graph_response(model, graph, question, messages, history)
     else:
         chat_mode_settings = get_chat_mode_settings(mode=mode)
         document_names= list(map(str.strip, json.loads(document_names)))
@@ -716,7 +733,7 @@ def QA_RAG(graph, model, question, document_names, session_id, mode, write_acces
                 "user": "chatbot"
             }
         else:
-            result = process_chat_response(messages,history, question, model, graph, document_names,chat_mode_settings, email, uri, embedding_provider, embedding_model, session_id)
+            result = process_chat_response(messages,history, question, model, graph, document_names,chat_mode_settings, email, uri, embedding_provider, embedding_model)
 
     result["session_id"] = session_id
     

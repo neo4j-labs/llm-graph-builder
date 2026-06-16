@@ -20,7 +20,7 @@ from sse_starlette.sse import EventSourceResponse
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-from src.QA_integration import QA_RAG, clear_chat_history
+from src.QA_integration import QA_RAG, clear_chat_history, get_chat_history
 from src.api_response import create_api_response
 from src.chunkid_entities import get_entities_from_chunkids
 from src.communities import create_communities
@@ -419,9 +419,7 @@ async def chat_bot(
         else:
             graph = create_graph_database_connection(credentials)
         
-        graphDb_data_Access = graphDBdataAccess(graph)
-        write_access = graphDb_data_Access.check_account_access(database=credentials.database)
-        result = await asyncio.to_thread(QA_RAG, graph=graph, model=model, question=question, document_names=document_names, session_id=session_id, mode=mode, write_access=write_access, email=credentials.email, uri=credentials.uri, embedding_provider=embedding_provider, embedding_model=embedding_model)
+        result = await asyncio.to_thread(QA_RAG, graph=graph, model=model, question=question, document_names=document_names, mode=mode, email=credentials.email, uri=credentials.uri, embedding_provider=embedding_provider, embedding_model=embedding_model)
 
         total_call_time = time.time() - qa_rag_start_time
         logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
@@ -518,6 +516,29 @@ async def graph_query(
         gc.collect()
     
 
+@app.post("/chat_history")
+async def chat_history(
+    credentials: Neo4jCredentials = Depends(get_neo4j_credentials)
+):
+    """Get the persisted chat history for the requesting user."""
+    try:
+        start = time.time()
+        graph = create_graph_database_connection(credentials)
+        result = await asyncio.to_thread(get_chat_history, graph=graph, email=credentials.email, uri=credentials.uri)
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {'api_name':'chat_history', 'db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
+        logger.log_struct(json_obj, "INFO")
+        return create_api_response('Success', data=result)
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to fetch chat history"
+        error_message = str(e)
+        logging.exception(f'Exception in chat history:{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        gc.collect()
+
 @app.post("/clear_chat_bot")
 async def clear_chat_bot(
     credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
@@ -527,7 +548,7 @@ async def clear_chat_bot(
     try:
         start = time.time()
         graph = create_graph_database_connection(credentials)
-        result = await asyncio.to_thread(clear_chat_history,graph=graph,session_id=session_id)
+        result = await asyncio.to_thread(clear_chat_history, graph=graph, email=credentials.email, uri=credentials.uri)
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name':'clear_chat_bot', 'db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'session_id':session_id, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
