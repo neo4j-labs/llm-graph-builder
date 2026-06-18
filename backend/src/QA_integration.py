@@ -466,7 +466,7 @@ def process_chat_response(messages, history, question, model, graph, document_na
         ai_response = AIMessage(content=content)
         messages.append(ai_response)
 
-        summarization_thread = threading.Thread(target=summarize_and_log, args=(history, messages, llm))
+        summarization_thread = threading.Thread(target=summarize_and_log, args=(history, messages, llm, graph))
         summarization_thread.start()
         logging.info("Summarization thread started.")
         metric_details = {"question":question,"contexts":formatted_docs,"answer":content}
@@ -507,7 +507,7 @@ def process_chat_response(messages, history, question, model, graph, document_na
             "user": "chatbot"
         }
 
-def summarize_and_log(history, stored_messages, llm):
+def summarize_and_log(history, stored_messages, llm, graph=None):
     logging.info("Starting summarization in a separate thread.")
     if not stored_messages:
         logging.info("No messages to summarize.")
@@ -611,7 +611,7 @@ def process_graph_response(model, graph, question, messages, history):
         ai_response = AIMessage(content=ai_response_content)
         
         messages.append(ai_response)
-        summarization_thread = threading.Thread(target=summarize_and_log, args=(history, messages, qa_llm))
+        summarization_thread = threading.Thread(target=summarize_and_log, args=(history, messages, qa_llm, graph))
         summarization_thread.start()
         logging.info("Summarization thread started.")
         metric_details = {"question":question,"contexts":graph_response.get("context", ""),"answer":ai_response_content}
