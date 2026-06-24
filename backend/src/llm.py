@@ -3,6 +3,7 @@ from langchain_core.documents import Document
 import os
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
 from langchain_google_vertexai import ChatVertexAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_groq import ChatGroq
 from langchain_google_vertexai import HarmBlockThreshold, HarmCategory
 from langchain_experimental.graph_transformers.diffbot import DiffbotGraphTransformer
@@ -38,22 +39,30 @@ def get_llm(model: str):
     try:
         if "GEMINI" in model:
             model_name = env_value
-            credentials, project_id = google.auth.default()
-            llm = ChatVertexAI(
-                model_name=model_name,
-                credentials=credentials,
-                project=project_id,
-                temperature=0,
-                callbacks=callback_manager,
-                safety_settings={
-                    HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
-                },
-            
-            )
+            google_api_key = os.environ.get("GOOGLE_API_KEY")
+            if google_api_key:
+                llm = ChatGoogleGenerativeAI(
+                    model=model_name,
+                    google_api_key=google_api_key,
+                    temperature=0,
+                    callbacks=callback_manager,
+                )
+            else:
+                credentials, project_id = google.auth.default()
+                llm = ChatVertexAI(
+                    model_name=model_name,
+                    credentials=credentials,
+                    project=project_id,
+                    temperature=0,
+                    callbacks=callback_manager,
+                    safety_settings={
+                        HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE,
+                        HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+                        HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+                        HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+                        HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+                    },
+                )
         elif "OPENAI" in model:
             model_name, api_key = env_value.split(",")
             if "MINI" in model:
