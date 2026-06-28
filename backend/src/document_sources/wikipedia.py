@@ -2,9 +2,9 @@ import logging
 import wikipedia
 wikipedia.set_user_agent("llm-graph-builder/1.0")
 
-from langchain_community.document_loaders import WikipediaLoader
-from requests.exceptions import JSONDecodeError
-from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
+from langchain_community.document_loaders import WikipediaLoader  # noqa: E402
+from requests.exceptions import JSONDecodeError  # noqa: E402
+from src.shared.llm_graph_builder_exception import LLMGraphBuilderException  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
