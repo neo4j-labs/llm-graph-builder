@@ -5,12 +5,14 @@ import json
 import logging
 import os
 import time
+import uuid
 from datetime import datetime, timezone
 from typing import List
 
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, File, Form, Request, UploadFile
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi_health import health
@@ -51,7 +53,8 @@ load_dotenv(override=True)
 logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
 MERGED_DIR = os.path.join(os.path.dirname(__file__), "merged_files")
-
+status_token_store: dict = {}
+STATUS_TOKEN_TTL = 300  # 5 minutes
 
 def sanitize_filename(filename: str) -> str:
     """Sanitize a filename to prevent directory traversal."""
@@ -634,28 +637,52 @@ def decode_password(pwd):
 def encode_password(pwd):
     return base64.b64encode(pwd.encode('ascii'))
 
+def cleanup_expired_tokens():
+    """Remove tokens that have exceeded the TTL from the store."""
+    now = time.time()
+    expired = [k for k, v in status_token_store.items() if now - v["created_at"] > STATUS_TOKEN_TTL]
+    for k in expired:
+        del status_token_store[k]
+
+@app.post("/get_extract_status_token")
+async def get_extract_status_token(
+    credentials: Neo4jCredentials = Depends(get_neo4j_credentials)
+):
+    """Exchange Neo4j credentials (sent securely in POST body) for a short-lived token.
+    The token is then used in the EventSource URL instead of raw credentials."""
+    cleanup_expired_tokens()
+    token = str(uuid.uuid4())
+    status_token_store[token] = {
+        "uri": credentials.uri,
+        "userName": credentials.userName,
+        "password": credentials.password,
+        "database": credentials.database,
+        "created_at": time.time(),
+    }
+    return create_api_response("Success", data={"token": token})
+
 @app.get("/update_extract_status/{file_name}")
 async def update_extract_status(
     request: Request,
     file_name: str,
-    uri: str = None,
-    userName: str = None,
-    password: str = None,
-    database: str = None
+    token: str = None,
 ):
     """Stream updates on extract status for a given file name."""
+    # Validate and immediately consume the token (single-use, prevents replay)
+    token_data = status_token_store.pop(token, None) if token else None
+    if not token_data or (time.time() - token_data["created_at"] > STATUS_TOKEN_TTL):
+        return JSONResponse(
+            status_code=401,
+            content=create_api_response("Failed", message="Invalid or expired status token"),
+        )
+
+    uri = token_data["uri"]
+    if uri and " " in uri:
+        uri = uri.replace(" ", "+")
+    credentials = Neo4jCredentials(uri=uri, userName=token_data["userName"], password=token_data["password"], database=token_data["database"])
+
     async def generate():
         status = ''
-        
-        if password is not None and password != "null":
-            decoded_password = decode_password(password)
-        else:
-            decoded_password = None
-
-        url = uri
-        if url and " " in url:
-            url= url.replace(" ","+")
-        credentials= Neo4jCredentials(uri=url, userName=userName, password=decoded_password, database=database)
         graph = create_graph_database_connection(credentials)
         graphDb_data_Access = graphDBdataAccess(graph)
         while True:
