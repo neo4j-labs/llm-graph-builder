@@ -5,7 +5,7 @@ torchaudio==2.10.0+cpu
 asyncio==4.0.0
 boto3==1.43.16
 botocore==1.43.16
-certifi==2026.5.20
+certifi==2026.6.17
 fastapi==0.136.3
 fastapi-health==0.4.0
 fireworks-ai==1.2.0a73
