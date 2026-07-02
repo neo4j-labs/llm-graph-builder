@@ -63,5 +63,5 @@ rouge_score==0.1.2
 langchain-neo4j==0.9.0
 chardet==5.2.0
 python-multipart==0.0.29
-requests==2.32.3
+requests>=2.20.0
 PyJWT[crypto]==2.10.1
