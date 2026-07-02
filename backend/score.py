@@ -22,6 +22,7 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 
 from src.QA_integration import QA_RAG, clear_chat_history
 from src.api_response import create_api_response
+from src.auth_middleware import BearerAuthMiddleware
 from src.chunkid_entities import get_entities_from_chunkids
 from src.communities import create_communities
 from src.entities.source_extract_params import SourceScanExtractParams, get_source_scan_extract_params
@@ -122,6 +123,8 @@ app.add_middleware(
         "/schema_visualization"
     ]
 )
+# Added before CORSMiddleware so CORS wraps it and 401 responses carry CORS headers
+app.add_middleware(BearerAuthMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -790,14 +793,15 @@ async def cancelled_job(
 
 @app.post("/populate_graph_schema")
 async def populate_graph_schema(
+    request: Request,
     input_text=Form(None),
     model=Form(None),
     is_schema_description_checked=Form(None),
-    is_local_storage=Form(None),
-    email=Form(None)
+    is_local_storage=Form(None)
 ):
     """Populate the graph schema from input text."""
     try:
+        email = getattr(request.state, "token_email", None)
         start = time.time()
         result = populate_graph_schema_from_text(input_text, model, is_schema_description_checked, is_local_storage)
         end = time.time()

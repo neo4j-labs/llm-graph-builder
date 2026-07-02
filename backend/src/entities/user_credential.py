@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional
-from fastapi import Form, HTTPException
+from fastapi import Form, HTTPException, Request
 
 class Neo4jCredentials(BaseModel):
     """
@@ -27,25 +27,24 @@ class Neo4jCredentials(BaseModel):
 
 
 async def get_neo4j_credentials(
+    request: Request,
     uri: Optional[str] = Form(None),
     userName: Optional[str] = Form(None),
     password: Optional[str] = Form(None),
-    database: Optional[str] = Form(None),
-    email: Optional[str] = Form(None)
+    database: Optional[str] = Form(None)
 ) -> Neo4jCredentials:
     """
     FastAPI dependency function to extract and validate Neo4j credentials from form data.
-    
     Args:
+        request: Incoming request, used to read the verified token email
         uri: Neo4j database URI
         userName: Neo4j username
-        password: Neo4j password  
+        password: Neo4j password
         database: Neo4j database name (optional, defaults to neo4j)
-        email: User email for logging purposes
-    
+
     Returns:
         Neo4jCredentials: Validated credentials object
-    
+
     Raises:
         HTTPException: If validation fails
     """
@@ -54,5 +53,5 @@ async def get_neo4j_credentials(
         userName=userName,
         password=password,
         database=database,
-        email=email
+        email=getattr(request.state, "token_email", None)
     )
