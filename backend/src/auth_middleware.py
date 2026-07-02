@@ -7,6 +7,7 @@ from jwt import PyJWKClient
 from dotenv import load_dotenv
 from fastapi.responses import JSONResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
+import requests
 
 from src.api_response import create_api_response
 from src.shared.common_fn import get_value_from_env
@@ -27,6 +28,33 @@ def extract_email_claim(claims: dict) -> str | None:
     if not email:
         email = next((value for key, value in claims.items() if key.endswith("/email") and isinstance(value, str)), None)
     return email
+
+
+def fetch_email_from_userinfo(token: str) -> str | None:
+    """Fetch user email from Auth0's /userinfo endpoint using the access token."""
+    if not AUTH0_DOMAIN:
+        return None
+    try:
+        response = requests.get(
+            f"https://{AUTH0_DOMAIN}/userinfo",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5
+        )
+        if response.status_code == 200:
+            userinfo = response.json()
+            email = userinfo.get("email")
+            if email:
+                logging.info(f"Successfully fetched email from /userinfo endpoint")
+                return email
+            # Check for namespaced email claim
+            email = next((value for key, value in userinfo.items() if key.endswith("/email") and isinstance(value, str)), None)
+            return email
+        else:
+            logging.warning(f"Failed to fetch userinfo: {response.status_code}")
+            return None
+    except Exception as e:
+        logging.warning(f"Error fetching userinfo: {e}")
+        return None
 
 
 def verify_bearer_token(token: str) -> dict:
@@ -75,8 +103,21 @@ class BearerAuthMiddleware:
             return await response(scope, receive, send)
         try:
             claims = verify_bearer_token(token)
+            # Try to extract email from token claims first
+            email = extract_email_claim(claims)
+            
+            # If email not found in claims, fetch from /userinfo endpoint
+            if not email:
+                logging.info("Email not found in token claims, fetching from /userinfo endpoint")
+                email = fetch_email_from_userinfo(token)
+            
+            if email:
+                logging.info(f"User authenticated with email: {email}")
+            else:
+                logging.warning("Email could not be extracted from token or userinfo endpoint")
+            
             # Expose the verified identity to endpoints via request.state
-            scope.setdefault("state", {})["token_email"] = extract_email_claim(claims)
+            scope.setdefault("state", {})["token_email"] = email
         except Exception as e:
             logging.warning(f"Bearer token verification failed: {e}")
             response = JSONResponse(

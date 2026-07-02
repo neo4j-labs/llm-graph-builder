@@ -34,6 +34,7 @@ const Auth0ProviderWithHistory: React.FC<{ children: React.ReactNode }> = ({ chi
       clientId={clientId as string}
       authorizationParams={{
         redirect_uri: window.location.origin,
+        scope: 'openid profile email',
         ...(audience ? { audience } : {}),
       }}
       onRedirectCallback={onRedirectCallback}
