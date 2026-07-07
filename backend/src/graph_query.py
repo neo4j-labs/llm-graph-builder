@@ -16,10 +16,12 @@ def get_graphDB_driver(credentials):
     """
     try:
         logging.info(f"Attempting to connect to the Neo4j database at {credentials.uri}")
-        # Prefer credentials values, fallback to env if missing
-        username = credentials.userName if credentials.userName is not None else get_value_from_env('NEO4J_USERNAME')
-        password = credentials.password if credentials.password is not None else get_value_from_env('NEO4J_PASSWORD')
-        database = credentials.database if hasattr(credentials, 'database') and credentials.database is not None else get_value_from_env('NEO4J_DATABASE')
+        username = credentials.userName
+        password = credentials.password
+        database = credentials.database
+
+        if not credentials.uri or not username or not password:
+            raise ValueError("Missing request credentials. uri, userName, and password are required")
 
         enable_user_agent = get_value_from_env("ENABLE_USER_AGENT", "False", "bool")
         if enable_user_agent:

@@ -1,6 +1,8 @@
 from pydantic import BaseModel, Field
 from typing import Optional
-from fastapi import Form, HTTPException
+from fastapi import Form, Header, HTTPException
+
+from src.security.auth import get_optional_verified_user, resolve_trusted_email
 
 class Neo4jCredentials(BaseModel):
     """
@@ -31,7 +33,8 @@ async def get_neo4j_credentials(
     userName: Optional[str] = Form(None),
     password: Optional[str] = Form(None),
     database: Optional[str] = Form(None),
-    email: Optional[str] = Form(None)
+    email: Optional[str] = Form(None),
+    authorization: Optional[str] = Header(default=None)
 ) -> Neo4jCredentials:
     """
     FastAPI dependency function to extract and validate Neo4j credentials from form data.
@@ -49,10 +52,16 @@ async def get_neo4j_credentials(
     Raises:
         HTTPException: If validation fails
     """
+    claims = await get_optional_verified_user(authorization)
+    trusted_email = resolve_trusted_email(claims, email)
+
+    if claims and email and trusted_email != str(email).strip().lower():
+        raise HTTPException(status_code=403, detail="Email in request does not match authenticated user")
+
     return Neo4jCredentials(
         uri=uri,
         userName=userName,
         password=password,
         database=database,
-        email=email
+        email=trusted_email
     )

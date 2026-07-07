@@ -1,9 +1,11 @@
 import json
+import hashlib
 import logging
 import os
 import re
 import shutil
 import sys
+import threading
 import time
 import urllib.parse
 import warnings
@@ -48,12 +50,20 @@ from src.shared.constants import (
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from src.shared.schema_extraction import schema_extraction_from_text
 
-from langchain_community.document_loaders import WebBaseLoader
-
 warnings.filterwarnings("ignore")
 load_dotenv()
 
 logging.basicConfig(format='%(asctime)s - %(message)s', level='INFO')
+_processing_locks: dict[str, threading.Lock] = {}
+
+
+def _get_processing_lock(file_name: str) -> threading.Lock:
+  lock_key = (file_name or "").strip()
+  if lock_key not in _processing_locks:
+    _processing_locks[lock_key] = threading.Lock()
+  return _processing_locks[lock_key]
+
+
 GCS_FILE_CACHE = get_value_from_env("GCS_FILE_CACHE", "False", "bool")
 if GCS_FILE_CACHE:
     BUCKET_UPLOAD_FILE = get_value_from_env('BUCKET_UPLOAD_FILE', default_value=None, data_type=str)
@@ -73,20 +83,32 @@ def sanitize_uploaded_fileName(filename, max_length=100):
     Returns:
         str: Sanitized filename.
     """
-    print("Original filename or incoming file Name:", filename)
-    # safe_name = unicodedata.normalize('NFKD', filename).encode('ascii', 'ignore').decode('ascii')
-    # safe_name = re.sub(r'[^A-Za-z0-9._-]', '_', safe_name)
-    # if '.' in filename:
-    #     base, ext = os.path.splitext(filename)
-    # else:
-    #     base, ext = filename, ''
-    # if len(safe_name) == 0 or len(safe_name) > max_length:
-    #     hash_part = hashlib.sha256(filename.encode('utf-8')).hexdigest()[:16]
-    #     safe_name = (safe_name[:max_length] if len(safe_name) > 0 else 'file') + '_' + hash_part + ext
-    #     if len(safe_name) > max_length:
-    #         safe_name = safe_name[:max_length - len(ext) - 17] + '_' + hash_part + ext
-    # print("Sanitized filename:", safe_name)
-    return filename
+    candidate = (filename or "").replace("\x00", "").strip()
+    candidate = os.path.basename(candidate)
+    if not candidate or candidate in (".", ".."):
+      raise ValueError("Invalid file name")
+    if "/" in candidate or "\\" in candidate:
+      raise ValueError("Invalid file name")
+
+    safe_name = re.sub(r"[^A-Za-z0-9._-]", "_", candidate)
+    safe_name = safe_name.lstrip(".")
+    if not safe_name:
+      raise ValueError("Invalid file name")
+
+    if len(safe_name) > max_length:
+      base, ext = os.path.splitext(safe_name)
+      hash_part = hashlib.sha256(safe_name.encode("utf-8")).hexdigest()[:12]
+      trim_to = max_length - len(ext) - len(hash_part) - 1
+      safe_name = f"{base[:max(1, trim_to)]}_{hash_part}{ext}"
+    return safe_name
+
+
+def validate_file_path(base_dir: str, file_name: str) -> str:
+    base_dir_abs = os.path.abspath(base_dir)
+    candidate = os.path.abspath(os.path.join(base_dir_abs, file_name))
+    if os.path.commonpath([base_dir_abs, candidate]) != base_dir_abs:
+      raise ValueError("Invalid file path")
+    return candidate
 
 
 def create_source_node_graph_url_s3(graph, params):
@@ -213,9 +235,7 @@ def create_source_node_graph_web_url(graph, params):
     success_count=0
     failed_count=0
     lst_file_name = []
-    if not params.source_url.startswith(('http://', 'https://')):
-        params.source_url = 'https://' + params.source_url
-    pages = WebBaseLoader(params.source_url, verify_ssl=False).load()
+    pages = get_documents_from_web_page(params.source_url)
     if pages is None or len(pages)==0:
       failed_count+=1
       message = f"Unable to read data for given url : {params.source_url}"
@@ -499,18 +519,19 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
   uri_latency["total_chunks"] = total_chunks
 
   start_status_document_node = time.time()
-  result = graphDb_data_Access.get_current_status_document_node(params.file_name)
-  end_status_document_node = time.time()
-  elapsed_status_document_node = end_status_document_node - start_status_document_node
-  logging.info(f'Time taken to get the current status of document node: {elapsed_status_document_node:.2f} seconds')
-  uri_latency["get_status_document_node"] = f'{elapsed_status_document_node:.2f}'
+  with _get_processing_lock(params.file_name):
+    result = graphDb_data_Access.get_current_status_document_node(params.file_name)
+    end_status_document_node = time.time()
+    elapsed_status_document_node = end_status_document_node - start_status_document_node
+    logging.info(f'Time taken to get the current status of document node: {elapsed_status_document_node:.2f} seconds')
+    uri_latency["get_status_document_node"] = f'{elapsed_status_document_node:.2f}'
 
   select_chunks_with_retry=0
   node_count = 0
   rel_count = 0
-      
+
   if len(result) > 0:
-    if result[0]['Status'] != 'Processing':      
+    if result[0]['Status'] != 'Processing':
       obj_source_node = sourceNode()
       status = "Processing"
       obj_source_node.file_name = params.file_name.strip() if isinstance(params.file_name, str) else params.file_name
@@ -535,125 +556,125 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
       elapsed_update_source_node = end_update_source_node - start_update_source_node
       logging.info(f'Time taken to update the document source node: {elapsed_update_source_node:.2f} seconds')
       uri_latency["update_source_node"] = f'{elapsed_update_source_node:.2f}'
-
-      logging.info('Update the status as Processing')
-      update_graph_chunk_processed = get_value_from_env("UPDATE_GRAPH_CHUNKS_PROCESSED",20,"int")
-      # selected_chunks = []
-      is_cancelled_status = False
-      job_status = "Completed"
-      tokens_per_file = 0
-      for i in range(0, len(chunkId_chunkDoc_list), update_graph_chunk_processed):
-        select_chunks_upto = i+update_graph_chunk_processed
-        logging.info(f'Selected Chunks upto: {select_chunks_upto}')
-        if len(chunkId_chunkDoc_list) <= select_chunks_upto:
-          select_chunks_upto = len(chunkId_chunkDoc_list)
-        selected_chunks = chunkId_chunkDoc_list[i:select_chunks_upto]
-        
-        result = graphDb_data_Access.get_current_status_document_node(params.file_name)
-        is_cancelled_status = result[0]['is_cancelled']
-        logging.info(f"Value of is_cancelled : {result[0]['is_cancelled']}")
-        if bool(is_cancelled_status):
-          job_status = "Cancelled"
-          logging.info('Exit from running loop of processing file')
-          break
-        else:
-          processing_chunks_start_time = time.time()
-          node_count,rel_count,latency_processed_chunk,token_usage = await processing_chunks(selected_chunks,graph,credentials,params.file_name,params.model,params.allowedNodes,params.allowedRelationship,params.chunks_to_combine,node_count, rel_count, params.additional_instructions, params.embedding_provider, params.embedding_model)
-          logging.info("Token used in processing chunks: %s", token_usage)
-          tokens_per_file += token_usage
-          logging.info("Total token used per file: %s", tokens_per_file)
-          start_save_token = time.time()
-          try:
-            if get_value_from_env("TRACK_USER_USAGE", "false", "bool"):
-                    track_token_usage(credentials.email,credentials.uri,token_usage, params.model, operation_type="extraction")
-                    logging.info("Token usage for extraction: %s for user: %s", token_usage, credentials.email)
-          except LLMGraphBuilderException as e:
-            logging.info(f"Error while tracking token usage: {e}")
-            obj_source_node = sourceNode()
-            obj_source_node.file_name = params.file_name
-            obj_source_node.updated_at = datetime.now()
-            obj_source_node.processing_time = datetime.now() - start_time
-            obj_source_node.processed_chunk = select_chunks_upto + select_chunks_with_retry
-            obj_source_node.token_usage = tokens_per_file
-            graphDb_data_Access.update_source_node(obj_source_node)
-            graphDb_data_Access.update_node_relationship_count(params.file_name)
-            raise e
-          end_save_token = time.time()
-          elapsed_save_token = end_save_token - start_save_token
-          logging.info(f'Time taken to save token count: {elapsed_save_token:.2f} seconds')
-
-          processing_chunks_end_time = time.time()
-          processing_chunks_elapsed_end_time = processing_chunks_end_time - processing_chunks_start_time
-          logging.info(f"Time taken {update_graph_chunk_processed} chunks processed upto {select_chunks_upto} completed in {processing_chunks_elapsed_end_time:.2f} seconds for file name {params.file_name}")
-          uri_latency[f'processed_combine_chunk_{i}-{select_chunks_upto}'] = f'{processing_chunks_elapsed_end_time:.2f}'
-          uri_latency[f'processed_chunk_detail_{i}-{select_chunks_upto}'] = latency_processed_chunk
-          end_time = datetime.now()
-          processed_time = end_time - start_time
-          
-          obj_source_node = sourceNode()
-          obj_source_node.file_name = params.file_name
-          obj_source_node.updated_at = end_time
-          obj_source_node.processing_time = processed_time
-          obj_source_node.processed_chunk = select_chunks_upto+select_chunks_with_retry
-          obj_source_node.token_usage = tokens_per_file
-          if params.retry_condition == START_FROM_BEGINNING:
-            result = execute_graph_query(graph,QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT, params={"filename":params.file_name})
-            obj_source_node.node_count = result[0]['nodes']
-            obj_source_node.relationship_count = result[0]['rels']
-          else:  
-            obj_source_node.node_count = node_count
-            obj_source_node.relationship_count = rel_count
-          graphDb_data_Access.update_source_node(obj_source_node)
-          graphDb_data_Access.update_node_relationship_count(params.file_name)
-      result = graphDb_data_Access.get_current_status_document_node(params.file_name)
-      is_cancelled_status = result[0]['is_cancelled']
-      if bool(is_cancelled_status):
-        logging.info('Is_cancelled True at the end extraction')
-        job_status = 'Cancelled'
-      logging.info(f'Job Status at the end : {job_status}')
-      end_time = datetime.now()
-      processed_time = end_time - start_time
-      obj_source_node = sourceNode()
-      obj_source_node.file_name = params.file_name.strip() if isinstance(params.file_name, str) else params.file_name
-      obj_source_node.status = job_status
-      obj_source_node.processing_time = processed_time
-      obj_source_node.token_usage = tokens_per_file
-
-      graphDb_data_Access.update_source_node(obj_source_node)
-      graphDb_data_Access.update_node_relationship_count(params.file_name)
-      logging.info('Updated the nodeCount and relCount properties in Document node')
-      logging.info(f'file:{params.file_name} extraction has been completed')
-
-
-      # merged_file_path have value only when file uploaded from local
-      
-      if is_uploaded_from_local and not bool(is_cancelled_status):
-        if GCS_FILE_CACHE:
-          folder_name = create_gcs_bucket_folder_name_hashed(credentials.uri, params.file_name)
-          delete_file_from_gcs(BUCKET_UPLOAD_FILE,folder_name,params.file_name)
-        else:
-          delete_uploaded_local_file(merged_file_path, params.file_name)  
-      processing_source_func = time.time() - processing_source_start_time
-      logging.info(f"Time taken to processing source function completed in {processing_source_func:.2f} seconds for file name {params.file_name}")  
-      uri_latency["Processed_source"] = f'{processing_source_func:.2f}'
-      if node_count == 0:
-        uri_latency["Per_entity_latency"] = 'N/A'
-      else:  
-        uri_latency["Per_entity_latency"] = f'{int(processing_source_func)/node_count}/s'
-      
-      response["fileName"] = params.file_name
-      response["nodeCount"] = node_count
-      response["relationshipCount"] = rel_count
-      response["total_processing_time"] = round(processed_time.total_seconds(),2)
-      response["status"] = job_status
-      response["model"] = params.model
-      response["success_count"] = 1
-      response['token_usage'] = tokens_per_file
-      
-      return uri_latency, response
-    else:      
+    else:
       logging.info("File does not process because its already in Processing status")
       return uri_latency,response
+
+    logging.info('Update the status as Processing')
+    update_graph_chunk_processed = get_value_from_env("UPDATE_GRAPH_CHUNKS_PROCESSED",20,"int")
+    # selected_chunks = []
+    is_cancelled_status = False
+    job_status = "Completed"
+    tokens_per_file = 0
+    for i in range(0, len(chunkId_chunkDoc_list), update_graph_chunk_processed):
+      select_chunks_upto = i+update_graph_chunk_processed
+      logging.info(f'Selected Chunks upto: {select_chunks_upto}')
+      if len(chunkId_chunkDoc_list) <= select_chunks_upto:
+        select_chunks_upto = len(chunkId_chunkDoc_list)
+      selected_chunks = chunkId_chunkDoc_list[i:select_chunks_upto]
+      
+      result = graphDb_data_Access.get_current_status_document_node(params.file_name)
+      is_cancelled_status = result[0]['is_cancelled']
+      logging.info(f"Value of is_cancelled : {result[0]['is_cancelled']}")
+      if bool(is_cancelled_status):
+        job_status = "Cancelled"
+        logging.info('Exit from running loop of processing file')
+        break
+      else:
+        processing_chunks_start_time = time.time()
+        node_count,rel_count,latency_processed_chunk,token_usage = await processing_chunks(selected_chunks,graph,credentials,params.file_name,params.model,params.allowedNodes,params.allowedRelationship,params.chunks_to_combine,node_count, rel_count, params.additional_instructions, params.embedding_provider, params.embedding_model)
+        logging.info("Token used in processing chunks: %s", token_usage)
+        tokens_per_file += token_usage
+        logging.info("Total token used per file: %s", tokens_per_file)
+        start_save_token = time.time()
+        try:
+          if get_value_from_env("TRACK_USER_USAGE", "false", "bool"):
+            track_token_usage(credentials.email,credentials.uri,token_usage, params.model, operation_type="extraction")
+            logging.info("Token usage for extraction: %s for user: %s", token_usage, credentials.email)
+        except LLMGraphBuilderException as e:
+          logging.info(f"Error while tracking token usage: {e}")
+          obj_source_node = sourceNode()
+          obj_source_node.file_name = params.file_name
+          obj_source_node.updated_at = datetime.now()
+          obj_source_node.processing_time = datetime.now() - start_time
+          obj_source_node.processed_chunk = select_chunks_upto + select_chunks_with_retry
+          obj_source_node.token_usage = tokens_per_file
+          graphDb_data_Access.update_source_node(obj_source_node)
+          graphDb_data_Access.update_node_relationship_count(params.file_name)
+          raise e
+        end_save_token = time.time()
+        elapsed_save_token = end_save_token - start_save_token
+        logging.info(f'Time taken to save token count: {elapsed_save_token:.2f} seconds')
+
+        processing_chunks_end_time = time.time()
+        processing_chunks_elapsed_end_time = processing_chunks_end_time - processing_chunks_start_time
+        logging.info(f"Time taken {update_graph_chunk_processed} chunks processed upto {select_chunks_upto} completed in {processing_chunks_elapsed_end_time:.2f} seconds for file name {params.file_name}")
+        uri_latency[f'processed_combine_chunk_{i}-{select_chunks_upto}'] = f'{processing_chunks_elapsed_end_time:.2f}'
+        uri_latency[f'processed_chunk_detail_{i}-{select_chunks_upto}'] = latency_processed_chunk
+        end_time = datetime.now()
+        processed_time = end_time - start_time
+        
+        obj_source_node = sourceNode()
+        obj_source_node.file_name = params.file_name
+        obj_source_node.updated_at = end_time
+        obj_source_node.processing_time = processed_time
+        obj_source_node.processed_chunk = select_chunks_upto+select_chunks_with_retry
+        obj_source_node.token_usage = tokens_per_file
+        if params.retry_condition == START_FROM_BEGINNING:
+          result = execute_graph_query(graph,QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT, params={"filename":params.file_name})
+          obj_source_node.node_count = result[0]['nodes']
+          obj_source_node.relationship_count = result[0]['rels']
+        else:  
+          obj_source_node.node_count = node_count
+          obj_source_node.relationship_count = rel_count
+        graphDb_data_Access.update_source_node(obj_source_node)
+        graphDb_data_Access.update_node_relationship_count(params.file_name)
+    result = graphDb_data_Access.get_current_status_document_node(params.file_name)
+    is_cancelled_status = result[0]['is_cancelled']
+    if bool(is_cancelled_status):
+      logging.info('Is_cancelled True at the end extraction')
+      job_status = 'Cancelled'
+    logging.info(f'Job Status at the end : {job_status}')
+    end_time = datetime.now()
+    processed_time = end_time - start_time
+    obj_source_node = sourceNode()
+    obj_source_node.file_name = params.file_name.strip() if isinstance(params.file_name, str) else params.file_name
+    obj_source_node.status = job_status
+    obj_source_node.processing_time = processed_time
+    obj_source_node.token_usage = tokens_per_file
+
+    graphDb_data_Access.update_source_node(obj_source_node)
+    graphDb_data_Access.update_node_relationship_count(params.file_name)
+    logging.info('Updated the nodeCount and relCount properties in Document node')
+    logging.info(f'file:{params.file_name} extraction has been completed')
+
+
+    # merged_file_path have value only when file uploaded from local
+    
+    if is_uploaded_from_local and not bool(is_cancelled_status):
+      if GCS_FILE_CACHE:
+        folder_name = create_gcs_bucket_folder_name_hashed(credentials.uri, params.file_name)
+        delete_file_from_gcs(BUCKET_UPLOAD_FILE,folder_name,params.file_name)
+      else:
+        delete_uploaded_local_file(merged_file_path, params.file_name)  
+    processing_source_func = time.time() - processing_source_start_time
+    logging.info(f"Time taken to processing source function completed in {processing_source_func:.2f} seconds for file name {params.file_name}")  
+    uri_latency["Processed_source"] = f'{processing_source_func:.2f}'
+    if node_count == 0:
+      uri_latency["Per_entity_latency"] = 'N/A'
+    else:  
+      uri_latency["Per_entity_latency"] = f'{int(processing_source_func)/node_count}/s'
+    
+    response["fileName"] = params.file_name
+    response["nodeCount"] = node_count
+    response["relationshipCount"] = rel_count
+    response["total_processing_time"] = round(processed_time.total_seconds(),2)
+    response["status"] = job_status
+    response["model"] = params.model
+    response["success_count"] = 1
+    response['token_usage'] = tokens_per_file
+
+    return uri_latency, response
   else:
     error_message = "Unable to get the status of document node."
     logging.error(error_message)
@@ -800,7 +821,7 @@ def connection_check_and_get_vector_dimensions(graph, database, email, uri):
   return graph_DB_dataAccess.connection_check_and_get_vector_dimensions(database, email, uri)
 
 
-def merge_chunks_local(file_name, total_chunks, chunk_dir, merged_dir):
+def merge_chunks_local(file_name, total_chunks, chunk_dir, merged_dir, upload_id=None):
   """
   Merge file chunks into a single file locally.
 
@@ -816,10 +837,11 @@ def merge_chunks_local(file_name, total_chunks, chunk_dir, merged_dir):
   if not os.path.exists(merged_dir):
     os.mkdir(merged_dir)
   logging.info(f'Merged File Path: {merged_dir}')
-  merged_file_path = os.path.join(merged_dir, file_name)
+  merged_file_path = validate_file_path(merged_dir, file_name)
+  upload_prefix = f"{upload_id}_" if upload_id else ""
   with open(merged_file_path, "wb") as write_stream:
     for i in range(1, total_chunks + 1):
-      chunk_file_path = os.path.join(chunk_dir, f"{file_name}_part_{i}")
+      chunk_file_path = validate_file_path(chunk_dir, f"{upload_prefix}{file_name}_part_{i}")
       logging.info(f'Chunk File Path While Merging Parts:{chunk_file_path}')
       with open(chunk_file_path, "rb") as chunk_file:
         shutil.copyfileobj(chunk_file, write_stream)
@@ -828,7 +850,7 @@ def merge_chunks_local(file_name, total_chunks, chunk_dir, merged_dir):
   file_size = os.path.getsize(merged_file_path)
   return file_size
 
-def upload_file(graph, model, chunk, chunk_number: int, total_chunks: int, file_name, uri, chunk_dir, merged_dir):
+def upload_file(graph, model, chunk, chunk_number: int, total_chunks: int, file_name, uri, chunk_dir, merged_dir, upload_id=None):
     """
     Upload a file or its chunk to the specified destination (GCS or local).
 
@@ -846,15 +868,23 @@ def upload_file(graph, model, chunk, chunk_number: int, total_chunks: int, file_
     Returns:
         str: Status message indicating the result of the upload operation.
     """
+    chunk_number = int(chunk_number)
+    total_chunks = int(total_chunks)
+    if chunk_number < 1 or total_chunks < 1 or chunk_number > total_chunks or total_chunks > 10000:
+        raise ValueError("Invalid chunk number or total chunk count")
+
     # Use sanitized filename for chunk operations
     safe_file_name = sanitize_uploaded_fileName(file_name)
+    upload_prefix = ""
+    if upload_id:
+        upload_prefix = sanitize_uploaded_fileName(upload_id, max_length=64) + "_"
+
     if GCS_FILE_CACHE:
       folder_name = create_gcs_bucket_folder_name_hashed(uri, safe_file_name)
       upload_file_to_gcs(chunk, chunk_number, safe_file_name, BUCKET_UPLOAD_FILE, folder_name)
     else:
-      if not os.path.exists(chunk_dir):
-        os.mkdir(chunk_dir)
-      chunk_file_path = os.path.join(chunk_dir, f"{safe_file_name}_part_{chunk_number}")
+      os.makedirs(chunk_dir, exist_ok=True)
+      chunk_file_path = validate_file_path(chunk_dir, f"{upload_prefix}{safe_file_name}_part_{chunk_number}")
       logging.info(f'Chunk File Path: {chunk_file_path}')
       with open(chunk_file_path, "wb") as chunk_file:
         chunk_file.write(chunk.file.read())
@@ -862,9 +892,9 @@ def upload_file(graph, model, chunk, chunk_number: int, total_chunks: int, file_
     if int(chunk_number) == int(total_chunks):
         # If this is the last chunk, merge all chunks into a single file
         if GCS_FILE_CACHE:
-            file_size = merge_file_gcs(BUCKET_UPLOAD_FILE, safe_file_name, folder_name, int(total_chunks))
+          file_size = merge_file_gcs(BUCKET_UPLOAD_FILE, safe_file_name, folder_name, total_chunks)
         else:
-            file_size = merge_chunks_local(safe_file_name, int(total_chunks), chunk_dir, merged_dir)
+          file_size = merge_chunks_local(safe_file_name, total_chunks, chunk_dir, merged_dir, upload_id=upload_prefix.rstrip("_"))
         logging.info("File merged successfully")
         file_extension = safe_file_name.split('.')[-1]
         obj_source_node = sourceNode()

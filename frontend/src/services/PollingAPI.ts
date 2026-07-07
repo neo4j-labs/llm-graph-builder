@@ -9,23 +9,25 @@ export default async function subscribe(
   const MAX_POLLING_ATTEMPTS = 10;
   let pollingAttempts = 0;
   let delay = 1000;
-  // Build query parameters conditionally
-  const queryParams = new URLSearchParams();
+  const formData = new FormData();
   if (userCredentials.uri) {
-    queryParams.append('url', userCredentials.uri);
+    formData.append('uri', userCredentials.uri);
   }
   if (userCredentials.userName) {
-    queryParams.append('userName', userCredentials.userName);
+    formData.append('userName', userCredentials.userName);
   }
   if (userCredentials.password) {
-    queryParams.append('password', btoa(userCredentials.password));
+    formData.append('password', userCredentials.password);
   }
   if (userCredentials.database) {
-    queryParams.append('database', userCredentials.database);
+    formData.append('database', userCredentials.database);
+  }
+  if (userCredentials.email) {
+    formData.append('email', userCredentials.email);
   }
   while (pollingAttempts < MAX_POLLING_ATTEMPTS) {
     let currentDelay = delay;
-    const response: PollingAPI_Response = await api.get(`/document_status/${fileName}?${queryParams.toString()}`);
+    const response: PollingAPI_Response = await api.post(`/document_status/${fileName}`, formData);
     if (response.data?.file_name?.status === 'Processing') {
       progressHandler(response.data);
       await new Promise((resolve) => setTimeout(resolve, currentDelay));

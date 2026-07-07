@@ -394,7 +394,7 @@ def track_token_usage(
         normalized_email = (email or "").strip().lower() or None
         normalized_db_url = (uri or "").strip() or None
         logging.info(f"Tracking token usage for email: {normalized_email}, uri: {normalized_db_url}, usage: {usage}, operation_type: {operation_type}")
-        is_neo4j_user = bool(normalized_email and normalized_email.endswith("@neo4j.com"))
+        is_neo4j_user = False
         
         if operation_type == "precheck":
             limits = get_remaining_token_limits(email, uri)
@@ -404,7 +404,7 @@ def track_token_usage(
             users_monthly_used = limits.get("monthly_used", 0)
             
             if get_value_from_env("LIMIT_TOKEN_USAGE_PER_USER", "False", bool):
-                if ((users_daily_used > users_daily_limit) or (users_monthly_used > users_monthly_limit)) and not is_neo4j_user:
+                if ((users_daily_used > users_daily_limit) or (users_monthly_used > users_monthly_limit)):
                     raise LLMGraphBuilderException(
                         "Token usage limit exceeded. Please contact the team to increase your limit."
                     )

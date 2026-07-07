@@ -9,6 +9,11 @@ const api = axios.create({
 
 // Store credentials globally for the interceptor
 let globalCredentials: UserCredentials | null = null;
+let tokenProvider: (() => Promise<string | null>) | null = null;
+
+export const setAuthTokenProvider = (provider: (() => Promise<string | null>) | null) => {
+  tokenProvider = provider;
+};
 
 export const createDefaultFormData = (userCredentials: UserCredentials) => {
   // Store credentials for interceptor use
@@ -19,7 +24,21 @@ export const createDefaultFormData = (userCredentials: UserCredentials) => {
 
   // Add interceptor to automatically inject credentials into all requests
   api.interceptors.request.use(
-    (config) => {
+    async (config) => {
+      if (tokenProvider) {
+        try {
+          const token = await tokenProvider();
+          if (token) {
+            config.headers = {
+              ...config.headers,
+              Authorization: `Bearer ${token}`,
+            };
+          }
+        } catch (error) {
+          console.warn('Unable to fetch access token for request:', error);
+        }
+      }
+
       if (globalCredentials && config.data instanceof FormData) {
         // Add credentials to FormData if not already present
         if (globalCredentials.uri && !config.data.has('uri')) {

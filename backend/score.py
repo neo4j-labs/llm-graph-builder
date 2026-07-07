@@ -1,22 +1,22 @@
 import asyncio
-import base64
 import gc
 import json
 import logging
 import os
 import time
 from datetime import datetime, timezone
+from collections import defaultdict, deque
 from typing import List
+from uuid import uuid4
 
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, File, Form, Request, UploadFile
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi_health import health
 from google.oauth2.credentials import Credentials
 from langchain_neo4j import Neo4jGraph
-from sse_starlette.sse import EventSourceResponse
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.types import ASGIApp, Receive, Scope, Send
 
@@ -43,10 +43,11 @@ from src.post_processing import create_entity_embedding, create_vector_fulltext_
 from src.ragas_eval import get_additional_metrics, get_ragas_metrics
 from src.shared.common_fn import formatted_time, get_value_from_env, get_remaining_token_limits, get_user_embedding_model, change_user_embedding_model
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
+from src.security.auth import get_verified_user
 from Secweb.XContentTypeOptions import XContentTypeOptions
 from Secweb.XFrameOptions import XFrame
 
-load_dotenv(override=True)
+load_dotenv(override=False)
 
 logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
@@ -124,13 +125,61 @@ app.add_middleware(
 )
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[origin.strip() for origin in get_value_from_env("CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173", str).split(",") if origin.strip()],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 app.add_middleware(SessionMiddleware, secret_key=os.urandom(24))
 app.add_api_route("/health", health([healthy_condition, healthy]))
+
+
+AI_RATE_LIMIT_WINDOW_SECONDS = get_value_from_env("AI_RATE_LIMIT_WINDOW_SECONDS", 60, int)
+AI_RATE_LIMIT_MAX_REQUESTS = get_value_from_env("AI_RATE_LIMIT_MAX_REQUESTS", 30, int)
+MAX_AI_INPUT_CHARS = get_value_from_env("MAX_AI_INPUT_CHARS", 20000, int)
+_ai_request_buckets = defaultdict(deque)
+
+
+def _get_client_ip(request: Request) -> str:
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+def _redact_secret(value: str | None) -> str | None:
+    if value:
+        return "***REDACTED***"
+    return None
+
+
+def _sanitize_for_log(value: str | None, max_len: int = 200) -> str:
+    if not value:
+        return ""
+    return str(value).replace("\n", " ")[:max_len]
+
+
+def _scoped_session_id(email: str | None, session_id: str | None) -> str:
+    raw_session = (session_id or "").strip() or str(uuid4())
+    if len(raw_session) > 128:
+        raise HTTPException(status_code=400, detail="Invalid session_id")
+    owner = (email or "anonymous").strip().lower()
+    return f"{owner}:{raw_session}"
+
+
+def enforce_ai_guardrails(request: Request, user_key: str | None, *text_inputs: str | None) -> None:
+    key = f"{(user_key or '').strip().lower()}|{_get_client_ip(request)}"
+    now = time.time()
+    bucket = _ai_request_buckets[key]
+    while bucket and now - bucket[0] > AI_RATE_LIMIT_WINDOW_SECONDS:
+        bucket.popleft()
+    if len(bucket) >= AI_RATE_LIMIT_MAX_REQUESTS:
+        raise HTTPException(status_code=429, detail="Rate limit exceeded")
+    bucket.append(now)
+
+    for text in text_inputs:
+        if text and len(str(text)) > MAX_AI_INPUT_CHARS:
+            raise HTTPException(status_code=413, detail="Request input is too large")
 
 
 @app.post("/url/scan")
@@ -174,7 +223,7 @@ async def create_source_knowledge_graph_url(
             'elapsed_api_time': f'{elapsed_time:.2f}',
             'userName': credentials.userName,
             'database': credentials.database,
-            'aws_access_key_id': params.aws_access_key_id,
+            'aws_access_key_id': _redact_secret(params.aws_access_key_id),
             'model': params.model,
             'gcs_bucket_name': params.gcs_bucket_name,
             'gcs_bucket_folder': params.gcs_bucket_folder,
@@ -205,12 +254,14 @@ async def create_source_knowledge_graph_url(
 
 @app.post("/extract")
 async def extract_knowledge_graph_from_file(
+    request: Request,
     credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
     params: SourceScanExtractParams = Depends(get_source_scan_extract_params)
 ):
     """Extract a knowledge graph from a file or URL source."""
     try:
         start_time = time.time()
+        enforce_ai_guardrails(request, credentials.email, params.additional_instructions, params.source_url, params.wiki_query)
         graph = create_graph_database_connection(credentials)
         graphDb_data_Access = graphDBdataAccess(graph)
 
@@ -401,6 +452,7 @@ async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_cred
                 
 @app.post("/chat_bot")
 async def chat_bot(
+    request: Request,
     credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
     model=Form(None),
     question=Form(None),
@@ -414,6 +466,8 @@ async def chat_bot(
     logging.info(f"QA_RAG called at {datetime.now()}")
     qa_rag_start_time = time.time()
     try:
+        enforce_ai_guardrails(request, credentials.email, question)
+        scoped_session_id = _scoped_session_id(credentials.email, session_id)
         if mode == "graph":
             graph = Neo4jGraph(url=credentials.uri, username=credentials.userName, password=credentials.password, database=credentials.database, sanitize=True, refresh_schema=True)
         else:
@@ -421,14 +475,14 @@ async def chat_bot(
         
         graphDb_data_Access = graphDBdataAccess(graph)
         write_access = graphDb_data_Access.check_account_access(database=credentials.database)
-        result = await asyncio.to_thread(QA_RAG, graph=graph, model=model, question=question, document_names=document_names, session_id=session_id, mode=mode, write_access=write_access, email=credentials.email, uri=credentials.uri, embedding_provider=embedding_provider, embedding_model=embedding_model)
+        result = await asyncio.to_thread(QA_RAG, graph=graph, model=model, question=question, document_names=document_names, session_id=scoped_session_id, mode=mode, write_access=write_access, email=credentials.email, uri=credentials.uri, embedding_provider=embedding_provider, embedding_model=embedding_model)
 
         total_call_time = time.time() - qa_rag_start_time
         logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
         result["info"]["response_time"] = round(total_call_time, 2)
         
         json_obj = {'api_name':'chat_bot','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'question':question,'document_names':document_names,
-                             'session_id':session_id, 'mode':mode, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{total_call_time:.2f}','email':credentials.email}
+                             'session_id':scoped_session_id, 'mode':mode, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{total_call_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         
         return create_api_response('Success',data=result)
@@ -527,10 +581,11 @@ async def clear_chat_bot(
     try:
         start = time.time()
         graph = create_graph_database_connection(credentials)
-        result = await asyncio.to_thread(clear_chat_history,graph=graph,session_id=session_id)
+        scoped_session_id = _scoped_session_id(credentials.email, session_id)
+        result = await asyncio.to_thread(clear_chat_history,graph=graph,session_id=scoped_session_id)
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'clear_chat_bot', 'db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'session_id':session_id, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
+        json_obj = {'api_name':'clear_chat_bot', 'db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'session_id':scoped_session_id, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result)
     except Exception as e:
@@ -576,6 +631,7 @@ async def upload_large_file_into_chunks(
     chunkNumber=Form(None),
     totalChunks=Form(None),
     originalname=Form(None),
+    uploadId=Form(None),
     model=Form(None),
     credentials: Neo4jCredentials = Depends(get_neo4j_credentials)
 ):
@@ -583,7 +639,7 @@ async def upload_large_file_into_chunks(
     try:
         start = time.time()
         graph = create_graph_database_connection(credentials)
-        result = await asyncio.to_thread(upload_file, graph, model, file, chunkNumber, totalChunks, originalname, credentials.uri, CHUNK_DIR, MERGED_DIR)
+        result = await asyncio.to_thread(upload_file, graph, model, file, chunkNumber, totalChunks, originalname, credentials.uri, CHUNK_DIR, MERGED_DIR, uploadId)
         end = time.time()
         elapsed_time = end - start
         if int(chunkNumber) == int(totalChunks):
@@ -628,70 +684,42 @@ async def get_structured_schema(credentials: Neo4jCredentials = Depends(get_neo4
     finally:
         gc.collect()
             
-def decode_password(pwd):
-    return base64.b64decode(pwd).decode("utf-8")
-
-def encode_password(pwd):
-    return base64.b64encode(pwd.encode('ascii'))
-
-@app.get("/update_extract_status/{file_name}")
-async def update_extract_status(
-    request: Request,
-    file_name: str,
-    uri: str = None,
-    userName: str = None,
-    password: str = None,
-    database: str = None
-):
-    """Stream updates on extract status for a given file name."""
-    async def generate():
-        status = ''
-        
-        if password is not None and password != "null":
-            decoded_password = decode_password(password)
-        else:
-            decoded_password = None
-
-        url = uri
-        if url and " " in url:
-            url= url.replace(" ","+")
-        credentials= Neo4jCredentials(uri=url, userName=userName, password=decoded_password, database=database)
+@app.post('/document_status/{file_name}')
+async def get_document_status(file_name: str, credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
+    """Get the status of a document in the graph database."""
+    try:
         graph = create_graph_database_connection(credentials)
         graphDb_data_Access = graphDBdataAccess(graph)
-        while True:
-            try:
-                if await request.is_disconnected():
-                    logging.info(" SSE Client disconnected")
-                    break
-                # get the current status of document node
-                
-                else:
-                    result = graphDb_data_Access.get_current_status_document_node(file_name)
-                    if len(result) > 0:
-                        status = json.dumps({'fileName':file_name, 
-                        'status':result[0]['Status'],
-                        'processingTime':result[0]['processingTime'],
-                        'nodeCount':result[0]['nodeCount'],
-                        'relationshipCount':result[0]['relationshipCount'],
-                        'model':result[0]['model'],
-                        'total_chunks':result[0]['total_chunks'],
-                        'fileSize':result[0]['fileSize'],
-                        'processed_chunk':result[0]['processed_chunk'],
-                        'fileSource':result[0]['fileSource'],
-                        'chunkNodeCount' : result[0]['chunkNodeCount'],
-                        'chunkRelCount' : result[0]['chunkRelCount'],
-                        'entityNodeCount' : result[0]['entityNodeCount'],
-                        'entityEntityRelCount' : result[0]['entityEntityRelCount'],
-                        'communityNodeCount' : result[0]['communityNodeCount'],
-                        'communityRelCount' : result[0]['communityRelCount'],
-                        'token_usage' : result[0]['token_usage'],
-                        'embedding_model' : result[0]['embedding_model']
-                        })
-                    yield status
-            except asyncio.CancelledError:
-                logging.info("SSE Connection cancelled")
-    
-    return EventSourceResponse(generate(),ping=60)
+        result = graphDb_data_Access.get_current_status_document_node(file_name)
+        if len(result) > 0:
+            status = {'fileName':file_name,
+                'status':result[0]['Status'],
+                'processingTime':result[0]['processingTime'],
+                'nodeCount':result[0]['nodeCount'],
+                'relationshipCount':result[0]['relationshipCount'],
+                'model':result[0]['model'],
+                'total_chunks':result[0]['total_chunks'],
+                'fileSize':result[0]['fileSize'],
+                'processed_chunk':result[0]['processed_chunk'],
+                'fileSource':result[0]['fileSource'],
+                'chunkNodeCount' : result[0]['chunkNodeCount'],
+                'chunkRelCount' : result[0]['chunkRelCount'],
+                'entityNodeCount' : result[0]['entityNodeCount'],
+                'entityEntityRelCount' : result[0]['entityEntityRelCount'],
+                'communityNodeCount' : result[0]['communityNodeCount'],
+                'communityRelCount' : result[0]['communityRelCount'],
+                'token_usage' : result[0]['token_usage'],
+                'embedding_model' : result[0]['embedding_model']
+                }
+        else:
+            status = {'fileName':file_name, 'status':'Failed'}
+        logging.info(f'Result of document status in refresh : {result}')
+        return create_api_response('Success',message="",file_name=status)
+    except Exception as e:
+        message="Unable to get the document status"
+        error_message = str(e)
+        logging.exception(f'{message}:{error_message}')
+        return create_api_response('Failed',message=message)
 
 @app.post("/delete_document_and_entities")
 async def delete_document_and_entities(
@@ -722,46 +750,6 @@ async def delete_document_and_entities(
     finally:
         gc.collect()
 
-@app.get('/document_status/{file_name}')
-async def get_document_status(file_name, url, userName, password, database):
-    """Get the status of a document in the graph database."""
-    decoded_password = decode_password(password)
-   
-    try:
-        credentials= Neo4jCredentials(uri=url, userName=userName, password=decoded_password, database=database)
-        graph = create_graph_database_connection(credentials)
-        graphDb_data_Access = graphDBdataAccess(graph)
-        result = graphDb_data_Access.get_current_status_document_node(file_name)
-        if len(result) > 0:
-            status = {'fileName':file_name, 
-                'status':result[0]['Status'],
-                'processingTime':result[0]['processingTime'],
-                'nodeCount':result[0]['nodeCount'],
-                'relationshipCount':result[0]['relationshipCount'],
-                'model':result[0]['model'],
-                'total_chunks':result[0]['total_chunks'],
-                'fileSize':result[0]['fileSize'],
-                'processed_chunk':result[0]['processed_chunk'],
-                'fileSource':result[0]['fileSource'],
-                'chunkNodeCount' : result[0]['chunkNodeCount'],
-                'chunkRelCount' : result[0]['chunkRelCount'],
-                'entityNodeCount' : result[0]['entityNodeCount'],
-                'entityEntityRelCount' : result[0]['entityEntityRelCount'],
-                'communityNodeCount' : result[0]['communityNodeCount'],
-                'communityRelCount' : result[0]['communityRelCount'],
-                'token_usage' : result[0]['token_usage'],
-                'embedding_model' : result[0]['embedding_model']
-                }
-        else:
-            status = {'fileName':file_name, 'status':'Failed'}
-        logging.info(f'Result of document status in refresh : {result}')
-        return create_api_response('Success',message="",file_name=status)
-    except Exception as e:
-        message="Unable to get the document status"
-        error_message = str(e)
-        logging.exception(f'{message}:{error_message}')
-        return create_api_response('Failed',message=message)
-    
 @app.post("/cancelled_job")
 async def cancelled_job(
     credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
@@ -790,6 +778,8 @@ async def cancelled_job(
 
 @app.post("/populate_graph_schema")
 async def populate_graph_schema(
+    request: Request,
+    user_claims: dict = Depends(get_verified_user),
     input_text=Form(None),
     model=Form(None),
     is_schema_description_checked=Form(None),
@@ -799,10 +789,12 @@ async def populate_graph_schema(
     """Populate the graph schema from input text."""
     try:
         start = time.time()
+        trusted_email = str(user_claims.get("email", "")).strip().lower()
+        enforce_ai_guardrails(request, trusted_email, input_text)
         result = populate_graph_schema_from_text(input_text, model, is_schema_description_checked, is_local_storage)
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'populate_graph_schema', 'model':model, 'is_schema_description_checked':is_schema_description_checked, 'input_text':input_text, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
+        json_obj = {'api_name':'populate_graph_schema', 'model':model, 'is_schema_description_checked':is_schema_description_checked, 'input_text':_sanitize_for_log(input_text), 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':trusted_email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result)
     except Exception as e:
@@ -966,6 +958,8 @@ async def retry_processing(
 
 @app.post('/metric')
 async def calculate_metric(
+    request: Request,
+    user_claims: dict = Depends(get_verified_user),
     question: str = Form(),
     context: str = Form(),
     answer: str = Form(),
@@ -977,6 +971,7 @@ async def calculate_metric(
     """Calculate RAGAS metrics for a given question, context, and answer."""
     try:
         start = time.time()
+        enforce_ai_guardrails(request, str(user_claims.get("email", "")).strip().lower(), question, context, answer)
         context_list = [str(item).strip() for item in json.loads(context)] if context else []
         answer_list = [str(item).strip() for item in json.loads(answer)] if answer else []
         mode_list = [str(item).strip() for item in json.loads(mode)] if mode else []
@@ -993,7 +988,7 @@ async def calculate_metric(
         data = {mode: {metric: result[metric][i] for metric in result} for i, mode in enumerate(mode_list)}
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'metric', 'question':question, 'context':context, 'answer':answer, 'model':model,'mode':mode,
+        json_obj = {'api_name':'metric', 'question':_sanitize_for_log(question), 'context':_sanitize_for_log(context), 'answer':_sanitize_for_log(answer), 'model':model,'mode':mode,
                             'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}'}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success', data=data)
@@ -1009,7 +1004,9 @@ async def calculate_metric(
        
 
 @app.post('/additional_metrics')
-async def calculate_additional_metrics(question: str = Form(),
+async def calculate_additional_metrics(request: Request,
+                                        user_claims: dict = Depends(get_verified_user),
+                                        question: str = Form(),
                                         context: str = Form(),
                                         answer: str = Form(),
                                         reference: str = Form(),
@@ -1018,28 +1015,29 @@ async def calculate_additional_metrics(question: str = Form(),
                                         embedding_provider: str = Form(None),
                                         embedding_model: str = Form(None)
 ):
-   try:
-       context_list = [str(item).strip() for item in json.loads(context)] if context else []
-       answer_list = [str(item).strip() for item in json.loads(answer)] if answer else []
-       mode_list = [str(item).strip() for item in json.loads(mode)] if mode else []
-       result = await get_additional_metrics(question, context_list,answer_list, reference, model, embedding_provider, embedding_model)
-       if result is None or "error" in result:
-           return create_api_response(
-               'Failed',
-               message='Failed to calculate evaluation metrics.',
-               error=result.get("error", "Ragas evaluation returned null")
-           )
-       data = {mode: {metric: result[i][metric] for metric in result[i]} for i, mode in enumerate(mode_list)}
-       return create_api_response('Success', data=data)
-   except Exception as e:
-       logging.exception(f"Error while calculating evaluation metrics: {e}")
-       return create_api_response(
-           'Failed',
-           message="Error while calculating evaluation metrics",
-           error=str(e)
-       )
-   finally:
-       gc.collect()
+    try:
+        enforce_ai_guardrails(request, str(user_claims.get("email", "")).strip().lower(), question, context, answer, reference)
+        context_list = [str(item).strip() for item in json.loads(context)] if context else []
+        answer_list = [str(item).strip() for item in json.loads(answer)] if answer else []
+        mode_list = [str(item).strip() for item in json.loads(mode)] if mode else []
+        result = await get_additional_metrics(question, context_list,answer_list, reference, model, embedding_provider, embedding_model)
+        if result is None or "error" in result:
+            return create_api_response(
+                'Failed',
+                message='Failed to calculate evaluation metrics.',
+                error=result.get("error", "Ragas evaluation returned null")
+            )
+        data = {mode: {metric: result[i][metric] for metric in result[i]} for i, mode in enumerate(mode_list)}
+        return create_api_response('Success', data=data)
+    except Exception as e:
+        logging.exception(f"Error while calculating evaluation metrics: {e}")
+        return create_api_response(
+            'Failed',
+            message="Error while calculating evaluation metrics",
+            error=str(e)
+        )
+    finally:
+        gc.collect()
 
 @app.post("/fetch_chunktext")
 async def fetch_chunktext(

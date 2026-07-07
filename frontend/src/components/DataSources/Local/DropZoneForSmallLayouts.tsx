@@ -19,6 +19,7 @@ export default function DropZoneForSmallLayouts() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const uploadFileInChunks = (file: File) => {
+    const uploadId = uuidv4();
     const totalChunks = Math.ceil(file.size / chunkSize);
     const chunkProgressIncrement = 100 / totalChunks;
     let chunkNumber = 1;
@@ -49,7 +50,7 @@ export default function DropZoneForSmallLayouts() {
           })
         );
         try {
-          const apiResponse = await uploadAPI(chunk, model, chunkNumber, totalChunks, file.name);
+          const apiResponse = await uploadAPI(chunk, model, chunkNumber, totalChunks, file.name, uploadId);
           if (apiResponse?.status === 'Failed') {
             throw new Error(`message:${apiResponse.data.message},fileName:${apiResponse.data.file_name}`);
           } else {

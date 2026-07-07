@@ -1,39 +1,41 @@
 import { eventResponsetypes, UserCredentials } from '../types';
-import { url } from '../utils/Utils';
+import api from '../API/Index';
 export function triggerStatusUpdateAPI(
   name: string,
   userCredentials: UserCredentials,
   datahandler: (i: eventResponsetypes) => void
 ) {
-  const params = new URLSearchParams();
+  const formData = new FormData();
   if (userCredentials.uri) {
-    params.append('uri', userCredentials.uri);
+    formData.append('uri', userCredentials.uri);
   }
   if (userCredentials.database) {
-    params.append('database', userCredentials.database);
+    formData.append('database', userCredentials.database);
   }
   if (userCredentials.userName) {
-    params.append('userName', userCredentials.userName);
+    formData.append('userName', userCredentials.userName);
   }
   if (userCredentials.password) {
-    params.append('password', btoa(userCredentials.password));
+    formData.append('password', userCredentials.password);
   }
-  const queryString = params.toString();
-  const requestUrl = queryString
-    ? `${url()}/update_extract_status/${name}?${queryString}`
-    : `${url()}/update_extract_status/${name}`;
-  const eventSource = new EventSource(requestUrl);
-  eventSource.onmessage = (event) => {
-    const eventResponse = JSON.parse(event.data);
-    if (
-      eventResponse.status === 'Completed' ||
-      eventResponse.status === 'Failed' ||
-      eventResponse.status === 'Cancelled'
-    ) {
-      datahandler(eventResponse);
-      eventSource.close();
-    } else {
-      datahandler(eventResponse);
+  if (userCredentials.email) {
+    formData.append('email', userCredentials.email);
+  }
+
+  const poll = async () => {
+    const response = await api.post(`/document_status/${name}`, formData);
+    const eventResponse = response?.data?.file_name;
+    if (!eventResponse) {
+      return;
     }
+
+    datahandler(eventResponse);
+    if (eventResponse.status === 'Completed' || eventResponse.status === 'Failed' || eventResponse.status === 'Cancelled') {
+      return;
+    }
+
+    setTimeout(poll, 1000);
   };
+
+  void poll();
 }
