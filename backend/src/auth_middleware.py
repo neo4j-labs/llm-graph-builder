@@ -2,8 +2,6 @@ import logging
 import os
 from urllib.parse import parse_qs
 
-import jwt
-from jwt import PyJWKClient
 from dotenv import load_dotenv
 from fastapi.responses import JSONResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
@@ -15,114 +13,151 @@ from src.shared.common_fn import get_value_from_env
 load_dotenv()
 
 AUTH0_DOMAIN = os.getenv("AUTH0_DOMAIN", "").strip()
-AUTH0_AUDIENCE = os.getenv("AUTH0_AUDIENCE", "").strip()
 AUTH_EXEMPT_PATHS = {"/health", "/docs", "/redoc", "/openapi.json"}
 # EventSource cannot send custom headers, so these endpoints may pass the token as a query param
 SSE_TOKEN_PATHS = ("/update_extract_status/", "/document_status/")
-jwks_client = PyJWKClient(f"https://{AUTH0_DOMAIN}/.well-known/jwks.json", cache_keys=True) if AUTH0_DOMAIN else None
 
 
-def extract_email_claim(claims: dict) -> str | None:
-    """Get the user email from token claims, supporting Auth0 namespaced custom claims (e.g. "https://myapp/email")."""
-    email = claims.get("email")
-    if not email:
-        email = next((value for key, value in claims.items() if key.endswith("/email") and isinstance(value, str)), None)
-    return email
-
-
-def fetch_email_from_userinfo(token: str) -> str | None:
-    """Fetch user email from Auth0's /userinfo endpoint using the access token."""
+def validate_token_and_get_email(token: str) -> str | None:
+    """
+    Validate an Auth0 token by calling the /userinfo endpoint and extract the user's email.
+    
+    This approach validates the token directly with Auth0, ensuring:
+    - Token is not expired or revoked
+    - Token is valid for the current Auth0 tenant
+    - User information is current
+    
+    Works with all Auth0 token types (JWT, JWE, opaque).
+    
+    Args:
+        token: The bearer token to validate
+        
+    Returns:
+        User's email if token is valid, None if email not found
+        
+    Raises:
+        ValueError: If token is invalid, expired, or validation fails
+    """
     if not AUTH0_DOMAIN:
-        return None
+        raise ValueError("AUTH0_DOMAIN is not configured")
+    
     try:
+        # Validate token with Auth0 by calling /userinfo endpoint
         response = requests.get(
             f"https://{AUTH0_DOMAIN}/userinfo",
             headers={"Authorization": f"Bearer {token}"},
             timeout=5
         )
+        
         if response.status_code == 200:
             userinfo = response.json()
+            
+            # Extract email from userinfo response
             email = userinfo.get("email")
+            if not email:
+                # Check for namespaced email claim (e.g., "https://myapp/email")
+                email = next((value for key, value in userinfo.items() 
+                            if key.endswith("/email") and isinstance(value, str)), None)
+            
             if email:
-                logging.info(f"Successfully fetched email from /userinfo endpoint")
+                logging.info(f"Token validated successfully, email: {email}")
                 return email
-            # Check for namespaced email claim
-            email = next((value for key, value in userinfo.items() if key.endswith("/email") and isinstance(value, str)), None)
-            return email
+            else:
+                logging.warning("Token is valid but email not found in userinfo response")
+                return None
+                
+        elif response.status_code == 401:
+            logging.warning("Token rejected by Auth0 (invalid or expired)")
+            raise ValueError("Invalid or expired token")
         else:
-            logging.warning(f"Failed to fetch userinfo: {response.status_code}")
-            return None
-    except Exception as e:
-        logging.warning(f"Error fetching userinfo: {e}")
-        return None
-
-
-def verify_bearer_token(token: str) -> dict:
-    """Verify an Auth0-issued JWT against the tenant JWKS and return its claims."""
-    if jwks_client is None:
-        raise ValueError("AUTH0_DOMAIN is not configured on the backend")
-    signing_key = jwks_client.get_signing_key_from_jwt(token)
-    return jwt.decode(
-        token,
-        signing_key.key,
-        algorithms=["RS256"],
-        audience=AUTH0_AUDIENCE or None,
-        issuer=f"https://{AUTH0_DOMAIN}/",
-        options={"verify_aud": bool(AUTH0_AUDIENCE)},
-    )
+            logging.error(f"Unexpected Auth0 /userinfo response: {response.status_code}")
+            raise ValueError(f"Token validation failed with status {response.status_code}")
+            
+    except requests.exceptions.Timeout:
+        logging.error("Timeout calling Auth0 /userinfo endpoint")
+        raise ValueError("Token validation timeout")
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Error calling Auth0 /userinfo endpoint: {e}")
+        raise ValueError(f"Token validation failed: {e}")
 
 
 class BearerAuthMiddleware:
-    """Reject any request that does not carry a valid Auth0 bearer token."""
+    """
+    ASGI middleware to enforce Auth0 bearer token authentication.
+    
+    For each request:
+    1. Checks if authentication is required
+    2. Extracts bearer token from Authorization header or query params (for SSE)
+    3. Validates the token against Auth0
+    4. Extracts user email and stores it in request.state for downstream use
+    """
 
     def __init__(self, app: ASGIApp):
         self.app = app
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send):
+        # Only process HTTP requests
         if scope["type"] != "http":
             return await self.app(scope, receive, send)
+        
+        # Check if authentication is required
         if not get_value_from_env("AUTHENTICATION_REQUIRED", False, bool):
             return await self.app(scope, receive, send)
+        
         path = scope["path"]
+        
+        # Skip authentication for exempt paths and OPTIONS requests
         if path in AUTH_EXEMPT_PATHS or scope["method"] == "OPTIONS":
             return await self.app(scope, receive, send)
+        
+        # Extract token from Authorization header
         token = None
         auth_header = next((value for name, value in scope["headers"] if name == b"authorization"), None)
         if auth_header is not None:
             parts = auth_header.decode("utf-8", errors="ignore").split(" ", 1)
             if len(parts) == 2 and parts[0].lower() == "bearer" and parts[1].strip():
                 token = parts[1].strip()
+        # For SSE endpoints, token can be in query string (since EventSource can't set headers)
         elif path.startswith(SSE_TOKEN_PATHS):
             query = parse_qs(scope.get("query_string", b"").decode("utf-8"))
             token = next(iter(query.get("access_token", [])), None)
+        
+        # Reject request if no token provided
         if not token:
+            logging.warning(f"Request to {path} missing bearer token")
             response = JSONResponse(
                 status_code=401,
                 content=create_api_response("Unauthorized", message="Missing bearer token in Authorization header")
             )
             return await response(scope, receive, send)
+        
+        # Validate token and extract email
         try:
-            claims = verify_bearer_token(token)
-            # Try to extract email from token claims first
-            email = extract_email_claim(claims)
+            email = validate_token_and_get_email(token)
             
-            # If email not found in claims, fetch from /userinfo endpoint
-            if not email:
-                logging.info("Email not found in token claims, fetching from /userinfo endpoint")
-                email = fetch_email_from_userinfo(token)
+            # Store email in request state for use by endpoint handlers
+            if "state" not in scope:
+                scope["state"] = {}
+            scope["state"]["token_email"] = email
             
-            if email:
-                logging.info(f"User authenticated with email: {email}")
-            else:
-                logging.warning("Email could not be extracted from token or userinfo endpoint")
+            logging.info(f"User authenticated: {email or 'unknown'} for {path}")
             
-            # Expose the verified identity to endpoints via request.state
-            scope.setdefault("state", {})["token_email"] = email
-        except Exception as e:
-            logging.warning(f"Bearer token verification failed: {e}")
+        except ValueError as e:
+            # Token validation failed
+            logging.warning(f"Token validation failed for {path}: {e}")
             response = JSONResponse(
                 status_code=401,
-                content=create_api_response("Unauthorized", message="Invalid or expired bearer token")
+                content=create_api_response("Unauthorized", message=str(e))
             )
             return await response(scope, receive, send)
+        except Exception as e:
+            # Unexpected error during validation
+            logging.error(f"Unexpected error validating token for {path}: {e}")
+            response = JSONResponse(
+                status_code=401,
+                content=create_api_response("Unauthorized", message="Token validation failed")
+            )
+            return await response(scope, receive, send)
+        
+        # Continue to the application
         await self.app(scope, receive, send)

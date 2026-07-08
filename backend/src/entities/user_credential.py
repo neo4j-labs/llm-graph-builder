@@ -48,10 +48,13 @@ async def get_neo4j_credentials(
     Raises:
         HTTPException: If validation fails
     """
+    # Extract email set by auth middleware
+    token_email = getattr(request.state, "token_email", None)
+    
     return Neo4jCredentials(
         uri=uri,
         userName=userName,
         password=password,
         database=database,
-        email=getattr(request.state, "token_email", None)
+        email=token_email
     )
