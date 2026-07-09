@@ -26,7 +26,7 @@ from src.auth_middleware import BearerAuthMiddleware
 from src.chunkid_entities import get_entities_from_chunkids
 from src.communities import create_communities
 from src.entities.source_extract_params import SourceScanExtractParams, get_source_scan_extract_params
-from src.entities.user_credential import Neo4jCredentials, get_neo4j_credentials
+from src.entities.user_credential import Neo4jCredentials, get_neo4j_credentials, get_neo4j_credentials_from_session
 from src.graphDB_dataAccess import graphDBdataAccess
 from src.graph_query import get_chunktext_results, get_graph_results, visualize_schema
 from src.logger import CustomLogger
@@ -557,6 +557,9 @@ async def connect(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)
             if not getattr(credentials, "email", None) or not getattr(credentials, "uri", None):
                 error_message = "Authentication required: Your session is missing required credentials. Please log in to the application."
                 raise Exception(error_message)
+        
+        # Credentials are automatically cached in get_neo4j_credentials dependency
+        
         result = await asyncio.to_thread(connection_check_and_get_vector_dimensions, graph, credentials.database, credentials.email, credentials.uri)
         gcs_cache = get_value_from_env("GCS_FILE_CACHE","False","bool")
         end = time.time()
@@ -585,6 +588,9 @@ async def upload_large_file_into_chunks(
     """Upload a large file in chunks and create a source node."""
     try:
         start = time.time()
+        
+        # Credentials are automatically cached in get_neo4j_credentials dependency
+        
         graph = create_graph_database_connection(credentials)
         result = await asyncio.to_thread(upload_file, graph, model, file, chunkNumber, totalChunks, originalname, credentials.uri, CHUNK_DIR, MERGED_DIR)
         end = time.time()
@@ -631,34 +637,16 @@ async def get_structured_schema(credentials: Neo4jCredentials = Depends(get_neo4
     finally:
         gc.collect()
             
-def decode_password(pwd):
-    return base64.b64decode(pwd).decode("utf-8")
-
-def encode_password(pwd):
-    return base64.b64encode(pwd.encode('ascii'))
-
 @app.get("/update_extract_status/{file_name}")
 async def update_extract_status(
     request: Request,
     file_name: str,
-    uri: str = None,
-    userName: str = None,
-    password: str = None,
-    database: str = None
+    credentials: Neo4jCredentials = Depends(get_neo4j_credentials_from_session)
 ):
     """Stream updates on extract status for a given file name."""
     async def generate():
         status = ''
         
-        if password is not None and password != "null":
-            decoded_password = decode_password(password)
-        else:
-            decoded_password = None
-
-        url = uri
-        if url and " " in url:
-            url= url.replace(" ","+")
-        credentials= Neo4jCredentials(uri=url, userName=userName, password=decoded_password, database=database)
         graph = create_graph_database_connection(credentials)
         graphDb_data_Access = graphDBdataAccess(graph)
         while True:
@@ -726,12 +714,12 @@ async def delete_document_and_entities(
         gc.collect()
 
 @app.get('/document_status/{file_name}')
-async def get_document_status(file_name, url, userName, password, database):
+async def get_document_status(
+    file_name: str,
+    credentials: Neo4jCredentials = Depends(get_neo4j_credentials_from_session)
+):
     """Get the status of a document in the graph database."""
-    decoded_password = decode_password(password)
-   
     try:
-        credentials= Neo4jCredentials(uri=url, userName=userName, password=decoded_password, database=database)
         graph = create_graph_database_connection(credentials)
         graphDb_data_Access = graphDBdataAccess(graph)
         result = graphDb_data_Access.get_current_status_document_node(file_name)
@@ -763,11 +751,11 @@ async def get_document_status(file_name, url, userName, password, database):
         message="Unable to get the document status"
         error_message = str(e)
         logging.exception(f'{message}:{error_message}')
-        return create_api_response('Failed',message=message)
+        return create_api_response('Failed',message=message, error=error_message)
     
 @app.post("/cancelled_job")
 async def cancelled_job(
-    credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
+    credentials: Neo4jCredentials = Depends(get_neo4j_credentials_from_session),
     filenames=Form(None),
     source_types=Form(None)
 ):
