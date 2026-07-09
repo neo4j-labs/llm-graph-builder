@@ -176,3 +176,5 @@ startupbackend.sh
 startupfrontend.sh
 /backend/local_model
 /crab
+.mcp.json
+mcp.json
