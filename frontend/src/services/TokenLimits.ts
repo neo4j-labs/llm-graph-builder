@@ -15,9 +15,6 @@ export const getTokenLimits = async (userCredentials: UserCredentials): Promise<
   if (userCredentials?.uri) {
     formData.append('uri', userCredentials.uri);
   }
-  if (userCredentials?.email) {
-    formData.append('email', userCredentials.email);
-  }
 
   const response = await api.post(`/get_token_limits`, formData, {
     headers: {
