@@ -8,7 +8,8 @@ import time
 import urllib.parse
 import warnings
 from datetime import datetime
-
+import ipaddress, socket
+from urllib.parse import urlparse
 
 
 from dotenv import load_dotenv
@@ -60,34 +61,6 @@ if GCS_FILE_CACHE:
     BUCKET_UPLOAD_FILE = get_value_from_env('BUCKET_UPLOAD_FILE', default_value=None, data_type=str)
     BUCKET_FAILED_FILE = get_value_from_env('BUCKET_FAILED_FILE', default_value=None, data_type=str)
     PROJECT_ID = get_value_from_env('PROJECT_ID', default_value=None, data_type=str)
-
-
-def sanitize_uploaded_fileName(filename, max_length=100):
-    """
-    Sanitize filename to remove problematic characters and limit length.
-    If filename is too long or contains non-ASCII, use a hash for uniqueness.
-
-    Args:
-        filename (str): The original filename.
-        max_length (int): Maximum allowed length for the filename.
-
-    Returns:
-        str: Sanitized filename.
-    """
-    print("Original filename or incoming file Name:", filename)
-    # safe_name = unicodedata.normalize('NFKD', filename).encode('ascii', 'ignore').decode('ascii')
-    # safe_name = re.sub(r'[^A-Za-z0-9._-]', '_', safe_name)
-    # if '.' in filename:
-    #     base, ext = os.path.splitext(filename)
-    # else:
-    #     base, ext = filename, ''
-    # if len(safe_name) == 0 or len(safe_name) > max_length:
-    #     hash_part = hashlib.sha256(filename.encode('utf-8')).hexdigest()[:16]
-    #     safe_name = (safe_name[:max_length] if len(safe_name) > 0 else 'file') + '_' + hash_part + ext
-    #     if len(safe_name) > max_length:
-    #         safe_name = safe_name[:max_length - len(ext) - 17] + '_' + hash_part + ext
-    # print("Sanitized filename:", safe_name)
-    return filename
 
 
 def create_source_node_graph_url_s3(graph, params):
@@ -214,9 +187,7 @@ def create_source_node_graph_web_url(graph, params):
     success_count=0
     failed_count=0
     lst_file_name = []
-    if not params.source_url.startswith(('http://', 'https://')):
-        params.source_url = 'https://' + params.source_url
-    # pages = WebBaseLoader(params.source_url, verify_ssl=False).load()
+    assert_public_http_url(params.source_url)
     response = requests.get(params.source_url)
     response.raise_for_status()
     soup = BeautifulSoup(response.text, 'html.parser')
@@ -852,15 +823,13 @@ def upload_file(graph, model, chunk, chunk_number: int, total_chunks: int, file_
     Returns:
         str: Status message indicating the result of the upload operation.
     """
-    # Use sanitized filename for chunk operations
-    safe_file_name = sanitize_uploaded_fileName(file_name)
     if GCS_FILE_CACHE:
-      folder_name = create_gcs_bucket_folder_name_hashed(uri, safe_file_name)
-      upload_file_to_gcs(chunk, chunk_number, safe_file_name, BUCKET_UPLOAD_FILE, folder_name)
+      folder_name = create_gcs_bucket_folder_name_hashed(uri, file_name)
+      upload_file_to_gcs(chunk, chunk_number, file_name, BUCKET_UPLOAD_FILE, folder_name)
     else:
       if not os.path.exists(chunk_dir):
         os.mkdir(chunk_dir)
-      chunk_file_path = os.path.join(chunk_dir, f"{safe_file_name}_part_{chunk_number}")
+      chunk_file_path = os.path.join(chunk_dir, f"{file_name}_part_{chunk_number}")
       logging.info(f'Chunk File Path: {chunk_file_path}')
       with open(chunk_file_path, "wb") as chunk_file:
         chunk_file.write(chunk.file.read())
@@ -868,13 +837,13 @@ def upload_file(graph, model, chunk, chunk_number: int, total_chunks: int, file_
     if int(chunk_number) == int(total_chunks):
         # If this is the last chunk, merge all chunks into a single file
         if GCS_FILE_CACHE:
-            file_size = merge_file_gcs(BUCKET_UPLOAD_FILE, safe_file_name, folder_name, int(total_chunks))
+            file_size = merge_file_gcs(BUCKET_UPLOAD_FILE, file_name, folder_name, int(total_chunks))
         else:
-            file_size = merge_chunks_local(safe_file_name, int(total_chunks), chunk_dir, merged_dir)
+            file_size = merge_chunks_local(file_name, int(total_chunks), chunk_dir, merged_dir)
         logging.info("File merged successfully")
-        file_extension = safe_file_name.split('.')[-1]
+        file_extension = file_name.split('.')[-1]
         obj_source_node = sourceNode()
-        obj_source_node.file_name = safe_file_name.strip() if isinstance(safe_file_name, str) else safe_file_name
+        obj_source_node.file_name = file_name.strip() if isinstance(file_name, str) else file_name
         obj_source_node.file_type = file_extension
         obj_source_node.file_size = file_size
         obj_source_node.file_source = 'local file'
@@ -888,7 +857,7 @@ def upload_file(graph, model, chunk, chunk_number: int, total_chunks: int, file_
         obj_source_node.communityRelCount = 0
         graphDb_data_Access = graphDBdataAccess(graph)
         graphDb_data_Access.create_source_node(obj_source_node)
-        return {'file_size': file_size, 'file_name': safe_file_name, 'file_extension': file_extension, 'message': f"Chunk {chunk_number}/{total_chunks} saved"}
+        return {'file_size': file_size, 'file_name': file_name, 'file_extension': file_extension, 'message': f"Chunk {chunk_number}/{total_chunks} saved"}
     return f"Chunk {chunk_number}/{total_chunks} saved"
 
 def get_labels_and_relationtypes(credentials):
@@ -1029,3 +998,13 @@ def failed_file_process(uri,file_name, merged_file_path):
   else:
       logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
       delete_uploaded_local_file(merged_file_path,file_name)
+      
+      
+def assert_public_http_url(url: str):
+    p = urlparse(url)
+    if p.scheme not in ("http", "https"):
+        raise ValueError("Only http(s) URLs are allowed")
+    for _, _, _, _, sockaddr in socket.getaddrinfo(p.hostname, None):
+        ip = ipaddress.ip_address(sockaddr[0])
+        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
+            raise ValueError("Access to internal addresses is blocked")
