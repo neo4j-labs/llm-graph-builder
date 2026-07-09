@@ -13,7 +13,7 @@ from src.shared.common_fn import get_value_from_env
 load_dotenv()
 
 AUTH0_DOMAIN = os.getenv("AUTH0_DOMAIN", "").strip()
-AUTH_EXEMPT_PATHS = {"/health", "/docs", "/redoc", "/openapi.json"}
+AUTH_EXEMPT_PATHS = {"/health", "/docs", "/redoc", "/openapi.json", "/backend_connection_configuration"}
 # EventSource cannot send custom headers, so these endpoints may pass the token as a query param
 SSE_TOKEN_PATHS = ("/update_extract_status/", "/document_status/")
 
