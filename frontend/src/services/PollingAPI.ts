@@ -1,9 +1,8 @@
-import { PollingAPI_Response, statusupdate, UserCredentials } from '../types';
+import { PollingAPI_Response, statusupdate } from '../types';
 import api from '../API/Index';
 
 export default async function subscribe(
   fileName: string,
-  userCredentials: UserCredentials,
   datahandler: (i: statusupdate) => void,
   progressHandler: (i: statusupdate) => void
 ) {
