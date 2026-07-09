@@ -1,12 +1,8 @@
-import { eventResponsetypes, UserCredentials } from '../types';
+import { eventResponsetypes } from '../types';
 import { url } from '../utils/Utils';
 import { getAuthToken } from '../API/Index';
 
-export async function triggerStatusUpdateAPI(
-  name: string,
-  userCredentials: UserCredentials,
-  datahandler: (i: eventResponsetypes) => void
-) {
+export async function triggerStatusUpdateAPI(name: string, datahandler: (i: eventResponsetypes) => void) {
   const params = new URLSearchParams();
 
   // EventSource cannot send an Authorization header, so the token goes as a query param
