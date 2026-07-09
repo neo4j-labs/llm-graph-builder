@@ -20,7 +20,7 @@ from sse_starlette.sse import EventSourceResponse
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-from src.QA_integration import QA_RAG, clear_chat_history
+from src.QA_integration import QA_RAG, clear_chat_history, get_chat_history
 from src.api_response import create_api_response
 from src.auth_middleware import BearerAuthMiddleware
 from src.chunkid_entities import get_entities_from_chunkids
@@ -52,12 +52,15 @@ load_dotenv(override=True)
 logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
 MERGED_DIR = os.path.join(os.path.dirname(__file__), "merged_files")
-
+ALLOWED_FRONTEND_ORIGINS = get_value_from_env("ALLOWED_FRONTEND_ORIGINS", "*", str).split(",")
 
 def sanitize_filename(filename: str) -> str:
     """Sanitize a filename to prevent directory traversal."""
     filename = os.path.basename(filename)
     filename = os.path.normpath(filename)
+    filename = filename.replace("\x00", "").strip()           # drop null bytes
+    if not filename or filename in (".", "..") or "/" in filename or "\\" in filename:
+        raise ValueError("Invalid file name")
     return filename
 
 
@@ -127,7 +130,7 @@ app.add_middleware(
 app.add_middleware(BearerAuthMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_FRONTEND_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -177,7 +180,6 @@ async def create_source_knowledge_graph_url(
             'elapsed_api_time': f'{elapsed_time:.2f}',
             'userName': credentials.userName,
             'database': credentials.database,
-            'aws_access_key_id': params.aws_access_key_id,
             'model': params.model,
             'gcs_bucket_name': params.gcs_bucket_name,
             'gcs_bucket_folder': params.gcs_bucket_folder,
@@ -422,15 +424,13 @@ async def chat_bot(
         else:
             graph = create_graph_database_connection(credentials)
         
-        graphDb_data_Access = graphDBdataAccess(graph)
-        write_access = graphDb_data_Access.check_account_access(database=credentials.database)
-        result = await asyncio.to_thread(QA_RAG, graph=graph, model=model, question=question, document_names=document_names, session_id=session_id, mode=mode, write_access=write_access, email=credentials.email, uri=credentials.uri, embedding_provider=embedding_provider, embedding_model=embedding_model)
+        result = await asyncio.to_thread(QA_RAG, graph=graph, model=model, question=question, document_names=document_names, mode=mode, email=credentials.email, uri=credentials.uri, embedding_provider=embedding_provider, embedding_model=embedding_model)
 
         total_call_time = time.time() - qa_rag_start_time
         logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
         result["info"]["response_time"] = round(total_call_time, 2)
         
-        json_obj = {'api_name':'chat_bot','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'question':question,'document_names':document_names,
+        json_obj = {'api_name':'chat_bot','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'document_names':document_names,
                              'session_id':session_id, 'mode':mode, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{total_call_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         
@@ -521,6 +521,29 @@ async def graph_query(
         gc.collect()
     
 
+@app.post("/chat_history")
+async def chat_history(
+    credentials: Neo4jCredentials = Depends(get_neo4j_credentials)
+):
+    """Get the persisted chat history for the requesting user."""
+    try:
+        start = time.time()
+        graph = create_graph_database_connection(credentials)
+        result = await asyncio.to_thread(get_chat_history, graph=graph, email=credentials.email, uri=credentials.uri)
+        end = time.time()
+        elapsed_time = end - start
+        json_obj = {'api_name':'chat_history', 'db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
+        logger.log_struct(json_obj, "INFO")
+        return create_api_response('Success', data=result)
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to fetch chat history"
+        error_message = str(e)
+        logging.exception(f'Exception in chat history:{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
+    finally:
+        gc.collect()
+
 @app.post("/clear_chat_bot")
 async def clear_chat_bot(
     credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
@@ -530,10 +553,10 @@ async def clear_chat_bot(
     try:
         start = time.time()
         graph = create_graph_database_connection(credentials)
-        result = await asyncio.to_thread(clear_chat_history,graph=graph,session_id=session_id)
+        result = await asyncio.to_thread(clear_chat_history, graph=graph, email=credentials.email, uri=credentials.uri)
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'clear_chat_bot', 'db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'session_id':session_id, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
+        json_obj = {'api_name':'clear_chat_bot', 'db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result)
     except Exception as e:
@@ -588,9 +611,7 @@ async def upload_large_file_into_chunks(
     """Upload a large file in chunks and create a source node."""
     try:
         start = time.time()
-        
-        # Credentials are automatically cached in get_neo4j_credentials dependency
-        
+        originalname = sanitize_filename(originalname)
         graph = create_graph_database_connection(credentials)
         result = await asyncio.to_thread(upload_file, graph, model, file, chunkNumber, totalChunks, originalname, credentials.uri, CHUNK_DIR, MERGED_DIR)
         end = time.time()
@@ -794,7 +815,7 @@ async def populate_graph_schema(
         result = populate_graph_schema_from_text(input_text, model, is_schema_description_checked, is_local_storage)
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'populate_graph_schema', 'model':model, 'is_schema_description_checked':is_schema_description_checked, 'input_text':input_text, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
+        json_obj = {'api_name':'populate_graph_schema', 'model':model, 'is_schema_description_checked':is_schema_description_checked, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result)
     except Exception as e:
