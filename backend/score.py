@@ -51,12 +51,15 @@ load_dotenv(override=True)
 logger = CustomLogger()
 CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
 MERGED_DIR = os.path.join(os.path.dirname(__file__), "merged_files")
-
+ALLOWED_FRONTEND_ORIGINS = get_value_from_env("ALLOWED_FRONTEND_ORIGINS", "*", str).split(",")
 
 def sanitize_filename(filename: str) -> str:
     """Sanitize a filename to prevent directory traversal."""
     filename = os.path.basename(filename)
     filename = os.path.normpath(filename)
+    filename = filename.replace("\x00", "").strip()           # drop null bytes
+    if not filename or filename in (".", "..") or "/" in filename or "\\" in filename:
+        raise ValueError("Invalid file name")
     return filename
 
 
@@ -124,7 +127,7 @@ app.add_middleware(
 )
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_FRONTEND_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -174,7 +177,6 @@ async def create_source_knowledge_graph_url(
             'elapsed_api_time': f'{elapsed_time:.2f}',
             'userName': credentials.userName,
             'database': credentials.database,
-            'aws_access_key_id': params.aws_access_key_id,
             'model': params.model,
             'gcs_bucket_name': params.gcs_bucket_name,
             'gcs_bucket_folder': params.gcs_bucket_folder,
@@ -427,7 +429,7 @@ async def chat_bot(
         logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
         result["info"]["response_time"] = round(total_call_time, 2)
         
-        json_obj = {'api_name':'chat_bot','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'question':question,'document_names':document_names,
+        json_obj = {'api_name':'chat_bot','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'document_names':document_names,
                              'session_id':session_id, 'mode':mode, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{total_call_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         
@@ -530,7 +532,7 @@ async def clear_chat_bot(
         result = await asyncio.to_thread(clear_chat_history,graph=graph,session_id=session_id)
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'clear_chat_bot', 'db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'session_id':session_id, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
+        json_obj = {'api_name':'clear_chat_bot', 'db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result)
     except Exception as e:
@@ -582,6 +584,7 @@ async def upload_large_file_into_chunks(
     """Upload a large file in chunks and create a source node."""
     try:
         start = time.time()
+        originalname = sanitize_filename(originalname)
         graph = create_graph_database_connection(credentials)
         result = await asyncio.to_thread(upload_file, graph, model, file, chunkNumber, totalChunks, originalname, credentials.uri, CHUNK_DIR, MERGED_DIR)
         end = time.time()
@@ -802,7 +805,7 @@ async def populate_graph_schema(
         result = populate_graph_schema_from_text(input_text, model, is_schema_description_checked, is_local_storage)
         end = time.time()
         elapsed_time = end - start
-        json_obj = {'api_name':'populate_graph_schema', 'model':model, 'is_schema_description_checked':is_schema_description_checked, 'input_text':input_text, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
+        json_obj = {'api_name':'populate_graph_schema', 'model':model, 'is_schema_description_checked':is_schema_description_checked, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result)
     except Exception as e:
