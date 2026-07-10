@@ -38,6 +38,8 @@ const Auth0ProviderWithHistory: React.FC<{ children: React.ReactNode }> = ({ chi
         ...(audience ? { audience } : {}),
       }}
       onRedirectCallback={onRedirectCallback}
+      cacheLocation='localstorage'
+      useRefreshTokens={true}
     >
       <AuthTokenBridge />
       {children}
@@ -54,7 +56,7 @@ export const AuthenticationGuard: React.FC<{ component: React.ComponentType<obje
       localStorage.setItem('isReadOnlyMode', 'true');
       navigate('/readonly', { replace: true });
     }
-  }, [isLoading, isAuthenticated]);
+  }, [isLoading, isAuthenticated, navigate]);
   return <Component />;
 };
 

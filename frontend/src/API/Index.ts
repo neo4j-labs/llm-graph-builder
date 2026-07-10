@@ -49,7 +49,7 @@ api.interceptors.request.use(
         config.data.append('userName', globalCredentials.userName);
       }
       if (globalCredentials.password && !config.data.has('password')) {
-        config.data.append('password', globalCredentials.password);
+        config.data.append('password', btoa(globalCredentials.password));
       }
     } else if (globalCredentials && !(config.data instanceof FormData)) {
       // Convert plain object to FormData and add credentials
@@ -66,12 +66,16 @@ api.interceptors.request.use(
         formData.append('userName', globalCredentials.userName);
       }
       if (globalCredentials.password) {
-        formData.append('password', globalCredentials.password);
+        formData.append('password', btoa(globalCredentials.password));
       }
 
       // Add other data fields
       for (const [key, value] of Object.entries(config.data || {})) {
-        formData.append(key, value as any);
+        if (key === 'password') {
+          formData.append(key, btoa(value as string));
+        } else {
+          formData.append(key, value as any);
+        }
       }
 
       config.data = formData;
@@ -104,7 +108,7 @@ export const createCredentialsFormData = (userCredentials: UserCredentials): For
     formData.append('userName', userCredentials.userName);
   }
   if (userCredentials?.password) {
-    formData.append('password', userCredentials.password);
+    formData.append('password', btoa(userCredentials.password));
   }
   return formData;
 };
