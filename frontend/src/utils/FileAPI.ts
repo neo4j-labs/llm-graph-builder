@@ -10,11 +10,12 @@ export const uploadAPI = async (
   model: string,
   chunkNumber: number,
   totalChunks: number,
-  originalname: string
+  originalname: string,
+  uploadId: string
 ): Promise<any> => {
   const urlUpload = `${url()}/upload`;
   const method: Method = 'post';
-  const additionalParams: UploadParams = { file, model, chunkNumber, totalChunks, originalname };
+  const additionalParams: UploadParams = { file, model, chunkNumber, totalChunks, originalname, uploadId };
   const response = await apiCall(urlUpload, method, additionalParams);
   return response;
 };
