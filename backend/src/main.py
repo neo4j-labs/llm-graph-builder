@@ -487,7 +487,9 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
   rel_count = 0
       
   if len(result) > 0:
-    if result[0]['Status'] != 'Processing':      
+    claimed_result = graphDb_data_Access.claim_document_for_processing(params.file_name)
+    if len(claimed_result) > 0:
+      result = claimed_result
       obj_source_node = sourceNode()
       status = "Processing"
       obj_source_node.file_name = params.file_name.strip() if isinstance(params.file_name, str) else params.file_name
@@ -801,11 +803,12 @@ def merge_chunks_local(file_name, total_chunks, chunk_dir, merged_dir):
       with open(chunk_file_path, "rb") as chunk_file:
         shutil.copyfileobj(chunk_file, write_stream)
       os.unlink(chunk_file_path)  # Delete the individual chunk file after merging
+  os.rmdir(chunk_dir)  # Remove the now-empty per-upload chunk staging directory
   logging.info("Chunks merged successfully and return file size")
   file_size = os.path.getsize(merged_file_path)
   return file_size
 
-def upload_file(graph, model, chunk, chunk_number: int, total_chunks: int, file_name, uri, chunk_dir, merged_dir):
+def upload_file(graph, model, chunk, chunk_number: int, total_chunks: int, file_name, uri, chunk_dir, merged_dir, upload_id):
     """
     Upload a file or its chunk to the specified destination (GCS or local).
 
@@ -819,6 +822,8 @@ def upload_file(graph, model, chunk, chunk_number: int, total_chunks: int, file_
         uri: Database URI.
         chunk_dir (str): Directory for storing chunks.
         merged_dir (str): Directory for storing merged files.
+        upload_id (str): Unique id for this upload attempt, used to keep concurrent
+            uploads of a same-named file from writing into each other's chunk files.
 
     Returns:
         str: Status message indicating the result of the upload operation.
@@ -827,9 +832,10 @@ def upload_file(graph, model, chunk, chunk_number: int, total_chunks: int, file_
       folder_name = create_gcs_bucket_folder_name_hashed(uri, file_name)
       upload_file_to_gcs(chunk, chunk_number, file_name, BUCKET_UPLOAD_FILE, folder_name)
     else:
-      if not os.path.exists(chunk_dir):
-        os.mkdir(chunk_dir)
-      chunk_file_path = os.path.join(chunk_dir, f"{file_name}_part_{chunk_number}")
+      upload_chunk_dir = os.path.join(chunk_dir, upload_id)
+      if not os.path.exists(upload_chunk_dir):
+        os.makedirs(upload_chunk_dir)
+      chunk_file_path = os.path.join(upload_chunk_dir, f"{file_name}_part_{chunk_number}")
       logging.info(f'Chunk File Path: {chunk_file_path}')
       with open(chunk_file_path, "wb") as chunk_file:
         chunk_file.write(chunk.file.read())
@@ -839,7 +845,7 @@ def upload_file(graph, model, chunk, chunk_number: int, total_chunks: int, file_
         if GCS_FILE_CACHE:
             file_size = merge_file_gcs(BUCKET_UPLOAD_FILE, file_name, folder_name, int(total_chunks))
         else:
-            file_size = merge_chunks_local(file_name, int(total_chunks), chunk_dir, merged_dir)
+            file_size = merge_chunks_local(file_name, int(total_chunks), upload_chunk_dir, merged_dir)
         logging.info("File merged successfully")
         file_extension = file_name.split('.')[-1]
         obj_source_node = sourceNode()
