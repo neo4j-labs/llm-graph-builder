@@ -8,8 +8,10 @@ import { chunkSize } from '../../../utils/Constants';
 import { uploadAPI } from '../../../utils/FileAPI';
 import { v4 as uuidv4 } from 'uuid';
 import { LoadingSpinner } from '@neo4j-ndl/react';
-import { showErrorToast, showSuccessToast } from '../../../utils/Toasts';
+import { showErrorToast, showSuccessToast, showNormalToast } from '../../../utils/Toasts';
 import { getEmbeddingModel } from '../../../utils/EmbeddingConfigUtils';
+
+const busyStatuses = ['Uploading', 'Processing', 'Waiting'];
 
 export default function DropZoneForSmallLayouts() {
   const { filesData, setFilesData, model } = useFileContext();
@@ -18,7 +20,7 @@ export default function DropZoneForSmallLayouts() {
   const { userCredentials, connectionStatus, isReadOnlyUser } = useCredentials();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
-  const uploadFileInChunks = (file: File) => {
+  const uploadFileInChunks = (file: File, uploadId: string) => {
     const totalChunks = Math.ceil(file.size / chunkSize);
     const chunkProgressIncrement = 100 / totalChunks;
     let chunkNumber = 1;
@@ -32,6 +34,7 @@ export default function DropZoneForSmallLayouts() {
         formData.append('chunkNumber', chunkNumber.toString());
         formData.append('totalChunks', totalChunks.toString());
         formData.append('originalname', file.name);
+        formData.append('uploadId', uploadId);
         formData.append('model', model);
         for (const key in userCredentials) {
           formData.append(key, userCredentials[key]);
@@ -49,7 +52,7 @@ export default function DropZoneForSmallLayouts() {
           })
         );
         try {
-          const apiResponse = await uploadAPI(chunk, model, chunkNumber, totalChunks, file.name);
+          const apiResponse = await uploadAPI(chunk, model, chunkNumber, totalChunks, file.name, uploadId);
           if (apiResponse?.status === 'Failed') {
             throw new Error(`message:${apiResponse.data.message},fileName:${apiResponse.data.file_name}`);
           } else {
@@ -177,6 +180,7 @@ export default function DropZoneForSmallLayouts() {
       };
 
       const copiedFilesData: CustomFile[] = [...filesData];
+      const skippedFileNames: string[] = [];
       for (let index = 0; index < f.length; index++) {
         const file = f[index];
         const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === file?.name);
@@ -190,6 +194,8 @@ export default function DropZoneForSmallLayouts() {
             id: uuidv4(),
             ...defaultValues,
           });
+        } else if (busyStatuses.includes(copiedFilesData[filedataIndex].status)) {
+          skippedFileNames.push(file.name as string);
         } else {
           const tempFileData = copiedFilesData[filedataIndex];
           copiedFilesData.splice(filedataIndex, 1);
@@ -207,6 +213,11 @@ export default function DropZoneForSmallLayouts() {
           });
         }
       }
+      if (skippedFileNames.length) {
+        showNormalToast(
+          `${skippedFileNames.join(', ')} ${skippedFileNames.length > 1 ? 'are' : 'is'} already being processed. Please wait for it to finish before re-uploading.`
+        );
+      }
       setFilesData(copiedFilesData);
     }
   };
@@ -215,7 +226,7 @@ export default function DropZoneForSmallLayouts() {
       for (let index = 0; index < selectedFiles.length; index++) {
         const file = selectedFiles[index];
         if (filesData[index]?.status == 'None' && isClicked) {
-          uploadFileInChunks(file);
+          uploadFileInChunks(file, filesData[index].id);
         }
       }
     }

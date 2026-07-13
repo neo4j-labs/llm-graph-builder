@@ -4,6 +4,7 @@ import gc
 import json
 import logging
 import os
+import re
 import time
 from datetime import datetime, timezone
 from typing import List
@@ -62,6 +63,13 @@ def sanitize_filename(filename: str) -> str:
     if not filename or filename in (".", "..") or "/" in filename or "\\" in filename:
         raise ValueError("Invalid file name")
     return filename
+
+
+def sanitize_upload_id(upload_id: str) -> str:
+    """Validate the per-upload-attempt id used to namespace chunk staging directories."""
+    if not upload_id or not re.fullmatch(r"[A-Za-z0-9-]{1,100}", upload_id):
+        raise ValueError("Invalid upload id")
+    return upload_id
 
 
 def validate_file_path(directory: str, filename: str) -> str:
@@ -606,14 +614,16 @@ async def upload_large_file_into_chunks(
     totalChunks=Form(None),
     originalname=Form(None),
     model=Form(None),
+    uploadId=Form(None),
     credentials: Neo4jCredentials = Depends(get_neo4j_credentials)
 ):
     """Upload a large file in chunks and create a source node."""
     try:
         start = time.time()
         originalname = sanitize_filename(originalname)
+        upload_id = sanitize_upload_id(uploadId)
         graph = create_graph_database_connection(credentials)
-        result = await asyncio.to_thread(upload_file, graph, model, file, chunkNumber, totalChunks, originalname, credentials.uri, CHUNK_DIR, MERGED_DIR)
+        result = await asyncio.to_thread(upload_file, graph, model, file, chunkNumber, totalChunks, originalname, credentials.uri, CHUNK_DIR, MERGED_DIR, upload_id)
         end = time.time()
         elapsed_time = end - start
         if int(chunkNumber) == int(totalChunks):
@@ -776,7 +786,7 @@ async def get_document_status(
     
 @app.post("/cancelled_job")
 async def cancelled_job(
-    credentials: Neo4jCredentials = Depends(get_neo4j_credentials_from_session),
+    credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
     filenames=Form(None),
     source_types=Form(None)
 ):

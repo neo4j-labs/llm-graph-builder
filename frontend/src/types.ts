@@ -98,6 +98,7 @@ export type UploadParams = {
   chunkNumber: number;
   totalChunks: number;
   originalname: string;
+  uploadId: string;
 } & { [key: string]: any };
 
 export type FormDataParams = ExtractParams | UploadParams;

@@ -1,3 +1,5 @@
+import base64
+import binascii
 from pydantic import BaseModel, Field
 from typing import Optional, Dict
 from fastapi import Form, HTTPException, Request
@@ -5,6 +7,16 @@ from fastapi import Form, HTTPException, Request
 # Server-side credential cache keyed by user email
 # More reliable than session cookies for SSE/EventSource requests
 _credentials_cache: Dict[str, dict] = {}
+
+
+def _decode_password(password: Optional[str]) -> Optional[str]:
+    """Decode the base64-encoded password sent by the frontend (see frontend/src/API/Index.ts, btoa())."""
+    if not password:
+        return password
+    try:
+        return base64.b64decode(password).decode("utf-8")
+    except (binascii.Error, UnicodeDecodeError):
+        return password
 
 class Neo4jCredentials(BaseModel):
     """
@@ -56,21 +68,22 @@ async def get_neo4j_credentials(
     """
     # Extract email set by auth middleware
     token_email = getattr(request.state, "token_email", None)
-    
+    decoded_password = _decode_password(password)
+
     # Store credentials in server-side cache keyed by email
     # This allows SSE endpoints to retrieve credentials without relying on session cookies
     if token_email:
         _credentials_cache[token_email] = {
             "uri": uri,
             "userName": userName,
-            "password": password,
+            "password": decoded_password,
             "database": database
         }
-    
+
     return Neo4jCredentials(
         uri=uri,
         userName=userName,
-        password=password,
+        password=decoded_password,
         database=database,
         email=token_email
     )
