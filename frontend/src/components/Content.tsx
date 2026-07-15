@@ -327,9 +327,9 @@ const Content: React.FC<ContentProps> = ({
         }
         return copiedobj;
       });
-      if (fileItem.name != undefined && userCredentials != null) {
+      if (fileItem.name != undefined) {
         const { name } = fileItem;
-        triggerStatusUpdateAPI(name as string, userCredentials, updateStatusForLargeFiles);
+        triggerStatusUpdateAPI(name as string, updateStatusForLargeFiles);
       }
 
       const apiResponse = await extractAPI(

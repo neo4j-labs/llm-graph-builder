@@ -4,8 +4,10 @@ from langchain_openai import ChatOpenAI, AzureChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_groq import ChatGroq
 from langchain_experimental.graph_transformers.diffbot import DiffbotGraphTransformer
-from langchain_experimental.graph_transformers import LLMGraphTransformer
+from langchain_neo4j import LLMGraphTransformer
 from langchain_experimental.graph_transformers.llm import _Graph
+# from src.shared.diffbot import DiffbotGraphTransformer, Graph
+# from src.shared.diffbot import Graph
 from langchain_anthropic import ChatAnthropic
 from langchain_fireworks import ChatFireworks
 from langchain_aws import ChatBedrock

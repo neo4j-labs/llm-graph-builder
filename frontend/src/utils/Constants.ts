@@ -247,6 +247,12 @@ export const buttonCaptions = {
   importDropzoneSpan: 'JSON Documents',
 };
 
+export const URLS = {
+  DOCUMENT_INTELLIGENCE: 'https://console.neo4j.io/document-intelligence',
+  DOCUMENTATION: 'https://neo4j.com/labs/genai-ecosystem/llm-graph-builder',
+  GITHUB_ISSUES: 'https://github.com/neo4j-labs/llm-graph-builder/issues',
+};
+
 export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
   {
     title: 'materialize_text_chunk_similarities',

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useReducer } from 'react';
+import { Dispatch, SetStateAction, useEffect, useState, useCallback, useReducer } from 'react';
 import { useLocation } from 'react-router';
 import { MessageContextWrapper, useMessageContext } from '../../context/UserMessages';
 import UserCredentialsWrapper, { useCredentials } from '../../context/UserCredentials';
@@ -6,13 +6,25 @@ import { FileContextProvider } from '../../context/UsersFiles';
 import Chatbot from './Chatbot';
 import ConnectionModal from '../Popups/ConnectionModal/ConnectionModal';
 import Header from '../Layout/Header';
-import { clearChatAPI } from '../../services/QnaAPI';
+import { clearChatAPI, getChatHistoryAPI } from '../../services/QnaAPI';
 import { ChatProps, connectionState, Messages, UserCredentials } from '../../types';
-import { getIsLoading } from '../../utils/Utils';
+import { convertChatHistoryToMessages, getIsLoading } from '../../utils/Utils';
 import ThemeWrapper from '../../context/ThemeWrapper';
 import { SpotlightProvider } from '@neo4j-ndl/react';
 import { envConnectionAPI } from '../../services/ConnectAPI';
 import { showErrorToast } from '../../utils/Toasts';
+
+const loadChatHistory = async (setMessages: Dispatch<SetStateAction<Messages[]>>) => {
+  try {
+    const chatHistoryResponse = await getChatHistoryAPI();
+    const history = chatHistoryResponse?.data?.data?.messages;
+    if (Array.isArray(history) && history.length) {
+      setMessages(convertChatHistoryToMessages(history));
+    }
+  } catch (error) {
+    console.log('Error loading chat history:', error);
+  }
+};
 
 const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
   const { clearHistoryData, messages, setMessages, setClearHistoryData, setIsDeleteChatLoading, isDeleteChatLoading } =
@@ -41,6 +53,8 @@ const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
         setShowDisconnectButton(true);
         if (chatMessages.length) {
           setMessages(chatMessages);
+        } else if (connectionData.data.graph_connection) {
+          await loadChatHistory(setMessages);
         }
         return true;
       }
@@ -54,6 +68,8 @@ const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
           setShowDisconnectButton(true);
           if (chatMessages.length) {
             setMessages(chatMessages);
+          } else if (parsed.connection === 'connectAPI') {
+            await loadChatHistory(setMessages);
           }
           return true;
         }
@@ -104,6 +120,8 @@ const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
       setShowDisconnectButton(true);
       if (chatMessages.length) {
         setMessages(chatMessages);
+      } else {
+        await loadChatHistory(setMessages);
       }
       window.history.replaceState({}, document.title, window.location.pathname);
     }
