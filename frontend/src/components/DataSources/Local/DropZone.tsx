@@ -9,8 +9,10 @@ import { buttonCaptions, chunkSize } from '../../../utils/Constants';
 import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
 import { IconButtonWithToolTip } from '../../UI/IconButtonToolTip';
 import { uploadAPI } from '../../../utils/FileAPI';
-import { showErrorToast, showSuccessToast } from '../../../utils/Toasts';
+import { showErrorToast, showSuccessToast, showNormalToast } from '../../../utils/Toasts';
 import { getEmbeddingModel } from '../../../utils/EmbeddingConfigUtils';
+
+const busyStatuses = ['Uploading', 'Processing', 'Waiting'];
 
 const DropZone: FunctionComponent = () => {
   const { filesData, setFilesData, model } = useFileContext();
@@ -46,6 +48,7 @@ const DropZone: FunctionComponent = () => {
       };
 
       const copiedFilesData: CustomFile[] = [...filesData];
+      const skippedFileNames: string[] = [];
       for (let index = 0; index < f.length; index++) {
         const file = f[index];
         const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === file?.name);
@@ -59,6 +62,8 @@ const DropZone: FunctionComponent = () => {
             id: uuidv4(),
             ...defaultValues,
           });
+        } else if (busyStatuses.includes(copiedFilesData[filedataIndex].status)) {
+          skippedFileNames.push(file.name as string);
         } else {
           const tempFileData = copiedFilesData[filedataIndex];
           copiedFilesData.splice(filedataIndex, 1);
@@ -76,6 +81,11 @@ const DropZone: FunctionComponent = () => {
           });
         }
       }
+      if (skippedFileNames.length) {
+        showNormalToast(
+          `${skippedFileNames.join(', ')} ${skippedFileNames.length > 1 ? 'are' : 'is'} already being processed. Please wait for it to finish before re-uploading.`
+        );
+      }
       setFilesData(copiedFilesData);
     }
   };
@@ -84,13 +94,13 @@ const DropZone: FunctionComponent = () => {
       for (let index = 0; index < selectedFiles.length; index++) {
         const file = selectedFiles[index];
         if (filesData[index]?.status == 'None' && isClicked) {
-          uploadFileInChunks(file);
+          uploadFileInChunks(file, filesData[index].id);
         }
       }
     }
   }, [selectedFiles]);
 
-  const uploadFileInChunks = (file: File) => {
+  const uploadFileInChunks = (file: File, uploadId: string) => {
     const totalChunks = Math.ceil(file.size / chunkSize);
     const chunkProgressIncrement = 100 / totalChunks;
     let chunkNumber = 1;
@@ -104,6 +114,7 @@ const DropZone: FunctionComponent = () => {
         formData.append('chunkNumber', chunkNumber.toString());
         formData.append('totalChunks', totalChunks.toString());
         formData.append('originalname', file.name);
+        formData.append('uploadId', uploadId);
         formData.append('model', model);
         for (const key in userCredentials) {
           formData.append(key, userCredentials[key]);
@@ -121,7 +132,7 @@ const DropZone: FunctionComponent = () => {
           })
         );
         try {
-          const apiResponse = await uploadAPI(chunk, model, chunkNumber, totalChunks, file.name);
+          const apiResponse = await uploadAPI(chunk, model, chunkNumber, totalChunks, file.name, uploadId);
           if (apiResponse?.status === 'Failed') {
             throw new Error(`message:${apiResponse.data.message},fileName:${apiResponse.data.file_name}`);
           } else {

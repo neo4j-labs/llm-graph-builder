@@ -330,7 +330,35 @@ class graphDBdataAccess:
                 """
         param = {"file_name" : file_name}
         return self.execute_query(query, param)
-    
+
+    def claim_document_for_processing(self, file_name):
+        """
+        Atomically checks that the document is not already 'Processing' and marks it as such
+        in a single query, closing the read-then-write race between concurrent requests.
+        Returns the same row shape as get_current_status_document_node, or an empty list if
+        another request has already claimed the document (or it doesn't exist).
+        """
+        query = """
+                MATCH(d:Document {fileName : $file_name})
+                WHERE d.status <> 'Processing'
+                SET d.status = 'Processing'
+                RETURN d.status AS Status , d.processingTime AS processingTime,
+                d.nodeCount AS nodeCount, d.model as model, d.relationshipCount as relationshipCount,
+                d.total_chunks AS total_chunks , d.fileSize as fileSize,
+                d.is_cancelled as is_cancelled, d.processed_chunk as processed_chunk, d.fileSource as fileSource,
+                d.chunkNodeCount AS chunkNodeCount,
+                d.chunkRelCount AS chunkRelCount,
+                d.entityNodeCount AS entityNodeCount,
+                d.entityEntityRelCount AS entityEntityRelCount,
+                d.communityNodeCount AS communityNodeCount,
+                d.communityRelCount AS communityRelCount,
+                d.createdAt AS created_time,
+                coalesce(d.token_usage, 0) AS token_usage,
+                coalesce(d.embedding_model, "") AS embedding_model
+                """
+        param = {"file_name" : file_name}
+        return self.execute_query(query, param)
+
     def delete_file_from_graph(self, filenames, source_types, deleteEntities:str, merged_dir:str, uri):
         
         filename_list= list(map(str.strip, json.loads(filenames)))
