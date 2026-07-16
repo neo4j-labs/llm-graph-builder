@@ -9,18 +9,11 @@ import {
   predefinedSchemaDialogType,
   dataImporterSchemaDialogType,
 } from '../types';
-import {
-  chatModeLables,
-  getStoredSchema,
-  llms,
-  PRODMODELS,
-  chunkOverlap,
-  chunksToCombine,
-  tokenchunkSize,
-} from '../utils/Constants';
+import { getStoredSchema, llms, PRODMODELS, chunkOverlap, chunksToCombine, tokenchunkSize } from '../utils/Constants';
 import { useCredentials } from './UserCredentials';
 import Queue from '../utils/Queue';
 import { getChunkConfig } from '../utils/EmbeddingConfigUtils';
+import { chatModeLables } from '../utils/Utils';
 
 const FileContext = createContext<FileContextType | undefined>(undefined);
 

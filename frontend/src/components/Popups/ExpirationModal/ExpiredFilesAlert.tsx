@@ -5,8 +5,7 @@ import { List, ListItem, ListItemAvatar, ListItemButton, ListItemIcon, ListItemT
 import { FC } from 'react';
 import BellImage from '../../../assets/images/Stopwatch-blue.svg';
 import AlertIcon from '../../Layout/AlertIcon';
-import { isExpired } from '../../../utils/Utils';
-import { EXPIRATION_DAYS } from '../../../utils/Constants';
+import { EXPIRATION_DAYS, isExpired } from '../../../utils/Utils';
 import { IconWithToolTip } from '../../UI/IconButtonToolTip';
 
 const ExpiredFilesAlert: FC<LargefilesProps> = ({ Files, handleToggle, checked }) => {
