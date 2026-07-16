@@ -147,7 +147,7 @@ class BearerAuthMiddleware:
             logging.warning(f"Token validation failed for {path}: {e}")
             response = JSONResponse(
                 status_code=401,
-                content=create_api_response("Unauthorized", message=str(e))
+                content=create_api_response("Unauthorized", message="Token verification failed")
             )
             return await response(scope, receive, send)
         except Exception as e:

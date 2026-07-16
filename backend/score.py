@@ -199,20 +199,18 @@ async def create_source_knowledge_graph_url(
         result = {'elapsed_api_time': f'{elapsed_time:.2f}'}
         return create_api_response("Success", message=message, success_count=success_count, failed_count=failed_count, file_name=lst_file_name, data=result)
     except LLMGraphBuilderException as e:
-        error_message = str(e)
-        message = f" Unable to create source node for source type: {params.source_type} and source: {source}"
+        message = f"Unable to create source node for source type: {params.source_type} and source: {source}"
         # Set the status "Success" becuase we are treating these error already handled by application as like custom errors.
-        json_obj = {'error_message':error_message, 'status':'Success','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,'success_count':1, 'source_type': params.source_type, 'source_url':params.source_url, 'wiki_query':params.wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email}
+        json_obj = {'error_message':message, 'status':'Success','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,'success_count':1, 'source_type': params.source_type, 'source_url':params.source_url, 'wiki_query':params.wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         logging.exception(f'File Failed in upload: {e}')
-        return create_api_response('Failed',message=message + error_message[:80],error=error_message,file_source=params.source_type)
+        return create_api_response('Failed',message=message,error="Internal Server Error",file_source=params.source_type)
     except Exception as e:
-        error_message = str(e)
-        message = f" Unable to create source node for source type: {params.source_type} and source: {source}"
-        json_obj = {'error_message':error_message, 'status':'Failed','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,'failed_count':1, 'source_type': params.source_type, 'source_url':params.source_url, 'wiki_query':params.wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email}
+        message = f"Unable to create source node for source type: {params.source_type} and source: {source}"
+        json_obj = {'error_message':message, 'status':'Failed','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,'failed_count':1, 'source_type': params.source_type, 'source_url':params.source_url, 'wiki_query':params.wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email}
         logger.log_struct(json_obj, "ERROR")
         logging.exception(f'Exception Stack trace upload:{e}')
-        return create_api_response('Failed',message=message + error_message[:80],error=error_message,file_source=params.source_type)
+        return create_api_response('Failed',message=message,error="Internal Server Error",file_source=params.source_type)
     finally:
         gc.collect()
 
@@ -288,7 +286,7 @@ async def extract_knowledge_graph_from_file(
         logging.info(f"extraction completed in {extract_api_time:.2f} seconds for file name {params.file_name}")
         return create_api_response('Success', data=result, file_source= params.source_type)
     except LLMGraphBuilderException as e:
-        error_message = str(e)
+        error_message = f"Failed To Process File:{params.file_name} or LLM Unable To Parse Content"
         graph = create_graph_database_connection(credentials)   
         graphDb_data_Access = graphDBdataAccess(graph)
         graphDb_data_Access.update_exception_db(params.file_name,error_message, params.retry_condition)
@@ -303,22 +301,21 @@ async def extract_knowledge_graph_from_file(
         else:
             logger.log_struct(json_obj, "ERROR")
         logging.exception(f'File Failed in extraction: {e}')
-        return create_api_response("Failed", message = error_message, error=error_message, file_name=params.file_name)
+        return create_api_response("Failed", message = error_message, error="Internal server error", file_name=params.file_name)
     except Exception as e:
         message=f"Failed To Process File:{params.file_name} or LLM Unable To Parse Content "
-        error_message = str(e)
         graph = create_graph_database_connection(credentials)   
         graphDb_data_Access = graphDBdataAccess(graph)
-        graphDb_data_Access.update_exception_db(params.file_name,error_message, params.retry_condition)
+        graphDb_data_Access.update_exception_db(params.file_name,message, params.retry_condition)
         if params.source_type == 'local file':
             failed_file_process(credentials.uri,params.file_name, merged_file_path)
         node_detail = graphDb_data_Access.get_current_status_document_node(params.file_name)
         
-        json_obj = {'api_name':'extract','message':message,'file_created_at':formatted_time(node_detail[0]['created_time']),'error_message':error_message, 'filename': params.file_name,'status':'Failed',
+        json_obj = {'api_name':'extract','message':message,'file_created_at':formatted_time(node_detail[0]['created_time']),'error_message':message, 'filename': params.file_name,'status':'Failed',
                     'db_url':credentials.uri,'model': params.model, 'userName':credentials.userName, 'database':credentials.database,'failed_count':1, 'source_type': params.source_type, 'source_url':params.source_url, 'wiki_query':params.wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email}
         logger.log_struct(json_obj, "ERROR")
         logging.exception(f'File Failed in extraction: {e}')
-        return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = params.file_name)
+        return create_api_response('Failed', message=message, error="Internal server error", file_name = params.file_name)
     finally:
         gc.collect()
             
@@ -336,9 +333,8 @@ async def get_source_list(credentials: Neo4jCredentials = Depends(get_neo4j_cred
     except Exception as e:
         job_status = "Failed"
         message="Unable to fetch source list"
-        error_message = str(e)
-        logging.exception(f'Exception:{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
+        logging.exception(message)
+        return create_api_response(job_status, message=message, error="Internal server error")
 
 @app.post("/post_processing")
 async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), tasks=Form(None), embedding_provider=Form(None), embedding_model=Form(None)):
@@ -404,10 +400,9 @@ async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_cred
     
     except Exception as e:
         job_status = "Failed"
-        error_message = str(e)
-        message = "Unable to complete tasks"
-        logging.exception(f'Exception in post_processing tasks: {error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
+        message = "Unable to complete post processing tasks"
+        logging.exception(message)
+        return create_api_response(job_status, message=message, error="Internal server error")
     
     finally:
         gc.collect()
@@ -446,9 +441,8 @@ async def chat_bot(
     except Exception as e:
         job_status = "Failed"
         message="Unable to get chat response"
-        error_message = str(e)
-        logging.exception(f'Exception in chat bot:{error_message}')
-        return create_api_response(job_status, message=message, error=error_message,data=mode)
+        logging.exception(message)
+        return create_api_response(job_status, message=message, error="Internal server error", data=mode)
     finally:
         gc.collect()
 
@@ -472,9 +466,8 @@ async def chunk_entities(
     except Exception as e:
         job_status = "Failed"
         message="Unable to extract entities from chunk ids"
-        error_message = str(e)
-        logging.exception(f'Exception in chat bot:{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
+        logging.exception(message)
+        return create_api_response(job_status, message=message, error="Internal server error")
     finally:
         gc.collect()
 
@@ -495,9 +488,8 @@ async def get_neighbours(
     except Exception as e:
         job_status = "Failed"
         message="Unable to extract neighbour nodes for given element ID"
-        error_message = str(e)
-        logging.exception(f'Exception in get neighbours :{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
+        logging.exception(message)
+        return create_api_response(job_status, message=message, error="Internal server error")
     finally:
         gc.collect()
 
@@ -522,9 +514,8 @@ async def graph_query(
     except Exception as e:
         job_status = "Failed"
         message = "Unable to get graph query response"
-        error_message = str(e)
-        logging.exception(f'Exception in graph query: {error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
+        logging.exception(message)
+        return create_api_response(job_status, message=message, error="Internal server error")
     finally:
         gc.collect()
     
@@ -546,9 +537,8 @@ async def chat_history(
     except Exception as e:
         job_status = "Failed"
         message="Unable to fetch chat history"
-        error_message = str(e)
-        logging.exception(f'Exception in chat history:{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
+        logging.exception('Exception in chat history')
+        return create_api_response(job_status, message=message, error="Internal server error")
     finally:
         gc.collect()
 
@@ -570,9 +560,8 @@ async def clear_chat_bot(
     except Exception as e:
         job_status = "Failed"
         message="Unable to clear chat History"
-        error_message = str(e)
-        logging.exception(f'Exception in chat bot:{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
+        logging.exception('Exception in chat bot')
+        return create_api_response(job_status, message=message, error="Internal server error")
     finally:
         gc.collect()
             
@@ -603,9 +592,8 @@ async def connect(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)
     except Exception as e:
         job_status = "Failed"
         message="Connection failed to connect Neo4j database"
-        error_message = str(e)
-        logging.exception(f'Connection failed to connect Neo4j database:{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
+        logging.exception('Failed to connect Neo4j database')
+        return create_api_response(job_status, message=message, error="Internal server error")
 
 @app.post("/upload")
 async def upload_large_file_into_chunks(
@@ -637,13 +625,11 @@ async def upload_large_file_into_chunks(
             return create_api_response('Success', message=result)
     except Exception as e:
         message="Unable to upload file in chunks"
-        error_message = str(e)
         graph = create_graph_database_connection(credentials)   
         graphDb_data_Access = graphDBdataAccess(graph)
-        graphDb_data_Access.update_exception_db(originalname,error_message)
+        graphDb_data_Access.update_exception_db(originalname, message)
         logging.info(message)
-        logging.exception(f'Exception:{error_message}')
-        return create_api_response('Failed', message=message + error_message[:100], error=error_message, file_name = originalname)
+        return create_api_response('Failed', message=message, error="Internal server error", file_name=originalname)
     finally:
         gc.collect()
             
@@ -661,10 +647,9 @@ async def get_structured_schema(credentials: Neo4jCredentials = Depends(get_neo4
         return create_api_response('Success', data=result,message=f"Total elapsed API time {elapsed_time:.2f}")
     except Exception as e:
         message="Unable to get the labels and relationtypes from neo4j database"
-        error_message = str(e)
         logging.info(message)
-        logging.exception(f'Exception:{error_message}')
-        return create_api_response("Failed", message=message, error=error_message)
+        logging.exception('Exception occurred while getting schema')
+        return create_api_response("Failed", message=message, error="Internal server error")
     finally:
         gc.collect()
             
@@ -738,9 +723,8 @@ async def delete_document_and_entities(
     except Exception as e:
         job_status = "Failed"
         message=f"Unable to delete document {filenames}"
-        error_message = str(e)
-        logging.exception(f'{message}:{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
+        logging.exception(message)
+        return create_api_response(job_status, message=message, error="Internal server error")
     finally:
         gc.collect()
 
@@ -780,9 +764,8 @@ async def get_document_status(
         return create_api_response('Success',message="",file_name=status)
     except Exception as e:
         message="Unable to get the document status"
-        error_message = str(e)
-        logging.exception(f'{message}:{error_message}')
-        return create_api_response('Failed',message=message, error=error_message)
+        logging.exception(message)
+        return create_api_response('Failed',message=message, error="Internal server error")
     
 @app.post("/cancelled_job")
 async def cancelled_job(
@@ -803,10 +786,9 @@ async def cancelled_job(
         return create_api_response('Success',message=result)
     except Exception as e:
         job_status = "Failed"
-        message="Unable to cancelled the running job"
-        error_message = str(e)
-        logging.exception(f'Exception in cancelling the running job:{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
+        message="Unable to cancel the running job"
+        logging.exception(message)
+        return create_api_response(job_status, message=message, error="Internal server error")
     finally:
         gc.collect()
 
@@ -831,9 +813,8 @@ async def populate_graph_schema(
     except Exception as e:
         job_status = "Failed"
         message="Unable to get the schema from text"
-        error_message = str(e)
-        logging.exception(f'Exception in getting the schema from text:{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
+        logging.exception(message)
+        return create_api_response(job_status, message=message, error="Internal server error")
     finally:
         gc.collect()
         
@@ -853,9 +834,8 @@ async def get_unconnected_nodes_list(credentials: Neo4jCredentials = Depends(get
     except Exception as e:
         job_status = "Failed"
         message="Unable to get the list of unconnected nodes"
-        error_message = str(e)
-        logging.exception(f'Exception in getting list of unconnected nodes:{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
+        logging.exception(message)
+        return create_api_response(job_status, message=message, error="Internal server error")
     finally:
         gc.collect()
         
@@ -878,9 +858,8 @@ async def delete_orphan_nodes(
     except Exception as e:
         job_status = "Failed"
         message="Unable to delete the unconnected nodes"
-        error_message = str(e)
-        logging.exception(f'Exception in delete the unconnected nodes:{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
+        logging.exception(message)
+        return create_api_response(job_status, message=message, error="Internal server error")
     finally:
         gc.collect()
         
@@ -900,9 +879,8 @@ async def get_duplicate_nodes(credentials: Neo4jCredentials = Depends(get_neo4j_
     except Exception as e:
         job_status = "Failed"
         message="Unable to get the list of duplicate nodes"
-        error_message = str(e)
-        logging.exception(f'Exception in getting list of duplicate nodes:{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
+        logging.exception(message)
+        return create_api_response(job_status, message=message, error="Internal server error")
     finally:
         gc.collect()
         
@@ -926,9 +904,8 @@ async def merge_duplicate_nodes(
     except Exception as e:
         job_status = "Failed"
         message="Unable to merge the duplicate nodes"
-        error_message = str(e)
-        logging.exception(f'Exception in merge the duplicate nodes:{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
+        logging.exception(message)
+        return create_api_response(job_status, message=message, error="Internal server error")
     finally:
         gc.collect()
         
@@ -954,9 +931,8 @@ async def drop_create_vector_index(
     except Exception as e:
         job_status = "Failed"
         message="Unable to drop and re-create vector index with correct dimesion as per application configuration"
-        error_message = str(e)
-        logging.exception(f'Exception into drop and re-create vector index with correct dimesion as per application configuration:{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
+        logging.exception(message)
+        return create_api_response(job_status, message=message, error="Internal server error")
     finally:
         gc.collect()
         
@@ -981,9 +957,8 @@ async def retry_processing(
     except Exception as e:
         job_status = "Failed"
         message="Unable to set status to Retry"
-        error_message = str(e)
-        logging.exception(f'{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
+        logging.exception(message)
+        return create_api_response(job_status, message=message, error="Internal server error")
     finally:
         gc.collect()    
 
@@ -1025,7 +1000,7 @@ async def calculate_metric(
         return create_api_response(
             'Failed',
             message="Error while calculating evaluation metrics",
-            error=str(e)
+            error="Internal server error"
         )
     finally:
         gc.collect()
@@ -1059,7 +1034,7 @@ async def calculate_additional_metrics(question: str = Form(),
        return create_api_response(
            'Failed',
            message="Error while calculating evaluation metrics",
-           error=str(e)
+           error="Internal server error"
        )
    finally:
        gc.collect()
@@ -1094,9 +1069,8 @@ async def fetch_chunktext(
    except Exception as e:
        job_status = "Failed"
        message = "Unable to get chunk text response"
-       error_message = str(e)
-       logging.exception(f'Exception in fetch_chunktext: {error_message}')
-       return create_api_response(job_status, message=message, error=error_message)
+       logging.exception(message)
+       return create_api_response(job_status, message=message, error="Internal server error")
    finally:
        gc.collect()
 
@@ -1134,9 +1108,8 @@ async def backend_connection_configuration():
         graph_connection = False
         job_status = "Failed"
         message="Unable to connect backend DB"
-        error_message = str(e)
-        logging.exception(f'{error_message}')
-        return create_api_response(job_status, message=message, error=error_message.rstrip('.') + ', or fill from the login dialog.', data=graph_connection)
+        logging.exception(message)
+        return create_api_response(job_status, message=message, error="Internal server error", data=graph_connection)
     finally:
         gc.collect()
     
@@ -1155,10 +1128,8 @@ async def get_schema_visualization(credentials: Neo4jCredentials = Depends(get_n
         return create_api_response('Success', data=result,message=f"Total elapsed API time {elapsed_time:.2f}")
     except Exception as e:
         message="Unable to get schema visualization from neo4j database"
-        error_message = str(e)
-        logging.info(message)
-        logging.exception(f'Exception:{error_message}')
-        return create_api_response("Failed", message=message, error=error_message)
+        logging.exception(message)
+        return create_api_response("Failed", message=message, error="Internal server error")
     finally:
         gc.collect()
 
@@ -1191,11 +1162,10 @@ async def get_token_limits(credentials: Neo4jCredentials = Depends(get_neo4j_cre
         return create_api_response(job_status, data=limits, message=message)
     except Exception as e:
         job_status = "Failed"
-        error_message = str(e)
         message = "Unable to fetch token limits"
-        logger.log_struct({'api_name': 'get_token_limits', 'db_url': credentials.uri, 'email': credentials.email, 'error_message': error_message, 'logging_time': formatted_time(datetime.now(timezone.utc))}, "ERROR")
-        logging.exception(f'Exception in get_token_limits: {error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
+        logger.log_struct({'api_name': 'get_token_limits', 'db_url': credentials.uri, 'email': credentials.email, 'logging_time': formatted_time(datetime.now(timezone.utc))}, "ERROR")
+        logging.exception(message)
+        return create_api_response(job_status, message=message, error="Internal server error")
 
 @app.post("/fetch_embedding_model")
 async def fetch_embedding_model(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
@@ -1216,10 +1186,9 @@ async def fetch_embedding_model(credentials: Neo4jCredentials = Depends(get_neo4
         return create_api_response('Success',data=result)
     except Exception as e:
         job_status = "Failed"
-        message="Unable to fetch embedding models"
-        error_message = str(e)
-        logging.exception(f'Exception in fetch_embedding_model:{error_message}')
-        return create_api_response(job_status, message=message, error=error_message)
+        message="Unable to fetch embedding model"
+        logging.exception(message)
+        return create_api_response(job_status, message=message, error="Internal server error")
     finally:
         gc.collect() 
 
@@ -1265,8 +1234,8 @@ async def change_embedding_model(
                   "change_index": change_index}
         )
     except Exception as e:
-        logging.exception(f'Exception in change_embedding_model:{e}')
-        return create_api_response("Failed", message=f"An unexpected error occurred: {str(e)}", error=str(e))
+        logging.exception("Exception in change_embedding_model")
+        return create_api_response("Failed", message="An unexpected error occurred.", error="Internal server error")
     finally:
         gc.collect()
 
