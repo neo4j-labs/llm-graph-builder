@@ -2,7 +2,7 @@ import { LoadingSpinner, Flex, Typography, TextLink } from '@neo4j-ndl/react';
 import { FC, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { CommunitiesProps } from '../../types';
-import { chatModeLables } from '../../utils/Constants';
+import { chatModeLables } from '../../utils/Utils';
 import GraphViewModal from '../Graph/GraphViewModal';
 import { handleGraphNodeClick } from './chatInfo';
 import remarkGfm from 'remark-gfm';
