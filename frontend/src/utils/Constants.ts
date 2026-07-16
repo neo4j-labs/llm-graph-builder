@@ -1,6 +1,6 @@
 import { NvlOptions } from '@neo4j-nvl/base';
 import { GraphType, OptionType, PatternOption } from '../types';
-import { getDateTime, getDescriptionForChatMode } from './Utils';
+import { chatModeLables, getDateTime, getDescriptionForChatMode } from './Utils';
 import chatbotmessages from '../assets/ChatbotMessages.json';
 import schemaExamples from '../assets/newSchema.json';
 export const APP_SOURCES =
@@ -32,17 +32,6 @@ export const prodllms = import.meta.env.VITE_LLM_MODELS_PROD?.trim()
   ? (import.meta.env.VITE_LLM_MODELS_PROD.split(',') as string[])
   : ['gemini_3.5_flash', 'openai_gpt_5.4_mini', 'diffbot', 'anthropic_claude_4.5_haiku'];
 
-export const chatModeLables = {
-  vector: 'vector',
-  graph: 'graph',
-  'graph+vector': 'graph_vector',
-  fulltext: 'fulltext',
-  'graph+vector+fulltext': 'graph_vector_fulltext',
-  'entity search+vector': 'entity_vector',
-  unavailableChatMode: 'Chat mode is unavailable when files are selected',
-  selected: 'Selected',
-  'global search+vector+fulltext': 'global_vector',
-};
 export const chatModeReadableLables: Record<string, string> = {
   vector: 'vector',
   graph: 'graph',
@@ -450,7 +439,6 @@ export const metricsinfo: Record<string, string> = {
   semantic_score: 'Determines How well the generated answer understands the meaning of the reference answer.',
   context_entity_recall: 'Determines the recall of entities present in both generated answer and retrieved contexts',
 };
-export const EXPIRATION_DAYS = 3;
 export const SKIP_AUTH = (import.meta.env.VITE_SKIP_AUTH ?? 'true') == 'true';
 
 export const sourceOptions: PatternOption[] = [{ label: 'Person', value: 'Person' }];
