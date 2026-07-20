@@ -147,6 +147,14 @@ app.add_middleware(SessionMiddleware, secret_key=os.urandom(24))
 app.add_api_route("/health", health([healthy_condition, healthy]))
 
 
+@app.get("/verify_auth")
+async def verify_auth(request: Request):
+    """Lightweight auth pre-flight: BearerAuthMiddleware validates the token before this
+    handler runs, so reaching it means the caller is authenticated (or auth is disabled)."""
+    email = getattr(request.state, "token_email", None)
+    return create_api_response("Success", message="Token verified", data={"email": email})
+
+
 @app.post("/url/scan")
 async def create_source_knowledge_graph_url(
     credentials: Neo4jCredentials = Depends(get_neo4j_credentials),

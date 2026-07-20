@@ -13,6 +13,8 @@ import ThemeWrapper from '../../context/ThemeWrapper';
 import { SpotlightProvider } from '@neo4j-ndl/react';
 import { envConnectionAPI } from '../../services/ConnectAPI';
 import { showErrorToast } from '../../utils/Toasts';
+import { useAuth0 } from '@auth0/auth0-react';
+import { SKIP_AUTH } from '../../utils/Constants';
 
 const loadChatHistory = async (setMessages: Dispatch<SetStateAction<Messages[]>>) => {
   try {
@@ -30,6 +32,7 @@ const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
   const { clearHistoryData, messages, setMessages, setClearHistoryData, setIsDeleteChatLoading, isDeleteChatLoading } =
     useMessageContext();
   const { setUserCredentials, setConnectionStatus, connectionStatus, setShowDisconnectButton } = useCredentials();
+  const { isLoading: isAuthLoading } = useAuth0();
   const [showBackButton, setShowBackButton] = useReducer((state) => !state, false);
   const [openConnection, setOpenConnection] = useState<connectionState>({
     openPopUp: false,
@@ -128,8 +131,12 @@ const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
   }, [chatMessages, setUserCredentials, setConnectionStatus, setMessages, resolveConnectionFromBackend]);
 
   useEffect(() => {
+    // Wait for Auth0 to restore the session so requests carry a valid bearer token
+    if (!SKIP_AUTH && isAuthLoading) {
+      return;
+    }
     initialiseConnection();
-  }, [initialiseConnection]);
+  }, [initialiseConnection, isAuthLoading]);
   /**
    * Handles successful connection establishment.
    */
