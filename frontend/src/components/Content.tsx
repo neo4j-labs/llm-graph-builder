@@ -21,7 +21,6 @@ import useServerSideEvent from '../hooks/useSse';
 import {
   batchSize,
   buttonCaptions,
-  chatModeLables,
   largeFileSize,
   llms,
   RETRY_OPIONS,
@@ -48,7 +47,7 @@ import { useMessageContext } from '../context/UserMessages';
 import PostProcessingToast from './Popups/GraphEnhancementDialog/PostProcessingCheckList/PostProcessingToast';
 import { getChunkText } from '../services/getChunkText';
 import ChunkPopUp from './Popups/ChunkPopUp';
-import { isExpired, isFileReadyToProcess, shouldShowTokenTracking } from '../utils/Utils';
+import { chatModeLables, isExpired, isFileReadyToProcess, shouldShowTokenTracking } from '../utils/Utils';
 import { checkTokenLimits } from '../utils/TokenWarning';
 import { useHasSelections } from '../hooks/useHasSelections';
 import { ChevronUpIconOutline, ChevronDownIconOutline } from '@neo4j-ndl/react/icons';
@@ -327,9 +326,9 @@ const Content: React.FC<ContentProps> = ({
         }
         return copiedobj;
       });
-      if (fileItem.name != undefined && userCredentials != null) {
+      if (fileItem.name != undefined) {
         const { name } = fileItem;
-        triggerStatusUpdateAPI(name as string, userCredentials, updateStatusForLargeFiles);
+        triggerStatusUpdateAPI(name as string, updateStatusForLargeFiles);
       }
 
       const apiResponse = await extractAPI(

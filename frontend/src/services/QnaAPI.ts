@@ -34,6 +34,21 @@ export const chatBotAPI = async (
   }
 };
 
+export const getChatHistoryAPI = async () => {
+  try {
+    const formData = new FormData();
+    const response = await api.post(`/chat_history`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response;
+  } catch (error) {
+    console.log('Error fetching chat history:', error);
+    throw error;
+  }
+};
+
 export const clearChatAPI = async (session_id: string) => {
   try {
     const formData = new FormData();

@@ -1,9 +1,9 @@
 import { StatusIndicator, Typography } from '@neo4j-ndl/react';
 import { useFileContext } from '../../context/UsersFiles';
 import CustomMenu from '../UI/CustomMenu';
-import { chatModeLables, chatModes as AvailableModes, chatModeReadableLables } from '../../utils/Constants';
+import { chatModes as AvailableModes, chatModeReadableLables } from '../../utils/Constants';
 import { capitalize } from '@mui/material';
-import { capitalizeWithPlus } from '../../utils/Utils';
+import { capitalizeWithPlus, chatModeLables } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
 import { JSXElementConstructor, ReactElement, ReactNode, ReactPortal, useMemo } from 'react';
 

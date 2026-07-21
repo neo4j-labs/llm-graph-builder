@@ -715,12 +715,12 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
     );
   };
 
-  const handleSmallFile = (item: SourceNode, userCredentials: UserCredentials) => {
-    subscribe(item.fileName, userCredentials, updatestatus, updateProgress).catch(handleFileUploadError);
+  const handleSmallFile = (item: SourceNode) => {
+    subscribe(item.fileName, updatestatus, updateProgress).catch(handleFileUploadError);
   };
 
-  const handleLargeFile = (item: SourceNode, userCredentials: UserCredentials) => {
-    triggerStatusUpdateAPI(item.fileName, userCredentials, updateStatusForLargeFiles);
+  const handleLargeFile = (item: SourceNode) => {
+    triggerStatusUpdateAPI(item.fileName, updateStatusForLargeFiles);
   };
   useEffect(() => {
     const waitingQueue: CustomFile[] = JSON.parse(
@@ -810,9 +810,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
             });
             res.data.data.forEach((item) => {
               if (isProcessingFileValid(item, userCredentials as UserCredentials)) {
-                item.fileSize < largeFileSize
-                  ? handleSmallFile(item, userCredentials as UserCredentials)
-                  : handleLargeFile(item, userCredentials as UserCredentials);
+                item.fileSize < largeFileSize ? handleSmallFile(item) : handleLargeFile(item);
               }
             });
           } else {
