@@ -10,19 +10,20 @@ const api = axios.create({
 // Store credentials globally for the interceptor
 let globalCredentials: UserCredentials | null = null;
 
-// Async getter registered by the Auth0 provider to fetch the current access token
-let authTokenGetter: (() => Promise<string>) | null = null;
+// Async getter registered by the Auth0 provider to fetch the current access token.
+// forceRefresh bypasses the Auth0 cache so an expired/revoked token is replaced.
+let authTokenGetter: ((forceRefresh?: boolean) => Promise<string>) | null = null;
 
-export const setAuthTokenGetter = (getter: (() => Promise<string>) | null) => {
+export const setAuthTokenGetter = (getter: ((forceRefresh?: boolean) => Promise<string>) | null) => {
   authTokenGetter = getter;
 };
 
-export const getAuthToken = async (): Promise<string | null> => {
+export const getAuthToken = async (forceRefresh = false): Promise<string | null> => {
   if (!authTokenGetter) {
     return null;
   }
   try {
-    return await authTokenGetter();
+    return await authTokenGetter(forceRefresh);
   } catch (error) {
     console.error('Unable to acquire access token', error);
     return null;
@@ -84,6 +85,25 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// On a 401 (e.g. access token expired while the tab was idle) force-refresh the token
+// via the Auth0 refresh token and retry the request once before surfacing the error.
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error?.config;
+    if (error?.response?.status === 401 && originalRequest && !originalRequest._authRetry && authTokenGetter) {
+      originalRequest._authRetry = true;
+      const freshToken = await getAuthToken(true);
+      if (freshToken) {
+        originalRequest.headers = originalRequest.headers ?? {};
+        originalRequest.headers.Authorization = `Bearer ${freshToken}`;
+        return api.request(originalRequest);
+      }
+    }
     return Promise.reject(error);
   }
 );
