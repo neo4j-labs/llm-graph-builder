@@ -441,7 +441,7 @@ def setup_chat(model, graph, document_names, chat_mode_settings, embedding_provi
     
     return llm, doc_retriever, model_name
 
-def process_chat_response(messages, history, question, model, graph, document_names, chat_mode_settings, email=None, uri=None, embedding_provider=None, embedding_model=None):
+def process_chat_response(messages, history, question, model, graph, document_names, chat_mode_settings, email=None, uri=None, embedding_provider=None, embedding_model=None, session_id=None):
     try:
         # if get_value_from_env("TRACK_USER_USAGE", "false", "bool"):
         #     try:
@@ -541,9 +541,16 @@ def summarize_and_log(history, stored_messages, llm, graph=None):
         summary_message_for_db = AIMessage(content=summary_text)
 
         with threading.Lock():
-            history.clear()
-            history.add_user_message("Our current conversation summary till now")
-            history.add_message(summary_message_for_db)
+            try:
+                history.clear()
+                history.add_user_message("Our current conversation summary till now")
+                history.add_message(summary_message_for_db)
+            except Exception as e:
+                logging.warning(f"Could not save to database history (driver likely closed): {e}. Falling back to local history.")
+                if session_id:
+                    local_history = SessionChatHistory.get_chat_history(session_id)
+                    local_history.add_message(HumanMessage(content="Our current conversation summary till now"))
+                    local_history.add_message(summary_message_for_db)
 
         logging.info(f"Chat History summarized in {time.time() - start_time:.2f} seconds")
         return True
@@ -598,7 +605,7 @@ def get_graph_response(graph_chain, question):
     except Exception as e:
         logging.error(f"An error occurred while getting the graph response : {e}")
 
-def process_graph_response(model, graph, question, messages, history):
+def process_graph_response(model, graph, question, messages, history, session_id=None):
     try:
         graph_chain, qa_llm, model_version = create_graph_chain(model, graph)
         
@@ -713,7 +720,7 @@ def QA_RAG(graph, model, question, document_names, mode, email=None, uri=None, e
     messages.append(user_question)
 
     if mode == CHAT_GRAPH_MODE:
-        result = process_graph_response(model, graph, question, messages, history)
+        result = process_graph_response(model, graph, question, messages, history, session_id)
     else:
         chat_mode_settings = get_chat_mode_settings(mode=mode)
         document_names= list(map(str.strip, json.loads(document_names)))
@@ -734,7 +741,7 @@ def QA_RAG(graph, model, question, document_names, mode, email=None, uri=None, e
                 "user": "chatbot"
             }
         else:
-            result = process_chat_response(messages,history, question, model, graph, document_names,chat_mode_settings, email, uri, embedding_provider, embedding_model)
+            result = process_chat_response(messages,history, question, model, graph, document_names,chat_mode_settings, email, uri, embedding_provider, embedding_model, session_id)
 
     result["session_id"] = session_id
     

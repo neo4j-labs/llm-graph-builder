@@ -28,6 +28,18 @@ const loadChatHistory = async (setMessages: Dispatch<SetStateAction<Messages[]>>
   }
 };
 
+const loadChatHistory = async (setMessages: Dispatch<SetStateAction<Messages[]>>) => {
+  try {
+    const chatHistoryResponse = await getChatHistoryAPI();
+    const history = chatHistoryResponse?.data?.data?.messages;
+    if (Array.isArray(history) && history.length) {
+      setMessages(convertChatHistoryToMessages(history));
+    }
+  } catch (error) {
+    console.log('Error loading chat history:', error);
+  }
+};
+
 const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
   const { clearHistoryData, messages, setMessages, setClearHistoryData, setIsDeleteChatLoading, isDeleteChatLoading } =
     useMessageContext();
