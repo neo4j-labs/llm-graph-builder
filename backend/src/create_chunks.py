@@ -71,6 +71,9 @@ class CreateChunksofDocument:
             logging.info("No metadata found for pages, proceeding with normal chunking")
             chunks = text_splitter.split_documents(self.pages)
 
+        for chunk in chunks:
+            chunk.page_content = re.sub(r'\s+', ' ', chunk.page_content).strip()
+
         logging.info('Total chunks created: %d', len(chunks))
         if not is_neo4j_user and len(chunks) > chunk_to_be_created:
             chunks = chunks[:chunk_to_be_created]

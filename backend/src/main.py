@@ -12,8 +12,6 @@ import ipaddress, socket
 from urllib.parse import urlparse
 
 
-
-
 from dotenv import load_dotenv
 from langchain_core.documents import Document
 from langchain_neo4j import Neo4jGraph
