@@ -248,6 +248,23 @@ class graphDBdataAccess:
                     logging.error(f"An unexpected error occurred while verifying GDS: {e}")
                     return False
             
+    def verify_connectivity(self):
+        """
+        Verify the database connection is alive using db.verifyConnectivity()
+        Returns True if connection is healthy, False otherwise
+        """
+        try:
+            result = self.graph.query("CALL db.verifyConnectivity()", session_params={"database": self.graph._database})
+            if result and result[0].get('outcome') == 'ok':
+                logging.info("Database connectivity verified successfully")
+                return True
+            else:
+                logging.warning("Database connectivity check returned unexpected result")
+                return False
+        except Exception as e:
+            logging.error(f"Failed to verify database connectivity: {e}")
+            return False
+
     def connection_check_and_get_vector_dimensions(self, database, email, uri):
         """
         Get the vector index dimension from database and application configuration and DB connection status
@@ -260,6 +277,11 @@ class graphDBdataAccess:
         Returns:
         Returns a status of connection from NEO4j is success or failure
         """
+        
+        # Verify connectivity first
+        if not self.verify_connectivity():
+            logging.error("Database connectivity check failed")
+            return {'message': "Connection Failed - Unable to verify connectivity", 'gds_status': False, 'write_access': False}
         
         db_vector_dimension = self.graph.query("""SHOW INDEXES YIELD *
                                     WHERE type = 'VECTOR' AND name = 'vector'
@@ -308,7 +330,23 @@ class graphDBdataAccess:
                     logging.info(f"Deadlock detected. Retrying {retries}/{max_retries} in {delay} seconds...")
                     time.sleep(delay)  # Wait before retrying
                 else:
-                    raise 
+                    raise
+            except Exception as e:
+                error_msg = str(e).lower()
+                # Handle defunct connection errors
+                if "defunct" in error_msg or "failed to read" in error_msg or "connection" in error_msg:
+                    retries += 1
+                    if retries >= max_retries:
+                        logging.error(f"Connection error after {max_retries} retries: {e}")
+                        raise RuntimeError(f"Database connection failed after {max_retries} retries: {e}")
+                    logging.warning(f"Connection error encountered, verifying connectivity and retrying ({retries}/{max_retries}): {e}")
+                    # Verify connectivity before retry
+                    self.verify_connectivity()
+                    time.sleep(delay * retries)  # Exponential backoff
+                else:
+                    # For non-connection errors, fail immediately
+                    logging.error(f"Query execution error: {e}")
+                    raise
         logging.error("Failed to execute query after maximum retries due to persistent deadlocks.")
         raise RuntimeError("Query execution failed after multiple retries due to deadlock.")
 
