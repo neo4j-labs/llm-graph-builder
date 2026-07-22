@@ -21,7 +21,6 @@ import useServerSideEvent from '../hooks/useSse';
 import {
   batchSize,
   buttonCaptions,
-  chatModeLables,
   largeFileSize,
   llms,
   RETRY_OPIONS,
@@ -48,7 +47,7 @@ import { useMessageContext } from '../context/UserMessages';
 import PostProcessingToast from './Popups/GraphEnhancementDialog/PostProcessingCheckList/PostProcessingToast';
 import { getChunkText } from '../services/getChunkText';
 import ChunkPopUp from './Popups/ChunkPopUp';
-import { isExpired, isFileReadyToProcess, shouldShowTokenTracking } from '../utils/Utils';
+import { chatModeLables, isExpired, isFileReadyToProcess, shouldShowTokenTracking } from '../utils/Utils';
 import { checkTokenLimits } from '../utils/TokenWarning';
 import { useHasSelections } from '../hooks/useHasSelections';
 import { ChevronUpIconOutline, ChevronDownIconOutline } from '@neo4j-ndl/react/icons';

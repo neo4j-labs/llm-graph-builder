@@ -23,7 +23,19 @@ import youtubedarklogo from '../assets/images/youtube-darkmode.svg';
 import youtubelightlogo from '../assets/images/youtube-lightmode.svg';
 import s3logo from '../assets/images/s3logo.png';
 import gcslogo from '../assets/images/gcs.webp';
-import { chatModeLables, EXPIRATION_DAYS } from './Constants';
+
+export const chatModeLables = {
+  vector: 'vector',
+  graph: 'graph',
+  'graph+vector': 'graph_vector',
+  fulltext: 'fulltext',
+  'graph+vector+fulltext': 'graph_vector_fulltext',
+  'entity search+vector': 'entity_vector',
+  unavailableChatMode: 'Chat mode is unavailable when files are selected',
+  selected: 'Selected',
+  'global search+vector+fulltext': 'global_vector',
+};
+export const EXPIRATION_DAYS = 3;
 
 // Get the Url
 export const url = () => {
