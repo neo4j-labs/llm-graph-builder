@@ -141,17 +141,7 @@ export default function Profile() {
       {
         title: 'Logout',
         onClick: () => {
-          try {
-            localStorage.removeItem('currentUserEmail');
-            const existing = localStorage.getItem('neo4j.connection');
-            if (existing) {
-              const parsed = JSON.parse(existing);
-              parsed.email = '';
-              localStorage.setItem('neo4j.connection', JSON.stringify(parsed));
-            }
-          } catch (e) {
-            console.warn('Failed to clear email on logout', e);
-          }
+          localStorage.clear();
           logout({ logoutParams: { returnTo: `${window.location.origin}/readonly` } });
         },
         disabled: false,
