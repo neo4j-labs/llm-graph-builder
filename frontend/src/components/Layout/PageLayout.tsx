@@ -14,6 +14,7 @@ import useSpeechSynthesis from '../../hooks/useSpeech';
 import FallBackDialog from '../UI/FallBackDialog';
 import { envConnectionAPI } from '../../services/ConnectAPI';
 import { healthStatus } from '../../services/HealthStatus';
+import { verifyAuthAPI } from '../../services/AuthVerify';
 import { useAuth0 } from '@auth0/auth0-react';
 import { showErrorToast } from '../../utils/Toasts';
 import { APP_SOURCES } from '../../utils/Constants';
@@ -219,7 +220,7 @@ const PageLayout: React.FC = () => {
     setTypeOptions,
   } = useFileContext();
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth0();
+  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth0();
 
   useEffect(() => {
     try {
@@ -286,7 +287,20 @@ const PageLayout: React.FC = () => {
   }, [allPatterns, selectedNodes, selectedRels]);
 
   useEffect(() => {
+    // Wait until Auth0 has restored the session (refresh / new tab) so startup calls
+    // carry a valid bearer token and this effect does not run twice per page load.
+    if (!SKIP_AUTH && isAuthLoading) {
+      return;
+    }
     async function initializeConnection() {
+      // Verify authentication before any other API call
+      if (!SKIP_AUTH && isAuthenticated) {
+        const isTokenValid = await verifyAuthAPI();
+        if (!isTokenValid) {
+          showErrorToast('Session verification failed. Please log in again.');
+          return;
+        }
+      }
       // Fetch backend health status
       try {
         const response = await healthStatus();
@@ -383,7 +397,7 @@ const PageLayout: React.FC = () => {
     if ((isAuthenticated || SKIP_AUTH) && isFirstTimeUser) {
       setActiveSpotlight('connectbutton');
     }
-  }, [isAuthenticated, isFirstTimeUser]);
+  }, [isAuthenticated, isAuthLoading, isFirstTimeUser]);
 
   const toggleLeftDrawer = useCallback(() => {
     if (isLargeDesktop) {

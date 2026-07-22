@@ -1,5 +1,8 @@
+import hashlib
 import logging
 import os
+import threading
+import time
 from urllib.parse import parse_qs
 
 from dotenv import load_dotenv
@@ -16,6 +19,42 @@ AUTH0_DOMAIN = os.getenv("AUTH0_DOMAIN", "").strip()
 AUTH_EXEMPT_PATHS = {"/health", "/docs", "/redoc", "/openapi.json", "/backend_connection_configuration"}
 # EventSource cannot send custom headers, so these endpoints may pass the token as a query param
 SSE_TOKEN_PATHS = ("/update_extract_status/", "/document_status/")
+
+# Auth0 /userinfo is rate limited (~5 req/min per token), so a validated token is cached
+# and revalidated only after the TTL expires instead of on every request.
+TOKEN_CACHE_TTL_SECONDS = int(os.getenv("TOKEN_CACHE_TTL_SECONDS", "300"))
+_token_cache: dict[str, tuple[str | None, float]] = {}
+_token_cache_lock = threading.Lock()
+_TOKEN_CACHE_MAX_ENTRIES = 1000
+
+
+def _cache_key(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def _get_cached_email(token: str) -> tuple[bool, str | None]:
+    key = _cache_key(token)
+    with _token_cache_lock:
+        entry = _token_cache.get(key)
+        if entry is None:
+            return False, None
+        email, expires_at = entry
+        if time.monotonic() >= expires_at:
+            del _token_cache[key]
+            return False, None
+        return True, email
+
+
+def _store_cached_email(token: str, email: str | None) -> None:
+    key = _cache_key(token)
+    with _token_cache_lock:
+        if len(_token_cache) >= _TOKEN_CACHE_MAX_ENTRIES:
+            now = time.monotonic()
+            for stale_key in [k for k, (_, exp) in _token_cache.items() if exp <= now]:
+                del _token_cache[stale_key]
+            if len(_token_cache) >= _TOKEN_CACHE_MAX_ENTRIES:
+                _token_cache.clear()
+        _token_cache[key] = (email, time.monotonic() + TOKEN_CACHE_TTL_SECONDS)
 
 
 def validate_token_and_get_email(token: str) -> str | None:
@@ -40,7 +79,11 @@ def validate_token_and_get_email(token: str) -> str | None:
     """
     if not AUTH0_DOMAIN:
         raise ValueError("AUTH0_DOMAIN is not configured")
-    
+
+    cached, cached_email = _get_cached_email(token)
+    if cached:
+        return cached_email
+
     try:
         # Validate token with Auth0 by calling /userinfo endpoint
         response = requests.get(
@@ -61,14 +104,19 @@ def validate_token_and_get_email(token: str) -> str | None:
             
             if email:
                 logging.info(f"Token validated successfully, email: {email}")
-                return email
             else:
                 logging.warning("Token is valid but email not found in userinfo response")
-                return None
-                
+            _store_cached_email(token, email)
+            return email
+
         elif response.status_code == 401:
             logging.warning("Token rejected by Auth0 (invalid or expired)")
             raise ValueError("Invalid or expired token")
+        elif response.status_code == 429:
+            # Auth0 rate limited us; the token itself is not proven invalid, so fail
+            # closed with a distinct message rather than reporting a bad token
+            logging.error("Auth0 /userinfo rate limit hit while validating token")
+            raise ValueError("Token validation rate limited by Auth0")
         else:
             logging.error(f"Unexpected Auth0 /userinfo response: {response.status_code}")
             raise ValueError(f"Token validation failed with status {response.status_code}")
