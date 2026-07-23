@@ -132,7 +132,7 @@ def check_url_source(source_type, yt_url:str=None, wiki_query:str=None):
         match = re.search(wikipedia_url_regex, wiki_query.strip())
         if match:
                 language = match.group(2)
-                wiki_query_id = match.group(3)
+                wiki_query_id = match.group(3).split('#')[0]
         else:
             raise Exception(f'Not a valid wikipedia url: {wiki_query} ')
 
