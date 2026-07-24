@@ -207,18 +207,20 @@ async def create_source_knowledge_graph_url(
         result = {'elapsed_api_time': f'{elapsed_time:.2f}'}
         return create_api_response("Success", message=message, success_count=success_count, failed_count=failed_count, file_name=lst_file_name, data=result)
     except LLMGraphBuilderException as e:
-        message = f"Unable to create source node for source type: {params.source_type} and source: {source}"
+        error_details = str(e)
+        message = f"Unable to create source node for source type: {params.source_type} and source: {source} due to {error_details[:100]}"
         # Set the status "Success" becuase we are treating these error already handled by application as like custom errors.
-        json_obj = {'error_message':message, 'status':'Success','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,'success_count':1, 'source_type': params.source_type, 'source_url':params.source_url, 'wiki_query':params.wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email}
+        json_obj = {'error_message':message, 'error': error_details, 'status':'Success','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,'success_count':1, 'source_type': params.source_type, 'source_url':params.source_url, 'wiki_query':params.wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email}
         logger.log_struct(json_obj, "INFO")
-        logging.exception(f'File Failed in upload: {e}')
-        return create_api_response('Failed',message=message,error="Internal Server Error",file_source=params.source_type)
+        logging.exception(f'File Failed in upload: {error_details}')
+        return create_api_response('Failed',message=message,error=error_details,file_source=params.source_type)
     except Exception as e:
-        message = f"Unable to create source node for source type: {params.source_type} and source: {source}"
-        json_obj = {'error_message':message, 'status':'Failed','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,'failed_count':1, 'source_type': params.source_type, 'source_url':params.source_url, 'wiki_query':params.wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email}
+        error_details = str(e)
+        message = f"Unable to create source node for source type: {params.source_type} and source: {source} due to {error_details[:100]}"
+        json_obj = {'error_message':message, 'error': error_details, 'status':'Failed','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,'failed_count':1, 'source_type': params.source_type, 'source_url':params.source_url, 'wiki_query':params.wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email}
         logger.log_struct(json_obj, "ERROR")
-        logging.exception(f'Exception Stack trace upload:{e}')
-        return create_api_response('Failed',message=message,error="Internal Server Error",file_source=params.source_type)
+        logging.exception(f'Exception Stack trace upload: {error_details}')
+        return create_api_response('Failed',message=message,error=error_details,file_source=params.source_type)
     finally:
         gc.collect()
 
@@ -294,7 +296,8 @@ async def extract_knowledge_graph_from_file(
         logging.info(f"extraction completed in {extract_api_time:.2f} seconds for file name {params.file_name}")
         return create_api_response('Success', data=result, file_source= params.source_type)
     except LLMGraphBuilderException as e:
-        error_message = f"Failed To Process File:{params.file_name} or LLM Unable To Parse Content"
+        error_details = str(e)
+        error_message = f"Failed To Process File:{params.file_name} or LLM Unable To Parse Content due to {error_details[:100]}"
         graph = create_graph_database_connection(credentials)   
         graphDb_data_Access = graphDBdataAccess(graph)
         graphDb_data_Access.update_exception_db(params.file_name,error_message, params.retry_condition)
@@ -307,23 +310,26 @@ async def extract_knowledge_graph_from_file(
         if "Token usage limit exceeded" in error_message:
             logger.log_struct(json_obj, "WARNING")
         else:
+            json_obj['error_details'] = error_details
             logger.log_struct(json_obj, "ERROR")
-        logging.exception(f'File Failed in extraction: {e}')
-        return create_api_response("Failed", message = error_message, error="Internal server error", file_name=params.file_name)
+        error_details = str(e)
+        logging.exception(f'File Failed in extraction: {error_details}')
+        return create_api_response("Failed", message = error_message, error=error_details, file_name=params.file_name)
     except Exception as e:
-        message=f"Failed To Process File:{params.file_name} or LLM Unable To Parse Content "
+        error_details = str(e)
+        message=f"Failed To Process File:{params.file_name} or LLM Unable To Parse Content due to {error_details[:100]}"
         graph = create_graph_database_connection(credentials)   
         graphDb_data_Access = graphDBdataAccess(graph)
         graphDb_data_Access.update_exception_db(params.file_name,message, params.retry_condition)
         if params.source_type == 'local file':
             failed_file_process(credentials.uri,params.file_name, merged_file_path)
         node_detail = graphDb_data_Access.get_current_status_document_node(params.file_name)
-        
-        json_obj = {'api_name':'extract','message':message,'file_created_at':formatted_time(node_detail[0]['created_time']),'error_message':message, 'filename': params.file_name,'status':'Failed',
+
+        json_obj = {'api_name':'extract','message':message,'error':error_details,'file_created_at':formatted_time(node_detail[0]['created_time']),'error_message':message, 'filename': params.file_name,'status':'Failed',
                     'db_url':credentials.uri,'model': params.model, 'userName':credentials.userName, 'database':credentials.database,'failed_count':1, 'source_type': params.source_type, 'source_url':params.source_url, 'wiki_query':params.wiki_query, 'logging_time': formatted_time(datetime.now(timezone.utc)),'email':credentials.email}
         logger.log_struct(json_obj, "ERROR")
-        logging.exception(f'File Failed in extraction: {e}')
-        return create_api_response('Failed', message=message, error="Internal server error", file_name = params.file_name)
+        logging.exception(f'File Failed in extraction: {error_details}')
+        return create_api_response('Failed', message=message, error=error_details, file_name = params.file_name)
     finally:
         gc.collect()
             
@@ -447,10 +453,11 @@ async def chat_bot(
         
         return create_api_response('Success',data=result)
     except Exception as e:
+        error_details = str(e)
         job_status = "Failed"
-        message="Unable to get chat response"
-        logging.exception(message)
-        return create_api_response(job_status, message=message, error="Internal server error", data=mode)
+        message=f"Unable to get chat response due to {error_details[:100]}"
+        logging.exception(f"{message}: {error_details}")
+        return create_api_response(job_status,message=message, error=error_details, data=mode)
     finally:
         gc.collect()
 
@@ -598,10 +605,11 @@ async def connect(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)
         result['gcs_file_cache'] = gcs_cache
         return create_api_response('Success',data=result)
     except Exception as e:
+        error_details = str(e)
         job_status = "Failed"
-        message="Connection failed to connect Neo4j database"
-        logging.exception('Failed to connect Neo4j database')
-        return create_api_response(job_status, message=message, error="Internal server error")
+        message=f"Connection failed to connect Neo4j database due to {error_details[:100]}"
+        logging.exception(f'Failed to connect Neo4j database: {error_details}')
+        return create_api_response(job_status, message=message, error=error_details)
 
 @app.post("/upload")
 async def upload_large_file_into_chunks(
@@ -1171,9 +1179,10 @@ async def get_token_limits(credentials: Neo4jCredentials = Depends(get_neo4j_cre
     except Exception as e:
         job_status = "Failed"
         message = "Unable to fetch token limits"
-        logger.log_struct({'api_name': 'get_token_limits', 'db_url': credentials.uri, 'email': credentials.email, 'logging_time': formatted_time(datetime.now(timezone.utc))}, "ERROR")
-        logging.exception(message)
-        return create_api_response(job_status, message=message, error="Internal server error")
+        error_details = str(e)
+        logger.log_struct({'api_name': 'get_token_limits', 'db_url': credentials.uri, 'email': credentials.email, 'error_details': error_details, 'logging_time': formatted_time(datetime.now(timezone.utc))}, "ERROR")
+        logging.exception(f"{message}: {error_details}")
+        return create_api_response(job_status, message=message+ error_details[:100], error=error_details)
 
 @app.post("/fetch_embedding_model")
 async def fetch_embedding_model(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
