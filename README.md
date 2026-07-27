@@ -269,6 +269,7 @@ gcloud run deploy dev-backend \
 | GCS_FILE_CACHE         | Optional           | False         | If set to True, will save files to process into GCS. If False, will save files locally           |                   |
 | ENTITY_EMBEDDING       | Optional           | False         | If set to True, it will add embeddings for each entity in the database                           |
 | LLM_MODEL_CONFIG_ollama_<model_name> | Optional |           | Set ollama config as model_name,model_local_url for local deployments                            |
+| LLM_MODEL_CONFIG_huggingface_<model_name> | Optional |      | Set Hugging Face config as repo_id,hf_api_token[,provider[,endpoint_url]]. Provider defaults to `auto` (routes to whichever inference provider serves the model); pass an endpoint_url to target a dedicated Inference Endpoint or self-hosted TGI server instead of the hub. |
 |                        |                   |               |                                                                                                  |
 | **FRONTEND ENV**        |                   |               |                                                                                                  |
 | VITE_BLOOM_URL         | Mandatory          | [Bloom URL][bloom-url] | URL for Bloom visualization                                |

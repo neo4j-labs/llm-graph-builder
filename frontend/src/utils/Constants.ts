@@ -26,6 +26,7 @@ export const llms = import.meta.env?.VITE_LLM_MODELS?.trim()
       'fireworks_gpt_oss',
       'fireworks_kimi_k2p6',
       'fireworks_glm_5.1',
+      'huggingface_llama3_1_8b',
     ];
 
 export const prodllms = import.meta.env.VITE_LLM_MODELS_PROD?.trim()

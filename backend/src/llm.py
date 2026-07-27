@@ -12,6 +12,7 @@ from langchain_anthropic import ChatAnthropic
 from langchain_fireworks import ChatFireworks
 from langchain_aws import ChatBedrock
 from langchain_ollama import ChatOllama
+from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
 import boto3
 import google.auth
 from src.shared.constants import ADDITIONAL_INSTRUCTIONS
@@ -19,6 +20,35 @@ from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 import re
 from langchain_core.callbacks.manager import CallbackManager
 from src.shared.common_fn import UniversalTokenUsageHandler,get_value_from_env
+
+def _parse_huggingface_config(env_value: str):
+    """Parse a Hugging Face LLM_MODEL_CONFIG value.
+
+    Accepted forms:
+        "<repo_id>,<hf_api_token>"
+        "<repo_id>,<hf_api_token>,<provider>"
+        "<repo_id>,<hf_api_token>,<provider>,<endpoint_url>"
+
+    Returns (model_name, api_token, provider, endpoint_url).
+    """
+    parts = [part.strip() for part in env_value.split(",")]
+    if len(parts) < 2 or len(parts) > 4:
+        raise ValueError(
+            "Hugging Face config must be 'repo_id,api_token[,provider[,endpoint_url]]', "
+            f"got {len(parts)} comma-separated value(s)"
+        )
+
+    model_name, api_token = parts[0], parts[1]
+    provider = parts[2] if len(parts) > 2 and parts[2] else "auto"
+    endpoint_url = parts[3] if len(parts) > 3 and parts[3] else None
+
+    if not model_name:
+        raise ValueError("Hugging Face config is missing repo_id")
+    if not api_token:
+        raise ValueError("Hugging Face config is missing api_token")
+
+    return model_name, api_token, provider, endpoint_url
+
 
 def get_llm(model: str):
     """Retrieve the specified language model based on the model name."""
@@ -119,6 +149,26 @@ def get_llm(model: str):
         elif "OLLAMA" in model:
             model_name, base_url = env_value.split(",")
             llm = ChatOllama(base_url=base_url, model=model_name,callbacks=callback_manager)
+
+        elif "HUGGINGFACE" in model:
+            model_name, api_token, provider, endpoint_url = _parse_huggingface_config(env_value)
+            endpoint_kwargs = {
+                "huggingfacehub_api_token": api_token,
+                "task": "conversational",
+                "provider": provider,
+                "temperature": 0,
+                "callbacks": callback_manager,
+            }
+            if endpoint_url:
+                # A dedicated Inference Endpoint / TGI server is addressed by URL,
+                # and rejects repo_id being set alongside it.
+                endpoint_kwargs["endpoint_url"] = endpoint_url
+            else:
+                endpoint_kwargs["repo_id"] = model_name
+            endpoint = HuggingFaceEndpoint(**endpoint_kwargs)
+            # model_id is passed explicitly so ChatHuggingFace skips its hub lookup,
+            # which fails on dedicated endpoints and in offline environments.
+            llm = ChatHuggingFace(llm=endpoint, model_id=model_name, callbacks=callback_manager)
 
         elif "DIFFBOT" in model:
             #model_name = "diffbot"
