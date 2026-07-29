@@ -63,7 +63,7 @@ export const webLinkValidation = (url: string) => {
 export const youtubeLinkValidation = (url: string) => {
   return (
     url.trim() != '' &&
-    /^(?:https?:\/\/)?(?:www\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))((\w|-){11})(?:\S+)?$/.test(
+    /^(?:https?:\/\/)?(?:www\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|shorts\/|watch\?v=|watch\?.+&v=))((\w|-){11})(?:\S+)?$/.test(
       url
     ) != false
   );

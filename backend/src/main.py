@@ -8,8 +8,6 @@ import time
 import urllib.parse
 import warnings
 from datetime import datetime
-import ipaddress, socket
-from urllib.parse import urlparse
 
 
 from dotenv import load_dotenv
@@ -37,7 +35,7 @@ from src.make_relationships import (
 )
 from src.shared.common_fn import (
     check_url_source, create_gcs_bucket_folder_name_hashed, create_graph_database_connection,
-    delete_uploaded_local_file, get_chunk_and_graphDocument, get_value_from_env,
+    delete_uploaded_local_file, fetch_public_url, get_chunk_and_graphDocument, get_value_from_env,
     handle_backticks_nodes_relationship_id_type, last_url_segment, save_graphDocuments_in_neo4j, track_token_usage
 )
 from src.shared.constants import (
@@ -49,7 +47,6 @@ from src.shared.constants import (
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from src.shared.schema_extraction import schema_extraction_from_text
 
-import requests
 from bs4 import BeautifulSoup
 
 warnings.filterwarnings("ignore")
@@ -187,12 +184,11 @@ def create_source_node_graph_web_url(graph, params):
     success_count=0
     failed_count=0
     lst_file_name = []
-    assert_public_http_url(params.source_url)
-    response = requests.get(params.source_url)
+    response, final_url = fetch_public_url(params.source_url)
     response.raise_for_status()
     soup = BeautifulSoup(response.text, 'html.parser')
     text = soup.get_text()
-    pages = [Document(page_content=text, metadata={"source": params.source_url})]
+    pages = [Document(page_content=text, metadata={"source": final_url})]
     if pages is None or len(pages)==0:
       failed_count+=1
       message = f"Unable to read data for given url : {params.source_url}"
@@ -1004,13 +1000,3 @@ def failed_file_process(uri,file_name, merged_file_path):
   else:
       logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
       delete_uploaded_local_file(merged_file_path,file_name)
-      
-      
-def assert_public_http_url(url: str):
-    p = urlparse(url)
-    if p.scheme not in ("http", "https"):
-        raise ValueError("Only http(s) URLs are allowed")
-    for _, _, _, _, sockaddr in socket.getaddrinfo(p.hostname, None):
-        ip = ipaddress.ip_address(sockaddr[0])
-        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
-            raise ValueError("Access to internal addresses is blocked")

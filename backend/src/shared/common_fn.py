@@ -1,9 +1,11 @@
 import hashlib
+import ipaddress
 import os
 import json
 import logging
+import socket
 from typing import Any
-
+import requests
 from src.entities.user_credential import Neo4jCredentials
 from transformers import AutoTokenizer, AutoModel
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -101,6 +103,66 @@ def _get_bedrock_embeddings(model_name: str):
         logging.error(f"An unexpected error occurred: {e}")
         raise
    
+# --- SSRF Guard Helpers ---
+_SSRF_MAX_REDIRECTS = 5
+
+
+def is_public_ip(ip_str: str) -> bool:
+    """Returns False for private, loopback, link-local, multicast, reserved or unspecified IPs."""
+    ip = ipaddress.ip_address(ip_str)
+    return not (
+        ip.is_private
+        or ip.is_loopback
+        or ip.is_link_local
+        or ip.is_multicast
+        or ip.is_reserved
+        or ip.is_unspecified
+    )
+
+def assert_public_http_url(url: str):
+    """
+    Guards against SSRF: ensures the URL is http(s) and every IP it resolves to
+    is a public address (blocks internal services, cloud metadata endpoints, etc).
+    Raises ValueError if the URL is unsafe.
+    """
+    p = urlparse(url)
+    if p.scheme not in ("http", "https"):
+        raise ValueError("Only http(s) URLs are allowed")
+    if not p.hostname:
+        raise ValueError("URL is missing a hostname")
+    try:
+        addrinfo = socket.getaddrinfo(p.hostname, None)
+    except socket.gaierror as exc:
+        raise ValueError(f"Unable to resolve host: {p.hostname}") from exc
+    resolved_ips = {sockaddr[0] for _, _, _, _, sockaddr in addrinfo}
+    if not resolved_ips or not all(is_public_ip(ip) for ip in resolved_ips):
+        raise ValueError(f"Access to internal addresses is blocked: {p.hostname}")
+
+
+def fetch_public_url(url: str, session: requests.Session = None, max_redirects: int = _SSRF_MAX_REDIRECTS, **kwargs):
+    """
+    Safely GETs a URL while guarding against SSRF, including via redirects:
+    validates the URL (and every redirect hop) resolves only to public IP
+    addresses before following it.
+
+    Returns:
+        tuple: (requests.Response, final_url)
+    """
+    session = session or requests
+    current_url = url
+    for _ in range(max_redirects + 1):
+        assert_public_http_url(current_url)
+        response = session.get(current_url, allow_redirects=False, **kwargs)
+        if response.is_redirect or response.is_permanent_redirect:
+            next_url = response.headers.get('Location')
+            if not next_url:
+                return response, current_url
+            current_url = requests.compat.urljoin(current_url, next_url)
+            continue
+        return response, current_url
+    raise ValueError("Too many redirects")
+
+
 def create_youtube_url(url):
     you_tu_url = "https://www.youtube.com/watch?v="
     u_pars = urlparse(url)
@@ -117,7 +179,7 @@ def check_url_source(source_type, yt_url:str=None, wiki_query:str=None):
     try:
       logging.info(f"incoming URL: {yt_url}")
       if source_type == 'youtube':
-        if re.match(r'(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/)([\w\-_]+)\&?',yt_url.strip()):
+        if re.match(r'(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed|shorts)?(?:.*v=|v\/|\/)([\w\-_]+)\&?',yt_url.strip()):
           youtube_url = create_youtube_url(yt_url.strip())
           logging.info(youtube_url)
           return youtube_url,language
@@ -132,7 +194,7 @@ def check_url_source(source_type, yt_url:str=None, wiki_query:str=None):
         match = re.search(wikipedia_url_regex, wiki_query.strip())
         if match:
                 language = match.group(2)
-                wiki_query_id = match.group(3)
+                wiki_query_id = match.group(3).split('#')[0]
         else:
             raise Exception(f'Not a valid wikipedia url: {wiki_query} ')
 
