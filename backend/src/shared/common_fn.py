@@ -5,7 +5,7 @@ import json
 import logging
 import socket
 from typing import Any
-
+from functools import lru_cache
 import requests
 from src.entities.user_credential import Neo4jCredentials
 from transformers import AutoTokenizer, AutoModel
@@ -120,6 +120,36 @@ def is_public_ip(ip_str: str) -> bool:
         or ip.is_unspecified
     )
 
+_SSRF_ALLOWED_HOSTS_ENV = "SSRF_ALLOWED_HOSTS"
+@lru_cache(maxsize=1)
+def _get_ssrf_allowed_hosts():
+    """
+    Returns a normalized tuple of allowed host patterns from env.
+    Comma-separated values in SSRF_ALLOWED_HOSTS, e.g. :
+        'example.com,.trusted.org'
+        - 'example.com' allows only exact host.
+        - '.trusted.org' allows trusted.org and any subdomain of trusted.org.
+    """
+    raw = os.getenv(_SSRF_ALLOWED_HOSTS_ENV, "")
+    return tuple(
+        entry.strip().lower().rstrip(".")
+        for entry in raw.split(",")
+        if entry and entry.strip()
+    )
+    
+def _is_allowed_host(hostname: str) -> bool:
+    allowed = _get_ssrf_allowed_hosts()
+    if not allowed:
+        return False
+    host = hostname.lower().rstrip(".")
+    for rule in allowed:
+        if rule.startswith("."):
+            domain = rule[1:]
+            if host == domain or host.endswith("." + domain):
+                return True
+        elif host == rule:
+            return True
+    return False
 
 def assert_public_http_url(url: str):
     """
@@ -132,6 +162,8 @@ def assert_public_http_url(url: str):
         raise ValueError("Only http(s) URLs are allowed")
     if not p.hostname:
         raise ValueError("URL is missing a hostname")
+    if not _is_allowed_host(p.hostname):
+         raise ValueError(f"Host is not in allowed outbound host list: {p.hostname}")
     try:
         addrinfo = socket.getaddrinfo(p.hostname, None)
     except socket.gaierror as exc:
