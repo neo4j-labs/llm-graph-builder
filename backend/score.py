@@ -1,5 +1,4 @@
 import asyncio
-import base64
 import gc
 import json
 import logging
@@ -344,7 +343,7 @@ async def get_source_list(credentials: Neo4jCredentials = Depends(get_neo4j_cred
         json_obj = {'api_name':'sources_list','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response("Success",data=result, message=f"Total elapsed API time {elapsed_time:.2f}")
-    except Exception as e:
+    except Exception:
         job_status = "Failed"
         message="Unable to fetch source list"
         logging.exception(message)
@@ -412,7 +411,7 @@ async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_cred
             logger.log_struct(json_obj)
         return create_api_response('Success', data=count_response, message='All tasks completed successfully')
     
-    except Exception as e:
+    except Exception:
         job_status = "Failed"
         message = "Unable to complete post processing tasks"
         logging.exception(message)
@@ -478,7 +477,7 @@ async def chunk_entities(
                             'mode':mode, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result,message=f"Total elapsed API time {elapsed_time:.2f}")
-    except Exception as e:
+    except Exception:
         job_status = "Failed"
         message="Unable to extract entities from chunk ids"
         logging.exception(message)
@@ -500,7 +499,7 @@ async def get_neighbours(
         json_obj = {'api_name':'get_neighbours', 'userName':credentials.userName, 'database':credentials.database,'db_url':credentials.uri, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result,message=f"Total elapsed API time {elapsed_time:.2f}")
-    except Exception as e:
+    except Exception:
         job_status = "Failed"
         message="Unable to extract neighbour nodes for given element ID"
         logging.exception(message)
@@ -526,7 +525,7 @@ async def graph_query(
         json_obj = {'api_name':'graph_query','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'document_names':document_names, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success', data=result,message=f"Total elapsed API time {elapsed_time:.2f}")
-    except Exception as e:
+    except Exception:
         job_status = "Failed"
         message = "Unable to get graph query response"
         logging.exception(message)
@@ -549,7 +548,7 @@ async def chat_history(
         json_obj = {'api_name':'chat_history', 'db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success', data=result)
-    except Exception as e:
+    except Exception:
         job_status = "Failed"
         message="Unable to fetch chat history"
         logging.exception('Exception in chat history')
@@ -572,7 +571,7 @@ async def clear_chat_bot(
         json_obj = {'api_name':'clear_chat_bot', 'db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result)
-    except Exception as e:
+    except Exception:
         job_status = "Failed"
         message="Unable to clear chat History"
         logging.exception('Exception in chat bot')
@@ -639,7 +638,7 @@ async def upload_large_file_into_chunks(
             return create_api_response('Success',data=result, message='Source Node Created Successfully')
         else:
             return create_api_response('Success', message=result)
-    except Exception as e:
+    except Exception:
         message="Unable to upload file in chunks"
         graph = create_graph_database_connection(credentials)   
         graphDb_data_Access = graphDBdataAccess(graph)
@@ -661,7 +660,7 @@ async def get_structured_schema(credentials: Neo4jCredentials = Depends(get_neo4
         json_obj = {'api_name':'schema','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success', data=result,message=f"Total elapsed API time {elapsed_time:.2f}")
-    except Exception as e:
+    except Exception:
         message="Unable to get the labels and relationtypes from neo4j database"
         logging.info(message)
         logging.exception('Exception occurred while getting schema')
@@ -736,7 +735,7 @@ async def delete_document_and_entities(
                             'source_types':source_types, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',message=message)
-    except Exception as e:
+    except Exception:
         job_status = "Failed"
         message=f"Unable to delete document {filenames}"
         logging.exception(message)
@@ -778,7 +777,7 @@ async def get_document_status(
             status = {'fileName':file_name, 'status':'Failed'}
         logging.info(f'Result of document status in refresh : {result}')
         return create_api_response('Success',message="",file_name=status)
-    except Exception as e:
+    except Exception:
         message="Unable to get the document status"
         logging.exception(message)
         return create_api_response('Failed',message=message, error="Internal server error")
@@ -800,7 +799,7 @@ async def cancelled_job(
                             'source_types':source_types, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',message=result)
-    except Exception as e:
+    except Exception:
         job_status = "Failed"
         message="Unable to cancel the running job"
         logging.exception(message)
@@ -826,7 +825,7 @@ async def populate_graph_schema(
         json_obj = {'api_name':'populate_graph_schema', 'model':model, 'is_schema_description_checked':is_schema_description_checked, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result)
-    except Exception as e:
+    except Exception:
         job_status = "Failed"
         message="Unable to get the schema from text"
         logging.exception(message)
@@ -847,7 +846,7 @@ async def get_unconnected_nodes_list(credentials: Neo4jCredentials = Depends(get
         json_obj = {'api_name':'get_unconnected_nodes_list','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=nodes_list,message=total_nodes)
-    except Exception as e:
+    except Exception:
         job_status = "Failed"
         message="Unable to get the list of unconnected nodes"
         logging.exception(message)
@@ -871,7 +870,7 @@ async def delete_orphan_nodes(
         json_obj = {'api_name':'delete_unconnected_nodes','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,'unconnected_entities_list':unconnected_entities_list, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result,message="Unconnected entities delete successfully")
-    except Exception as e:
+    except Exception:
         job_status = "Failed"
         message="Unable to delete the unconnected nodes"
         logging.exception(message)
@@ -892,7 +891,7 @@ async def get_duplicate_nodes(credentials: Neo4jCredentials = Depends(get_neo4j_
         json_obj = {'api_name':'get_duplicate_nodes','db_url':credentials.uri,'userName':credentials.userName, 'database':credentials.database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=nodes_list, message=total_nodes)
-    except Exception as e:
+    except Exception:
         job_status = "Failed"
         message="Unable to get the list of duplicate nodes"
         logging.exception(message)
@@ -917,7 +916,7 @@ async def merge_duplicate_nodes(
                             'duplicate_nodes_list':duplicate_nodes_list, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result,message="Duplicate entities merged successfully")
-    except Exception as e:
+    except Exception:
         job_status = "Failed"
         message="Unable to merge the duplicate nodes"
         logging.exception(message)
@@ -944,7 +943,7 @@ async def drop_create_vector_index(
                             'isVectorIndexExist':isVectorIndexExist, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',message=result)
-    except Exception as e:
+    except Exception:
         job_status = "Failed"
         message="Unable to drop and re-create vector index with correct dimesion as per application configuration"
         logging.exception(message)
@@ -970,7 +969,7 @@ async def retry_processing(
         logger.log_struct(json_obj, "INFO")
         await asyncio.to_thread(set_status_retry, graph,file_name,retry_condition)
         return create_api_response('Success',message=f"Status set to Ready to Reprocess for filename : {file_name}")
-    except Exception as e:
+    except Exception:
         job_status = "Failed"
         message="Unable to set status to Retry"
         logging.exception(message)
@@ -1082,7 +1081,7 @@ async def fetch_chunktext(
        }
        logger.log_struct(json_obj, "INFO")
        return create_api_response('Success', data=result, message=f"Total elapsed API time {elapsed_time:.2f}")
-   except Exception as e:
+   except Exception:
        job_status = "Failed"
        message = "Unable to get chunk text response"
        logging.exception(message)
@@ -1120,7 +1119,7 @@ async def backend_connection_configuration():
         else:
             graph_connection = False
             return create_api_response('Success',message="Backend connection is not successful",data=graph_connection)
-    except Exception as e:
+    except Exception:
         graph_connection = False
         job_status = "Failed"
         message="Unable to connect backend DB"
@@ -1142,7 +1141,7 @@ async def get_schema_visualization(credentials: Neo4jCredentials = Depends(get_n
         json_obj = {'api_name':'schema_visualization','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success', data=result,message=f"Total elapsed API time {elapsed_time:.2f}")
-    except Exception as e:
+    except Exception:
         message="Unable to get schema visualization from neo4j database"
         logging.exception(message)
         return create_api_response("Failed", message=message, error="Internal server error")
@@ -1201,7 +1200,7 @@ async def fetch_embedding_model(credentials: Neo4jCredentials = Depends(get_neo4
             }
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result)
-    except Exception as e:
+    except Exception:
         job_status = "Failed"
         message="Unable to fetch embedding model"
         logging.exception(message)
@@ -1250,7 +1249,7 @@ async def change_embedding_model(
                   "embedding_dimension": result.get("new_dimension"),
                   "change_index": change_index}
         )
-    except Exception as e:
+    except Exception:
         logging.exception("Exception in change_embedding_model")
         return create_api_response("Failed", message="An unexpected error occurred.", error="Internal server error")
     finally:
