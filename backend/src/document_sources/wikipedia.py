@@ -1,11 +1,12 @@
 import logging
+from requests.exceptions import JSONDecodeError
 from langchain_core.documents import Document
+from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 import wikipedia
+
 wikipedia.set_user_agent("llm-graph-builder/1.0")
 
 # from langchain_community.document_loaders import WikipediaLoader
-from requests.exceptions import JSONDecodeError
-from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 
 logger = logging.getLogger(__name__)
 

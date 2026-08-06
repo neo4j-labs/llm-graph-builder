@@ -1,6 +1,6 @@
 import requests
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List
 
 class DiffbotGraphTransformer:
     def __init__(self, diffbot_api_key: str, extract_types: List[str] = ["facts"]):
