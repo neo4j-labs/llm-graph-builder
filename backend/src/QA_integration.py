@@ -541,16 +541,9 @@ def summarize_and_log(history, stored_messages, llm, graph=None):
         summary_message_for_db = AIMessage(content=summary_text)
 
         with threading.Lock():
-            try:
-                history.clear()
-                history.add_user_message("Our current conversation summary till now")
-                history.add_message(summary_message_for_db)
-            except Exception as e:
-                logging.warning(f"Could not save to database history (driver likely closed): {e}. Falling back to local history.")
-                if session_id:
-                    local_history = SessionChatHistory.get_chat_history(session_id)
-                    local_history.add_message(HumanMessage(content="Our current conversation summary till now"))
-                    local_history.add_message(summary_message_for_db)
+            history.clear()
+            history.add_user_message("Our current conversation summary till now")
+            history.add_message(summary_message_for_db)
 
         logging.info(f"Chat History summarized in {time.time() - start_time:.2f} seconds")
         return True
