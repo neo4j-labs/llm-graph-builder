@@ -1,4 +1,3 @@
-# from langchain_community.document_loaders import WebBaseLoader
 from langchain_core.documents import Document
 import requests
 from bs4 import BeautifulSoup

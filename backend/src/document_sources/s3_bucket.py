@@ -4,7 +4,6 @@ import tempfile
 from urllib.parse import urlparse
 
 import boto3
-from langchain_community.document_loaders import S3DirectoryLoader
 
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from .local_file import load_document_content
@@ -59,41 +58,6 @@ def get_s3_files_info(s3_url, aws_access_key_id=None, aws_secret_access_key=None
         error_message = str(exc)
         logger.error("Error while reading files from s3: %s", error_message)
         raise Exception(error_message) from exc
-
-
-def get_s3_pdf_content(s3_url, aws_access_key_id=None, aws_secret_access_key=None):
-    """
-    Loads and splits PDF content from an S3 bucket if the path ends with .pdf.
-
-    Args:
-        s3_url (str): The S3 URL to the PDF file.
-        aws_access_key_id (str, optional): AWS access key ID.
-        aws_secret_access_key (str, optional): AWS secret access key.
-
-    Returns:
-        list or None: List of Document objects if PDF, else None.
-
-    Raises:
-        Exception: If reading content from S3 fails.
-    """
-    try:
-        parsed_url = urlparse(s3_url)
-        bucket_name = parsed_url.netloc
-        logger.info('bucket name : %s', bucket_name)
-        directory = parsed_url.path.lstrip('/')
-        if directory.endswith('.pdf'):
-            loader = S3DirectoryLoader(
-                bucket_name,
-                prefix=directory,
-                aws_access_key_id=aws_access_key_id,
-                aws_secret_access_key=aws_secret_access_key
-            )
-            pages = loader.load_and_split()
-            return pages
-        return None
-    except Exception as exc:
-        logger.error("getting error while reading content from s3 files:%s", exc)
-        raise Exception(exc) from exc
 
 
 def download_s3_file(s3_client, bucket, file_key, local_path):

@@ -16,13 +16,13 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_openai import OpenAIEmbeddings
 from langchain_neo4j import Neo4jGraph
 from neo4j.exceptions import TransientError
-from langchain_community.graphs.graph_document import GraphDocument
+from langchain_neo4j.graphs.graph_document import GraphDocument
 from typing import List
 import re
 import time
 from pathlib import Path
 import boto3
-from langchain_community.embeddings import BedrockEmbeddings
+from langchain_aws import BedrockEmbeddings
 from langchain_core.callbacks import BaseCallbackHandler
 
 

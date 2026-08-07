@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 import chardet
-from langchain_community.document_loaders import PyMuPDFLoader, UnstructuredFileLoader
+import pymupdf
 from langchain_core.documents import Document
 from langchain_core.document_loaders import BaseLoader
 
@@ -17,6 +17,50 @@ class ListLoader(BaseLoader):
         Returns the list of documents.
         """
         return self.documents
+
+class PyMuPDFLoader:
+    """
+    Minimal drop-in replacement for langchain_community.document_loaders.PyMuPDFLoader
+    (mode="page"): loads one Document per PDF page using PyMuPDF directly.
+    """
+    def __init__(self, file_path):
+        self.file_path = str(file_path)
+
+    def load(self):
+        pages = []
+        with pymupdf.open(self.file_path) as pdf_doc:
+            total_pages = len(pdf_doc)
+            for page in pdf_doc:
+                pages.append(Document(
+                    page_content=page.get_text(),
+                    metadata={'source': self.file_path, 'page': page.number, 'total_pages': total_pages}
+                ))
+        return pages
+
+class UnstructuredFileLoader:
+    """
+    Minimal drop-in replacement for langchain_community.document_loaders.UnstructuredFileLoader
+    (mode="elements"): loads one Document per unstructured element.
+    """
+    def __init__(self, file_path, mode="elements", autodetect_encoding=True):
+        self.file_path = str(file_path)
+        self.autodetect_encoding = autodetect_encoding
+
+    def load(self):
+        from unstructured.partition.auto import partition
+        elements = partition(filename=self.file_path, autodetect_encoding=self.autodetect_encoding)
+        documents = []
+        for element in elements:
+            metadata = {'source': self.file_path}
+            if hasattr(element, 'metadata'):
+                metadata.update(element.metadata.to_dict())
+            if hasattr(element, 'category'):
+                metadata['category'] = element.category
+            element_id = element.to_dict().get('element_id')
+            if element_id:
+                metadata['element_id'] = element_id
+            documents.append(Document(page_content=str(element), metadata=metadata))
+        return documents
 
 def detect_encoding(file_path):
     """

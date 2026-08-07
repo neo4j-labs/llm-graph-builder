@@ -1,9 +1,9 @@
 import os
 import logging
 import io
+import tempfile
 import time
 from google.cloud import storage
-from langchain_community.document_loaders import GCSFileLoader
 from langchain_core.documents import Document
 from PyPDF2 import PdfReader
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
@@ -106,6 +106,33 @@ def gcs_loader_func(file_path):
     loader, _ = load_document_content(file_path)
     return loader
 
+def load_documents_from_gcs_blob(storage_client, bucket_name, blob, blob_name):
+    """
+    Downloads a GCS blob to a temp file and loads it, replicating the behaviour of
+    langchain_community.document_loaders.GCSFileLoader without that dependency.
+
+    Args:
+        storage_client: google.cloud.storage.Client instance.
+        bucket_name (str): GCS bucket name.
+        blob: google.cloud.storage.Blob instance to download.
+        blob_name (str): Name of the blob in the bucket.
+
+    Returns:
+        list: List of Document objects loaded from the blob.
+    """
+    with tempfile.TemporaryDirectory() as temp_dir:
+        file_path = os.path.join(temp_dir, os.path.basename(blob_name))
+        blob.download_to_filename(file_path)
+        loader = gcs_loader_func(file_path)
+        docs = loader.load()
+        custom_metadata = storage_client.bucket(bucket_name).get_blob(blob_name).metadata
+        for doc in docs:
+            if "source" in doc.metadata:
+                doc.metadata["source"] = f"gs://{bucket_name}/{blob_name}"
+            if custom_metadata:
+                doc.metadata.update(custom_metadata)
+        return docs
+
 def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, gcs_blob_filename, access_token=None):
     """
     Loads documents from a GCS bucket, handling both public and token-based access.
@@ -138,13 +165,7 @@ def get_documents_from_gcs(gcs_project_id, gcs_bucket_name, gcs_bucket_folder, g
             bucket = storage_client.bucket(gcs_bucket_name)
             blob = bucket.blob(blob_name)
             if blob.exists():
-                loader = GCSFileLoader(
-                    project_name=gcs_project_id,
-                    bucket=gcs_bucket_name,
-                    blob=blob_name,
-                    loader_func=gcs_loader_func
-                )
-                pages = loader.load()
+                pages = load_documents_from_gcs_blob(storage_client, gcs_bucket_name, blob, blob_name)
             else:
                 raise LLMGraphBuilderException('File does not exist, Please re-upload the file and try again.')
         else:
