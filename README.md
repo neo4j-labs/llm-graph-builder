@@ -65,6 +65,7 @@ This application allows you to upload files from various sources (local machine,
 9. Ollama (dev deployed version)
 10. Deepseek (dev deployed version)
 11. Other OpenAI-compatible base URL models (dev deployed version)
+12. OrcaRouter (dev deployed version)
 
 
 ### **Token Usage Tracking**
@@ -125,7 +126,14 @@ Run the application using the default `docker-compose` configuration.
    LLM_MODEL_CONFIG_ANTHROPIC_CLAUDE_4_7_OPUS="claude-opus-4-7,anthropic_api_key"
    ```
 
-3. **Input Sources:**  
+3. **OrcaRouter Models:**
+   OrcaRouter is an OpenAI-compatible model routing gateway. Set the model to any upstream model your OrcaRouter key can access (e.g. `anthropic/claude-sonnet-4.6`, `openai/gpt-5.5`):
+   ```bash
+   LLM_MODEL_CONFIG_ORCAROUTER_CLAUDE_4_6_SONNET="anthropic/claude-sonnet-4.6,orcarouter_api_key"
+   LLM_MODEL_CONFIG_ORCAROUTER_GPT_5_5="openai/gpt-5.5,orcarouter_api_key"
+   ```
+
+4. **Input Sources:**  
    By default, the following sources are enabled: `local`, `YouTube`, `Wikipedia`, `AWS S3`, and `web`.  
    To add Google Cloud Storage (GCS) integration, include `gcs` and your Google client ID:
    ```bash
