@@ -54,6 +54,16 @@ def get_llm(model: str):
                 },
             
             )
+        elif "ORCAROUTER" in model:
+            model_name, api_key = env_value.split(",")
+            llm = ChatOpenAI(
+                api_key=api_key,
+                base_url="https://api.orcarouter.ai/v1",
+                model=model_name,
+                temperature=0,
+                callbacks=callback_manager,
+            )
+
         elif "OPENAI" in model:
             model_name, api_key = env_value.split(",")
             if "MINI" in model:
