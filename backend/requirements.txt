@@ -42,7 +42,7 @@ PyMuPDF==1.27.2
 starlette==0.52.1
 sse-starlette==3.4.4
 starlette-session==0.4.3
-tqdm==4.67.3
+tqdm==4.70.0
 unstructured[all-docs]==0.22.31
 unstructured-client==0.44.1
 unstructured-inference>=1.5.2
