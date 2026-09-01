@@ -29,7 +29,7 @@ langchain-ollama==1.1.0
 langchain-text-splitters==1.1.2
 langchain-huggingface==1.2.2
 langchain-classic==1.0.7
-langchain-google-vertexai==3.2.3
+langchain-google-vertexai==3.2.4
 langdetect==1.0.9
 nltk==3.9.4
 openai==2.38.0
