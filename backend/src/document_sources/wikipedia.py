@@ -24,10 +24,14 @@ def get_documents_from_wikipedia(wiki_query: str, language: str):
         LLMGraphBuilderException: If the Wikipedia query fails.
     """
     try:
+        # Set language before searching
+        wikipedia.set_lang(language)
         # Convert underscores to spaces for Wikipedia API search
         results = wikipedia.search(wiki_query.replace('_', ' '), results=1, suggestion=False)
         docs = []
         print(f"Results from Wikipedia search for query '{wiki_query}': {results}")
+        if not results:
+            raise LLMGraphBuilderException(f"No Wikipedia results found for query '{wiki_query}' in language '{language}'")
         try:
             page = wikipedia.page(results[0], auto_suggest=False, redirect=True, preload=False)
             docs.append(Document(page_content=page.content[:100000], metadata={"title": page.title,"source": page.url}))
