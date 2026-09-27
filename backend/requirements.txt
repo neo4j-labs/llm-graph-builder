@@ -31,7 +31,7 @@ langchain-huggingface==1.2.2
 langchain-classic==1.0.7
 langchain-google-vertexai==3.2.3
 langdetect==1.0.9
-nltk==3.9.4
+nltk==3.10.3
 openai==2.38.0
 psutil==7.2.2
 pydantic==2.12.5
