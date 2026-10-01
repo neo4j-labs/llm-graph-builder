@@ -46,7 +46,7 @@ tqdm==4.67.3
 unstructured[all-docs]==0.22.31
 unstructured-client==0.44.1
 unstructured-inference>=1.5.2
-urllib3==2.2.2
+urllib3==2.8.0
 uvicorn==0.48.0
 gunicorn==26.0.0
 wikipedia==1.4.0
