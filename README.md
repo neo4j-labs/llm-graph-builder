@@ -116,7 +116,7 @@ Run the application using the default `docker-compose` configuration.
    By default, only OpenAI and Diffbot are enabled. Gemini requires additional GCP configurations.  
    Use the `VITE_LLM_MODELS_PROD` variable to configure the models you need. Example:
    ```bash
-   VITE_LLM_MODELS_PROD="gemini_3.5_flash,openai_gpt_5.4_mini,diffbot,anthropic_claude_4.5_haiku"
+   VITE_LLM_MODELS_PROD="gemini_3.8_flash,openai_gpt_6_luna,diffbot,anthropic_claude_5.5_haiku"
    ```
 
 2. **Anthropic Models:**
