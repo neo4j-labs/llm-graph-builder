@@ -19,6 +19,28 @@ try:
 except LookupError:
     nltk.download("punkt", download_dir=os.path.expanduser("~/.nltk_data"))
     
+class FixedTemperatureLLMWrapper(LangchainLLMWrapper):
+    """RAGAS wrapper that never overrides temperature.
+
+    Some newer models (e.g. GPT reasoning-style models) only accept the
+    default temperature of 1 and reject RAGAS's 1e-8 / 0.3 values.
+    """
+    def __init__(self, langchain_llm, fixed_temperature: float = 1.0, **kwargs):
+        super().__init__(langchain_llm, **kwargs)
+        self._fixed_temperature = fixed_temperature
+
+    def get_temperature(self, n: int) -> float:
+        return self._fixed_temperature
+
+
+# Models that only accept the default temperature
+FIXED_TEMPERATURE_MODEL_PREFIXES = ("gpt-6","claude-haiku-5-5","claude-sonnet-5-5","claude-opus-5-5",)
+
+def wrap_llm_for_ragas(llm, model_name: str):
+    name = (model_name or "").lower()
+    if name.startswith(FIXED_TEMPERATURE_MODEL_PREFIXES):
+        return FixedTemperatureLLMWrapper(llm, fixed_temperature=1.0)
+    return LangchainLLMWrapper(llm)
 
 def get_ragas_metrics(question: str, context: list, answer: list, model: str, embedding_provider: str, embedding_model: str):
     """Calculates RAGAS metrics."""
@@ -32,7 +54,7 @@ def get_ragas_metrics(question: str, context: list, answer: list, model: str, em
             raise ValueError(f"Unsupported model for evaluation: {model}")
         else:
             llm, model_name, _ = get_llm(model=model)
-            llm = LangchainLLMWrapper(llm)
+            llm = wrap_llm_for_ragas(llm, model_name)
     
         logging.info(f"Evaluating with model: {model_name}")
         EMBEDDING_FUNCTION, _ = load_embedding_model(embedding_provider, embedding_model)
@@ -69,6 +91,7 @@ async def get_additional_metrics(question: str, contexts: list, answers: list, r
        if ("diffbot" in model_name) or ("ollama" in model_name):
            raise ValueError(f"Unsupported model for evaluation: {model_name}")
        llm, model_name, _ = get_llm(model=model_name)
+       llm = wrap_llm_for_ragas(llm, model_name)
        embeddings, _ = load_embedding_model(embedding_provider, embedding_model)
        embedding_model = LangchainEmbeddingsWrapper(embeddings=embeddings)
        rouge_scorer = RougeScore()

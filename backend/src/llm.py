@@ -56,19 +56,11 @@ def get_llm(model: str):
             )
         elif "OPENAI" in model:
             model_name, api_key = env_value.split(",")
-            if "MINI" in model:
-                llm= ChatOpenAI(
-                api_key=api_key,
-                model=model_name,
-                callbacks=callback_manager,
-                )
-            else:
-                llm = ChatOpenAI(
-                api_key=api_key,
-                model=model_name,
-                temperature=0,
-                callbacks=callback_manager,
-                )
+            llm= ChatOpenAI(
+            api_key=api_key,
+            model=model_name,
+            callbacks=callback_manager,
+            )
 
         elif "AZURE" in model:
             model_name, api_endpoint, api_key, api_version = env_value.split(",")
@@ -91,8 +83,6 @@ def get_llm(model: str):
                 "timeout": None,
                 "callbacks": callback_manager,
             }
-            if not model_name.startswith("claude-opus-4-7"):
-                anthropic_kwargs["temperature"] = 0
             llm = ChatAnthropic(**anthropic_kwargs)
 
         elif "FIREWORKS" in model:
@@ -142,9 +132,8 @@ def get_llm(model: str):
         err = f"Error while creating LLM '{model}': {str(e)}"
         logging.error(err)
         raise Exception(err)
- 
-    logging.info(f"Model created - Model Version: {model}")
-    return llm, model_name, callback_handler
+    logging.info(f"Model created - Model Version: {model_name or ''}")
+    return llm, model_name or "", callback_handler
 
 def get_llm_model_name(llm):
     """Extract name of llm model from llm object"""

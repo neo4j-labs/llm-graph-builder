@@ -634,7 +634,6 @@ async def upload_large_file_into_chunks(
             json_obj = {'api_name':'upload','db_url':credentials.uri,'userName':credentials.userName, 'database':credentials.database, 'chunkNumber':chunkNumber,'totalChunks':totalChunks,
                                 'filename':originalname,'model':model, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
             logger.log_struct(json_obj, "INFO")
-            print("upload log obj",json_obj)
         if int(chunkNumber) == int(totalChunks):
             return create_api_response('Success',data=result, message='Source Node Created Successfully')
         else:

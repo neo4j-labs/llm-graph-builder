@@ -31,7 +31,7 @@ from langchain_ollama import ChatOllama
 from src.llm import get_llm
 from src.shared.common_fn import load_embedding_model, get_value_from_env
 from src.shared.constants import (
-    CHAT_SYSTEM_TEMPLATE, CHAT_TOKEN_CUT_OFF, CHAT_ENTITY_VECTOR_MODE,
+    CHAT_SYSTEM_TEMPLATE, CHAT_DOCUMENT_LIMIT, DEFAULT_DOCUMENT_LIMIT, CHAT_ENTITY_VECTOR_MODE,
     CHAT_GLOBAL_VECTOR_FULLTEXT_MODE, CHAT_SEARCH_KWARG_SCORE_THRESHOLD,CHAT_MODE_CONFIG_MAP, CHAT_DEFAULT_MODE, CHAT_GRAPH_MODE,CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD, CHAT_DOC_SPLIT_SIZE, QUESTION_TRANSFORM_TEMPLATE
 )
 load_dotenv()
@@ -179,14 +179,15 @@ def get_rag_chain(llm, system_template=CHAT_SYSTEM_TEMPLATE):
         raise
 
 def format_documents(documents, model,chat_mode_settings):
-    prompt_token_cutoff = 4
-    for model_names, value in CHAT_TOKEN_CUT_OFF.items():
-        if model in model_names:
-            prompt_token_cutoff = value
-            break
+    document_limit = CHAT_DOCUMENT_LIMIT.get(
+        model, DEFAULT_DOCUMENT_LIMIT
+    )
 
-    sorted_documents = sorted(documents, key=lambda doc: doc.state.get("query_similarity_score", 0), reverse=True)
-    sorted_documents = sorted_documents[:prompt_token_cutoff]
+    sorted_documents = sorted(
+        documents,
+        key=lambda doc: doc.state.get("query_similarity_score", 0),
+        reverse=True,
+    )[:document_limit]
 
     formatted_docs = list()
     sources = set()
@@ -564,7 +565,7 @@ def create_graph_chain(model, graph):
             validate_cypher= True,
             graph=graph,
             # verbose=True, 
-            allow_dangerous_requests=False,
+            allow_dangerous_requests=True,
             return_intermediate_steps = True,
             top_k=3
         )
@@ -620,7 +621,7 @@ def process_graph_response(model, graph, question, messages, history, session_id
             "session_id": "", 
             "message": ai_response_content,
             "info": {
-                "model": model_version,
+                "model": model_version or "N/A",
                 "cypher_query": graph_response.get("cypher_query", ""),
                 "context": graph_response.get("context", ""),
                 "mode": "graph",
@@ -638,7 +639,7 @@ def process_graph_response(model, graph, question, messages, history, session_id
             "session_id": "",  
             "message": "Something went wrong",
             "info": {
-                "model": model_version,
+                "model": model_version or "N/A",
                 "cypher_query": "",
                 "context": "",
                 "mode": "graph",
