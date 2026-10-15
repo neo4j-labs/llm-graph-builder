@@ -496,3 +496,30 @@
   border: 2px solid rgb(var(--theme-palette-primary-bg-strong));
 }
 
+.banner-track {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  height: 100%;
+  will-change: transform;
+  animation: bannerScroll 18s linear infinite;
+}
+
+.banner-message {
+  flex-shrink: 0;
+  padding-right: 12px;
+}
+
+.marquee-banner:hover .banner-track {
+  animation-play-state: paused;
+}
+
+@keyframes bannerScroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
