@@ -101,22 +101,20 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
           </section>
           {
             <section className='flex items-center justify-center px-2 min-w-0'>
-              <div className='w-full max-w-[920px]'>
-                <Banner className='!py-1.5 !px-3 !min-h-0 text-xs leading-tight'>
-                  Try{' '}
+              <Banner type='warning' hasIcon usage='inline' className='w-fit max-w-full !py-1.5 !px-3 !min-h-0'>
+                <span className='text-sm font-medium leading-5'>
+                  This project is no longer actively developed, instead use{' '}
                   <TextLink
-                    as='a'
-                    htmlAttributes={{
-                      href: URLS.DOCUMENT_INTELLIGENCE,
-                      target: '_blank',
-                      rel: 'noopener noreferrer',
-                    }}
+                    type='external'
+                    href={URLS.DOCUMENT_INTELLIGENCE}
+                    className='whitespace-nowrap font-semibold'
+                    htmlAttributes={{ rel: 'noopener noreferrer' }}
                   >
-                    Document Intelligence
+                    Neo4j Document Intelligence
                   </TextLink>{' '}
-                  in Neo4j Aura
-                </Banner>
-              </div>
+                  in Aura for free.
+                </span>
+              </Banner>
             </section>
           }
 
