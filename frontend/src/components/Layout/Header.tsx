@@ -101,19 +101,35 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
           </section>
           {
             <section className='flex items-center justify-center px-2 min-w-0'>
-              <Banner type='warning' hasIcon usage='inline' className='w-fit max-w-full !py-1.5 !px-3 !min-h-0'>
-                <span className='text-sm font-medium leading-5'>
-                  This project is no longer actively developed, instead use{' '}
-                  <TextLink
-                    type='external'
-                    href={URLS.DOCUMENT_INTELLIGENCE}
-                    className='whitespace-nowrap font-semibold'
-                    htmlAttributes={{ rel: 'noopener noreferrer' }}
-                  >
-                    Neo4j Document Intelligence
-                  </TextLink>{' '}
-                  in Aura for free.
-                </span>
+              <Banner
+                type='warning'
+                hasIcon
+                usage='inline'
+                className='marquee-banner w-[380px] max-w-full overflow-hidden !py-1 !px-3 !min-h-0'
+              >
+                <div className='banner-track'>
+                  {[0, 1].map((item) => (
+                    <span
+                      key={item}
+                      className='banner-message text-xs font-medium leading-4 whitespace-nowrap'
+                      aria-hidden={item === 1}
+                    >
+                      This project is no longer actively developed, instead use{' '}
+                      <TextLink
+                        type='external'
+                        href={URLS.DOCUMENT_INTELLIGENCE}
+                        className='whitespace-nowrap font-semibold'
+                        htmlAttributes={{
+                          rel: 'noopener noreferrer',
+                          tabIndex: item === 1 ? -1 : 0,
+                        }}
+                      >
+                        Neo4j Document Intelligence
+                      </TextLink>{' '}
+                      in Aura for free.
+                    </span>
+                  ))}
+                </div>
               </Banner>
             </section>
           }
