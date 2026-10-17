@@ -510,8 +510,9 @@
   padding-right: 12px;
 }
 
-.marquee-banner:hover .banner-track {
-  animation-play-state: paused;
+.marquee-banner,
+.marquee-banner > * {
+  overflow-x: hidden !important;
 }
 
 @keyframes bannerScroll {

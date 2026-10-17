@@ -105,7 +105,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                 type='warning'
                 hasIcon
                 usage='inline'
-                className='marquee-banner w-[380px] max-w-full overflow-hidden !py-1 !px-3 !min-h-0'
+                className='marquee-banner w-full max-w-[380px] min-w-[180px] overflow-hidden !py-1 !px-3 !min-h-0'
               >
                 <div className='banner-track'>
                   {[0, 1].map((item) => (
