@@ -35,7 +35,7 @@ from src.make_relationships import (
 )
 from src.shared.common_fn import (
     check_url_source, create_gcs_bucket_folder_name_hashed, create_graph_database_connection,
-    delete_uploaded_local_file, get_chunk_and_graphDocument, get_value_from_env,
+    delete_uploaded_local_file, fetch_public_url, get_chunk_and_graphDocument, get_value_from_env,
     handle_backticks_nodes_relationship_id_type, last_url_segment, save_graphDocuments_in_neo4j, track_token_usage
 )
 from src.shared.constants import (
