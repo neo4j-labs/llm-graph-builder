@@ -417,9 +417,11 @@ if __name__ == "__main__":
             'llama4_maverick',
             'openai_gpt_6_luna',
             'anthropic_claude_5.5_haiku',
+            'fireworks_qwen3_8',
             'fireworks_gpt_oss',
-            'fireworks_deepseek_v4_flash',
-            'fireworks_kimi_k2p6',
+            'fireworks_deepseek_v4_1_flash',
+            'fireworks_kimi_k3',
+            'fireworks_glm_5_3_flash',
             'bedrock_nova_pro_v1',
             ]
     chatbot_modes = [

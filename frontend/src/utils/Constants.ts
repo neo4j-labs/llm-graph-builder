@@ -16,16 +16,17 @@ export const llms = import.meta.env?.VITE_LLM_MODELS?.trim()
       'openai_gpt_6_luna',
       'gemini_3.1_pro_preview',
       'diffbot',
-      'groq_llama3.1_8b',
       'anthropic_claude_5.5_opus',
       'anthropic_claude_5.5_haiku',
+      'anthropic_claude_5.5_sonnet',
+      'fireworks_deepseek_v4_1_flash',
+      'fireworks_qwen3_8',
+      'fireworks_gpt_oss',
+      'fireworks_kimi_k3',
+      'fireworks_glm_5.3_flash',
       'llama4_maverick',
       'bedrock_nova_pro_v1',
-      'fireworks_deepseek_v4_flash',
-      'fireworks_qwen3_6',
-      'fireworks_gpt_oss',
-      'fireworks_kimi_k2p6',
-      'fireworks_glm_5.1',
+      'groq_llama3.1_8b',
     ];
 
 export const prodllms = import.meta.env.VITE_LLM_MODELS_PROD?.trim()
