@@ -390,11 +390,15 @@
   background-color: rgb(201 201 201 / 40%);
 }
 
+:root {
+  --header-height: 58px;
+}
+
 .layout-wrapper {
   display: grid;
   grid-template-rows: auto;
   grid-template-columns: 64px 1fr minmax(min-content,4fr) 1.1fr 64px;
-  max-height: calc(100vh - 58px);
+  max-height: calc(100vh - var(--header-height));
   max-width: 100%;
 }
 
@@ -434,7 +438,7 @@
 }
 
 .sidenav-container {
-  height: calc(100vh - 58px);
+  height: calc(100vh - var(--header-height));
   min-height: 200px;
   display: flex
 }

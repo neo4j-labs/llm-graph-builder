@@ -930,13 +930,7 @@ const Content: React.FC<ContentProps> = ({
         selectedRows={childRef.current?.getSelectedRows()}
       />
       <div className={`n-bg-palette-neutral-bg-default main-content-wrapper`}>
-        <Flex
-          className='w-full absolute top-0'
-          alignItems='center'
-          justifyContent='space-between'
-          flexDirection='row'
-          flexWrap='wrap'
-        >
+        <Flex className='w-full' alignItems='center' justifyContent='space-between' flexDirection='row' flexWrap='wrap'>
           <div className='connectionstatus__container'>
             <span className='h6 px-1'>Neo4j connection {isReadOnlyUser ? '(Read only Mode)' : ''}</span>
             <Typography variant='body-medium'>
@@ -1004,37 +998,39 @@ const Content: React.FC<ContentProps> = ({
           </div>
         </Flex>
 
-        <FileTable
-          connectionStatus={connectionStatus}
-          setConnectionStatus={setConnectionStatus}
-          onInspect={useCallback((name) => {
-            setInspectedName(name);
-            setOpenGraphView(true);
-            setViewPoint('tableView');
-          }, [])}
-          onRetry={useCallback((id) => {
-            setRetryFile(id);
-            toggleRetryPopup();
-          }, [])}
-          onChunkView={useCallback(
-            async (name) => {
-              setDocumentName(name);
-              if (name != documentName) {
-                toggleChunkPopup();
-                if (totalPageCount) {
-                  setTotalPageCount(null);
+        <div className='relative flex-1'>
+          <FileTable
+            connectionStatus={connectionStatus}
+            setConnectionStatus={setConnectionStatus}
+            onInspect={useCallback((name) => {
+              setInspectedName(name);
+              setOpenGraphView(true);
+              setViewPoint('tableView');
+            }, [])}
+            onRetry={useCallback((id) => {
+              setRetryFile(id);
+              toggleRetryPopup();
+            }, [])}
+            onChunkView={useCallback(
+              async (name) => {
+                setDocumentName(name);
+                if (name != documentName) {
+                  toggleChunkPopup();
+                  if (totalPageCount) {
+                    setTotalPageCount(null);
+                  }
+                  setCurrentPage(1);
+                  await getChunks(name, 1);
                 }
-                setCurrentPage(1);
-                await getChunks(name, 1);
-              }
-            },
-            [documentName, totalPageCount]
-          )}
-          ref={childRef}
-          handleGenerateGraph={processWaitingFilesOnRefresh}
-        ></FileTable>
+              },
+              [documentName, totalPageCount]
+            )}
+            ref={childRef}
+            handleGenerateGraph={processWaitingFilesOnRefresh}
+          ></FileTable>
+        </div>
 
-        <Flex className={`p-2.5  mt-1.5 absolute bottom-0 w-full`} justifyContent='space-between' flexDirection={'row'}>
+        <Flex className='p-2.5 mt-1.5 w-full' justifyContent='space-between' flexDirection={'row'}>
           <div>
             <DropdownComponent
               onSelect={handleDropdownChange}
