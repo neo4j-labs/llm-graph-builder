@@ -81,9 +81,26 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
     navigate('/', { state: messages });
   };
 
+  const headerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const headerEl = headerRef.current;
+    if (!headerEl) {
+      return;
+    }
+    const observer = new ResizeObserver(() => {
+      document.documentElement.style.setProperty('--header-height', `${headerEl.offsetHeight}px`);
+    });
+    observer.observe(headerEl);
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty('--header-height');
+    };
+  }, []);
+
   return (
     <>
       <div
+        ref={headerRef}
         className='n-bg-palette-neutral-bg-weak p-1'
         style={{ borderBottom: '2px solid rgb(var(--theme-palette-neutral-border-weak))' }}
       >

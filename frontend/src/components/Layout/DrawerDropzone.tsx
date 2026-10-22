@@ -46,7 +46,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
     return null;
   }
   return (
-    <div className='flex relative min-h-[calc(-58px+100vh)]'>
+    <div className='flex relative min-h-[calc(100vh-var(--header-height))]'>
       <Drawer
         isExpanded={isExpanded}
         position='left'
