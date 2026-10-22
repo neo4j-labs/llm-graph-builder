@@ -712,11 +712,14 @@ def get_user_embedding_model(email: str, uri: str) -> dict:
     If not found, return default sentence-transformer values.
     """
     try:
+        logging.info("Fetching user embedding model")
         allow_embedding_change = False
         track_user_usage = get_value_from_env("TRACK_USER_USAGE", "false", bool)
+        logging.info("Track user usage: %s", track_user_usage)
         if not track_user_usage:
             embedding_provider = get_value_from_env("EMBEDDING_PROVIDER","sentence-transformer")
             embedding_model = get_value_from_env("EMBEDDING_MODEL","all-MiniLM-L6-v2")
+            logging.info("Using default embedding provider: %s, model: %s", embedding_provider, embedding_model)
             if not embedding_provider or not embedding_model:
                 raise EnvironmentError("EMBEDDING_PROVIDER and EMBEDDING_MODEL environment variables must be set")
             _, embedding_dimension = load_embedding_model(embedding_provider, embedding_model)
@@ -730,7 +733,9 @@ def get_user_embedding_model(email: str, uri: str) -> dict:
                 allow_embedding_change = False        
                 raise EnvironmentError("Neo4j credentials are not set properly.")
             
+        logging.info("Allow embedding change: %s", allow_embedding_change)
         allow_embedding_change = True
+        logging.info("Allow embedding change set to: %s", allow_embedding_change)
         normalized_email = (email or "").strip().lower() or None
         normalized_db_url = (uri or "").strip() or None
         if not normalized_email and not normalized_db_url:
@@ -738,29 +743,35 @@ def get_user_embedding_model(email: str, uri: str) -> dict:
 
         credentials = Neo4jCredentials(uri=token_uri, userName=token_user, password=token_password, database=token_database)
         graph = create_graph_database_connection(credentials)
-
+        logging.info("Graph database connection created successfully")
         auth_required = get_value_from_env("AUTHENTICATION_REQUIRED", False, bool)
+        logging.info("Authentication required: %s", auth_required)
         user_node = None
         if auth_required:
             result = graph.query(
                 "MATCH (u:User {email: $email}) RETURN u", {"email": normalized_email}
             )
+            
             if result and result[0].get("u"):
                 user_node = result[0]["u"]
+                logging.info("User node found for email: %s", normalized_email)
         else:
             result = graph.query(
                 "MATCH (u:User {db_url: $db_url}) RETURN u", {"db_url": normalized_db_url}
             )
             if result and result[0].get("u"):
                 user_node = result[0]["u"]
+                logging.info("User node found for db_url: %s", normalized_db_url)
 
         if user_node:
             embedding_provider = user_node.get("embedding_provider")
             embedding_model = user_node.get("embedding_model")
             embedding_dimension = user_node.get("embedding_dimension")
             if embedding_provider and embedding_model and embedding_dimension is not None:
+                logging.info("Returning user embedding model: provider=%s, model=%s, dimension=%s", embedding_provider, embedding_model, embedding_dimension)
                 return embedding_provider, embedding_model, embedding_dimension, allow_embedding_change
 
+        logging.info("Returning default embedding model")
         return "sentence-transformer", "all-MiniLM-L6-v2", 384, allow_embedding_change
     except Exception as e:
         logging.error(f"Error in get_user_embedding_model for email {email}: {e}")
