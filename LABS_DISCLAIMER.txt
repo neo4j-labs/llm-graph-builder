@@ -1,0 +1,12 @@
+## Neo4j Labs Disclaimer
+
+This project is an experimental Neo4j Labs project provided solely for evaluation, education, demonstration, and the exchange of 
+implementation ideas and emerging technical capabilities. It is not an official Neo4j product or supported component of the Neo4j portfolio. 
+Its functionality may change, be discontinued, or may never become part of a Neo4j product or service.
+
+The project is provided “as is,” without warranties, service-level commitments, maintenance guarantees, security assurances, or official technical support. 
+Neo4j does not assume responsibility for its reliability, availability, compatibility, supportability, or security.
+This project is not intended or approved for use in production or pre-production environments. Any use is entirely at the user’s own risk. 
+To the fullest extent permitted by applicable law, Neo4j will not be liable for any loss, damage, security incident, service interruption, 
+data loss, or other consequence arising from or related to the use of this project.
+Project ownership, copyright, and permitted use remain subject to the license and notices included with the project.
