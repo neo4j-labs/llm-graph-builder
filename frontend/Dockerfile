@@ -1,5 +1,5 @@
 # Step 1: Build the React application
-FROM node:26.12.1 AS build
+FROM node:24.22.1 AS build
 
 ARG VITE_BACKEND_API_URL="http://localhost:8000"
 ARG VITE_REACT_APP_SOURCES=""
