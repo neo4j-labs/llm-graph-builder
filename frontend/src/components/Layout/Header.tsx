@@ -81,47 +81,62 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
     navigate('/', { state: messages });
   };
 
+  const headerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const headerEl = headerRef.current;
+    if (!headerEl) {
+      return;
+    }
+    const observer = new ResizeObserver(() => {
+      document.documentElement.style.setProperty('--header-height', `${headerEl.offsetHeight}px`);
+    });
+    observer.observe(headerEl);
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty('--header-height');
+    };
+  }, []);
+
   return (
     <>
       <div
+        ref={headerRef}
         className='n-bg-palette-neutral-bg-weak p-1'
         style={{ borderBottom: '2px solid rgb(var(--theme-palette-neutral-border-weak))' }}
       >
         <nav
-          className='flex items-center justify-between flex-row'
+          className='flex flex-wrap items-center justify-between flex-row'
           role='navigation'
           data-testid='navigation'
           id='navigation'
           aria-label='main navigation'
         >
-          <section className='flex w-1/3 shrink-0 grow-0 items-center min-w-[200px]'>
+          <section className='flex w-auto shrink-0 grow-0 items-center'>
             <Typography variant='h1'>
               <Logo className='h-6 min-h-6 min-w-12 md:h-8 md:min-h-12 md:min-w-24 md:mr-2' type='full' />
             </Typography>
           </section>
           {
-            <section className='flex items-center justify-center px-2 min-w-0'>
-              <div className='w-full max-w-[920px]'>
-                <Banner className='!py-1.5 !px-3 !min-h-0 text-xs leading-tight'>
-                  Try{' '}
+            <section className='order-3 flex w-full min-w-0 items-center justify-center px-2 md:order-none md:w-auto md:flex-1'>
+              <Banner type='warning' hasIcon usage='inline' className='w-fit max-w-full !py-1.5 !px-4 !min-h-0'>
+                <span className='text-base font-medium leading-6'>
+                  This project is no longer actively developed, instead use{' '}
                   <TextLink
-                    as='a'
-                    htmlAttributes={{
-                      href: URLS.DOCUMENT_INTELLIGENCE,
-                      target: '_blank',
-                      rel: 'noopener noreferrer',
-                    }}
+                    type='external'
+                    href={URLS.DOCUMENT_INTELLIGENCE}
+                    className='font-semibold'
+                    htmlAttributes={{ rel: 'noopener noreferrer' }}
                   >
-                    Document Intelligence
+                    Neo4j Document Intelligence
                   </TextLink>{' '}
-                  in Neo4j Aura
-                </Banner>
-              </div>
+                  in Aura for free.
+                </span>
+              </Banner>
             </section>
           }
 
           {!chatOnly ? (
-            <section className='items-center justify-end w-1/3 grow-0 flex'>
+            <section className='items-center justify-end w-auto shrink-0 flex'>
               <div>
                 <div
                   className='inline-flex gap-x-1'
@@ -193,7 +208,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
               </div>
             </section>
           ) : (
-            <section className='items-center justify-end w-1/3 grow-0 flex'>
+            <section className='items-center justify-end w-auto shrink-0 flex'>
               <div
                 className='inline-flex gap-x-1'
                 style={{ display: 'flex', flexGrow: 0, alignItems: 'center', gap: '4px' }}

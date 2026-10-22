@@ -9,7 +9,6 @@ import {
   Typography,
   useCopyToClipboard,
   Checkbox,
-  useMediaQuery,
 } from '@neo4j-ndl/react';
 import {
   forwardRef,
@@ -89,7 +88,6 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
   const [_, copy] = useCopyToClipboard();
   const { colorMode } = useContext(ThemeWrapperContext);
   const [copyRow, setCopyRow] = useState<boolean>(false);
-  const islargeDesktop = useMediaQuery(`(min-width:1440px )`);
   const tableRef = useRef(null);
   const { isAuthenticated } = useAuth0();
   const { updateStatusForLargeFiles } = useServerSideEvent(
@@ -1125,7 +1123,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
             }}
             isLoading={isLoading}
             rootProps={{
-              className: `absolute h-[67%] left-10 filetable ${!islargeDesktop ? 'top-[17%]' : 'top-[14%]'}`,
+              className: 'absolute inset-y-0 left-10 filetable',
             }}
             components={{
               Body: () => (

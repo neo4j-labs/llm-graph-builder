@@ -1,5 +1,5 @@
 # Step 1: Build the React application
-FROM node:20 AS build
+FROM node:26.12.1 AS build
 
 ARG VITE_BACKEND_API_URL="http://localhost:8000"
 ARG VITE_REACT_APP_SOURCES=""
@@ -12,7 +12,7 @@ ARG VITE_CHUNK_SIZE=5242880
 ARG VITE_CHAT_MODES=""
 ARG VITE_ENV="DEV"
 ARG VITE_BATCH_SIZE=2
-ARG VITE_LLM_MODELS_PROD="gemini_3.5_flash,openai_gpt_5.4_mini,diffbot,anthropic_claude_4.5_haiku"
+ARG VITE_LLM_MODELS_PROD="gemini_3.8_flash,openai_gpt_6_luna,diffbot,anthropic_claude_5.5_haiku"
 ARG VITE_AUTH0_CLIENT_ID=""
 ARG VITE_AUTH0_DOMAIN=""
 ARG VITE_SKIP_AUTH="false"

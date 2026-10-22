@@ -47,8 +47,6 @@ from src.shared.constants import (
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from src.shared.schema_extraction import schema_extraction_from_text
 
-from bs4 import BeautifulSoup
-
 warnings.filterwarnings("ignore")
 load_dotenv()
 
@@ -184,11 +182,7 @@ def create_source_node_graph_web_url(graph, params):
     success_count=0
     failed_count=0
     lst_file_name = []
-    response, final_url = fetch_public_url(params.source_url)
-    response.raise_for_status()
-    soup = BeautifulSoup(response.text, 'html.parser')
-    text = soup.get_text()
-    pages = [Document(page_content=text, metadata={"source": final_url})]
+    pages = get_documents_from_web_page(params.source_url)
     if pages is None or len(pages)==0:
       failed_count+=1
       message = f"Unable to read data for given url : {params.source_url}"
