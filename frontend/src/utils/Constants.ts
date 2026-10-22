@@ -11,26 +11,27 @@ export const APP_SOURCES =
 export const llms = import.meta.env?.VITE_LLM_MODELS?.trim()
   ? (import.meta.env.VITE_LLM_MODELS.split(',') as string[])
   : [
-      'gemini_3.5_flash',
-      'openai_gpt_5.5',
-      'openai_gpt_5.4_mini',
+      'gemini_3.8_flash',
+      'openai_gpt_6.1_sol',
+      'openai_gpt_6_luna',
       'gemini_3.1_pro_preview',
       'diffbot',
-      'groq_llama3.1_8b',
-      'anthropic_claude_4.7_opus',
-      'anthropic_claude_4.5_haiku',
+      'anthropic_claude_5.5_opus',
+      'anthropic_claude_5.5_haiku',
+      'anthropic_claude_5.5_sonnet',
+      'fireworks_deepseek_v4_1_flash',
+      'fireworks_qwen3_8',
+      'fireworks_gpt_oss',
+      'fireworks_kimi_k3',
+      'fireworks_glm_5.3_flash',
       'llama4_maverick',
       'bedrock_nova_pro_v1',
-      'fireworks_deepseek_v4_flash',
-      'fireworks_qwen3_6',
-      'fireworks_gpt_oss',
-      'fireworks_kimi_k2p6',
-      'fireworks_glm_5.1',
+      'groq_llama3.1_8b',
     ];
 
 export const prodllms = import.meta.env.VITE_LLM_MODELS_PROD?.trim()
   ? (import.meta.env.VITE_LLM_MODELS_PROD.split(',') as string[])
-  : ['gemini_3.5_flash', 'openai_gpt_5.4_mini', 'diffbot', 'anthropic_claude_4.5_haiku'];
+  : ['gemini_3.8_flash', 'openai_gpt_6_luna', 'diffbot', 'anthropic_claude_5.5_haiku'];
 
 export const chatModeReadableLables: Record<string, string> = {
   vector: 'vector',
@@ -204,9 +205,9 @@ export const tooltips = {
   predinedSchema: 'Predefined Schema',
   dataImporterJson: 'Data Importer JSON',
 };
-export const PRODMODELS = ['gemini_3.5_flash', 'openai_gpt_5.4_mini', 'diffbot', 'anthropic_claude_4.5_haiku'];
+export const PRODMODELS = ['gemini_3.8_flash', 'openai_gpt_6_luna', 'diffbot', 'anthropic_claude_5.5_haiku'];
 export const modelTooltipMap: Record<string, string> = {
-  'gemini_3.5_flash': 'gemini-3.5-flash',
+  'gemini_3.8_flash': 'gemini-3.8-flash',
 };
 export const buttonCaptions = {
   exploreGraphWithBloom: 'Explore Graph',

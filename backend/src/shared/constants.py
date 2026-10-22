@@ -246,11 +246,16 @@ CHAT_SEARCH_KWARG_SCORE_THRESHOLD = 0.5
 CHAT_DOC_SPLIT_SIZE = 3000
 CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD = 0.10
 
-CHAT_TOKEN_CUT_OFF = {
-  ("gemini_3.5_flash","groq-llama3",'groq_llama3_70b','anthropic_claude_4') : 4,
-  ("openai_gpt_5.5","diffbot","anthropic_claude_4.7_opus") : 28,
-     ("ollama_llama3") : 2  
-}  
+DEFAULT_DOCUMENT_LIMIT = 8
+
+CHAT_DOCUMENT_LIMIT = {
+    "gemini_3.8_flash": 8,
+    "openai_gpt_6.1_sol": 8,
+    "openai_gpt_6_luna": 8,
+    "anthropic_claude_opus_5.5": 8,
+    "anthropic_claude_sonnet_5.5": 8,
+    "anthropic_claude_haiku_5.5": 8,
+} 
 
 ### CHAT TEMPLATES 
 CHAT_SYSTEM_TEMPLATE = """
