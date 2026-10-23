@@ -157,44 +157,42 @@ export default function Profile() {
   }, []);
 
   if (isLoading) {
-    return <Avatar></Avatar>;
+    return <Avatar />;
   }
   if (isAuthenticated) {
     return (
-      <div className=' p-1.5 h-12 profile-container'>
-        <>
-          <Avatar
-            className='md:flex hidden'
-            name={user?.name?.charAt(0).toLocaleUpperCase()}
-            size='large'
-            type='letters'
-            shape='square'
-          />
-          <div className='flex flex-col'>
-            <Typography variant='body-medium' className='p-0.5'>
-              {user?.name?.split('@')[0] ?? 'Jhon doe'}
-            </Typography>
+      <div className='profile-container h-12 p-1.5'>
+        <Avatar
+          className='md:flex hidden'
+          name={user?.name?.charAt(0).toLocaleUpperCase()}
+          size='large'
+          type='letters'
+          shape='square'
+        />
+        <div className='hidden min-w-0 md:flex md:flex-col'>
+          <Typography variant='body-medium' className='max-w-[120px] truncate p-0.5'>
+            {user?.name?.split('@')[0] ?? 'John Doe'}
+          </Typography>
 
-            <Typography variant='body-small' className='p-0.5'>
-              {user?.email ?? 'john.doe@neo4j.com'}
-            </Typography>
-          </div>
-          <IconButton ref={iconbtnRef} ariaLabel='settings' isClean onClick={handleClick}>
-            <ChevronDownIconOutline />
-          </IconButton>
-          <Menu anchorRef={iconbtnRef} isOpen={showMenu} onClose={handleClose}>
-            <Menu.Items>
-              {settings.map((setting, index) => (
-                <Menu.Item
-                  key={`${setting.title}-${index}`}
-                  onClick={() => !('disabled' in setting && setting.disabled) && setting.onClick()}
-                  title={setting.title}
-                  isDisabled={'disabled' in setting ? setting.disabled : false}
-                />
-              ))}
-            </Menu.Items>
-          </Menu>
-        </>
+          <Typography variant='body-small' className='hidden max-w-[180px] truncate p-0.5 xl:block'>
+            {user?.email ?? 'john.doe@neo4j.com'}
+          </Typography>
+        </div>
+        <IconButton ref={iconbtnRef} ariaLabel='settings' isClean onClick={handleClick}>
+          <ChevronDownIconOutline />
+        </IconButton>
+        <Menu anchorRef={iconbtnRef} isOpen={showMenu} onClose={handleClose}>
+          <Menu.Items>
+            {settings.map((setting, index) => (
+              <Menu.Item
+                key={`${setting.title}-${index}`}
+                onClick={() => !('disabled' in setting && setting.disabled) && setting.onClick()}
+                title={setting.title}
+                isDisabled={'disabled' in setting ? setting.disabled : false}
+              />
+            ))}
+          </Menu.Items>
+        </Menu>
       </div>
     );
   }

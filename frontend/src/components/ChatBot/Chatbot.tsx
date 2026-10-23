@@ -435,7 +435,9 @@ const Chatbot: FC<ChatbotProps> = (props) => {
       )}
       <div
         className={`flex! overflow-y-auto pb-12 min-w-full pl-5 pr-5 chatBotContainer ${
-          isChatOnly ? 'min-h-[calc(100dvh-114px)] max-h-[calc(100dvh-114px)]' : ''
+          isChatOnly
+            ? 'min-h-[calc(100dvh-var(--header-height)-56px)] max-h-[calc(100dvh-var(--header-height)-56px)]'
+            : ''
         } `}
       >
         <Widget className='n-bg-palette-neutral-bg-weak w-full' header='' isElevated={false}>
