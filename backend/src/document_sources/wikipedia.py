@@ -1,4 +1,5 @@
 import logging
+import re
 import urllib.parse
 import requests
 from langchain_core.documents import Document
@@ -10,13 +11,19 @@ logger = logging.getLogger(__name__)
 USER_AGENT = "llm-graph-builder/1.0"
 REQUEST_TIMEOUT = (5, 20)  # (connect, read) seconds; the wikipedia lib sets no timeout and can hang on Cloud Run
 MAX_CONTENT_CHARS = 100000
+LANGUAGE_CODE_PATTERN = re.compile(r"[a-z]{2,3}")
 
 
 def _api_get(session: requests.Session, language: str, params: dict) -> dict:
+    # The language becomes part of the hostname, so only plain language codes are allowed (SSRF guard).
+    language = language.strip().lower()
+    if not LANGUAGE_CODE_PATTERN.fullmatch(language):
+        raise LLMGraphBuilderException(f"Invalid Wikipedia language code: '{language}'")
     response = session.get(
         f"https://{language}.wikipedia.org/w/api.php",
         params={**params, "format": "json", "formatversion": 2},
         timeout=REQUEST_TIMEOUT,
+        allow_redirects=False,
     )
     response.raise_for_status()
     return response.json()
