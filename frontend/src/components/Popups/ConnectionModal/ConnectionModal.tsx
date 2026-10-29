@@ -420,9 +420,12 @@ export default function ConnectionModal({
           'aria-labelledby': 'form-dialog-title',
         }}
       >
-        <Dialog.Header htmlAttributes={{ id: 'form-dialog-title' }}>Connect to Neo4j</Dialog.Header>
-        <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
-          <Typography variant='body-medium' className='mb-4'>
+        <Dialog.Header htmlAttributes={{ id: 'form-dialog-title' }}>
+          <Typography variant='h4'>Connect to Neo4j</Typography>
+        </Dialog.Header>
+
+        <Dialog.Content className='n-flex n-flex-col n-gap-token-1 !pt-1'>
+          <Typography variant='body-medium' className='mb-1'>
             <TextLink type='external' href='https://console.neo4j.io/'>
               Don't have a Neo4j instance? Start for free today
             </TextLink>
@@ -446,11 +449,11 @@ export default function ConnectionModal({
                 usage='inline'
               ></Banner>
             ))}
-          <div className='n-flex max-h-44'>
+          <div className='n-flex h-30'>
             <Dropzone
               isTesting={false}
               customTitle={<>{buttonCaptions.dropYourCreds}</>}
-              className='n-p-6 end-0 top-0 w-full h-full'
+              className='n-p-3 end-0 top-0 w-full h-full'
               acceptedFileExtensions={['.txt', '.env']}
               dropZoneOptions={{
                 onDrop: (f: Partial<globalThis.File>[]) => {
@@ -517,7 +520,7 @@ export default function ConnectionModal({
               onChange={(e) => setDatabase(e.target.value)}
               className='w-full'
             />
-            <div className='n-flex n-flex-row n-flex-wrap mb-2'>
+            <div className='n-flex n-flex-row n-flex-wrap mb-1'>
               <div className='w-[48.5%] mr-1.5 inline-block'>
                 <TextInput
                   ref={userNameRef}
