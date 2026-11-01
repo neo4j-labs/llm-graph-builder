@@ -15,7 +15,7 @@ google_auth_oauthlib==1.5.0
 google-cloud-core==2.8.0
 google-cloud-storage==3.17.0
 google-genai==2.30.0
-langchain==1.4.5
+langchain==1.4.7
 langchain-aws==1.8.2
 langchain-anthropic==1.7.6
 langchain-fireworks==1.7.1
