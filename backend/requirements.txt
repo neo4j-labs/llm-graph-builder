@@ -50,7 +50,7 @@ urllib3==2.8.0
 uvicorn==0.54.0
 gunicorn==26.2.0
 wikipedia==1.4.0
-wrapt==2.5.0
+wrapt==2.5.1
 yarl==1.25.1
 youtube-transcript-api==1.2.4
 zipp==4.1.1
